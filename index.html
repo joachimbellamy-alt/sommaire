@@ -50,10 +50,13 @@
             font-size: 1.05rem; 
             transition: transform 0.1s; 
         }
-        .btn:active { transform: scale(0.97); background: #0056b3; }
+        .btn:active { transform: scale(0.97); opacity: 0.8; }
         
-        /* Couleur spéciale pour le Latin */
-        .latin { background: #5856d6; } /* Violet Apple */
+        /* Couleurs spécifiques par section */
+        .latin { background: #5856d6; } /* Violet */
+        .ebep { background: #34c759; }  /* Vert */
+        .soutien { background: #ff9500; } /* Orange */
+        .culture { background: #a2845e; } /* Ocre/Antique */
 
         .footer { margin-top: 40px; font-size: 0.8rem; color: #aeaeb2; }
     </style>
@@ -63,12 +66,18 @@
         <h1>📚 Sommaire</h1>
 
         <div class="section-title">Niveau 6ème (PP)</div>
-        <a href="mission-dictee-a-corriger.html" class="btn">📝 dictée à corriger</a>
+        <a href="mission-dictee-a-corriger.html" class="btn">📝 Dictée à corriger</a>
+        <a href="#" class="btn soutien">🚀 Soutien Français 6ème</a>
+
         <div class="section-title">Niveau 5ème</div>
         <a href="exercice-5eme.html" class="btn">⚔️ Conjugaison : Le Présent</a>
 
-        <div class="section-title">Option Latin (3ème)</div>
-        <a href="latin-3eme.html" class="btn latin">🏛️ Civilisation : Les Dieux</a>
+        <div class="section-title">Inclusion</div>
+        <a href="#" class="btn ebep">🌟 Ressources EBEP</a>
+
+        <div class="section-title">Culture Antique & Latin</div>
+        <a href="#" class="btn culture">🏛️ Atelier de Culture Antique</a>
+        <a href="latin-3eme.html" class="btn latin">📜 Option Latin (3ème)</a>
 
         <div class="footer">
             Professeur de Français & Latin<br>
