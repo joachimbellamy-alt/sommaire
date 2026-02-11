@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Le Petit Prince - Diagnostic Conjugaison</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #8e44ad;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --error: #e74c3c;
+            --bg: #fdfcfb;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+
+        #app {
+            width: 95%;
+            max-width: 700px;
+            background: white;
+            margin-top: 15px;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+        }
+
+        .header { text-align: center; margin-bottom: 15px; }
+        
+        .score-bar {
+            display: flex;
+            align-items: center;
+            background: #f0f2f5;
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        #progress-fill {
+            height: 8px;
+            background: var(--accent);
+            width: 0%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            flex-grow: 1;
+            margin: 0 15px;
+        }
+
+        .sentence-display {
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            line-height: 1.6;
+            text-align: center;
+            padding: 25px;
+            background: #fff;
+            border: 2px solid #f0f0f0;
+            border-radius: 18px;
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        .grid-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button.opt {
+            padding: 22px 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: 2px solid #ecf0f1;
+            border-radius: 16px;
+            background: #fff;
+            color: var(--primary);
+            -webkit-appearance: none;
+        }
+
+        button.opt:disabled { opacity: 0.4; }
+
+        #feedback-area { margin-top: 20px; display: none; }
+
+        #feedback-text {
+            padding: 18px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.1rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .btn-next {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+
+        #result-screen { display: none; text-align: center; padding: 20px 10px; }
+        
+        .mastery-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .insufficient { background-color: var(--error); }
+        .fragile { background-color: var(--warning); }
+        .satisfactory { background-color: var(--success); }
+        .excellent { background-color: var(--accent); }
+
+        .competence-box {
+            text-align: left;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--primary);
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div id="quiz-screen">
+        <div class="header">
+            <h1 style="font-size: 1.3rem; color: var(--primary);">Étude de la langue : Morphologie</h1>
+            <p id="instruction" style="color: #7f8c8d; font-size: 0.95rem;">Identifie le temps du verbe conjugué.</p>
+        </div>
+
+        <div class="score-bar">
+            <span id="current-step">1/20</span>
+            <div id="progress-fill"></div>
+            <span id="score-text" style="font-weight: bold;">Score: 0</span>
+        </div>
+        
+        <div class="sentence-display" id="sentence"></div>
+
+        <div class="grid-options" id="btn-grid">
+            <button class="opt" onclick="check('Imparfait')">Imparfait</button>
+            <button class="opt" onclick="check('Passé Simple')">Passé Simple</button>
+            <button class="opt" onclick="check('Passé Composé')">Passé Composé</button>
+            <button class="opt" onclick="check('Plus-que-parfait')">Plus-que-parfait</button>
+        </div>
+
+        <div id="feedback-area">
+            <div id="feedback-text"></div>
+            <button class="btn-next" onclick="nextQuestion()">Question suivante ➔</button>
+        </div>
+    </div>
+
+    <div id="result-screen">
+        <h1>Bilan des compétences</h1>
+        <div style="font-size: 3rem; font-weight: 900; color: var(--primary);" id="final-score">0/20</div>
+        
+        <div id="mastery-tag" class="mastery-badge"></div>
+        
+        <p id="result-msg" style="line-height: 1.6;"></p>
+
+        <div class="competence-box">
+            <strong>Compétence travaillée :</strong><br>
+            <em>"Maîtriser la morphologie verbale et identifier les marques de temps."</em> (Repères de fin de 6ème)
+        </div>
+
+        <button onclick="location.reload()" style="background:none; color:var(--primary); border:2px solid var(--primary); padding:15px 30px; border-radius:15px; font-size:1rem; margin-top:30px;">Recommencer l'exercice</button>
+    </div>
+</div>
+
+<script>
+    // [Les 20 phrases du Petit Prince restent identiques au code précédent]
+    const quiz = [
+        { s: "J'ai vécu seul sans personne à qui parler.", r: "Passé Composé", v: "ai vécu", m: "Auxiliaire AVOIR au présent + participe passé." },
+        { s: "Le petit prince posait beaucoup de questions.", r: "Imparfait", v: "posait", m: "Terminaison -ait." },
+        { s: "Il ne sembla pas s'apercevoir de ma présence.", r: "Passé Simple", v: "sembla", m: "Verbe du 1er groupe, terminaison en -a." },
+        { s: "J'avais dessiné un serpent boa.", r: "Plus-que-parfait", v: "avais dessiné", m: "Auxiliaire AVOIR à l'imparfait + participe passé." },
+        { s: "Les grandes personnes m'ont conseillé de laisser le dessin.", r: "Passé Composé", v: "ont conseillé", m: "Auxiliaire au présent + participe passé." },
+        { s: "Elle était très belle et très émouvante.", r: "Imparfait", v: "était", m: "Verbe être à l'imparfait." },
+        { s: "Je sautai sur mes pieds comme frappé par la foudre.", r: "Passé Simple", v: "sautai", m: "Terminaison -ai (1ère personne)." },
+        { s: "Il avait fallu longtemps pour comprendre.", r: "Plus-que-parfait", v: "avait fallu", m: "Auxiliaire à l'imparfait + participe passé." },
+        { s: "Je ne pus répondre à sa question.", r: "Passé Simple", v: "pus", m: "Verbe pouvoir, terminaison en -us." },
+        { s: "Le petit prince éclata d'un rire magnifique.", r: "Passé Simple", v: "éclata", m: "Action brève au passé simple." },
+        { s: "J'ai appris bien vite à connaître cette fleur.", r: "Passé Composé", v: "ai appris", m: "Auxiliaire avoir + participe passé." },
+        { s: "C'était alors une question de discipline.", r: "Imparfait", v: "était", m: "Imparfait de description." },
+        { s: "Le renard était apparu soudainement.", r: "Plus-que-parfait", v: "était apparu", m: "Auxiliaire être à l'imparfait + participe passé." },
+        { s: "Tu as apprivoisé mon cœur.", r: "Passé Composé", v: "as apprivoisé", m: "Auxiliaire au présent + participe passé." },
+        { s: "Les baobabs grandissaient chaque jour.", r: "Imparfait", v: "grandissaient", m: "Terminaison -aient." },
+        { s: "Le roi donnait ses ordres avec majesté.", r: "Imparfait", v: "donnait", m: "Action durable à l'imparfait." },
+        { s: "Il eut un geste de lassitude.", r: "Passé Simple", v: "eut", m: "Verbe avoir au passé simple." },
+        { s: "Ma fleur avait embaumé toute ma planète.", r: "Plus-que-parfait", v: "avait embaumé", m: "Auxiliaire à l'imparfait + participe passé." },
+        { s: "Ils ont oublié ce qu'ils cherchent.", r: "Passé Composé", v: "ont oublié", m: "Auxiliaire au présent + participe passé." },
+        { s: "Je reconnus le bruit de ses pas.", r: "Passé Simple", v: "reconnus", m: "Verbe du 3e groupe, terminaison en -us." }
+    ];
+
+    let idx = 0, score = 0, attempts = 0;
+
+    function load() {
+        attempts = 0;
+        document.getElementById('sentence').innerText = quiz[idx].s;
+        document.getElementById('current-step').innerText = (idx + 1) + " / 20";
+        document.getElementById('progress-fill').style.width = (idx / 20) * 100 + "%";
+        document.getElementById('feedback-area').style.display = "none";
+        document.getElementById('instruction').style.color = "#7f8c8d";
+        enableButtons(true);
+    }
+
+    function check(choice) {
+        const correct = quiz[idx].r;
+        const fArea = document.getElementById('feedback-area');
+        const fText = document.getElementById('feedback-text');
+        
+        if (choice === correct) {
+            if (attempts === 0) score++; 
+            showFinalFeedback(true);
+        } else {
+            attempts++;
+            if (attempts === 1) {
+                fArea.style.display = "block";
+                fText.style.background = "#fff3cd";
+                fText.style.color = "#856404";
+                fText.innerHTML = "<strong>Attention :</strong> Ce n'est pas ce temps. Observe si le verbe est composé ou simple !";
+            } else {
+                showFinalFeedback(false);
+            }
+        }
+    }
+
+    function showFinalFeedback(isCorrect) {
+        enableButtons(false);
+        const fArea = document.getElementById('feedback-area');
+        const fText = document.getElementById('feedback-text');
+        const q = quiz[idx];
+        fArea.style.display = "block";
+        document.getElementById('score-text').innerText = "Score: " + score;
+
+        if (isCorrect) {
+            fText.style.background = "#e8f5e9";
+            fText.style.color = "#2e7d32";
+            fText.innerHTML = `<strong>Correct !</strong><br>Verbe : "<em>${q.v}</em>".<br>${q.m}`;
+        } else {
+            fText.style.background = "#ffebee";
+            fText.style.color = "#c62828";
+            fText.innerHTML = `<strong>Échec :</strong> Le verbe était "<em>${q.v}</em>" au ${q.r}.<br>${q.m}`;
+        }
+    }
+
+    function nextQuestion() {
+        idx++;
+        if (idx < quiz.length) load(); else finish();
+    }
+
+    function enableButtons(status) {
+        const btns = document.querySelectorAll('.opt');
+        btns.forEach(b => b.disabled = !status);
+    }
+
+    function finish() {
+        document.getElementById('quiz-screen').style.display = "none";
+        document.getElementById('result-screen').style.display = "block";
+        document.getElementById('final-score').innerText = score + "/20";
+        
+        const masteryTag = document.getElementById('mastery-tag');
+        const msg = document.getElementById('result-msg');
+
+        if (score >= 18) {
+            masteryTag.innerText = "TRÈS BONNE MAÎTRISE";
+            masteryTag.className = "mastery-badge excellent";
+            msg.innerText = "Parfait ! Tu as une connaissance experte de la morphologie des temps du récit.";
+        } else if (score >= 16) {
+            masteryTag.innerText = "MAÎTRISE SATISFAISANTE";
+            masteryTag.className = "mastery-badge satisfactory";
+            msg.innerText = "Félicitations ! L'objectif de 80% est atteint. Tu es prêt pour les exercices de rédaction en 6ème.";
+        } else if (score >= 10) {
+            masteryTag.innerText = "MAÎTRISE FRAGILE";
+            masteryTag.className = "mastery-badge fragile";
+            msg.innerText = "L'objectif des 80% n'est pas encore atteint. Tu confonds encore certains temps simples et composés. Relis tes tableaux de conjugaison.";
+        } else {
+            masteryTag.innerText = "MAÎTRISE INSUFFISANTE";
+            masteryTag.className = "mastery-badge insufficient";
+            msg.innerText = "Attention, les structures verbales ne sont pas encore acquises. Un entraînement régulier sur les auxiliaires et terminaisons est nécessaire.";
+        }
+    }
+
+    load();
+</script>
+
+</body>
+</html>
