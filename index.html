@@ -3,49 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sommaire du Site</title>
+    <title>Espace Pédagogique | Français & Latin</title>
     <style>
+        :root {
+            --primary: #007aff;
+            --latin-color: #5856d6;
+            --bg: #f5f5f7;
+            --text: #1d1d1f;
+        }
+
         body { 
-            font-family: -apple-system, sans-serif; 
-            background-color: #f2f2f7; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text);
             display: flex; 
             justify-content: center; 
-            padding: 40px 20px;
+            align-items: center;
+            min-height: 100vh;
             margin: 0;
+            padding: 20px;
         }
+
         .container { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(10px);
+            padding: 40px; 
+            border-radius: 30px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05); 
             width: 100%; 
-            max-width: 450px; 
+            max-width: 480px; 
             text-align: center; 
         }
-        h1 { color: #1c1c1e; font-size: 1.6rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
-        .btn { 
-            display: block; 
-            background: #007aff; 
-            color: white; 
-            padding: 20px; 
-            margin: 15px 0; 
-            border-radius: 15px; 
-            text-decoration: none; 
-            font-weight: bold; 
-            transition: 0.2s;
+
+        .profile-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: block;
         }
-        .btn:active { transform: scale(0.98); background: #0056b3; }
-        .latin { background: #5856d6; }
-        .footer { margin-top: 30px; font-size: 0.8rem; color: #8e8e93; }
+
+        h1 { 
+            font-weight: 700;
+            font-size: 1.8rem; 
+            margin-bottom: 5px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: #86868b;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+
+        .section-title {
+            text-align: left;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: #86868b;
+            margin: 25px 0 10px 10px;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .btn { 
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            background: white; 
+            color: var(--primary); 
+            padding: 18px; 
+            margin: 12px 0; 
+            border-radius: 16px; 
+            text-decoration: none; 
+            font-weight: 600; 
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        .btn span { margin-right: 10px; font-size: 1.2rem; }
+
+        .btn:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Style spécifique Latin */
+        .btn-latin:hover {
+            background: var(--latin-color);
+        }
+
+        .footer { 
+            margin-top: 40px; 
+            font-size: 0.85rem; 
+            color: #86868b; 
+            border-top: 1px solid #d2d2d7;
+            padding-top: 20px;
+        }
+
+        .badge {
+            background: #ff3b30;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 10px;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Sommaire du site</h1>
+        <span class="profile-icon">👨‍🏫</span>
+        <h1>Espace de Travail</h1>
+        <p class="subtitle">Collège - Ressources de Français & Latin</p>
         
-    
-         <a href="mission-dictee-a-corriger.html" class="btn">📝mission dictée à corriger</a>
-        <div class="footer">Collège - Français & Latin</div>
+        <div class="section-title">Français (6ème / 5ème)</div>
+        <a href="mission-dictee-a-corriger.html" class="btn">
+            <span>📝</span> Mission Dictée <span class="badge">Nouveau</span>
+        </a>
+        <a href="#" class="btn">
+            <span>📚</span> Lecture & Analyse
+        </a>
+
+        <div class="section-title">Option Latin (3ème)</div>
+        <a href="#" class="btn btn-latin" style="color: var(--latin-color);">
+            <span>🏛️</span> Civilisation Romaine
+        </a>
+        <a href="#" class="btn btn-latin" style="color: var(--latin-color);">
+            <span>📜</span> Grammaire & Lexique
+        </a>
+
+        <div class="footer">
+            M. l'Enseignant — Mis à jour aujourd'hui
+        </div>
     </div>
 </body>
 </html>
