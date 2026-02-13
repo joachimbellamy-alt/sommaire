@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mission Correction - Jane Goodall</title>
+    <style>
+        /* Optimisation pour iPad : police aérée et pas de zoom automatique */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            line-height: 2.8; 
+            padding: 20px; 
+            background-color: #f0f2f5; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        .container { 
+            max-width: 850px; 
+            margin: auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        h1 { 
+            color: #2c3e50; 
+            text-align: center; 
+            border-bottom: 3px solid #e67e22; 
+            padding-bottom: 10px; 
+            text-transform: uppercase;
+            font-size: 1.5em;
+        }
+        .score-box { 
+            background: #2c3e50; 
+            color: white; 
+            padding: 10px 25px; 
+            border-radius: 50px; 
+            display: block; 
+            width: fit-content;
+            margin: 0 auto 25px auto; 
+            font-weight: bold; 
+            text-align: center;
+        }
+        .text-block { 
+            font-size: 1.3em; 
+            color: #34495e; 
+            text-align: justify; 
+        }
+        .word { 
+            cursor: pointer; 
+            padding: 2px 4px; 
+            border-radius: 4px; 
+            transition: 0.2s; 
+            display: inline-block;
+            border-bottom: 1px dashed #ccc;
+        }
+        .word:active { background-color: #fff3e0; }
+        .correct { 
+            color: #27ae60 !important; 
+            font-weight: bold; 
+            background-color: #eafaf1; 
+            border-bottom: 2px solid #27ae60; 
+            text-decoration: none;
+        }
+        .wrong { 
+            color: #e74c3c !important; 
+            background-color: #fdedec; 
+            border-bottom: 2px solid #e74c3c; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🚀 Mission Correction</h1>
+    <div class="score-box">Objectifs atteints : <span id="score">0</span> / 33</div>
+    <div id="dictee-container" class="text-block"></div>
+</div>
+
+<script>
+const wordsData = [
+    { o: "Jane", c: "Jane" }, { o: "Goodall", c: "Goodall" },
+    { o: "observer", c: "observait", h: "Verbe 'observer' à l'imparfait (3e pers. sing.)." },
+    { o: "les", c: "les" },
+    { o: "grand", c: "grands", h: "Adjectif. S'accorde avec 'singes' (masc. pluriel)." },
+    { o: "singe", c: "singes", h: "Nom commun. Pluriel après le déterminant 'les'." },
+    { o: "avec", c: "avec" }, { o: "une", c: "une" },
+    { o: "patience", c: "patience" },
+    { o: "infini.", c: "infinie.", h: "Adjectif. S'accorde avec 'patience' (fém. sing.)." },
+    { o: "Elle", c: "Elle" },
+    { o: "s’installai", c: "s'installait", h: "Verbe à l'imparfait. Terminaison -ait avec le sujet 'Elle'." },
+    { o: "chaque", c: "chaque" }, { o: "matin", c: "matin" }, { o: "sur", c: "sur" }, { o: "des", c: "des" },
+    { o: "coline", c: "collines", h: "Nom commun pluriel. Orthographe : deux 'L'." },
+    { o: "herbeuse.", c: "herbeuses.", h: "Adjectif. S'accorde avec 'collines' (fém. pluriel)." },
+    { o: "Il", c: "Il" }, { o: "faut", c: "faut" }, { o: "dire", c: "dire" }, { o: "que", c: "que" }, 
+    { o: "la", c: "la" }, { o: "jeune", c: "jeune" }, { o: "chercheuse", c: "chercheuse" },
+    { o: "avai", c: "avait", h: "Auxiliaire à l'imparfait. Sujet : 'la chercheuse' (sing.)." },
+    { o: "lu", c: "lu" }, { o: "de", c: "de" }, { o: "nombreux", c: "nombreux" },
+    { o: "livre", c: "livres", h: "Nom commun. Pluriel après l'adjectif 'nombreux'." },
+    { o: "avant", c: "avant" }, { o: "de", c: "de" }, { o: "partir.", c: "partir." },
+    { o: "Un", c: "Un" }, { o: "jour", c: "jour" }, { o: "qu’elle", c: "qu’elle" }, { o: "se", c: "se" },
+    { o: "promener", c: "promenait", h: "Verbe à l'imparfait. Terminaison en -ait." },
+    { o: "dans", c: "dans" }, { o: "une", c: "une" }, { o: "forêt", c: "forêt" },
+    { o: "d’arbre", c: "d’arbres", h: "Nom commun pluriel (une forêt contient plusieurs arbres)." },
+    { o: "imense,", c: "immenses,", h: "Adjectif pluriel. Orthographe : deux 'M'." },
+    { o: "elle", c: "elle" },
+    { o: "aperçu", c: "aperçut", h: "Verbe 'apercevoir' au passé simple (3e pers. sing.)." },
+    { o: "des", c: "des" },
+    { o: "famille", c: "familles", h: "Nom commun pluriel après le déterminant 'des'." },
+    { o: "de", c: "de" },
+    { o: "chimpenzé", c: "chimpanzés", h: "Nom commun pluriel. Orthographe : 'chim-pan-zé'." },
+    { o: "occuppé", c: "occupés", h: "Adjectif. S'accorde avec 'chimpanzés' (masc. pluriel)." },
+    { o: "à", c: "à" }, { o: "une", c: "une" },
+    { o: "tache", c: "tâche", h: "Nom commun (travail). Attention à l'accent circonflexe." },
+    { o: "inattendu", c: "inattendue", h: "Adjectif. S'accorde avec 'tâche' (fém. sing.)." },
+    { o: "autour", c: "autour" }, { o: "d’une", c: "d’une" }, { o: "termitière.", c: "termitière." },
+    { o: "ça", c: "sa", h: "Déterminant possessif (la sienne)." },
+    { o: "surprise", c: "surprise" },
+    { o: "fu", c: "fut", h: "Verbe 'être' au passé simple." },
+    { o: "grand", c: "grande", h: "Adjectif. S'accorde avec 'surprise' (fém. sing.)." },
+    { o: "car", c: "car" },
+    { o: "c’est", c: "ces", h: "Déterminant démonstratif (ceux-là)." },
+    { o: "animaux", c: "animaux" },
+    { o: "intelligent", c: "intelligents", h: "Adjectif. S'accorde avec 'animaux' (masc. pluriel)." },
+    { o: "avai", c: "avaient", h: "Auxiliaire à l'imparfait. Sujet pluriel : 'ces animaux'." },
+    { o: "utiliser", c: "utilisé", h: "Participe passé avec 'avoir'." },
+    { o: "des", c: "des" },
+    { o: "brindille", c: "brindilles", h: "Nom commun pluriel." },
+    { o: "pour", c: "pour" },
+    { o: "attrapaient", c: "attraper", h: "Verbe à l'infinitif après 'pour'." },
+    { o: "les", c: "les" },
+    { o: "termite", c: "termites", h: "Nom commun pluriel." },
+    { o: "caché", c: "cachés", h: "Adjectif. S'accorde avec 'termites' (masc. pluriel)." },
+    { o: "dans", c: "dans" }, { o: "leur", c: "leur" }, { o: "abri.", c: "abri." },
+    { o: "Leur", c: "Leurs", h: "Déterminant possessif. S'accorde avec 'regards' (pluriel)." },
+    { o: "regard", c: "regards", h: "Nom commun. S'accorde avec 'Leurs'." },
+    { o: "curieux", c: "curieux" },
+    { o: "croisère", c: "croisèrent", h: "Verbe au passé simple (sujet pluriel)." },
+    { o: "celui", c: "celui" }, { o: "de", c: "de" }, { o: "la", c: "la" }, { o: "scientifique", c: "scientifique" },
+    { o: "anglaise", c: "anglaise" }, { o: "qui", c: "qui" },
+    { o: "venaient", c: "venait", h: "Verbe à l'imparfait. Sujet : 'la scientifique' (sing.)." },
+    { o: "de", c: "de" }, { o: "découvrir", c: "découvrir" }, { o: "que", c: "que" }, { o: "les", c: "les" },
+    { o: "animaux", c: "animaux" },
+    { o: "utilisait", c: "utilisaient", h: "Verbe à l'imparfait. Sujet pluriel : 'les animaux'." },
+    { o: "aussi", c: "aussi" }, { o: "des", c: "des" },
+    { o: "outil.", c: "outils.", h: "Nom commun pluriel." }
+];
+
+let score = 0;
+const container = document.getElementById('dictee-container');
+
+wordsData.forEach((item) => {
+    const span = document.createElement('span');
+    span.className = 'word';
+    span.innerText = item.o + " ";
+    
+    span.onclick = () => {
+        if (span.classList.contains('correct')) return;
+        if (item.o !== item.c) {
+            setTimeout(() => {
+                const userGuess = prompt(`Correction pour "${item.o}" :`);
+                if (userGuess) {
+                    const cleanGuess = userGuess.trim().toLowerCase();
+                    const cleanTarget = item.c.replace(/[.,]/g, "").trim().toLowerCase();
+                    if (cleanGuess === cleanTarget) {
+                        span.innerText = item.c + " ";
+                        span.classList.add('correct');
+                        span.classList.remove('wrong');
+                        score++;
+                        document.getElementById('score').innerText = score;
+                        alert("⭐ BRAVO !\n\n" + item.h);
+                    } else {
+                        span.classList.add('wrong');
+                        alert("❌ Ce n'est pas encore ça. Cherche bien !");
+                    }
+                }
+            }, 50);
+        } else {
+            alert("✨ Ce mot est déjà bien orthographié.");
+        }
+    };
+    container.appendChild(span);
+});
+</script>
+</body>
+</html>
