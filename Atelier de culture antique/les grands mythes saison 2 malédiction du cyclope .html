@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Interactif : L'Odyssée</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #d35400;
+            --bg: #ecf0f1;
+            --white: #ffffff;
+            --success: #27ae60;
+            --error: #c0392b;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--white);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        h1 { text-align: center; color: var(--primary); font-size: 1.8em; margin-bottom: 30px; }
+
+        .question-card {
+            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: 15px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+        }
+
+        .question-text { font-weight: bold; font-size: 1.1em; margin-bottom: 15px; display: block; }
+
+        .option {
+            display: block;
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        /* Désactiver les clics une fois qu'une réponse est choisie */
+        .question-card.answered .option {
+            pointer-events: none;
+        }
+
+        .option:active { background: #f0f0f0; }
+
+        .option.correct {
+            border-color: var(--success);
+            background-color: #eafaf1;
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .option.wrong {
+            border-color: var(--error);
+            background-color: #fdeaea;
+            color: var(--error);
+        }
+
+        .explanation {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+
+        #score-final {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            padding: 20px;
+            background: var(--primary);
+            color: white;
+            border-radius: 15px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <h1>Ulysse et le Cyclope</h1>
+    <div class="progress-bar"><div id="progress-fill"></div></div>
+
+    <div id="quiz-body">
+        </div>
+
+    <div id="score-final"></div>
+</div>
+
+<script>
+    const questions = [
+        {
+            q: "Pourquoi Ulysse décide-t-il d'entrer dans la grotte ?",
+            options: ["Pour voler le bétail", "Par curiosité de rencontrer le géant", "Pour s'abriter de la foudre"],
+            correct: 1,
+            exp: "Ulysse est curieux, c'est son plus grand défaut ! Il veut voir à quoi ressemble un Cyclope."
+        },
+        {
+            q: "Quelle est l'arme fabriquée par Ulysse ?",
+            options: ["Une épée en bronze", "Un pieu en bois d'olivier", "Une fronde"],
+            correct: 1,
+            exp: "Il taille une poutre d'olivier (l'arbre d'Athéna) pour crever l'œil unique de Polyphème."
+        },
+        {
+            q: "Comment Ulysse endort-il Polyphème ?",
+            options: ["Avec du vin pur", "Avec une chanson", "Avec un somnifère"],
+            correct: 0,
+            exp: "Le vin des Cicones est si puissant qu'il doit normalement être coupé d'eau. Pur, il assomme le Cyclope."
+        },
+        {
+            q: "Quel nom Ulysse donne-t-il au Cyclope ?",
+            options: ["Quelqu'un", "Ulysse d'Ithaque", "Personne"],
+            correct: 2,
+            exp: "C'est sa ruse célèbre : 'Personne ne me tue par la ruse !' hurlera Polyphème à ses amis."
+        },
+        {
+            q: "Comment sortent les compagnons ?",
+            options: ["En courant", "Sous le ventre des moutons", "Par un trou secret"],
+            correct: 1,
+            exp: "Polyphème tâte le dos des bêtes, mais pas le ventre ! Les marins sont ainsi sauvés."
+        },
+        {
+            q: "Quelle faute commet Ulysse en partant ?",
+            options: ["Il crie son vrai nom", "Il oublie son épée", "Il tue une brebis"],
+            correct: 0,
+            exp: "Par orgueil, il veut que le monde sache que c'est lui qui a vaincu le géant. C'est sa perte."
+        },
+        {
+            q: "Qui est le père du Cyclope ?",
+            options: ["Zeus", "Poséidon", "Hadès"],
+            correct: 1,
+            exp: "Poséidon, dieu des mers, va alors déclencher des tempêtes pour empêcher Ulysse de rentrer."
+        },
+        {
+            q: "Que contient l'outre d'Éole ?",
+            options: ["De l'or", "De la nourriture", "Les vents contraires"],
+            correct: 2,
+            exp: "Éole enferme les vents mauvais pour qu'Ulysse n'ait que le bon vent (le Zéphyr)."
+        },
+        {
+            q: "Pourquoi les marins ouvrent-ils l'outre ?",
+            options: ["Par jalousie (ils croient que c'est de l'or)", "Parce qu'ils ont soif", "Par erreur"],
+            correct: 0,
+            exp: "Ils pensent qu'Ulysse garde un trésor pour lui seul."
+        },
+        {
+            q: "Pourquoi Éole refuse-t-il de les aider à nouveau ?",
+            options: ["Il n'a plus d'outre", "Il pense qu'ils sont maudits", "Il est trop fatigué"],
+            correct: 1,
+            exp: "Pour Éole, tant de malchance prouve que les dieux détestent Ulysse. Il ne veut pas s'en mêler."
+        }
+    ];
+
+    let score = 0;
+    let answeredCount = 0;
+
+    const quizBody = document.getElementById('quiz-body');
+
+    questions.forEach((data, index) => {
+        const card = document.createElement('div');
+        card.className = 'question-card';
+        card.id = `card-${index}`;
+
+        const qText = document.createElement('span');
+        qText.className = 'question-text';
+        qText.innerText = `${index + 1}. ${data.q}`;
+        card.appendChild(qText);
+
+        data.options.forEach((opt, optIndex) => {
+            const btn = document.createElement('div');
+            btn.className = 'option';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(index, optIndex, data.correct, data.exp);
+            card.appendChild(btn);
+        });
+
+        const expDiv = document.createElement('div');
+        expDiv.id = `exp-${index}`;
+        expDiv.className = 'explanation';
+        card.appendChild(expDiv);
+
+        quizBody.appendChild(card);
+    });
+
+    function checkAnswer(qIdx, selectedIdx, correctIdx, explanation) {
+        const card = document.getElementById(`card-${qIdx}`);
+        if (card.classList.contains('answered')) return;
+
+        card.classList.add('answered');
+        answeredCount++;
+
+        const options = card.querySelectorAll('.option');
+        const expDiv = document.getElementById(`exp-${qIdx}`);
+
+        if (selectedIdx === correctIdx) {
+            score++;
+            options[selectedIdx].classList.add('correct');
+            expDiv.style.display = 'block';
+            expDiv.style.backgroundColor = '#d4edda';
+            expDiv.innerHTML = `<b>Correct !</b> ${explanation}`;
+        } else {
+            options[selectedIdx].classList.add('wrong');
+            options[correctIdx].classList.add('correct');
+            expDiv.style.display = 'block';
+            expDiv.style.backgroundColor = '#f8d7da';
+            expDiv.innerHTML = `<b>Dommage...</b> ${explanation}`;
+        }
+
+        // Mise à jour barre de progression
+        document.getElementById('progress-fill').style.width = (answeredCount / questions.length) * 100 + '%';
+
+        // Affichage score final
+        if (answeredCount === questions.length) {
+            const scoreFinal = document.getElementById('score-final');
+            scoreFinal.style.display = 'block';
+            scoreFinal.innerHTML = `Terminé ! Ton score : ${score} / ${questions.length}`;
+        }
+    }
+</script>
+
+</body>
+</html>
