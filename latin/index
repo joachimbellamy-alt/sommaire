@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Espace Latin - 3ème</title>
+    <style>
+        body { font-family: sans-serif; padding: 30px; line-height: 1.6; max-width: 800px; margin: auto; }
+        h1 { color: #8e44ad; border-bottom: 2px solid #9b59b6; padding-bottom: 10px; }
+        .exercice { display: block; margin: 10px 0; padding: 15px; background: #f5eef8; border-radius: 8px; color: #8e44ad; text-decoration: none; font-weight: bold; }
+        .exercice:hover { background: #ebdef0; }
+        .retour { display: inline-block; margin-top: 20px; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <h1>🏛 Ressources 3ème - Latin</h1>
+    
+    <p>Salvete ! Sélectionnez votre exercice :</p>
+
+    <p><em>Aucun texte ou exercice pour le moment.</em></p>
+
+    <hr>
+    <a href="../index.html" class="retour">🏠 Retour à l'accueil du site</a>
+</body>
+</html>
