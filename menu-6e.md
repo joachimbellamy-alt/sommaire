@@ -2,8 +2,6 @@
 ---
 ### 📝 Travaux en cours
 * [Exercice : Le Petit Prince]
-* 
-* [Lien vers un futur exercice](dictee-a-corriger.html)
-
+* [Accéder à la Dictée](mission-dictee-a-corriger.html)
 ---
 [🏠 Retour à l'accueil](index.html)
