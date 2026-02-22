@@ -2,18 +2,51 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Espace 6ème</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Français 6ème</title>
     <style>
-        body { font-family: sans-serif; padding: 30px; line-height: 1.6; }
-        .exercice { display: block; margin: 10px 0; padding: 15px; background: #f4f4f4; border-radius: 8px; color: #007bff; text-decoration: none; font-weight: bold; }
+        /* Couleur distinctive pour la 6ème : Bleu */
+        :root { --couleur-classe: dodgerblue; }
+
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; padding: 20px; color: #2c3e50; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 15px; border-top: 10px solid var(--couleur-classe); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: var(--couleur-classe); text-align: center; margin-bottom: 5px; }
+        p { text-align: center; font-style: italic; color: #7f8c8d; margin-bottom: 25px; }
+        
+        .btn { 
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            padding: 18px; margin: 12px 0; 
+            background: #fff; border: 2px solid var(--couleur-classe); 
+            color: var(--couleur-classe); text-decoration: none; 
+            border-radius: 8px; font-weight: bold; transition: 0.3s;
+        }
+        .btn:hover { background: var(--couleur-classe); color: white; transform: scale(1.02); }
+        
+        .nouveau {
+            background: #e74c3c; color: white; font-size: 0.75em;
+            padding: 2px 10px; border-radius: 20px; text-transform: uppercase;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .retour { display: block; text-align: center; margin-top: 30px; color: #95a5a6; text-decoration: none; font-weight: bold; }
+        .retour:hover { color: var(--couleur-classe); }
     </style>
 </head>
 <body>
-    <h1>🎓 Ressources 6ème - Français</h1>
-    <hr>
-    <a href="mission-dictee-a-corriger.html" class="exercice">📝 Mission : Dictée à corriger</a>
 
-    <br>
-    <a href="../index.html">🏠 Retour à l'accueil</a>
+<div class="container">
+    <h1>📖 Espace Français 6ème</h1>
+    <p>« Le monstre, aux limites de l'humain »</p>
+    
+    <div class="list">
+        <a href="malediction-cyclope.html" class="btn">
+            👁️ La malédiction du Cyclope <span class="nouveau">Nouveau</span>
+        </a>
+
+        </div>
+
+    <a href="../index.html" class="retour">🏠 Retour à l'accueil</a>
+</div>
+
 </body>
 </html>
