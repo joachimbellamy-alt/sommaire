@@ -2,23 +2,48 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Espace Latin - 3ème</title>
     <style>
-        body { font-family: sans-serif; padding: 30px; line-height: 1.6; max-width: 800px; margin: auto; }
-        h1 { color: #8e44ad; border-bottom: 2px solid #9b59b6; padding-bottom: 10px; }
-        .exercice { display: block; margin: 10px 0; padding: 15px; background: #f5eef8; border-radius: 8px; color: #8e44ad; text-decoration: none; font-weight: bold; }
-        .exercice:hover { background: #ebdef0; }
-        .retour { display: inline-block; margin-top: 20px; color: #7f8c8d; }
+        /* Couleur distinctive pour le Latin : Violet */
+        :root { --couleur-classe: slateblue; }
+
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; padding: 20px; color: #2c3e50; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 15px; border-top: 10px solid var(--couleur-classe); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: var(--couleur-classe); text-align: center; margin-bottom: 5px; }
+        p { text-align: center; font-style: italic; color: #7f8c8d; margin-bottom: 25px; }
+        
+        .btn { 
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            padding: 18px; margin: 12px 0; 
+            background: #fff; border: 2px solid var(--couleur-classe); 
+            color: var(--couleur-classe); text-decoration: none; 
+            border-radius: 8px; font-weight: bold; transition: 0.3s;
+        }
+        .btn:hover { background: var(--couleur-classe); color: white; transform: scale(1.02); }
+        
+        .nouveau {
+            background: #e74c3c; color: white; font-size: 0.75em;
+            padding: 2px 10px; border-radius: 20px; text-transform: uppercase;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .retour { display: block; text-align: center; margin-top: 30px; color: #95a5a6; text-decoration: none; font-weight: bold; }
+        .retour:hover { color: var(--couleur-classe); }
     </style>
 </head>
 <body>
-    <h1>🏛 Ressources 3ème - Latin</h1>
+
+<div class="container">
+    <h1>🏛️ Espace Latin 3ème</h1>
+    <p>« Labor omnia vincit improbus »</p>
     
-    <p>Salvete ! Sélectionnez votre exercice :</p>
+    <a href="binomes_et _chambres.html" class="btn">
+        🏠 Liste des chambres (Voyage) <span class="nouveau">Nouveau</span>
+    </a>
 
-    <p><em>Aucun texte ou exercice pour le moment.</em></p>
+    <a href="../index.html" class="retour">🏠 Retour à l'accueil</a>
+</div>
 
-    <hr>
-    <a href="../index.html" class="retour">🏠 Retour à l'accueil du site</a>
 </body>
 </html>
