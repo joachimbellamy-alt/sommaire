@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Quiz Iliade : Le Destin d'Hector</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --selected: #d1e9ff; /* Couleur de sélection */
+            --correct: #27ae60;
+            --wrong: #e74c3c;
+            --bg: #f8f9fa;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: #333; padding: 20px; margin: 0; }
+        .container { max-width: 700px; margin: 0 auto; }
+        
+        .score-header { 
+            position: sticky; top: 10px; background: var(--primary); color: white; 
+            padding: 15px; border-radius: 12px; text-align: center; 
+            z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-bottom: 20px;
+        }
+
+        .card { 
+            background: white; padding: 20px; border-radius: 15px; 
+            margin-bottom: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            border: 1px solid #ddd;
+        }
+        
+        .question-text { font-weight: bold; font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); }
+        
+        .option { 
+            display: block; padding: 12px; margin: 8px 0; border: 2px solid #eee; 
+            border-radius: 10px; cursor: pointer; transition: background 0.2s, border-color 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Couleur quand l'élève clique/choisit */
+        input[type="radio"]:checked + .option-label {
+            background-color: var(--selected);
+            border-color: #3498db;
+        }
+        
+        .check-btn { 
+            width: 100%; padding: 15px; background: #e67e22; color: white; 
+            border: none; border-radius: 8px; font-weight: bold; margin-top: 10px; 
+            font-size: 16px;
+        }
+
+        .feedback { 
+            display: none; margin-top: 15px; padding: 12px; border-radius: 8px; 
+            font-size: 0.95rem; line-height: 1.4;
+        }
+
+        /* Classes de validation finale */
+        .is-correct { border-color: var(--correct) !important; background: #eafaf1 !important; font-weight: bold; }
+        .is-wrong { border-color: var(--wrong) !important; background: #fdedec !important; }
+        
+        .feedback.visible { display: block; }
+        .feedback.success { background: #d4edda; color: #155724; border: 1px solid var(--correct); }
+        .feedback.error { background: #f8d7da; color: #721c24; border: 1px solid var(--wrong); }
+        
+        input[type="radio"] { display: none; } /* On cache le bouton radio standard */
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="score-header">
+        <span style="font-size: 1.2rem;">Score : <span id="current-score">0</span> / 10</span>
+    </div>
+
+    <div id="quiz-container"></div>
+</div>
+
+<script>
+    const questions = [
+        {
+            q: "Quel dieu utilise le feu pour dessécher le fleuve Scamandre ?",
+            options: ["Poséidon", "Héphaïstos", "Apollon"],
+            correct: 1,
+            expl: "C'est le dieu des forgerons (Héphaïstos) qui intervient pour sauver Achille de la noyade."
+        },
+        {
+            q: "Pourquoi Poséidon refuse-t-il d'aider les Troyens ?",
+            options: ["Il a été trahi par le roi Laomédon", "Il préfère les Grecs par nature", "Il a peur de Zeus"],
+            correct: 0,
+            expl: "Le roi Laomédon n'avait pas payé les dieux après la construction des remparts de Troie."
+        },
+        {
+            q: "Quelle déesse pousse un soupir de soulagement quand Achille est sauvé des eaux ?",
+            options: ["Héra", "Aphrodite", "Artémis"],
+            correct: 0,
+            expl: "Héra, protectrice des Grecs, craignait pour la vie du fils de Thétis."
+        },
+        {
+            q: "Comment Athéna convainc-t-elle Hector de s'arrêter de courir ?",
+            options: ["Elle le paralyse", "Elle prend l'apparence de son frère Déiphobe", "Elle lui promet la vie sauve"],
+            correct: 1,
+            expl: "Elle utilise la ruse en lui faisant croire qu'il n'est plus seul pour combattre."
+        },
+        {
+            q: "Où se trouve le défaut de l'armure d'Hector repéré par Achille ?",
+            options: ["Au niveau du cœur", "À la base du cou", "Au niveau de la cheville"],
+            correct: 1,
+            expl: "C'est l'endroit où la gorge est exposée, le seul point vulnérable de l'armure."
+        },
+        {
+            q: "Quelle promesse Hector demande-t-il à Achille avant de mourir ?",
+            options: ["De ne pas piller ses armes", "De rendre son corps à sa famille", "D'épargner son fils"],
+            correct: 1,
+            expl: "Hector veut mourir avec l'assurance d'une sépulture digne, mais Achille refuse d'abord violemment."
+        },
+        {
+            q: "Quel outrage Achille fait-il subir à Hector ?",
+            options: ["Il le laisse manger par les chiens", "Il le décapite", "Il le traîne derrière son char"],
+            correct: 2,
+            expl: "Achille perce les chevilles d'Hector pour l'attacher à son char et le traîner dans la poussière."
+        },
+        {
+            q: "Qui guide Priam en secret jusqu'à la tente d'Achille ?",
+            options: ["Hermès", "Ulysse", "Apollon"],
+            correct: 0,
+            expl: "Le dieu messager Hermès protège le vieux roi pour traverser le camp grec."
+        },
+        {
+            q: "Pourquoi Achille finit-il par céder et rendre le corps ?",
+            options: ["Pour l'argent de la rançon", "Parce que Priam lui rappelle son propre père", "Sur ordre direct d'Agamemnon"],
+            correct: 1,
+            expl: "L'image du vieux Priam suppliant évoque pour Achille la vieillesse de son propre père, Pélé."
+        },
+        {
+            q: "Combien de jours de trêve Achille accorde-t-il pour le deuil ?",
+            options: ["3 jours", "7 jours", "12 jours"],
+            correct: 2,
+            expl: "Achille s'engage à suspendre la bataille pendant 12 jours pour les rites funéraires."
+        }
+    ];
+
+    let totalScore = 0;
+    const container = document.getElementById('quiz-container');
+
+    questions.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.id = `card-${index}`;
+
+        let optionsHtml = '';
+        item.options.forEach((opt, i) => {
+            optionsHtml += `
+                <input type="radio" id="q${index}-o${i}" name="q${index}" value="${i}">
+                <label for="q${index}-o${i}" class="option option-label" id="label-${index}-${i}">
+                    ${opt}
+                </label>
+            `;
+        });
+
+        card.innerHTML = `
+            <div class="question-text">${index + 1}. ${item.q}</div>
+            <div class="options">${optionsHtml}</div>
+            <button class="check-btn" id="btn-${index}" onclick="checkAnswer(${index})">Valider cette réponse</button>
+            <div class="feedback" id="feedback-${index}"></div>
+        `;
+        container.appendChild(card);
+    });
+
+    window.checkAnswer = function(idx) {
+        const selected = document.querySelector(`input[name="q${idx}"]:checked`);
+        if (!selected) {
+            alert("Veuillez choisir une réponse.");
+            return;
+        }
+
+        const choice = parseInt(selected.value);
+        const feedback = document.getElementById(`feedback-${idx}`);
+        const btn = document.getElementById(`btn-${idx}`);
+        const labels = document.querySelectorAll(`#card-${idx} .option-label`);
+        const correctIdx = questions[idx].correct;
+
+        // Désactivation des choix
+        document.querySelectorAll(`input[name="q${idx}"]`).forEach(input => input.disabled = true);
+        btn.style.display = 'none';
+
+        if (choice === correctIdx) {
+            totalScore++;
+            document.getElementById('current-score').innerText = totalScore;
+            labels[choice].classList.add('is-correct');
+            feedback.innerHTML = "<strong>Correct !</strong> " + questions[idx].expl;
+            feedback.className = "feedback visible success";
+        } else {
+            labels[choice].classList.add('is-wrong');
+            labels[correctIdx].classList.add('is-correct');
+            feedback.innerHTML = "<strong>Incorrect.</strong> " + questions[idx].expl;
+            feedback.className = "feedback visible error";
+        }
+    };
+</script>
+
+</body>
+</html>
