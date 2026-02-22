@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mon Bilan Scolaire - iPad</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --blue: #007AFF; --green: #34C759; --orange: #FF9500; }
+        body { font-family: -apple-system, sans-serif; background-color: #f2f2f7; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        
+        h1 { font-size: 1.5rem; color: #1c1c1e; margin-bottom: 5px; }
+        .subtitle { font-size: 0.9rem; color: #8e8e93; margin-bottom: 15px; text-align: center; }
+
+        .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 950px; width: 100%; display: flex; flex-direction: row; flex-wrap: wrap; gap: 20px; }
+        
+        /* Ajustements pour les petits écrans d'iPad en mode portrait */
+        @media (max-width: 768px) { .card { flex-direction: column; } }
+
+        .inputs-section { flex: 1; min-width: 280px; }
+        .chart-section { flex: 1.5; min-width: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        .input-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #f9f9fb; padding: 10px; border-radius: 8px; }
+        label { font-weight: 600; font-size: 14px; color: #3a3a3c; }
+        
+        /* Champs plus gros pour le tactile */
+        input { width: 70px; height: 35px; border: 2px solid #d1d1d6; border-radius: 6px; text-align: center; font-size: 16px; -webkit-appearance: none; }
+        input:focus { border-color: var(--blue); outline: none; background: #fff; }
+
+        .poles-box { margin-top: 15px; padding: 12px; background: #e5e5ea; border-radius: 10px; }
+        .pole-line { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
+        .badge { font-weight: bold; color: var(--blue); background: white; padding: 2px 8px; border-radius: 5px; }
+
+        button { width: 100%; margin-top: 20px; padding: 15px; background: var(--blue); color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 16px; -webkit-tap-highlight-color: transparent; }
+        button:active { opacity: 0.7; }
+
+        canvas { max-width: 100% !important; height: auto !important; }
+    </style>
+</head>
+<body>
+
+    <h1>Mon Profil Scolaire</h1>
+    <p class="subtitle">Utilise le clavier pour entrer tes moyennes (ex: 13,5)</p>
+
+    <div class="card">
+        <div class="inputs-section">
+            <div id="form-container"></div>
+            
+            <div class="poles-box">
+                <div class="pole-line"><span>🔬 Pôle Scientifique</span> <span id="avg-sci" class="badge">-</span></div>
+                <div class="pole-line"><span>📚 Pôle Littéraire</span> <span id="avg-lit" class="badge">-</span></div>
+                <div class="pole-line"><span>🎨 Art & Sport</span> <span id="avg-art" class="badge">-</span></div>
+            </div>
+            
+            <button onclick="downloadChart()">Sauvegarder l'image</button>
+        </div>
+
+        <div class="chart-section">
+            <canvas id="radarChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const subjects = [
+            { name: 'Français', pole: 'lit' },
+            { name: 'Mathématiques', pole: 'sci' },
+            { name: 'Sciences', pole: 'sci' },
+            { name: 'Histoire-Géo', pole: 'lit' },
+            { name: 'Anglais', pole: 'lit' },
+            { name: 'EPS', pole: 'art' },
+            { name: 'Éduc. Musique', pole: 'art' },
+            { name: 'Arts Plastiques', pole: 'art' }
+        ];
+
+        let scores = subjects.map(() => 10);
+        const formContainer = document.getElementById('form-container');
+
+        subjects.forEach((s, i) => {
+            const div = document.createElement('div');
+            div.className = 'input-item';
+            div.innerHTML = `<label>${s.name}</label>
+                             <input type="number" value="10" min="0" max="20" step="0.1" oninput="update(${i}, this.value)">`;
+            formContainer.appendChild(div);
+        });
+
+        const ctx = document.getElementById('radarChart').getContext('2d');
+        
+        // Plugin fond blanc pour l'export iPad
+        const whiteBg = {
+            id: 'white_bg',
+            beforeDraw: (c) => {
+                const {ctx} = c; ctx.save();
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.fillStyle = 'white'; ctx.fillRect(0,0,c.width,c.height);
+                ctx.restore();
+            }
+        };
+
+        const radarChart = new Chart(ctx, {
+            type: 'radar',
+            plugins: [whiteBg],
+            data: {
+                labels: subjects.map(s => s.name),
+                datasets: [{
+                    data: scores,
+                    backgroundColor: 'rgba(0, 122, 255, 0.2)',
+                    borderColor: '#007AFF',
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#007AFF'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: { 
+                    r: { 
+                        min: 0, max: 20, 
+                        ticks: { stepSize: 5, display: false },
+                        grid: { color: '#d1d1d6' },
+                        pointLabels: { font: { size: 13, weight: '600' } }
+                    } 
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        function update(index, val) {
+            scores[index] = parseFloat(val) || 0;
+            radarChart.data.datasets[0].data = scores;
+            radarChart.update();
+            calculatePoles();
+        }
+
+        function calculatePoles() {
+            const getAvg = (pole) => {
+                const filtered = subjects.filter(s => s.pole === pole).map(s => scores[subjects.indexOf(s)]);
+                return (filtered.reduce((a, b) => a + b, 0) / filtered.length).toFixed(1);
+            };
+            document.getElementById('avg-sci').innerText = getAvg('sci') + "/20";
+            document.getElementById('avg-lit').innerText = getAvg('lit') + "/20";
+            document.getElementById('avg-art').innerText = getAvg('art') + "/20";
+        }
+
+     function downloadChart() {
+    const canvas = document.getElementById('radarChart');
+    const dataUrl = canvas.toDataURL('image/png');
+    
+    // Ouvre l'image dans une nouvelle fenêtre/onglet
+    const newWindow = window.open();
+    newWindow.document.write('<img src="' + dataUrl + '" style="width:100%; height:auto;">');
+    newWindow.document.title = "Mon Bilan Scolaire";
+}
+        calculatePoles();
+    </script>
+</body>
+</html>
