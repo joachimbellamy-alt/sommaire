@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Vœux Montagne - Chambrées de 9</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; padding: 20px; }
+        .box { max-width: 650px; background: white; padding: 25px; border-radius: 12px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        .name { flex: 3; } .class { flex: 2; }
+        h2 { color: #2c3e50; text-align: center; border-bottom: 3px solid #e67e22; padding-bottom: 10px; }
+        h3 { border-left: 5px solid #e67e22; padding-left: 10px; color: #d35400; font-size: 1.1em; margin-top: 20px; }
+        button { width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1.1em; margin-top: 20px; }
+        button:hover { background: #219150; }
+        .num { background: #eee; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: bold; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2>🏔️ Vœux Chambrée de 9</h2>
+    
+    <form action="https://script.google.com/macros/s/AKfycbyqlfuL1sGZ63PAyFNr6qoNQ4PH5cYGXntVGO-_DTsu2w98aDISolhRx-G_beJKd8DR/exec" method="POST">
+        
+        <label><b>1. Mon Nom & Prénom :</b></label>
+        <div class="row">
+            <input type="text" name="eleve_nom" class="name" required placeholder="Ton Nom">
+            <select name="eleve_classe" class="class" required>
+                <option value="">Ta classe</option>
+                <option>6ème Turquoise</option><option>6ème Parme</option><option>6ème Verte</option>
+                <option>6ème Émeraude</option><option>6ème Rouge</option><option>6ème Bleue</option>
+                <option>6ème Jaune</option><option>6ème Orange</option>
+            </select>
+        </div>
+
+        <h3>🤝 Mon binôme / trinôme (Places 2 et 3)</h3>
+        <div class="row"><div class="num">2</div><input type="text" name="ami1_nom" class="name" placeholder="Ami 1"><select name="ami1_classe" class="class"><option value="">Classe</option><option>6T</option><option>6P</option><option>6V</option><option>6E</option><option>6R</option><option>6B</option><option>6J</option><option>6O</option></select></div>
+        <div class="row"><div class="num">3</div><input type="text" name="ami2_nom" class="name" placeholder="Ami 2"><select name="ami2_classe" class="class"><option value="">Classe</option><option>6T</option><option>6P</option><option>6V</option><option>6E</option><option>6R</option><option>6B</option><option>6J</option><option>6O</option></select></div>
+
+        <h3>🏠 Pour compléter la chambre (Places 4 à 9)</h3>
+        <div class="row"><div class="num">4</div><input type="text" name="ch_nom1" class="name" placeholder="Ami 3"><select name="ch_cl1" class="class"><option value="">Classe</option><option>6T</option><option>6P</option><option>6V</option><option>6E</option><option>6R</option><option>6B</option><option>6J</option><option>6O</option></select></div>
+        <div class="row"><div class="num">5</div><input type="text" name="ch_nom2" class="name" placeholder="Ami 4"><select name="ch_cl2" class="class"><option value="">Classe</option><option>6T</option><option>6P</option><option>6V</option><option>6E</option><option>6R</option><option>6B</option><option>6J</option><option>6O</option></select></div>
+        <div class="row"><div class="num">6</div><input type="text" name="ch_nom3" class="name" placeholder="Ami 5"><select name="ch_cl3" class="class"><option value="">Classe</option><option>6T</option><option>6P</option><option>6V</option><option>6E</option><option>6R</option><option>6B</option><option>6J</option><option>6O</option></select></div>
+        <div class="row"><div class="num">7</div><input type="text" name="ch_nom4" class="name" placeholder="Ami 6"><select name="ch_cl4" class="class"><option value="">Classe</option><option>6T</option><option>6P</option><option>6V</option><option>6E</option><option>6R</option><option>6B</option><option>6J</option><option>6O</option></select></div>
+        <div class="row"><div class="num">8</div><input type="text" name="ch_nom5" class="name" placeholder="Ami 7"><select name="ch_cl5" class="class"><option value="">Classe</option><option>6T</option><option>6P</option><option>6V</option><option>6E</option><option>6R</option><option>6B</option><option>6J</option><option>6O</option></select></div>
+        <div class="row"><div class="num">9</div><input type="text" name="ch_nom6" class="name" placeholder="Ami 8"><select name="ch_cl6" class="class"><option value="">Classe</option><option>6T</option><option>6P</option><option>6V</option><option>6E</option><option>6R</option><option>6B</option><option>6J</option><option>6O</option></select></div>
+
+        <button type="submit">Envoyer mes vœux 🎿</button>
+    </form>
+</div>
+</body>
+</html>
