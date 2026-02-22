@@ -1,29 +1,34 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>HVC</title>
     <style>
-        body { font-family: sans-serif; padding: 30px; line-height: 1.6; max-width: 800px; margin: auto; }
-        h1 { color: #e67e22; border-bottom: 2px solid #f39c12; padding-bottom: 10px; }
-        .document { display: block; margin: 10px 0; padding: 15px; background: #fef5e7; border-radius: 8px; color: #d35400; text-decoration: none; font-weight: bold; }
-        .document:hover { background: #fdebd0; }
-        .retour { display: inline-block; margin-top: 20px; color: #7f8c8d; }
+        /* MODIFIEZ JUSTE LA COULEUR ICI (ex: forestgreen, crimson, orange, slateblue) */
+        :root { --couleur-classe: orange; }
+
+        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; border-top: 8px solid var(--couleur-classe); }
+        h1 { color: var(--couleur-classe); text-align: center; }
+        .btn { 
+            display: block; padding: 15px; margin: 10px 0; 
+            background: #fff; border: 2px solid var(--couleur-classe); 
+            color: var(--couleur-classe); text-decoration: none; 
+            border-radius: 5px; font-weight: bold; text-align: center;
+        }
+        .btn:hover { background: var(--couleur-classe); color: white; }
+        .retour { display: block; text-align: center; margin-top: 20px; color: grey; text-decoration: none; font-size: 0.9em; }
     </style>
 </head>
 <body>
-    <h1>🏫 Heure de Vie de Classe (HVC)</h1>
+
+<div class="container">
+    <h1>Titre de la Classe</h1>
     
-    <p>Documents et informations pour la classe :</p>
-   <a href="binomes_et_chambres.html" class="item">
-    <span class="emoji">🏠</span>
-    <span>Organisation : Binômes et Chambres</span>
-</a>
-</a>
+    <a href="binomes_et _chambres.html" class="btn">🏠 Binômes et Chambres</a>
+    <a href="malediction-cyclope.html" class="btn">👁️ Le Cyclope</a>
 
-    <p><em>Aucun document pour le moment.</em></p>
+    <a href="../index.html" class="retour">🏠 Retour à l'accueil</a>
+</div>
 
-    <hr>
-    <a href="../index.html" class="retour">🏠 Retour à l'accueil du site</a>
 </body>
 </html>
