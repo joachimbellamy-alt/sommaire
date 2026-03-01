@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ali Baba : Maître de l'Accord</title>
+    <style>
+        :root { --primary: #0f172a; --accent: #f59e0b; --success: #10b981; --error: #ef4444; --bg: #f8fafc; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 800px; width: 100%; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-top: 8px solid var(--accent); }
+        h1 { color: var(--primary); text-align: center; font-size: 1.6rem; margin-bottom: 10px; }
+        #score-board { text-align: center; font-size: 1.2rem; margin-bottom: 20px; padding: 10px; background: #f1f5f9; border-radius: 10px; color: var(--primary); }
+        .text-area { line-height: 2.8; font-size: 1.35rem; text-align: justify; padding: 10px; color: #334155; }
+        .word { cursor: pointer; padding: 2px 6px; border-radius: 6px; transition: 0.2s; }
+        .target { background: #fef3c7; border: 2px solid var(--accent); font-weight: bold; color: #92400e; }
+        .correct { color: white !important; background: var(--success) !important; border: 2px solid var(--success) !important; }
+        .wrong { background: var(--error) !important; color: white !important; border: 2px solid var(--error) !important; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; }
+        .opt-btn { width: 100%; padding: 18px; margin: 10px 0; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1.2rem; background: #fff; font-weight: 600; cursor: pointer; }
+        .instr-header { display: block; margin-bottom: 15px; color: #64748b; font-weight: bold; text-transform: uppercase; font-size: 0.9rem; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Ali Baba et l'accord du verbe</h1>
+    <div id="score-board">✨ Score : <span id="score">0</span> / 10</div>
+    <div class="text-area" id="exercise-text"></div>
+</div>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span class="instr-header" id="modal-verb-info"></span>
+        <div id="options-list"></div>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { id: 1, label: "[Aller]", correct: "alla", options: ["alla", "allait", "allat", "est allé"], temps: "Passé Simple", clue: "Indice : Le sujet est 'Ali Baba' (3e pers. singulier). Quelle est la particularité des verbes du 1er groupe." },
+        { id: 2, label: "[Voir]", correct: "vit", options: ["vit", "vis", "voyait", "ai vu"], temps: "Passé Simple", clue: "Indice : Le sujet est 'il'. Au passé simple, une seule forme. Quelle est la lettre que l'on ajoute très souvent avec il?." },
+        { id: 3, label: "[Faire]", correct: "faisaient", options: ["faisaient", "faisait", "firent", "ont fait"], temps: "Imparfait", clue: "Indice : 'Les quarante voleurs' est un sujet PLURIEL." },
+        { id: 4, label: "[Dire]", correct: "dit", options: ["dit", "disa", "disait", "a dit"], temps: "Passé Simple", clue: "Indice : Le sujet est 'Le chef'. C'est une forme simple, le verbe est du 3eme groupe sans accent." },
+        { id: 5, label: "[Prendre]", correct: "prirent", options: ["prirent", "prenaient", "ont pris", "prires"], temps: "Passé Simple", clue: "Indice : 'Ils' est au pluriel. Au passé simple, cherche la terminaison en -rent." },
+        { id: 6, label: "[Pouvoir]", correct: "pouvait", options: ["pouvait", "pouvais", "put", "a pu"], temps: "Imparfait", clue: "Indice : Le sujet est 'Ali Baba'. Cherche la terminaison de l'imparfait au singulier (-ait)." },
+        { id: 7, label: "[Vouloir]", correct: "a voulu", options: ["a voulu", "a voulut", "voulait", "a voulue"], temps: "Passé Composé", clue: "Indice : Temps composé. Il te faut l'auxiliaire 'a' + le participe passé.le participe passé est invariable , il ne se conjugue pas" },
+        { id: 8, label: "[Venir]", correct: "est venu", options: ["est venu", "est venut", "venait", "est venus"], temps: "Passé Composé", clue: "Indice : Le sujet est 'il'. Utilise l'auxiliaire être au présent + participe passé.Ne conjugue pas le participe passé" },
+        { id: 9, label: "[Être]", correct: "était", options: ["était", "fut", "a été", "étais"], temps: "Imparfait", clue: "Indice : Le sujet est 'La grotte' (Elle). Cherche la terminaison -ait." },
+        { id: 10, label: "[Avoir]", correct: "ai eu", options: ["ai eu", "ai eue", "eus", "ai eut"], temps: "Passé Composé", clue: "Indice : Le sujet est 'J' (1ère pers.). Cherche l'auxiliaire 'ai' suivi du participe passé.Ne conjugue pas le participe passé" }
+    ];
+
+    const storyParts = [
+        "Un jour, Ali Baba ", 1, " vers la forêt. Il ", 2, " une troupe de brigands. Les quarante voleurs ", 3, " un boucan terrible. Le chef ", 4, " la formule magique. Aussitôt, ils ", 5, " leurs sacs d'or. Ali Baba ne ", 6, " pas détacher son regard. Il ", 7, " entrer lui aussi. Le lendemain, il ", 8, " à nouveau. La grotte ", 9, " remplie de pièces d'or. « J' ", 10, " de la chance », murmura-t-il."
+    ];
+
+    let score = 0;
+    const exerciseText = document.getElementById('exercise-text');
+
+    function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function init() {
+        storyParts.forEach(part => {
+            if (typeof part === 'number') {
+                const q = questions.find(item => item.id === part);
+                const span = document.createElement('span');
+                span.className = 'word target';
+                span.innerText = q.label;
+                span.onclick = () => openChoice(q, span);
+                exerciseText.appendChild(span);
+            } else {
+                const span = document.createElement('span');
+                span.className = 'word';
+                span.innerText = part;
+                exerciseText.appendChild(span);
+            }
+        });
+    }
+
+    function openChoice(q, element) {
+        if (element.classList.contains('correct')) return;
+        const modal = document.getElementById('modal');
+        const list = document.getElementById('options-list');
+        document.getElementById('modal-verb-info').innerText = `${q.temps} - Verbe : ${q.label.replace('[','').replace(']','')}`;
+        list.innerHTML = '';
+        modal.style.display = 'flex';
+
+        // Mélange des options pour ne plus avoir la bonne en position 1
+        const shuffledOptions = shuffle([...q.options]);
+
+        shuffledOptions.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = opt;
+            btn.onclick = () => {
+                if (opt === q.correct) {
+                    modal.style.display = 'none';
+                    element.innerText = opt;
+                    element.className = 'word correct';
+                    score++;
+                    document.getElementById('score').innerText = score;
+                } else {
+                    element.classList.add('wrong');
+                    alert(q.clue); 
+                    modal.style.display = 'none';
+                    setTimeout(() => element.classList.remove('wrong'), 800);
+                }
+            };
+            list.appendChild(btn);
+        });
+    }
+
+    init();
+</script>
+</body>
+</html>
