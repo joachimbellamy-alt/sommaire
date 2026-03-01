@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Exercice : Les Exploratrices de l'Extrême</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; line-height: 1.7; max-width: 850px; margin: 20px auto; padding: 20px; background-color: #f0f4f8; }
+        h1 { color: #2c3e50; text-align: center; }
+        
+        .toolbar { 
+            display: flex; justify-content: center; gap: 15px; 
+            margin-bottom: 25px; sticky; top: 10px; z-index: 100;
+            background: #dfe6e9; padding: 15px; border-radius: 12px;
+        }
+        
+        .tool-btn { 
+            padding: 10px 20px; border: 2px solid #bdc3c7; border-radius: 8px; 
+            cursor: pointer; font-weight: bold; transition: 0.3s;
+        }
+        
+        /* Styles des boutons/outils */
+        #btn-imparfait { background-color: #add8e6; }
+        #btn-passe-simple { background-color: #fffacd; }
+        #btn-plus-que-parfait { background-color: #ffb6c1; }
+        
+        .selected-tool { border: 3px solid #2d3436 !important; transform: scale(1.1); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+
+        .text-container { background: white; padding: 35px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); font-size: 1.15em; }
+        .verb { cursor: cell; padding: 2px 4px; border-radius: 4px; border: 1px solid #eee; background: #f9f9f9; }
+        
+        /* Couleurs appliquées */
+        .applied-imparfait { background-color: #add8e6 !important; }
+        .applied-passe-simple { background-color: #fffacd !important; }
+        .applied-plus-que-parfait { background-color: #ffb6c1 !important; }
+        
+        #feedback { position: fixed; top: 20px; right: 20px; width: 280px; padding: 15px; border-radius: 8px; display: none; color: white; font-weight: bold; text-align: center; }
+        .correct { background-color: #27ae60; }
+        .incorrect { background-color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+    <h1>Aventurières du Bout du Monde</h1>
+
+    <div class="toolbar">
+        <button class="tool-btn" id="btn-imparfait" onclick="selectTool('imparfait')">Imparfait (Bleu)</button>
+        <button class="tool-btn" id="btn-passe-simple" onclick="selectTool('passe-simple')">Passé Simple (Jaune)</button>
+        <button class="tool-btn" id="btn-plus-que-parfait" onclick="selectTool('plus-que-parfait')">Plus-que-parfait (Rose)</button>
+    </div>
+
+    <div class="text-container">
+        Dans les montagnes du Tibet, Alexandra David-Néel <span class="verb" data-correct="imparfait">marchait</span> depuis des jours. Elle <span class="verb" data-correct="plus-que-parfait">avait préparé</span> son déguisement avec soin. Soudain, une corde <span class="verb" data-correct="passe-simple">rompit</span> au-dessus d’un précipice. L'exploratrice <span class="verb" data-correct="passe-simple">poussa</span> un cri mais elle <span class="verb" data-correct="passe-simple">atteignit</span> finalement Lhassa.
+        <br><br>
+        En Afrique, Jane Goodall <span class="verb" data-correct="imparfait">étudiait</span> les chimpanzés de Tanzanie. Elle <span class="verb" data-correct="plus-que-parfait">avait observé</span> leurs rituels pendant des mois. Un après-midi, des mâles agressifs <span class="verb" data-correct="passe-simple">cernèrent</span> la jeune femme. La situation <span class="verb" data-correct="imparfait">semblait</span> périlleuse, mais Jane <span class="verb" data-correct="passe-simple">garda</span> son calme car elle <span class="verb" data-correct="plus-que-parfait">avait appris</span> à comprendre leurs cris.
+        <br><br>
+        Adrienne Bolland <span class="verb" data-correct="imparfait">pilotait</span> un avion au-dessus des Andes. Elle <span class="verb" data-correct="plus-que-parfait">avait décidé</span> de franchir les sommets. L'oxygène <span class="verb" data-correct="imparfait">manquait</span> cruellement et les pics <span class="verb" data-correct="imparfait">menaçaient</span> l'appareil. Pourtant, elle <span class="verb" data-correct="passe-simple">traversa</span> la cordillère et <span class="verb" data-correct="passe-simple">réussit</span> son exploit.
+        <br><br>
+        Enfin, Ella Maillart <span class="verb" data-correct="imparfait">parcourait</span> l'Asie Centrale. Son véhicule <span class="verb" data-correct="passe-simple">s'ensabla</span> sous une chaleur écrasante. Elle <span class="verb" data-correct="plus-que-parfait">avait emporté</span> peu d'eau, mais elle ne <span class="verb" data-correct="passe-simple">renonça</span> jamais. Ces femmes <span class="verb" data-correct="imparfait">étaient</span> courageuses ; elles <span class="verb" data-correct="plus-que-parfait">avaient ouvert</span> la voie.
+    </div>
+
+    <div id="feedback"></div>
+
+    <script>
+        let currentTool = null;
+
+        function selectTool(tool) {
+            currentTool = tool;
+            // Mise à jour visuelle des boutons
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('selected-tool'));
+            document.getElementById('btn-' + tool).classList.add('selected-tool');
+        }
+
+        document.querySelectorAll('.verb').forEach(verb => {
+            verb.addEventListener('click', () => {
+                if (!currentTool) {
+                    alert("Sélectionne d'abord un temps en haut !");
+                    return;
+                }
+
+                // Applique la couleur
+                verb.className = 'verb applied-' + currentTool;
+                
+                // Vérification
+                const correctTime = verb.getAttribute('data-correct');
+                showFeedback(currentTool === correctTime, correctTime, verb.innerText);
+            });
+        });
+
+        function showFeedback(isCorrect, correct, text) {
+            const fb = document.getElementById('feedback');
+            fb.style.display = 'block';
+            if (isCorrect) {
+                fb.innerText = `✅ Bravo ! "${text}" est bien au ${correct.replace(/-/g, ' ')}.`;
+                fb.className = 'correct';
+            } else {
+                fb.innerText = `❌ Faux... "${text}" n'est pas à ce temps-là.`;
+                fb.className = 'incorrect';
+            }
+            setTimeout(() => { fb.style.display = 'none'; }, 2000);
+        }
+    </script>
+</body>
+</html>
