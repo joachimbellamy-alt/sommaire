@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mission Grammaire : Le Trésor des COD</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --highlight: #f1c40f;
+            --bg: #f8f9fa;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            padding: 20px;
+            line-height: 2;
+            touch-action: manipulation;
+        }
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        #score-board {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+        .text-block {
+            font-size: 1.25rem;
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+        }
+        .word {
+            display: inline-block;
+            padding: 0 3px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        /* États */
+        .selected { background-color: var(--highlight); color: black; }
+        .correct { background-color: var(--success) !important; color: white; }
+        .wrong { background-color: var(--error) !important; color: white; }
+
+        .controls { text-align: center; margin-top: 20px; }
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #1a252f;
+        }
+        button:active { transform: translateY(2px); box-shadow: 0 2px 0 #1a252f; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Analyse de texte : Ali Baba</h1>
+    <div id="score-board">Sélectionne un COD puis clique sur "Valider ma sélection" : <br><span id="current-score">0</span> / 8 trouvé(s)</div>
+
+    <div class="text-block" id="exercise-text"></div>
+
+    <div class="controls">
+        <button onclick="validateSelection()">Valider ma sélection</button>
+    </div>
+</div>
+
+<script>
+// Les COD cibles exacts (doivent correspondre aux mots du texte)
+const codTargets = [
+    "le carnage",
+    "la justice",
+    "la vengeance des survivants",
+    "une fosse profonde",
+    "les soupçons",
+    "le signal de ses hommes",
+    "que son armée a été anéantie",
+    "une boutique"
+];
+
+const rawText = "Ali Baba , terrifié à l'idée que le voisinage découvre le carnage , doit agir vite pour éviter la justice et la vengeance des survivants . Aidé par son esclave Abdullah , il creuse une fosse profonde au fond de son jardin . Les trente-huit corps y sont enterrés secrètement durant la nuit . Les jarres , quant à elles , sont vendues petit à petit au marché pour ne pas éveiller les soupçons . Le capitaine , qui attendait le signal de ses hommes depuis sa chambre d'ami , découvre avec horreur que son armée a été anéantie . Il s'enfuit par les toits , mais il ne renonce pas . Pour lui , Ali Baba est désormais le seul responsable de la perte de son trésor et de ses hommes . Il décide de changer d'identité . Le chef se déguise en marchand de tissus et ouvre une boutique à Bagdad , juste en face de celle du fils d'Ali Baba .";
+
+const textContainer = document.getElementById('exercise-text');
+const scoreDisplay = document.getElementById('current-score');
+let foundCount = 0;
+
+function initExercise() {
+    const words = rawText.split(' ');
+    words.forEach((word, index) => {
+        const span = document.createElement('span');
+        span.innerText = word;
+        span.classList.add('word');
+        span.dataset.index = index;
+        
+        // Ajout d'un espace après le mot
+        const space = document.createTextNode(' ');
+        
+        span.onclick = () => {
+            if (!span.classList.contains('correct')) {
+                span.classList.toggle('selected');
+            }
+        };
+        
+        textContainer.appendChild(span);
+        textContainer.appendChild(space);
+    });
+}
+
+function validateSelection() {
+    const selectedSpans = document.querySelectorAll('.selected');
+    if (selectedSpans.length === 0) return;
+
+    // On récupère le texte sélectionné
+    const selectedText = Array.from(selectedSpans)
+        .map(s => s.innerText.toLowerCase().trim())
+        .join(' ')
+        .replace(/[.,]/g, "").trim();
+
+    // On vérifie si ce texte est dans nos cibles
+    // Note: On nettoie aussi les targets pour la comparaison
+    const isCorrect = codTargets.some(target => 
+        target.toLowerCase().replace(/[.,]/g, "").trim() === selectedText
+    );
+
+    if (isCorrect) {
+        selectedSpans.forEach(s => {
+            s.classList.remove('selected');
+            s.classList.add('correct');
+        });
+        foundCount++;
+        scoreDisplay.innerText = foundCount;
+        if(foundCount === codTargets.length) {
+            alert("Félicitations ! Tu as débusqué tous les COD !");
+        }
+    } else {
+        selectedSpans.forEach(s => {
+            s.classList.add('wrong', 'shake');
+            setTimeout(() => {
+                s.classList.remove('wrong', 'shake', 'selected');
+            }, 800);
+        });
+        alert("Ce n'est pas un COD. Astuce : Essaie de le remplacer par le pronom : 'le', 'la' ou 'les' juste avant le verbe.");
+    }
+}
+
+initExercise();
+</script>
+
+</body>
+</html>
