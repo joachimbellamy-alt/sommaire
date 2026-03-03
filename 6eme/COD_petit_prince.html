@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Exercice COD - Le Petit Prince</title>
+    <style>
+        body { font-family: system-ui, sans-serif; padding: 20px; background: #f8f9fa; line-height: 1.8; -webkit-user-select: none; user-select: none; }
+        .container { background: white; padding: 30px; border-radius: 20px; max-width: 850px; margin: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .consigne { background: #fff9db; padding: 15px; border-left: 5px solid #fcc419; margin-bottom: 20px; border-radius: 5px; }
+        .stats { display: flex; justify-content: space-around; background: #e7f5ff; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #a5d8ff; font-weight: bold; }
+        .stat-nb { display: block; font-size: 1.5em; color: #1971c2; text-align: center; }
+        #text-container { font-size: 1.3em; text-align: justify; padding: 20px; border: 2px solid #eee; border-radius: 10px; }
+        .word { display: inline-block; padding: 1px 3px; cursor: pointer; border-radius: 4px; transition: 0.2s; border: 1px solid transparent; }
+        .selected { background: #339af0; color: white; border-color: #1c7ed6; }
+        .correct { background: #51cf66 !important; color: white; cursor: default; }
+        .controls { text-align: center; margin: 30px 0; }
+        button { padding: 15px 40px; font-size: 1.2em; cursor: pointer; background: #228be6; color: white; border: none; border-radius: 50px; font-weight: bold; box-shadow: 0 4px 0 #1864ab; }
+        button:active { transform: translateY(2px); box-shadow: none; }
+        #feedback { text-align: center; font-weight: bold; padding: 15px; border-radius: 10px; min-height: 30px; }
+        .success { color: #2b8a3e; background: #ebfbee; }
+        .error { color: #c92a2a; background: #fff5f5; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="consigne">
+        <strong>📝 Consigne :</strong> Sélectionne tous les mots d'un <b>COD</b> complet (déterminant + nom + adjectifs/compléments), puis valide. 
+    </div>
+
+    <div class="stats">
+        <div>1er coup <span id="s1" class="stat-nb">0</span></div>
+        <div>2ème essai <span id="s2" class="stat-nb">0</span></div>
+        <div>Total <span id="total" class="stat-nb">0 / 14</span></div>
+    </div>
+
+    <div id="text-container"></div>
+    <div class="controls"><button onclick="validateSelection()">Valider ma sélection</button></div>
+    <div id="feedback">Clique sur les mots pour former un groupe...</div>
+</div>
+
+<script>
+// Structure : [Texte, ID du groupe COD (0 si aucun), Pronominalisation]
+const data = [
+    ["Le",0], ["Petit",0], ["Prince",0], ["observa",0], ["sa",1,"Il LA regarde"], ["planète",1], ["une",0], ["dernière",0], ["fois",0], ["avec",0], ["une",0], ["tendresse",0], ["infinie.",0],
+    ["Le",0], ["matin",0], ["du",0], ["départ,",0], ["il",0], ["ramona",0], ["ses",2,"Il LES ramona"], ["trois",2], ["volcans",2], ["avec",0], ["un",0], ["soin",0], ["méticuleux,",0], ["car",0], ["il",0], ["redoutait",0], ["le",3,"Il LE redoutait"], ["réveil",3], ["des",3], ["flammes.",3],
+    ["Il",0], ["ne",0], ["voulait",0], ["pas",0], ["abandonner",0], ["ce",4,"Il ne voulait pas L'abandonner"], ["paysage",4], ["familier",4], ["sans",0], ["une",0], ["ultime",0], ["attention.",0],
+    ["Ensuite,",0], ["il",0], ["arracha",0], ["les",5,"Il LES arracha"], ["dernières",5], ["pousses",5], ["de",5], ["baobabs",5], ["qui",0], ["menaçaient",0], ["le",6,"Qui LE menaçaient"], ["sol",6], ["fragile",6], ["de",6], ["l'astéroïde",6], ["B",6], ["612.",6],
+    ["Avant",0], ["de",0], ["s'envoler,",0], ["il",0], ["chercha",0], ["sa",7,"Il LA chercha"], ["fleur",7], ["pour",0], ["lui",0], ["dire",0], ["adieu.",0],
+    ["La",0], ["rose,",0], ["d'ordinaire",0], ["si",0], ["fière,",0], ["gardait",0], ["le",8,"Elle LE gardait"], ["silence.",8],
+    ["Elle",0], ["ne",0], ["montrait",0], ["plus",0], ["ses",9,"Elle ne LES montrait plus"], ["épines",9], ["pour",0], ["l'effrayer.",0],
+    ["Le",0], ["petit",0], ["garçon",0], ["versa",0], ["une",10,"Il LA versa"], ["larme",10], ["discrète",10], ["sur",0], ["le",0], ["dôme",0], ["de",0], ["verre,",0], ["mais",0], ["il",0], ["ne",0], ["changea",0], ["pas",0], ["d'avis.",0],
+    ["Il",0], ["ressentait",0], ["un",11,"Il LE ressentait"], ["appel",11], ["mystérieux",11], ["vers",11], ["l'inconnu.",11],
+    ["Finalement,",0], ["il",0], ["utilisa",0], ["une",12,"Il L'utilisa"], ["migration",12], ["d'oiseaux",12], ["sauvages",12], ["pour",0], ["quitter",0], ["son",13,"Pour LE quitter"], ["petit",13], ["monde",13], ["et",0], ["commencer",0], ["son",14,"Pour LE commencer"], ["grand",14], ["voyage",14], ["à",0], ["travers",0], ["les",0], ["étoiles.",0]
+];
+
+let selected = new Set();
+let found = new Set();
+let attempts = {};
+let s1 = 0, s2 = 0;
+
+const container = document.getElementById('text-container');
+data.forEach((item, i) => {
+    const span = document.createElement('span');
+    span.textContent = item[0] + ' ';
+    span.className = 'word';
+    span.onclick = () => {
+        if (span.classList.contains('correct')) return;
+        if (selected.has(i)) { selected.delete(i); span.classList.remove('selected'); }
+        else { selected.add(i); span.classList.add('selected'); }
+    };
+    span.id = 'w'+i;
+    container.appendChild(span);
+});
+
+function validateSelection() {
+    if (selected.size === 0) return;
+    const fb = document.getElementById('feedback');
+    const firstIdx = Array.from(selected)[0];
+    const groupId = data[firstIdx][1];
+    const correctIndices = data.map((item, idx) => item[1] === groupId && groupId !== 0 ? idx : null).filter(n => n !== null);
+    const isCorrect = groupId !== 0 && correctIndices.length === selected.size && correctIndices.every(idx => selected.has(idx));
+
+    if (isCorrect) {
+        if (!found.has(groupId)) {
+            correctIndices.forEach(idx => {
+                const el = document.getElementById('w'+idx);
+                el.classList.add('correct');
+                el.classList.remove('selected');
+            });
+            if (!attempts[groupId]) s1++; else s2++;
+            found.add(groupId);
+            fb.innerHTML = "✅ Excellent ! " + (data[firstIdx][2] || "");
+            fb.className = "success";
+        }
+        selected.clear();
+    } else {
+        selected.forEach(idx => {
+            const gId = data[idx][1];
+            if (gId !== 0) attempts[gId] = true;
+        });
+        fb.innerHTML = "❌ Groupe incomplet ou incorrect. Utilise le pronom le,la,les,l' pour vérifier. As-tu bien sélectionner tous les mots?";
+        fb.className = "error";
+    }
+    document.getElementById('s1').innerText = s1;
+    document.getElementById('s2').innerText = s2;
+    document.getElementById('total').innerText = found.size + " / 14";
+}
+</script>
+</body>
+</html>
