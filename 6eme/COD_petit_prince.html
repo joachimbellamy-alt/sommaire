@@ -100,7 +100,7 @@ function validateSelection() {
             const gId = data[idx][1];
             if (gId !== 0) attempts[gId] = true;
         });
-        fb.innerHTML = "❌ Groupe incomplet ou incorrect. Utilise le pronom le,la,les,l' pour vérifier. As-tu bien sélectionner tous les mots?";
+        fb.innerHTML = "❌ Groupe incomplet ou incorrect. Utilise le pronom le,la,les,l' pour vérifier. As-tu bien sélectionné tous les mots?";
         fb.className = "error";
     }
     document.getElementById('s1').innerText = s1;
