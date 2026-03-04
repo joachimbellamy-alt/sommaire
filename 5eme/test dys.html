@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mission Grammaire : Le Trésor des COD</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --highlight: #e0e7ff;
+            --bg: #f8f9fa;
+            --accent: #6366f1;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            padding: 20px;
+            line-height: 1.8;
+            -webkit-user-select: none; 
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .header-flex {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .audio-controls {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-audio {
+            background: white;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-audio:active { transform: scale(0.9); }
+
+        #progress-container {
+            width: 100%;
+            background: #e2e8f0;
+            height: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--success);
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        #score-board {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .text-block {
+            font-size: 1.4rem;
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #f1f5f9;
+            border-radius: 15px;
+            text-align: justify;
+        }
+        .word {
+            display: inline-block;
+            padding: 5px 7px;
+            margin: 2px 1px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+        .selected { background-color: var(--highlight); color: var(--accent); border-bottom-color: var(--accent); }
+        .correct { background-color: var(--success) !important; color: white !important; cursor: default; }
+        .wrong { background-color: var(--error) !important; color: white !important; }
+
+        .controls { text-align: center; margin-top: 20px; }
+        .btn-valider {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 20px 45px;
+            border-radius: 15px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-flex">
+        <h1 style="margin:0; font-size: 1.4rem;">Mission Ali Baba : Les COD</h1>
+        <div class="audio-controls">
+            <button id="btn-play-pause" class="btn-audio" onclick="toggleAudio()">▶️</button>
+            <button class="btn-audio" onclick="stopAudio()">⏹️</button>
+        </div>
+    </div>
+
+    <div id="progress-container">
+        <div id="progress-bar"></div>
+    </div>
+
+    <div id="score-board">
+        Trouve les 8 COD<br>
+        <span id="current-score" style="font-size: 1.8rem; font-weight: bold;">0</span> / 8
+    </div>
+
+    <div class="text-block" id="exercise-text"></div>
+
+    <div class="controls">
+        <button class="btn-valider" onclick="validateSelection()">VÉRIFIER MA SÉLECTION</button>
+    </div>
+</div>
+
+<script>
+const codTargets = [
+    "le carnage", "la justice", "la vengeance des survivants", "une fosse profonde",
+    "les soupçons", "le signal de ses hommes", "que son armée a été anéantie", "une boutique"
+];
+
+const rawText = "Ali Baba , terrifié à l'idée que le voisinage découvre le carnage , doit agir vite pour éviter la justice et la vengeance des survivants . Aidé par son esclave Abdullah , il creuse une fosse profonde au fond de son jardin . Les trente-huit corps y sont enterrés secrètement durant la nuit . Les jarres , quant à elles , sont vendues petit à petit au marché pour ne pas éveiller les soupçons . Le capitaine , qui attendait le signal de ses hommes depuis sa chambre d'ami , découvre avec horreur que son armée a été anéantie . Il s'enfuit par les toits , mais il ne renonce pas . Pour lui , Ali Baba est désormais le seul responsable de la perte de son trésor et de ses hommes . Il décide de changer d'identité . Le chef se déguise en marchand de tissus et ouvre une boutique à Bagdad , juste en face de celle du fils d'Ali Baba .";
+
+const textContainer = document.getElementById('exercise-text');
+const scoreDisplay = document.getElementById('current-score');
+const progressBar = document.getElementById('progress-bar');
+const btnPlayPause = document.getElementById('btn-play-pause');
+const synth = window.speechSynthesis;
+let foundCount = 0;
+
+// --- RECHERCHE DE LA MEILLEURE VOIX ---
+let bestVoice = null;
+function loadVoices() {
+    const voices = synth.getVoices();
+    // Priorité aux voix "Enhanced" ou Siri
+    bestVoice = voices.find(v => v.lang === 'fr-FR' && (v.name.includes('Thomas') || v.name.includes('Audrey') || v.name.includes('Siri'))) 
+                || voices.find(v => v.lang === 'fr-FR');
+}
+synth.onvoiceschanged = loadVoices;
+loadVoices();
+
+// --- LOGIQUE VOCALE ---
+function updateAudioIcon() {
+    btnPlayPause.innerText = (synth.speaking && !synth.paused) ? "⏸️" : "▶️";
+}
+
+function stopAudio() {
+    synth.cancel();
+    updateAudioIcon();
+}
+
+function toggleAudio() {
+    if (synth.speaking) {
+        if (synth.paused) synth.resume();
+        else synth.pause();
+    } else {
+        parler(rawText);
+    }
+    setTimeout(updateAudioIcon, 100);
+}
+
+function parler(message) {
+    synth.cancel();
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = 'fr-FR';
+    utterance.voice = bestVoice;
+    utterance.rate = 0.85; 
+    utterance.onstart = updateAudioIcon;
+    utterance.onend = updateAudioIcon;
+    synth.speak(utterance);
+}
+
+// --- INITIALISATION & UI ---
+function initExercise() {
+    rawText.split(' ').forEach((word, index) => {
+        const span = document.createElement('span');
+        span.innerText = word;
+        span.classList.add('word');
+        span.dataset.index = index;
+        span.onclick = () => {
+            if (!span.classList.contains('correct')) span.classList.toggle('selected');
+        };
+        textContainer.appendChild(span);
+        textContainer.appendChild(document.createTextNode(' '));
+    });
+}
+
+function updateUI() {
+    scoreDisplay.innerText = foundCount;
+    progressBar.style.width = (foundCount / codTargets.length * 100) + "%";
+}
+
+function validateSelection() {
+    const selectedSpans = document.querySelectorAll('.selected');
+    if (selectedSpans.length === 0) return;
+
+    const selectedText = Array.from(selectedSpans)
+        .map(s => s.innerText.toLowerCase().trim())
+        .join(' ')
+        .replace(/[.,]/g, "").trim();
+
+    const isCorrect = codTargets.some(target => 
+        target.toLowerCase().replace(/[.,]/g, "").trim() === selectedText
+    );
+
+    if (isCorrect) {
+        selectedSpans.forEach(s => {
+            s.classList.remove('selected');
+            s.classList.add('correct');
+        });
+        foundCount++;
+        updateUI();
+        parler("Bien joué !");
+        if(foundCount === codTargets.length) {
+            setTimeout(() => parler("Bravo, tu as trouvé tous les compléments d'objet direct !"), 600);
+        }
+    } else {
+        selectedSpans.forEach(s => {
+            s.classList.add('wrong', 'shake');
+            setTimeout(() => s.classList.remove('wrong', 'shake', 'selected'), 800);
+        });
+        parler("Ce n'est pas un C O D. Cherche ce qu'Ali Baba fait ou découvre.");
+    }
+}
+
+initExercise();
+</script>
+</body>
+</html>
