@@ -2,72 +2,59 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exercice interactif : Athènes</title>
+    <title>Exercice : La cité d'Athènes</title>
     <style>
-        :root { --blue: #007bff; --green: #28a745; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eceff1; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f0f2f5; }
+        .map-container { position: relative; display: inline-block; margin-top: 20px; border: 2px solid #333; }
+        img { display: block; max-width: 100%; height: auto; }
         
-        .game-container { position: relative; width: fit-content; border: 3px solid #333; border-radius: 8px; overflow: hidden; background: white; }
-        img { display: block; max-width: 900px; height: auto; }
-
         .drop-zone {
             position: absolute;
             transform: translate(-50%, -50%);
-            width: 140px; height: 35px;
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px dashed #555;
-            border-radius: 20px;
+            width: 150px; height: 32px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 2px dashed #444;
+            border-radius: 5px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 0.85em; font-weight: bold; color: #333;
-            transition: all 0.3s;
+            font-size: 0.9em; font-weight: bold;
         }
 
-        /* Positions ajustées sur l'image d'exemple */
-        #z1 { top: 30%; left: 20%; } #z2 { top: 25%; left: 45%; }
-        #z3 { top: 55%; left: 35%; } #z4 { top: 52%; left: 55%; }
-        #z5 { top: 45%; left: 70%; } #z6 { top: 75%; left: 45%; }
-        #z7 { top: 90%; left: 60%; }
+        /* Positions à ajuster selon le rendu final sur GitHub */
+        #z1 { top: 42%; left: 18%; } #z2 { top: 38%; left: 28%; }
+        #z3 { top: 56%; left: 25%; } #z4 { top: 51%; left: 43%; }
+        #z5 { top: 40%; left: 55%; } #z6 { top: 72%; left: 30%; }
+        #z7 { top: 88%; left: 40%; }
 
-        .labels-box { margin-top: 25px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
-        .label {
-            padding: 10px 15px; background: var(--blue); color: white;
-            border-radius: 5px; cursor: grab; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            touch-action: none; /* Important pour tablettes */
-        }
-        .correct { background: var(--green) !important; color: white; border: 2px solid darkgreen; border-style: solid; }
-        
-        .btn-reset { margin-top: 30px; padding: 12px 25px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .labels { margin-top: 25px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .label { padding: 10px 15px; background: #007bff; color: white; border-radius: 4px; cursor: grab; }
+        .correct { background: #28a745 !important; border: 2px solid darkgreen; }
     </style>
 </head>
 <body>
 
-    <h2>📍 Schéma de la cité d'Athènes</h2>
-    <p>Glissez chaque étiquette sur le bon numéro.</p>
-
-    <div class="game-container">
-        <img src="https://images.unsplash.com/photo-1603565816030-6b389eeb23cc?q=80&w=900" alt="Athènes">
+    <h2>Complétez le schéma de la cité d'Athènes</h2>
+    
+    <div class="map-container">
+        <img src="athenes.png" alt="Plan d'Athènes">
         
         <div id="z1" class="drop-zone" data-ans="La campagne">1</div>
         <div id="z2" class="drop-zone" data-ans="Un village">2</div>
-        <div id="z3" class="drop-zone" data-ans="Les remparts">3</div>
+        <div id="z3" class="drop-zone" data-ans="Les remparts de la ville">3</div>
         <div id="z4" class="drop-zone" data-ans="L'agora">4</div>
         <div id="z5" class="drop-zone" data-ans="L'Acropole">5</div>
         <div id="z6" class="drop-zone" data-ans="Les Longs Murs">6</div>
         <div id="z7" class="drop-zone" data-ans="Le port du Pirée">7</div>
     </div>
 
-    <div class="labels-box" id="labels">
+    <div class="labels">
         <div class="label" draggable="true">L'agora</div>
         <div class="label" draggable="true">Le port du Pirée</div>
         <div class="label" draggable="true">La campagne</div>
         <div class="label" draggable="true">L'Acropole</div>
         <div class="label" draggable="true">Un village</div>
         <div class="label" draggable="true">Les Longs Murs</div>
-        <div class="label" draggable="true">Les remparts</div>
+        <div class="label" draggable="true">Les remparts de la ville</div>
     </div>
-
-    <button class="btn-reset" onclick="location.reload()">Réinitialiser l'exercice</button>
 
     <script>
         const labels = document.querySelectorAll('.label');
@@ -81,11 +68,11 @@
             z.addEventListener('dragover', e => e.preventDefault());
             z.addEventListener('drop', e => {
                 e.preventDefault();
-                const droppedText = e.dataTransfer.getData('text');
-                if (droppedText === z.getAttribute('data-ans')) {
-                    z.innerText = droppedText;
+                const txt = e.dataTransfer.getData('text');
+                if (txt === z.getAttribute('data-ans')) {
+                    z.innerText = txt;
                     z.classList.add('correct');
-                    Array.from(labels).find(lbl => lbl.innerText === droppedText).style.visibility = 'hidden';
+                    Array.from(labels).find(lbl => lbl.innerText === txt).style.display = 'none';
                 }
             });
         });
