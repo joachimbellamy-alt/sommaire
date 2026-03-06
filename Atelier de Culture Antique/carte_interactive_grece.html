@@ -2,93 +2,75 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Carte Interactive - Monde Grec</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; background: #f0f2f5; }
+        .container { position: relative; display: inline-block; cursor: crosshair; }
+        .map { display: block; width: 1000px; height: auto; }
         
-        .map-container { 
-            position: relative; 
-            display: inline-block; 
-            margin: 20px auto;
-            border: 1px solid #999;
-            line-height: 0; /* Évite les décalages sous l'image */
-        }
-
-        .map-image { 
-            display: block; 
-            width: 1000px; /* On fixe la largeur pour stabiliser les points */
-            height: auto; 
-        }
-
-        /* Le point cible */
-        .hotspot {
+        /* Style des points interactifs */
+        .spot {
             position: absolute;
-            width: 10px;
-            height: 10px;
-            background: red; /* Rouge pour le réglage, mettre 'transparent' ensuite */
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             z-index: 10;
-            cursor: pointer;
         }
+        
+        .spot.city { background: rgba(0, 100, 255, 0.4); } /* Cités en bleu */
+        .spot.tribe { background: rgba(255, 100, 0, 0.4); } /* Peuples en orange */
 
-        /* L'étiquette */
-        .label {
+        /* Style des étiquettes */
+        .name {
             position: absolute;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: 13px;
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.2s;
-            pointer-events: none;
-            z-index: 20;
-            /* Positionnement de l'étiquette juste au-dessus du point */
-            bottom: 15px; 
+            bottom: 18px;
             left: 50%;
             transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: sans-serif;
+            white-space: nowrap;
+            opacity: 0;
+            transition: 0.2s;
+            pointer-events: none;
         }
 
-        /* Affichage au survol */
-        .hotspot:hover .label {
-            opacity: 1;
-        }
+        .spot:hover .name { opacity: 1; }
+        .spot:hover { border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
 
-    <h2>Expansion du Monde Grec (Carte Interactive)</h2>
-    <p>Survolez les points rouges pour révéler les noms.</p>
+<div class="container">
+    <img src="carte_nettoyee.jpg" class="map">
 
-    <div class="map-container">
-        <img src="carte.png" class="map-image">
+    <div class="spot city" style="top: 34.5%; left: 29.5%;"><div class="name">Massalia</div></div>
+    <div class="spot city" style="top: 32.5%; left: 34.8%;"><div class="name">Nikaia</div></div>
+    <div class="spot tribe" style="top: 23%; left: 28%;"><div class="name">Celtes</div></div>
 
-        <div class="hotspot" style="top: 34.5%; left: 29.5%;"><div class="label">Massalia</div></div>
-        <div class="hotspot" style="top: 32.5%; left: 34.8%;"><div class="label">Nikaia</div></div>
+    <div class="spot tribe" style="top: 29%; left: 40%;"><div class="name">Étrusques</div></div>
+    <div class="spot tribe" style="top: 34%; left: 45%;"><div class="name">Latins</div></div>
+    <div class="spot city" style="top: 42.8%; left: 49.5%;"><div class="name">Néapolis</div></div>
+    <div class="spot city" style="top: 53.6%; left: 50.8%;"><div class="name">Syracuse</div></div>
+    <div class="spot city" style="top: 53.8%; left: 47.9%;"><div class="name">Agrigente</div></div>
+    <div class="spot tribe" style="top: 58%; left: 35%;"><div class="name">Carthaginois</div></div>
 
-        <div class="hotspot" style="top: 41.5%; left: 45.2%;"><div class="label">Latins</div></div>
-        <div class="hotspot" style="top: 42.8%; left: 49.5%;"><div class="label">Néapolis</div></div>
-        <div class="hotspot" style="top: 47.5%; left: 52.5%;"><div class="label">Poseidonia</div></div>
-        <div class="hotspot" style="top: 52.8%; left: 48.1%;"><div class="label">Sicile</div></div>
-        <div class="hotspot" style="top: 53.6%; left: 50.8%;"><div class="label">Syracuse</div>
-        </div><div class="hotspot" style="top: 53.8%; left: 47.9%;"><div class="label">Agrigente</div></div>
+    <div class="spot city" style="top: 44.5%; left: 66.8%;"><div class="name">Athènes</div></div>
+    <div class="spot city" style="top: 49.5%; left: 65.2%;"><div class="name">Sparte</div></div>
+    <div class="spot city" style="top: 42.8%; left: 62.5%;"><div class="name">Delphes</div></div>
+    <div class="spot city" style="top: 48.5%; left: 62.8%;"><div class="name">Olympie</div></div>
+    <div class="spot city" style="top: 50.2%; left: 70.8%;"><div class="name">Délos</div></div>
 
-        <div class="hotspot" style="top: 44.5%; left: 66.8%;"><div class="label">Athènes</div></div>
-        <div class="hotspot" style="top: 45.5%; left: 63.8%;"><div class="label">Corinthe</div></div>
-        <div class="hotspot" style="top: 49.5%; left: 65.2%;"><div class="label">Sparte</div></div>
-        <div class="hotspot" style="top: 42.8%; left: 62.5%;"><div class="label">Delphes</div></div>
-        <div class="hotspot" style="top: 48.5%; left: 62.8%;"><div class="label">Olympie</div></div>
+    <div class="spot city" style="top: 33.5%; left: 74.8%;"><div class="name">Byzance</div></div>
+    <div class="spot city" style="top: 42.8%; left: 77.2%;"><div class="name">Milet</div></div>
+    <div class="spot city" style="top: 19.5%; left: 78.5%;"><div class="name">Olbia</div></div>
+    <div class="spot tribe" style="top: 55%; left: 91%;"><div class="name">Phéniciens</div></div>
 
-        <div class="hotspot" style="top: 33.5%; left: 74.8%;"><div class="label">Byzance</div></div>
-        <div class="hotspot" style="top: 40.5%; left: 74.5%;"><div class="label">Troie</div></div>
-        <div class="hotspot" style="top: 42.8%; left: 77.2%;"><div class="label">Milet</div></div>
-        <div class="hotspot" style="top: 19.5%; left: 78.5%;"><div class="label">Olbia</div></div>
-        
-        <div class="hotspot" style="top: 64.5%; left: 65.5%;"><div class="label">Cyrène</div></div>
-        <div class="hotspot" style="top: 64.8%; left: 84.8%;"><div class="label">Naucratis</div></div>
-    </div>
+    <div class="spot city" style="top: 64.5%; left: 65.5%;"><div class="name">Cyrène</div></div>
+    <div class="spot city" style="top: 64.8%; left: 84.8%;"><div class="name">Naucratis</div></div>
+</div>
 
 </body>
 </html>
