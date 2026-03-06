@@ -7,41 +7,26 @@
     <style>
         :root { --primary: #007bff; --success: #28a745; --error: #dc3545; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        
-        /* Conteneur de l'image */
         .map-container { position: relative; display: inline-block; background: white; padding: 5px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         img { display: block; max-width: 1000px; height: auto; border-radius: 4px; cursor: crosshair; }
-
-        /* Niveaux de difficulté */
         .levels { margin-bottom: 15px; display: flex; gap: 10px; }
         .lvl-btn { padding: 8px 15px; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 20px; font-size: 0.9em; }
         .lvl-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-
-        /* Zones de saisie */
         .input-group { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; z-index: 10; }
         .num-badge { background: rgba(0,0,0,0.7); color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 3px; border: 1px solid white; }
-        
-        input { 
-            width: 150px; padding: 6px; text-align: center; border: 2px solid rgba(0,0,0,0.2); border-radius: 6px; 
-            background: rgba(255,255,255,0.7); font-weight: bold; transition: 0.3s; outline: none; font-size: 0.85em;
-        }
-        input:focus { background: rgba(255,255,255,0.95); border-color: var(--primary); }
-        
-        .is-correct { border-color: var(--success) !important; background: rgba(40, 167, 69, 0.2) !important; color: #155724; }
+        input { width: 140px; padding: 6px; text-align: center; border: 2px solid rgba(0,0,0,0.2); border-radius: 6px; background: rgba(255,255,255,0.7); font-weight: bold; transition: 0.3s; outline: none; }
+        .is-correct { border-color: var(--success) !important; background: rgba(40, 167, 69, 0.2) !important; }
         .is-wrong { border-color: var(--error) !important; background: rgba(220, 53, 69, 0.2) !important; animation: shake 0.4s; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-
         .helper-text { font-size: 10px; color: #666; margin-top: 2px; height: 12px; font-weight: bold; }
-
-        /* Banque de mots */
         .word-bank { margin-top: 25px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; max-width: 900px; padding: 15px; background: white; border-radius: 8px; }
-        .word-item { padding: 8px 12px; background: #6c757d; color: white; border-radius: 4px; cursor: pointer; user-select: none; font-size: 0.9em; }
-        .word-item.selected { background: var(--primary); transform: scale(1.05); }
+        .word-item { padding: 8px 12px; background: #6c757d; color: white; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .word-item.selected { background: var(--primary); }
     </style>
 </head>
 <body>
 
-    <h2 id="ex-title">Chargement...</h2>
+    <h2 id="ex-title">Le sanctuaire d'Olympie</h2>
     
     <div class="levels">
         <button class="lvl-btn" onclick="setLvl(1)" id="btn-lvl1">Niveau 1 (Aide)</button>
@@ -50,18 +35,15 @@
     </div>
 
     <div class="map-container" id="container">
-        <img id="main-img" src="olympie.jpg" alt="Plan d'Olympie" title="Cliquez pour ajuster les positions (Outil Prof)">
+        <img id="main-img" src="olympie.png" alt="Exercice Olympie">
     </div>
 
     <div class="word-bank" id="word-bank"></div>
 
     <script>
-        /* ==========================================
-           CONFIG : SECTION À MODIFIER PAR LE GEM
-           ========================================== */
         const EXERCICE_CONFIG = {
             title: "Le sanctuaire d'Olympie",
-            image: "olympie.jpg", 
+            image: "olympie.png", 
             points: [
                 { id: 1, top: "35.5%", left: "50.8%", ans: "temple de zeus|zeus" },
                 { id: 2, top: "27.8%", left: "31.3%", ans: "temple d'héra|héra|temple d'hera" },
@@ -122,27 +104,16 @@
                 };
                 input.onchange = () => validate(input);
             });
-
-            // OUTIL PROF : Clic pour coordonnées
-            img.onclick = function(e) {
-                const rect = this.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
-                const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
-                console.log(`Point suggéré : { id: ?, top: "${y}%", left: "${x}%", ans: "" }`);
-                alert(`Position cliquée :\ntop: "${y}%", left: "${x}%"`);
-            };
         }
 
         function setLvl(lvl) {
             currentLvl = lvl;
             document.querySelectorAll('.lvl-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-lvl'+lvl).classList.add('active');
-            
             document.querySelectorAll('input').forEach(input => {
                 const pId = input.getAttribute('data-id');
                 const help = document.getElementById('help-'+pId);
                 const mainAns = input.getAttribute('data-ans').split('|')[0];
-
                 if (lvl === 1) help.innerText = [...mainAns].filter(c => c !== " ").sort(() => Math.random() - 0.5).join(' ');
                 else if (lvl === 2) help.innerText = "Débute par : " + mainAns[0].toUpperCase();
                 else help.innerText = "";
@@ -154,14 +125,12 @@
             const ans = el.getAttribute('data-ans').split('|');
             if (ans.includes(val)) {
                 el.classList.add('is-correct');
-                el.classList.remove('is-wrong');
                 el.disabled = true;
             } else {
                 el.classList.add('is-wrong');
                 setTimeout(() => el.classList.remove('is-wrong'), 500);
             }
         }
-
         window.onload = init;
     </script>
 </body>
