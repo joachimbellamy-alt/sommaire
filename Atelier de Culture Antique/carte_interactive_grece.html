@@ -2,77 +2,67 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Carte Interactive : Le Monde Grec</title>
     <style>
-        /* Conteneur de la carte */
-        .map-wrapper {
-            position: relative;
-            display: inline-block;
-            cursor: crosshair;
+        .map-container { position: relative; display: inline-block; background: #eee; }
+        .map-image { display: block; width: 1000px; height: auto; }
+        .hotspot { position: absolute; transform: translate(-50%, -50%); cursor: help; z-index: 10; }
+        
+        /* Style des étiquettes */
+        .label {
+            position: absolute; opacity: 0; transition: opacity 0.2s;
+            background: white; border: 1px solid #666; padding: 2px 5px;
+            font-family: sans-serif; font-size: 13px; font-weight: bold;
+            pointer-events: none; white-space: nowrap; z-index: 20;
         }
+        .hotspot:hover + .label { opacity: 1; }
 
-        /* Image de fond (votre carte nettoyée) */
-        .map-image {
-            display: block;
-            max-width: 1000px;
-            height: auto;
-        }
-
-        /* Style commun pour les étiquettes */
-        .city-label {
-            position: absolute;
-            background-color: white;
-            padding: 2px 6px;
-            border: 1px solid #333;
-            border-radius: 4px;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            font-weight: bold;
-            color: black;
-            
-            /* État invisible par défaut */
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none; /* Empêche l'étiquette de bloquer la souris */
-        }
-
-        /* Zone de détection (invisible) */
-        .hotspot {
-            position: absolute;
-            width: 25px;
-            height: 25px;
-            background: rgba(255, 0, 0, 0); /* Invisible */
-            border-radius: 50%;
-        }
-
-        /* Affichage de l'étiquette au survol de la zone */
-        .hotspot:hover + .city-label {
-            opacity: 1;
-        }
+        /* Types d'éléments (pour varier les couleurs si besoin) */
+        .peuple { color: #555; font-style: italic; }
+        .cite { color: #000; }
+        .region { color: #222; text-transform: uppercase; letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
-    <div class="map-wrapper">
-        <img src="https://googleusercontent.com/image_generation_content/0" class="map-image" alt="Carte du monde grec">
+<div class="map-container">
+    <img src="carte_nettoyee.png" class="map-image"> <div class="hotspot" style="top: 23%; left: 28%; width: 80px; height: 30px;"></div>
+    <div class="label peuple">Celtes</div>
+    <div class="hotspot" style="top: 29%; left: 40%; width: 80px; height: 30px;"></div>
+    <div class="label peuple">Étrusques</div>
+    <div class="hotspot" style="top: 34%; left: 45%; width: 60px; height: 30px;"></div>
+    <div class="label peuple">Latins</div>
+    <div class="hotspot" style="top: 58%; left: 35%; width: 100px; height: 30px;"></div>
+    <div class="label peuple">Carthaginois</div>
+    <div class="hotspot" style="top: 25%; left: 63%; width: 70px; height: 30px;"></div>
+    <div class="label peuple">Thraces</div>
+    <div class="hotspot" style="top: 55%; left: 91%; width: 80px; height: 30px;"></div>
+    <div class="label peuple">Phéniciens</div>
 
-        <div class="hotspot" style="top: 34%; left: 28%;"></div>
-        <div class="city-label" style="top: 31%; left: 28%;">Massalia</div>
+    <div class="hotspot" style="top: 38%; left: 63%; width: 80px; height: 30px;"></div>
+    <div class="label region">GRÈCE</div>
+    <div class="hotspot" style="top: 40%; left: 88%; width: 100px; height: 40px;"></div>
+    <div class="label region">ASIE MINEURE</div>
+    <div class="hotspot" style="top: 50%; left: 48%; width: 50px; height: 25px;"></div>
+    <div class="label region">Sicile</div>
 
-        <div class="hotspot" style="top: 72%; left: 51%;"></div>
-        <div class="city-label" style="top: 73%; left: 51%;">Syracuse</div>
+    <div class="hotspot" style="top: 48%; left: 68.5%; width: 20px; height: 20px;"></div>
+    <div class="label cite">Athènes (Cité-État)</div>
+    <div class="hotspot" style="top: 61%; left: 66%; width: 20px; height: 20px;"></div>
+    <div class="label cite">Sparte</div>
+    <div class="hotspot" style="top: 48%; left: 63%; width: 20px; height: 20px;"></div>
+    <div class="label cite">Delphes (Sanctuaire)</div>
+    <div class="hotspot" style="top: 55%; left: 64%; width: 20px; height: 20px;"></div>
+    <div class="label cite">Olympie (Sanctuaire)</div>
+    <div class="hotspot" style="top: 50%; left: 71.5%; width: 20px; height: 20px;"></div>
+    <div class="label cite">Délos (Sanctuaire)</div>
 
-        <div class="hotspot" style="top: 48%; left: 69%;"></div>
-        <div class="city-label" style="top: 48%; left: 70%;">Athènes</div>
-
-        <div class="hotspot" style="top: 55%; left: 66%;"></div>
-        <div class="city-label" style="top: 55%; left: 67%;">Sparte</div>
-
-        <div class="hotspot" style="top: 31%; left: 76%;"></div>
-        <div class="city-label" style="top: 28%; left: 76%;">Byzance</div>
-    </div>
-
-    <p><em>Passez votre souris sur les emplacements pour révéler le nom des cités.</em></p>
+    <div class="hotspot" style="top: 39%; left: 24.5%; width: 15px; height: 15px;"></div>
+    <div class="label cite">Massalia</div>
+    <div class="hotspot" style="top: 73%; left: 51%; width: 15px; height: 15px;"></div>
+    <div class="label cite">Syracuse</div>
+    <div class="hotspot" style="top: 33%; left: 75%; width: 15px; height: 15px;"></div>
+    <div class="label cite">Byzance</div>
+</div>
 
 </body>
 </html>
