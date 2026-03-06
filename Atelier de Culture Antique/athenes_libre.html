@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exercice : La cité d'Athènes</title>
+    <title>Exercice : La cité d'Athènes (V2)</title>
     <style>
         :root {
             --primary: #007bff;
             --success: #28a745;
+            --success-bg: rgba(40, 167, 69, 0.2); /* Fond vert semi-transparent */
             --error: #dc3545;
+            --error-bg: rgba(220, 53, 69, 0.2); /* Fond rouge semi-transparent */
             --bg: #f8f9fa;
+            --input-bg: rgba(255, 255, 255, 0.6); /* Fond blanc semi-transparent par défaut */
         }
 
         body { 
@@ -20,7 +23,7 @@
         }
 
         h2 { margin-bottom: 5px; color: #2c3e50; }
-        .instructions { margin-bottom: 20px; font-style: italic; color: #666; }
+        .instructions { margin-bottom: 20px; font-style: italic; color: #666; max-width: 600px; text-align: center; }
 
         .map-container { 
             position: relative; 
@@ -41,26 +44,42 @@
         }
 
         .num-badge {
-            background: #333; color: white;
+            background: rgba(51, 51, 51, 0.8); /* Badge numéro aussi semi-transparent */
+            color: white;
             width: 22px; height: 22px;
             border-radius: 50%;
             font-size: 13px; font-weight: bold;
             display: flex; align-items: center; justify-content: center;
-            margin-bottom: 4px; border: 2px solid white;
+            margin-bottom: 4px; border: 2px solid rgba(255,255,255,0.8);
         }
 
         input {
             width: 130px; padding: 6px;
-            text-align: center; border: 2px solid #ccc;
+            text-align: center; border: 2px solid rgba(204, 204, 204, 0.8);
             border-radius: 6px; font-weight: 600;
+            background-color: var(--input-bg); /* Fond semi-transparent */
             transition: all 0.3s; outline: none;
+            color: #333;
         }
 
-        input:focus { border-color: var(--primary); box-shadow: 0 0 8px rgba(0,123,255,0.2); }
+        /* Devient opaque au survol ou au focus pour la saisie */
+        input:hover, input:focus { 
+            background-color: rgba(255, 255, 255, 0.95); 
+            border-color: var(--primary); 
+            box-shadow: 0 0 8px rgba(0,123,255,0.2); 
+        }
 
-        /* États de validation */
-        .is-correct { border-color: var(--success) !important; background-color: #d4edda !important; color: #155724; }
-        .is-wrong { border-color: var(--error) !important; background-color: #f8d7da !important; animation: shake 0.4s; }
+        /* États de validation avec fonds semi-transparents */
+        .is-correct { 
+            border-color: var(--success) !important; 
+            background-color: var(--success-bg) !important; 
+            color: #155724 !important; 
+        }
+        .is-wrong { 
+            border-color: var(--error) !important; 
+            background-color: var(--error-bg) !important; 
+            animation: shake 0.4s; 
+        }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -71,6 +90,7 @@
         .hint {
             font-size: 11px; color: var(--error); margin-top: 2px;
             font-weight: bold; display: none;
+            background-color: rgba(255,255,255,0.8); padding: 2px 4px; border-radius: 3px;
         }
 
         .controls { margin-top: 30px; }
@@ -84,7 +104,7 @@
 <body>
 
     <h2>📍 Géographie d'Athènes au Ve siècle</h2>
-    <p class="instructions">Saisissez le nom de chaque lieu. La case devient verte si l'orthographe est exacte.</p>
+    <p class="instructions">Saisissez le nom de chaque lieu correspondant au numéro. Les cadres sont semi-transparents pour ne pas cacher l'image. Validez avec Entrée.</p>
     
     <div class="map-container">
         <img src="athenes.png" alt="Plan d'Athènes">
@@ -103,7 +123,7 @@
 
         <div id="p3" class="input-group" style="top: 56%; left: 25%;">
             <div class="num-badge">3</div>
-            <input type="text" data-ans="les remparts|les murs|remparts|murs|" placeholder="?">
+            <input type="text" data-ans="les remparts|les murs|remparts" placeholder="?">
             <div class="hint">Indice : Protection de la ville</div>
         </div>
 
@@ -156,16 +176,20 @@
         });
 
         function validate(el, id) {
+            // Normalisation : minuscules et suppression des espaces superflus
             const userVal = el.value.toLowerCase().trim();
+            // Récupération des options valides
             const validOptions = el.getAttribute('data-ans').split('|');
             const hintElement = el.nextElementSibling;
 
             if (validOptions.includes(userVal)) {
+                // CORRECT
                 el.classList.remove('is-wrong');
                 el.classList.add('is-correct');
                 hintElement.style.display = 'none';
                 el.disabled = true; // Verrouille la réponse si c'est juste
             } else {
+                // ERREUR
                 el.classList.remove('is-correct');
                 el.classList.add('is-wrong');
                 attempts[id]++;
