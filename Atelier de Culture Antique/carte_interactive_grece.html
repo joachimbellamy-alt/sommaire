@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Carte Interactive : Le Monde Grec</title>
+    <style>
+        /* Conteneur de la carte */
+        .map-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: crosshair;
+        }
+
+        /* Image de fond (votre carte nettoyée) */
+        .map-image {
+            display: block;
+            max-width: 1000px;
+            height: auto;
+        }
+
+        /* Style commun pour les étiquettes */
+        .city-label {
+            position: absolute;
+            background-color: white;
+            padding: 2px 6px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+            color: black;
+            
+            /* État invisible par défaut */
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none; /* Empêche l'étiquette de bloquer la souris */
+        }
+
+        /* Zone de détection (invisible) */
+        .hotspot {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            background: rgba(255, 0, 0, 0); /* Invisible */
+            border-radius: 50%;
+        }
+
+        /* Affichage de l'étiquette au survol de la zone */
+        .hotspot:hover + .city-label {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="map-wrapper">
+        <img src="https://googleusercontent.com/image_generation_content/0" class="map-image" alt="Carte du monde grec">
+
+        <div class="hotspot" style="top: 34%; left: 28%;"></div>
+        <div class="city-label" style="top: 31%; left: 28%;">Massalia</div>
+
+        <div class="hotspot" style="top: 72%; left: 51%;"></div>
+        <div class="city-label" style="top: 73%; left: 51%;">Syracuse</div>
+
+        <div class="hotspot" style="top: 48%; left: 69%;"></div>
+        <div class="city-label" style="top: 48%; left: 70%;">Athènes</div>
+
+        <div class="hotspot" style="top: 55%; left: 66%;"></div>
+        <div class="city-label" style="top: 55%; left: 67%;">Sparte</div>
+
+        <div class="hotspot" style="top: 31%; left: 76%;"></div>
+        <div class="city-label" style="top: 28%; left: 76%;">Byzance</div>
+    </div>
+
+    <p><em>Passez votre souris sur les emplacements pour révéler le nom des cités.</em></p>
+
+</body>
+</html>
