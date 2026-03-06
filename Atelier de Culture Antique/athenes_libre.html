@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercice : La cité d'Athènes</title>
+    <style>
+        :root {
+            --primary: #007bff;
+            --success: #28a745;
+            --error: #dc3545;
+            --bg: #f8f9fa;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg); 
+            display: flex; flex-direction: column; align-items: center; 
+            padding: 20px; color: #333;
+        }
+
+        h2 { margin-bottom: 5px; color: #2c3e50; }
+        .instructions { margin-bottom: 20px; font-style: italic; color: #666; }
+
+        .map-container { 
+            position: relative; 
+            display: inline-block; 
+            border: 4px solid #fff; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            background: white;
+        }
+
+        img { display: block; max-width: 900px; height: auto; border-radius: 4px; }
+        
+        .input-group {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            display: flex; flex-direction: column; align-items: center;
+            z-index: 10;
+        }
+
+        .num-badge {
+            background: #333; color: white;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            font-size: 13px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 4px; border: 2px solid white;
+        }
+
+        input {
+            width: 130px; padding: 6px;
+            text-align: center; border: 2px solid #ccc;
+            border-radius: 6px; font-weight: 600;
+            transition: all 0.3s; outline: none;
+        }
+
+        input:focus { border-color: var(--primary); box-shadow: 0 0 8px rgba(0,123,255,0.2); }
+
+        /* États de validation */
+        .is-correct { border-color: var(--success) !important; background-color: #d4edda !important; color: #155724; }
+        .is-wrong { border-color: var(--error) !important; background-color: #f8d7da !important; animation: shake 0.4s; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .hint {
+            font-size: 11px; color: var(--error); margin-top: 2px;
+            font-weight: bold; display: none;
+        }
+
+        .controls { margin-top: 30px; }
+        button {
+            padding: 10px 25px; background: #333; color: white;
+            border: none; border-radius: 5px; cursor: pointer; font-weight: bold;
+        }
+        button:hover { background: #555; }
+    </style>
+</head>
+<body>
+
+    <h2>📍 Géographie d'Athènes au Ve siècle</h2>
+    <p class="instructions">Saisissez le nom de chaque lieu. La case devient verte si l'orthographe est exacte.</p>
+    
+    <div class="map-container">
+        <img src="athenes.png" alt="Plan d'Athènes">
+        
+        <div id="p1" class="input-group" style="top: 42%; left: 18%;">
+            <div class="num-badge">1</div>
+            <input type="text" data-ans="la campagne|campagne" placeholder="?">
+            <div class="hint">Indice : L'espace rural</div>
+        </div>
+
+        <div id="p2" class="input-group" style="top: 38%; left: 28%;">
+            <div class="num-badge">2</div>
+            <input type="text" data-ans="un village|le village|village" placeholder="?">
+            <div class="hint">Indice : Petite agglomération</div>
+        </div>
+
+        <div id="p3" class="input-group" style="top: 56%; left: 25%;">
+            <div class="num-badge">3</div>
+            <input type="text" data-ans="les remparts|les murs|remparts|murs|" placeholder="?">
+            <div class="hint">Indice : Protection de la ville</div>
+        </div>
+
+        <div id="p4" class="input-group" style="top: 51%; left: 43%;">
+            <div class="num-badge">4</div>
+            <input type="text" data-ans="l'agora|agora" placeholder="?">
+            <div class="hint">Indice : La place publique</div>
+        </div>
+
+        <div id="p5" class="input-group" style="top: 40%; left: 55%;">
+            <div class="num-badge">5</div>
+            <input type="text" data-ans="l'acropole|acropole" placeholder="?">
+            <div class="hint">Indice : Colline des temples</div>
+        </div>
+
+        <div id="p6" class="input-group" style="top: 72%; left: 30%;">
+            <div class="num-badge">6</div>
+            <input type="text" data-ans="les longs murs|longs murs" placeholder="?">
+            <div class="hint">Indice : Route protégée</div>
+        </div>
+
+        <div id="p7" class="input-group" style="top: 88%; left: 40%;">
+            <div class="num-badge">7</div>
+            <input type="text" data-ans="le port du pirée|le pirée|le piree|port du pirée" placeholder="?">
+            <div class="hint">Indice : Zone maritime</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="location.reload()">Réinitialiser l'exercice</button>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll('input');
+        const attempts = {}; // Pour compter les erreurs par champ
+
+        inputs.forEach((input, index) => {
+            const id = `field_${index}`;
+            attempts[id] = 0;
+
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    validate(this, id);
+                }
+            });
+
+            input.addEventListener('blur', function() {
+                if (this.value !== "") validate(this, id);
+            });
+        });
+
+        function validate(el, id) {
+            const userVal = el.value.toLowerCase().trim();
+            const validOptions = el.getAttribute('data-ans').split('|');
+            const hintElement = el.nextElementSibling;
+
+            if (validOptions.includes(userVal)) {
+                el.classList.remove('is-wrong');
+                el.classList.add('is-correct');
+                hintElement.style.display = 'none';
+                el.disabled = true; // Verrouille la réponse si c'est juste
+            } else {
+                el.classList.remove('is-correct');
+                el.classList.add('is-wrong');
+                attempts[id]++;
+
+                // Affiche l'indice après 3 erreurs
+                if (attempts[id] >= 3) {
+                    hintElement.style.display = 'block';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
