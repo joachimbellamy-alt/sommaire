@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>QCM : Le Monde Grec (10 questions)</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 850px; margin: 20px auto; padding: 20px; background-color: #f0f2f5; }
+        .header { background: #2c3e50; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 30px; }
+        .question-container { background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 5px solid #3498db; }
+        .question { font-weight: bold; font-size: 1.1em; margin-bottom: 15px; color: #2c3e50; }
+        .options label { display: block; padding: 10px; margin: 5px 0; background: #f8f9fa; border-radius: 5px; cursor: pointer; transition: 0.2s; }
+        .options label:hover { background: #e9ecef; }
+        .feedback { margin-top: 10px; font-weight: bold; display: none; padding: 10px; border-radius: 5px; }
+        .btn-check { display: inline-block; margin-top: 10px; padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .stats-container { position: sticky; top: 10px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; justify-content: space-around; margin-bottom: 20px; z-index: 100; border: 2px solid #2c3e50; }
+        .stat-box { text-align: center; }
+        .stat-nb { font-size: 1.5em; font-weight: bold; color: #e67e22; }
+        .correct { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; display: block; }
+        .wrong { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Quiz : La Grèce Antique</h1>
+        <p>Documentaire Quelle Histoire</p>
+    </div>
+
+    <div class="stats-container">
+        <div class="stat-box">
+            <div id="score1" class="stat-nb">0</div>
+            <div>Réussi du 1er coup 🎯</div>
+        </div>
+        <div class="stat-box">
+            <div id="score2" class="stat-nb">0</div>
+            <div>Réussi au 2ème essai 💡</div>
+        </div>
+    </div>
+
+    <form id="quizForm">
+        <div id="questions-list"></div>
+    </form>
+
+    <script>
+        const questionsData = [
+            { q: "À quelle date les Romains s'imposent-ils définitivement ?", options: ["800 av. J.-C.", "31 av. J.-C.", "1100 av. J.-C."], correct: 1 },
+            { q: "Comment appelle-t-on les cités grecques indépendantes ?", options: ["Les cités-états", "Les colonies", "Les provinces"], correct: 0 },
+            { q: "Qui est exclu de la démocratie à Athènes ?", options: ["Les hommes libres", "Les riches", "Les femmes et les esclaves"], correct: 2 },
+            { q: "Qu'est-ce qu'une trirème ?", options: ["Un char", "Un navire de guerre", "Un temple"], correct: 1 },
+            { q: "D'où viennent souvent les esclaves ?", options: ["Des élections", "Des prisonniers de guerre", "Des familles royales"], correct: 1 },
+            { q: "Qui est la déesse de l'amour ?", options: ["Athéna", "Aphrodite", "Artémis"], correct: 1 },
+            { q: "Quelle était la récompense aux JO antiques ?", options: ["Une médaille d'or", "Une couronne d'olivier", "De l'argent"], correct: 1 },
+            { q: "À qui est dédié le Parthénon ?", options: ["Zeus", "Poséidon", "Athéna"], correct: 2 },
+            { q: "Dans quel domaine Hippocrate était-il célèbre ?", options: ["La médecine", "La cuisine", "La guerre"], correct: 0 },
+            { q: "En quel dieu romain Zeus s'est-il transformé ?", options: ["Mars", "Jupiter", "Neptune"], correct: 1 }
+        ];
+
+        let tentatives = {}; // Stocke le nombre d'essais par question
+        let score1erCoup = 0;
+        let score2emeCoup = 0;
+
+        const list = document.getElementById('questions-list');
+
+        questionsData.forEach((data, index) => {
+            tentatives[index] = 0;
+            let html = `
+                <div class="question-container" id="qc-${index}">
+                    <div class="question">${index + 1}. ${data.q}</div>
+                    <div class="options">
+                        ${data.options.map((opt, i) => `
+                            <label><input type="radio" name="q${index}" value="${i}"> ${opt}</label>
+                        `).join('')}
+                    </div>
+                    <button type="button" class="btn-check" onclick="valider(${index})">Vérifier</button>
+                    <div id="fb-${index}" class="feedback"></div>
+                </div>
+            `;
+            list.innerHTML += html;
+        });
+
+        function valider(index) {
+            const form = document.getElementById('quizForm');
+            const feedback = document.getElementById(`fb-${index}`);
+            const selected = form.elements[`q${index}`].value;
+            
+            if (selected === "") return; // Rien de coché
+
+            tentatives[index]++;
+
+            if (parseInt(selected) === questionsData[index].correct) {
+                feedback.innerHTML = "Bravo ! C'est la bonne réponse.";
+                feedback.className = "feedback correct";
+                
+                // Comptage des points
+                if (tentatives[index] === 1) {
+                    score1erCoup++;
+                    document.getElementById('score1').innerText = score1erCoup;
+                } else if (tentatives[index] === 2) {
+                    score2emeCoup++;
+                    document.getElementById('score2').innerText = score2emeCoup;
+                }
+                
+                // Désactiver la question après réussite
+                document.querySelectorAll(`#qc-${index} input`).forEach(el => el.disabled = true);
+                document.querySelector(`#qc-${index} button`).style.display = "none";
+
+            } else {
+                feedback.innerHTML = "Mauvaise réponse, réessaie !";
+                feedback.className = "feedback wrong";
+            }
+        }
+    </script>
+</body>
+</html>
