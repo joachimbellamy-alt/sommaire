@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enquête de Lecture : Inférences</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --error: #e74c3c; --bg: #f8f9fa; --highlight: #fff176; }
+        body { font-family: 'Helvetica Neue', sans-serif; margin: 0; background: var(--bg); color: var(--primary); }
+        .header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-around; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .container { display: flex; height: calc(100vh - 60px); }
+        .text-panel { flex: 1; padding: 40px; background: white; border-right: 2px solid #dee2e6; overflow-y: auto; display: flex; align-items: center; }
+        .question-panel { flex: 1; padding: 40px; background: var(--bg); overflow-y: auto; }
+        .text-box { font-size: 1.5rem; line-height: 1.6; border-left: 6px solid var(--accent); padding: 20px; background: #f0f7ff; border-radius: 0 10px 10px 0; transition: all 0.5s ease; }
+        .consigne { font-weight: bold; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-size: 0.9rem; }
+        .options { display: grid; gap: 12px; margin-top: 25px; }
+        button { padding: 18px; font-size: 1.1rem; border: 2px solid #cbd5e0; border-radius: 12px; background: white; cursor: pointer; transition: all 0.2s; text-align: left; }
+        button:hover { border-color: var(--accent); background: #eef2f7; }
+        button.wrong { border-color: var(--error); background: #fff5f5; color: var(--error); }
+        .feedback-box { margin-top: 20px; padding: 20px; border-radius: 10px; display: none; border: 2px solid transparent; line-height: 1.4; }
+        
+        /* Style pour la mise en évidence des indices */
+        .highlight { background-color: var(--highlight); padding: 2px 5px; border-radius: 4px; font-weight: bold; border-bottom: 2px solid #fbc02d; }
+
+        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 40px; border-radius: 20px; max-width: 600px; width: 90%; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>🎯 Réussite Directe : <strong id="score">0</strong>/10</div>
+    <div>⚙️ Tentatives : <strong id="tries">0</strong></div>
+</div>
+
+<div class="container">
+    <div class="text-panel">
+        <div id="text-display" class="text-box"></div>
+    </div>
+    <div class="question-panel">
+        <div id="consigne-display" class="consigne"></div>
+        <h2 id="question-title" style="margin-top:0;">Que peux-tu déduire ?</h2>
+        <div id="options-container" class="options"></div>
+        <div id="feedback-display" class="feedback-box"></div>
+        <button id="next-btn" style="display:none; width:100%; margin-top:20px; background:var(--success); color:white; font-weight:bold; padding:15px; border-radius:10px; cursor:pointer;">Texte suivant ➔</button>
+    </div>
+</div>
+
+<div id="modal">
+    <div class="modal-content">
+        <h1>Bilan de l'Expert</h1>
+        <p id="final-stats" style="font-size:1.2rem;"></p>
+        <button onclick="location.reload()" style="background:var(--primary); color:white; width:100%; padding:15px; border-radius:10px; cursor:pointer;">Recommencer</button>
+    </div>
+</div>
+
+<script>
+// Ajout de la propriété "indices" qui contient les mots exacts à surligner
+const db = [
+    { c: "Mission : Identifier l'agent", t: "« Alain traque les petites planètes, avec son télescope équipé de caméras. Soudain, il repère une traînée blanche encore inconnue... »", q: "Quel est le métier d'Alain ?", o: ["Météorologue", "Astronome", "Pilote", "Photographe"], cor: 1, h: "Cherche l'objet technique utilisé pour regarder les étoiles et les planètes.", indices: ["télescope", "planètes"] },
+    { c: "Mission : Identifier l'agent", t: "« Les plans de l'usine ont été déplacés et photocopiés... quelqu'un s'est introduit dans la place et tente de transmettre des secrets d'état. »", q: "Qui est l'auteur de cette action ?", o: ["Un espion", "Un gardien", "Un ouvrier", "Un journaliste"], cor: 0, h: "Réfléchis : qui agit en cachette pour voler des 'secrets d'état' ?", indices: ["secrets d'état", "s'est introduit"] },
+    { c: "Mission : Identifier le lieu", t: "« Seule au pied du cratère, dans une combinaison d'amiante, Clémentine prend la température des gaz dégagés par la lave. »", q: "Où se trouve Clémentine ?", o: ["Dans une usine", "Sur un volcan", "Dans une mine", "Près d'un incendie"], cor: 1, h: "Relis les mots 'cratère', 'gaz' et 'lave'.", indices: ["cratère", "lave", "gaz"] },
+    { c: "Mission : Identifier l'objet", t: "« Victor entend plusieurs détonations. Il sort pour admirer les explosions dans le ciel. Quel beau bouquet ! »", q: "De quel événement s'agit-il ?", o: ["Un orage", "Une guerre", "Un feu d'artifice", "Une fête aérienne"], cor: 2, h: "Le mot 'bouquet' désigne le final de ce spectacle nocturne.", indices: ["détonations", "explosions dans le ciel", "bouquet"] },
+    { c: "Mission : Identifier l'instrument", t: "« Chacun surveille son propre matériel, qu’il soit en bois, en cuivre, à vent ou à cordes. Il faut manipuler ces objets avec précaution... »", q: "De quels outils parle-t-on ?", o: ["Outils de menuisier", "Armes", "Instruments de musique", "Matériel de sport"], cor: 2, h: "Cherche quel domaine regroupe les 'cordes', les 'vents' et les 'cuivres'.", indices: ["en cuivre", "à vent", "à cordes"] },
+    { c: "Mission : Identifier l'action", t: "« Kevin lance une première balle, et avant qu’elle ne retombe, il en lance une seconde, puis une troisième. »", q: "Quelle activité Kevin exerce-t-il ?", o: ["Le tennis", "Le jonglage", "Le basket", "La pétanque"], cor: 1, h: "Il maintient trois balles en l'air en même temps.", indices: ["avant qu’elle ne retombe", "une seconde, puis une troisième"] },
+    { c: "Mission : Identifier l'action", t: "« Il place la reine en E.4. Son adversaire le regarde perplexe, puis le toise et le contre en déplaçant son cavalier en D.6. »", q: "À quel jeu jouent-ils ?", o: ["Aux cartes", "Aux échecs", "À la bataille navale", "Aux dames"], cor: 1, h: "La 'reine' et le 'cavalier' sont des pièces mobiles sur un plateau codé.", indices: ["reine", "cavalier", "E.4", "D.6"] },
+    { c: "Mission : Identifier l'action", t: "« Il ajuste son sac à dos, vérifie ses chaussures à crampons... Il prend dans une main son piolet, dans l’autre la corde et les mousquetons. »", q: "Que va-t-il faire ?", o: ["De la randonnée", "Du ski", "De l'escalade", "De la voile"], cor: 2, h: "Le 'piolet' et les 'mousquetons' sont indispensables pour grimper.", indices: ["piolet", "mousquetons", "corde"] },
+    { c: "Mission : Identifier la cause", t: "« — Je regrette, répond le réceptionniste, mais je ne peux pas vous donner de chambre. [...] Les chiens sont interdits dans l’hôtel. »", q: "Pourquoi la personne n'a-t-elle pas de chambre ?", o: ["L'hôtel est complet", "Elle a un animal", "Elle n'a pas payé", "Elle est en retard"], cor: 1, h: "Le réceptionniste donne la raison à la fin de son explication.", indices: ["chiens sont interdits"] },
+    { c: "Mission : Identifier le sentiment", t: "« Marc est puni injustement. Il ne dénonce pas son camarade. Audrey lui adresse un sourire, Laurent lui donne une tape amicale. »", q: "Quel sentiment les amis expriment-ils ?", o: ["La colère", "La pitié", "La reconnaissance", "La peur"], cor: 2, h: "Ils le remercient par des gestes de ne pas les avoir dénoncés.", indices: ["sourire", "tape amicale"] }
+];
+
+let idx = 0, direct = 0, totalTries = 0, firstTry = true;
+
+// Fonction pour mettre en valeur les mots dans le texte
+function highlightText() {
+    let text = db[idx].t;
+    const indices = db[idx].indices;
+    
+    indices.forEach(word => {
+        const regex = new RegExp(`(${word})`, 'gi');
+        text = text.replace(regex, `<span class="highlight">$1</span>`);
+    });
+    
+    document.getElementById('text-display').innerHTML = text;
+}
+
+function render() {
+    const item = db[idx];
+    document.getElementById('consigne-display').innerText = item.c;
+    // On affiche le texte normal au début
+    document.getElementById('text-display').innerText = item.t;
+    document.getElementById('question-title').innerText = item.q;
+    
+    const cont = document.getElementById('options-container');
+    cont.innerHTML = '';
+    const fb = document.getElementById('feedback-display');
+    fb.style.display = 'none';
+    document.getElementById('next-btn').style.display = 'none';
+    firstTry = true;
+
+    item.o.forEach((opt, i) => {
+        const b = document.createElement('button');
+        b.innerText = opt;
+        b.onclick = () => {
+            totalTries++;
+            document.getElementById('tries').innerText = totalTries;
+            if(i === item.cor) {
+                if(firstTry) direct++;
+                document.getElementById('score').innerText = direct;
+                fb.style.display = 'block';
+                fb.style.borderColor = '#27ae60';
+                fb.style.background = '#eafaf1';
+                fb.innerHTML = "<strong>Excellent !</strong> Ton analyse est correcte.";
+                // On surligne aussi lors de la réussite pour valider l'indice
+                highlightText();
+                document.getElementById('next-btn').style.display = 'block';
+                Array.from(cont.children).forEach(btn => btn.disabled = true);
+            } else {
+                firstTry = false;
+                b.classList.add('wrong');
+                fb.style.display = 'block';
+                fb.style.borderColor = '#e74c3c';
+                fb.style.background = '#fff5f5';
+                fb.innerHTML = `<strong>Indice méthodologique :</strong> ${item.h}`;
+                // ACTION : Surlignage des mots clés si erreur
+                highlightText();
+            }
+        };
+        cont.appendChild(b);
+    });
+}
+
+document.getElementById('next-btn').onclick = () => {
+    idx++;
+    if(idx < db.length) render();
+    else {
+        document.getElementById('modal').style.display = 'flex';
+        document.getElementById('final-stats').innerText = `Tu as réussi ${direct} textes du premier coup avec un total de ${totalTries} clics sur l'ensemble du parcours.`;
+    }
+};
+
+render();
+</script>
+</body>
+</html>
