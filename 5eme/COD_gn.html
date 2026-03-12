@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Expert Grammaire : 6 Défis</title>
+    <style>
+        :root { 
+            --p: #0056B3; --s: #1E8449; --e: #C0392B; --a: #7D3C98; --bg: #FEFEE2; 
+            --c-sujet: #D6EAF8; --c-cod: #FADBD8; --c-coi: #D5F5E3;
+        }
+        body { font-family: sans-serif; background-color: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        #app { width: 100%; max-width: 850px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .header { display: flex; justify-content: space-between; border-bottom: 3px solid var(--p); padding-bottom: 10px; margin-bottom: 20px; color: var(--p); font-weight: bold; }
+        .inst { background: #f9f0ff; padding: 20px; border-radius: 10px; border-left: 8px solid var(--a); margin-bottom: 20px; }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 15px; justify-content: center; flex-wrap: wrap; }
+        .tool-btn { padding: 12px 20px; border-radius: 8px; border: 2px solid #ddd; cursor: pointer; font-weight: bold; }
+        .tool-btn.active { border-color: var(--a); background: #eee; }
+        .paragraph-box { font-size: 1.3rem; line-height: 2.2; background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 10px; min-height: 100px; }
+        .word { padding: 2px 4px; margin: 0 2px; border-radius: 5px; cursor: pointer; border-bottom: 2px solid #eee; display: inline-block; -webkit-user-select: none; }
+        .word.selected { background: #fff9c4; border-bottom-color: var(--a); }
+        .word.correct-sujet { background-color: var(--c-sujet); border-bottom: 3px solid #3498DB; }
+        .word.correct-cod { background-color: var(--c-cod); border-bottom: 3px solid #E74C3C; }
+        .word.correct-coi { background-color: var(--c-coi); border-bottom: 3px solid #27AE60; }
+        .btn { width: 100%; min-height: 60px; font-size: 1.2rem; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 10px; border: none; }
+        .btn-val { background: var(--a); color: white; }
+        .btn-next { background: var(--s); color: white; display: none; }
+        .feedback { display: none; margin: 15px 0; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; border: 2px solid; }
+        .fb-ok { background: #e8f5e9; border-color: var(--s); color: #1b5e20; }
+        .fb-err { background: #ffebee; border-color: var(--e); color: #b71c1c; }
+        .dot { width: 14px; height: 14px; border-radius: 50%; background: #e0e0e0; display: inline-block; margin: 0 5px; }
+        .dot.done { background: var(--s); }
+        .dot.active { background: var(--a); }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div id="game-zone">
+        <div class="header">
+            <span id="step-label">Défi 1/6</span>
+            <div>Points : <span id="total-pts">0</span></div>
+        </div>
+        <div id="inst" class="inst"></div>
+        <div class="toolbar">
+            <button class="tool-btn" style="background: var(--c-sujet)" onclick="selectType('sujet')">SUJET</button>
+            <button class="tool-btn" style="background: var(--c-cod)" onclick="selectType('cod')">COD</button>
+            <button class="tool-btn" style="background: var(--c-coi)" onclick="selectType('coi')">COI</button>
+        </div>
+        <div id="progress" style="text-align:center; margin-bottom: 10px;"></div>
+        <div id="text-container" class="paragraph-box"></div>
+        <div id="feedback" class="feedback"></div>
+        <button id="btn-val" class="btn btn-val" onclick="validateSelection()">Valider mon analyse</button>
+        <button id="btn-next" class="btn btn-next" onclick="nextExercise()">Question suivante →</button>
+    </div>
+</div>
+
+<script>
+    const exercices = [
+        {
+            inst: "📖 <b>Observe</b> et identifie les <b>6 COD</b>.",
+            text: "Soudain Aladin aperçut une vieille lampe d'huile ternie par les siècles. Il saisit avec prudence l'objet précieux. Dans l'ombre il admirait les reflets mystérieux du bronze. Le génie exauça ses vœux les plus fous sans hésiter. La princesse rangea la bague magique dans son coffret. Chaque soir le sultan admirait les jardins merveilleux.",
+            targetGroups: [
+                { words: ["une","vieille","lampe","d'huile","ternie","par","les","siècles"], type: "cod" },
+                { words: ["l'objet","précieux"], type: "cod" },
+                { words: ["les","reflets","mystérieux","du","bronze"], type: "cod" },
+                { words: ["ses","vœux","les","plus","fous"], type: "cod" },
+                { words: ["la","bague","magique"], type: "cod" },
+                { words: ["les","jardins","merveilleux"], type: "cod" }
+            ]
+        },
+        {
+            inst: "🧠 <b>Réfléchis</b> et trouve les <b>6 COD Pronoms</b>.",
+            text: "De loin Sindbad le surveillait. Hier le monstre l' emporta. Dans la cale les marchands les observèrent. Derrière le rideau le vizir l' écoutait. Devant la porte les gardes nous attendaient. Par magie Shéhérazade les ensorcela.",
+            targetGroups: [
+                { words: ["le"], type: "cod" }, { words: ["l'"], type: "cod" }, { words: ["les"], type: "cod" },
+                { words: ["l'"], type: "cod" }, { words: ["nous"], type: "cod" }, { words: ["les"], type: "cod" }
+            ]
+        },
+        {
+            inst: "✍️ <b>Analyse</b> et trouve les <b>6 COI</b>.",
+            text: "Depuis toujours Ali Baba obéissait au destin. Dans son malheur il pensait à sa famille qui était dans la misère. Autour du feu ils parlaient de leur immense trésor. Avec douceur Morgiane sourit à son maître. Dans la tempête l'oiseau Roc s'attaqua au navire. Dans le noir les quarante voleurs songeaient à leur vengeance.",
+            targetGroups: [
+                { words: ["au","destin"], type: "coi" },
+                { words: ["à","sa","famille","qui","était","dans","la","misère"], type: "coi" },
+                { words: ["de","leur","immense","trésor"], type: "coi" },
+                { words: ["à","son","maître"], type: "coi" },
+                { words: ["au","navire"], type: "coi" },
+                { words: ["à","leur","vengeance"], type: "coi" }
+            ]
+        },
+        {
+            inst: "🔍 <b>Déniche</b> les <b>6 COI</b> dans ce récit.",
+            text: "En secret le vizir se méfiait du jeune homme. Dans la salle Aladin répondait aux questions avec prudence. Jadis la lampe appartenait à un puissant sorcier. Aussitôt le génie obéit au nouveau maître. Sur le chemin ils se souvenaient de la sombre caverne. Chaque nuit elle rêvait de cet avenir radieux.",
+            targetGroups: [
+                { words: ["du","jeune","homme"], type: "coi" }, { words: ["aux","questions"], type: "coi" },
+                { words: ["à","un","puissant","sorcier"], type: "coi" }, { words: ["au","nouveau","maître"], type: "coi" },
+                { words: ["de","la","sombre","caverne"], type: "coi" }, { words: ["de","cet","avenir","radieux"], type: "coi" }
+            ]
+        },
+        {
+            inst: "🎭 <b>Mélange :</b> Trouve les <b>7 compléments d'objet</b> (COD ou COI).",
+            text: "À l'aube le sultan convoqua son grand vizir. À l'oreille il lui demanda un conseil secret. Dans sa chambre la princesse attendait son fiancé. Joyeusement Aladin offrit des bijoux à son épouse. Dans la grotte le sorcier réclamait la lampe magique. Sans cesse nous craignons ce mauvais génie.",
+            targetGroups: [
+                { words: ["son","grand","vizir"], type: "cod" }, { words: ["lui"], type: "coi" },
+                { words: ["un","conseil","secret"], type: "cod" }, { words: ["son","fiancé"], type: "cod" },
+                { words: ["des","bijoux"], type: "cod" }, { words: ["la","lampe","magique"], type: "cod" },
+                { words: ["ce","mauvais","génie"], type: "cod" }
+            ]
+        },
+        {
+            inst: "⚔️ <b>Ultime Défi :</b> Identifie les <b>fonctions demandées</b>.",
+            text: "Sur l'océan la tempête malmena le petit bateau. Avec angoisse les marins redoutaient les vagues. Sur le pont Sindbad parlait à ses compagnons. Sous les flots un poisson géant suivait le navire. Depuis le mât le capitaine observait l'horizon. Tristement ils pensaient à leur patrie.",
+            targetGroups: [
+                { words: ["la","tempête"], type: "sujet" }, { words: ["le","petit", "bateau"], type: "cod" },
+                { words: ["les", "marins"], type: "sujet" }, { words: ["Sindbad"], type: "sujet" }, 
+                { words: ["les","vagues"], type: "cod" }, { words: ["le","navire"], type: "cod" },
+                { words: ["à","ses","compagnons"], type: "coi" }, { words: ["un","poisson","géant"], type: "sujet" },
+                { words: ["le", "capitaine"], type: "sujet" }, { words: ["l'horizon"], type: "cod" },
+                { words: ["ils"], type: "sujet" }, { words: ["à","leur","patrie"], type: "coi" }
+            ]
+        }
+    ];
+
+    let currentEx = 0, foundInCurrentEx = 0, attempts = 0, totalScore = 0;
+    let foundIndices = [], selectedType = null;
+
+    function selectType(type) {
+        selectedType = type;
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.innerText.toLowerCase() === type);
+        });
+    }
+
+    function clean(word) {
+        return word.replace(/[.,!?;]/g, "").toLowerCase().trim();
+    }
+
+    function init() {
+        const ex = exercices[currentEx];
+        foundInCurrentEx = 0; foundIndices = []; attempts = 0; selectedType = null;
+        document.getElementById('step-label').innerText = `Défi ${currentEx + 1} / ${exercices.length}`;
+        document.getElementById('inst').innerHTML = ex.inst;
+        
+        const prog = document.getElementById('progress');
+        prog.innerHTML = '';
+        ex.targetGroups.forEach(() => prog.innerHTML += '<div class="dot"></div>');
+        updateDots();
+
+        const box = document.getElementById('text-container');
+        box.innerHTML = '';
+        // Correction ici : split sur les espaces simples pour garder la structure
+        ex.text.split(/\s+/).forEach(w => {
+            const s = document.createElement('span');
+            s.className = 'word';
+            s.innerText = w;
+            s.onclick = () => {
+                if(!s.className.includes('correct-')) s.classList.toggle('selected');
+            };
+            box.appendChild(s);
+        });
+        
+        document.getElementById('btn-val').style.display = 'block';
+        document.getElementById('btn-next').style.display = 'none';
+        document.getElementById('feedback').style.display = 'none';
+    }
+
+    function updateDots() {
+        const dots = document.querySelectorAll('.dot');
+        dots.forEach((dot, i) => {
+            dot.className = 'dot';
+            if(i < foundInCurrentEx) dot.classList.add('done');
+            else if(i === foundInCurrentEx) dot.classList.add('active');
+        });
+    }
+
+    function validateSelection() {
+        const fb = document.getElementById('feedback');
+        fb.style.display = "block";
+        
+        if (!selectedType) {
+            fb.className = "feedback fb-err"; fb.innerText = "Choisis SUJET, COD ou COI !";
+            return;
+        }
+
+        const selectedElements = Array.from(document.querySelectorAll('.word.selected'));
+        if (selectedElements.length === 0) {
+            fb.className = "feedback fb-err"; fb.innerText = "Sélectionne des mots !";
+            return;
+        }
+
+        const currentExData = exercices[currentEx];
+        const selectedWordsStr = selectedElements.map(el => clean(el.innerText)).sort().join('|');
+
+        let matchIdx = -1;
+        currentExData.targetGroups.forEach((group, idx) => {
+            if (foundIndices.includes(idx)) return;
+            const targetWordsStr = group.words.map(w => clean(w)).sort().join('|');
+            if (selectedWordsStr === targetWordsStr && selectedType === group.type) {
+                matchIdx = idx;
+            }
+        });
+
+        if (matchIdx !== -1) {
+            fb.className = "feedback fb-ok"; fb.innerText = "Bien joué !";
+            foundIndices.push(matchIdx);
+            selectedElements.forEach(el => {
+                el.classList.remove('selected');
+                el.classList.add('correct-' + selectedType);
+            });
+            foundInCurrentEx++;
+            updateDots();
+
+            if (foundInCurrentEx >= currentExData.targetGroups.length) {
+                totalScore += (attempts === 0) ? 2 : 1;
+                document.getElementById('total-pts').innerText = totalScore;
+                document.getElementById('btn-val').style.display = 'none';
+                document.getElementById('btn-next').style.display = 'block';
+            }
+        } else {
+            attempts++;
+            fb.className = "feedback fb-err"; fb.innerText = "Ce n'est pas tout à fait ça, réessaie.";
+            selectedElements.forEach(el => el.classList.remove('selected'));
+        }
+    }
+
+    function nextExercise() {
+        currentEx++;
+        if(currentEx < exercices.length) init();
+        else alert("Bravo ! Tu as fini tous les défis.");
+    }
+
+    init();
+</script>
+</body>
+</html>
