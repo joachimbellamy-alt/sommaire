@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Expansions du Nom - Mode Tactile</title>
+    <style>
+        :root {
+            --primary: #2980b9;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f0f2f5;
+        }
+
+        body {
+            font-family: -apple-system, system-ui, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* Barre latérale fixe pour le bouton et les scores */
+        .sidebar {
+            width: 200px;
+            background: #fff;
+            border-right: 2px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            background: #f8fafc;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; }
+
+        .instruction {
+            font-size: 1rem; color: #555; border-bottom: 2px solid var(--primary);
+            padding-bottom: 15px; margin-bottom: 25px;
+        }
+
+        .stat-box { margin-bottom: 20px; font-size: 0.9rem; color: #666; }
+        .stat-value { font-weight: bold; font-size: 1.2rem; color: var(--primary); display: block; }
+
+        h3 { color: var(--primary); margin-top: 30px; border-bottom: 1px solid #eee; }
+
+        #exercise-zone { font-size: 1.25rem; line-height: 2.8; color: #333; }
+
+        .pivot { font-weight: 800; color: #000; border-bottom: 1px solid #eee; }
+
+        .word {
+            display: inline-block; padding: 0 4px; border-radius: 5px;
+            border: 1px solid transparent; cursor: pointer; transition: 0.1s;
+        }
+
+        .word.selected { background-color: #d1ecf1; border: 1px solid var(--primary); }
+        .word.correct { background-color: #d4edda !important; color: #155724; border: 1px solid var(--success); cursor: default; }
+        .word.wrong { animation: shake 0.4s; background-color: #f8d7da; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        .btn-valider {
+            width: 100%; padding: 25px 10px; background: var(--primary);
+            color: white; border: none; border-radius: 15px; font-size: 1.3rem;
+            font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #1f6391;
+            margin-top: auto; /* Pousse le bouton vers le bas */
+        }
+        .btn-valider:active { transform: translateY(4px); box-shadow: 0 0px 0 #1f6391; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="stat-box">Restants<span id="count-left" class="stat-value">0</span></div>
+    <div class="stat-box">Sans erreur<span id="score-gold" class="stat-value">0</span></div>
+    
+    <button class="btn-valider" onclick="validateSelection()">VALIDER</button>
+</div>
+
+<div class="main-content">
+    <div class="container">
+        <div class="instruction">
+            <strong>Consigne :</strong> Identifie les <strong>expansions du nom</strong> qui complètent les mots en gras.
+        </div>
+        <div id="exercise-zone"></div>
+    </div>
+</div>
+
+<script>
+const content = `
+### Les personnages et la diligence
+1. **Élisabeth Rousset** /que l'on surnomme Boule de Suif/ attire les **regards** /des voyageurs/ .
+2. La **voiture** /pesante/ s'enfonce lentement dans la **neige** /épaisse/.
+3. Les **passagers** /de la diligence/ affichent une **mine** /sombre/ en quittant Rouen.
+4. **Madame Carré-Lamadon** , /vêtue de fourrures précieuses/, grelotte malgré tout.
+5. Les trois **couples** /de la haute société/ méprisent la /jeune/ **femme** /assise en face d'eux/.
+6. Un **silence** /pesant/ s'installe dans l' **habitacle** /étroit/.
+7. Le **marchand** /de vin/ **Loiseau** , /dont la ruse est connue/, tente de détendre l'atmosphère.
+
+### La faim et le partage
+1. La **faim** /terrible/ commence à tirailler les **estomacs** /vides/.
+2. Boule de Suif sort un **panier** /de provisions/ de sous la banquette.
+3. L' **odeur** /alléchante/ /du poulet/ change soudainement l' **attitude** /des voisins/.
+4. Les **bourgeois** /affamés/ acceptent les **provisions** /que la jeune femme leur propose/.
+5. Ce **repas** /de fortune/ brise temporairement la **glace** /entre les classes sociales/.
+
+### L'oppression prussienne
+1. L' **officier** /prussien/ exige une **condition** /révoltante/ pour laisser repartir le groupe.
+2. Les **voyageurs** /retenus/ s'impatientent de ce **retard** /imprévu/.
+3. La **résistance** /héroïque/ de Boule de Suif se heurte à l' **égoïsme** /des autres/.
+4. Un **complot** /hypocrite/ se trame pour convaincre la jeune femme de céder.
+5. Les **arguments** /religieux/ de la /vieille/ **religieuse** finissent par ébranler sa volonté.
+
+### Le dénouement
+1. Après le départ, les **passagers** /ingrats/ ignorent totalement la **malheureuse** /en pleurs/.
+2. Cornudet siffle une **chanson** /patriote/ pour agacer ses **compagnons** /lâches/.
+`;
+
+function parseExercise(text) {
+    const lines = text.split('\n');
+    const result = [];
+    let groupId = 1;
+
+    lines.forEach(line => {
+        if (line.startsWith('###')) {
+            result.push({ type: 'h3', content: line.replace('###', '') });
+        } else if (line.trim() !== "") {
+            const wordsInLine = [];
+            const regex = /\/([^\/]+)\/|\*\*([^*]+)\*\*|([^\/\s*]+)/g;
+            let match;
+            while ((match = regex.exec(line)) !== null) {
+                if (match[1]) {
+                    match[1].trim().split(/\s+/).forEach(word => {
+                        const parts = word.match(/^([a-zA-ZÀ-ÿ0-9'’]+)(.*)$/);
+                        wordsInLine.push({ text: parts ? parts[1] : word, punc: parts ? parts[2] : "", id: groupId, isPivot: false });
+                    });
+                    groupId++;
+                } else if (match[2]) {
+                    wordsInLine.push({ text: match[2], punc: "", id: 0, isPivot: true });
+                } else {
+                    wordsInLine.push({ text: match[3], punc: "", id: 0, isPivot: false });
+                }
+            }
+            result.push({ type: 'p', words: wordsInLine });
+        }
+    });
+    return result;
+}
+
+const data = parseExercise(content);
+const zone = document.getElementById('exercise-zone');
+let totalGroups = 0;
+let groupsFound = 0;
+let errorsByGroup = new Set();
+
+data.forEach(item => {
+    if (item.type === 'h3') {
+        const h = document.createElement('h3');
+        h.textContent = item.content;
+        zone.appendChild(h);
+    } else {
+        const p = document.createElement('p');
+        item.words.forEach(w => {
+            if (w.id > 0) totalGroups = Math.max(totalGroups, w.id);
+            const span = document.createElement('span');
+            span.textContent = w.text;
+            span.className = 'word' + (w.isPivot ? ' pivot' : '');
+            if (w.id > 0) {
+                span.dataset.id = w.id;
+                span.addEventListener('pointerdown', () => {
+                    if (!span.classList.contains('correct')) span.classList.toggle('selected');
+                });
+            }
+            p.appendChild(span);
+            if (w.punc) {
+                const ps = document.createElement('span');
+                ps.textContent = w.punc;
+                p.appendChild(ps);
+            }
+            p.appendChild(document.createTextNode(' '));
+        });
+        zone.appendChild(p);
+    }
+});
+
+function validateSelection() {
+    const selected = Array.from(document.querySelectorAll('.word.selected'));
+    if (!selected.length) return;
+
+    const ids = [...new Set(selected.map(s => parseInt(s.dataset.id)))];
+
+    if (ids.length === 1 && ids[0] > 0) {
+        const targetId = ids[0];
+        const expectedCount = document.querySelectorAll(`.word[data-id="${targetId}"]`).length;
+
+        if (selected.length === expectedCount) {
+            selected.forEach(s => s.classList.replace('selected', 'correct'));
+            if (!errorsByGroup.has(targetId)) {
+                document.getElementById('score-gold').textContent = parseInt(document.getElementById('score-gold').textContent) + 1;
+            }
+            groupsFound++;
+            document.getElementById('count-left').textContent = totalGroups - groupsFound;
+            return;
+        }
+    }
+    
+    ids.forEach(id => errorsByGroup.add(id));
+    selected.forEach(s => {
+        s.classList.add('wrong');
+        setTimeout(() => s.classList.remove('wrong', 'selected'), 400);
+    });
+}
+
+document.getElementById('count-left').textContent = totalGroups;
+</script>
+</body>
+</html>

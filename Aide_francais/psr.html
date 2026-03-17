@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Repérage PSR</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f8f9fa;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background-color: var(--bg);
+            padding: 15px;
+            -webkit-user-select: none; /* Désactive la sélection de texte iPad */
+            touch-action: manipulation;
+        }
+
+        .container { 
+            max-width: 850px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 15px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+        }
+
+        /* Consigne demandée */
+        .instruction {
+            background-color: #eef7fd;
+            padding: 15px;
+            border-left: 5px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+            line-height: 1.4;
+            color: #2c3e50;
+        }
+
+        .header-stats { 
+            display: flex; justify-content: space-between; 
+            margin-bottom: 15px; font-weight: bold; color: #666;
+            font-size: 0.9rem;
+        }
+
+        #exercise-zone { 
+            font-size: 1.3rem; 
+            line-height: 2.8; 
+            text-align: justify; 
+            color: #333;
+        }
+
+        /* Le nom pivot en gras */
+        .pivot { 
+            font-weight: 800; 
+            color: #000;
+        }
+
+        .word {
+            display: inline-block;
+            padding: 0 4px;
+            border-radius: 6px;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+
+        /* États iPad-Friendly */
+        .word.selected { background-color: #d1ecf1; border-bottom: 2px solid var(--primary); }
+        .word.correct { background-color: #d4edda !important; color: #155724; border-bottom: 2px solid var(--success); cursor: default; }
+        .word.wrong { animation: shake 0.4s; background-color: #f8d7da; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .btn-valider {
+            width: 100%; margin-top: 30px; padding: 20px;
+            background: var(--primary); color: white; border: none;
+            border-radius: 12px; font-size: 1.2rem; font-weight: bold;
+            box-shadow: 0 4px 0 #2980b9;
+        }
+        .btn-valider:active { transform: translateY(2px); box-shadow: 0 2px 0 #2980b9; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="instruction">
+        <strong>Consigne :</strong> Identifie la <strong>proposition subordonnée relative</strong> qui complète le nom en gras en sélectionnant les mots précisément.
+    </div>
+
+    <div class="header-stats">
+        <div>PSR restantes : <span id="count-left">0</span></div>
+        <div>Sans erreur : <span id="score-gold">0</span></div>
+    </div>
+
+    <div id="exercise-zone"></div>
+
+    <button class="btn-valider" onclick="validateSelection()">Valider ma sélection</button>
+</div>
+
+<script>
+/** 1. Données (Formaté avec ** pour le pivot et / / pour la PSR) **/
+const rawText = "La **diligence** /qui transporte les dix voyageurs/ s'arrête devant une auberge. Le **Prussien** /que tout le monde redoute/ fixe une **condition** /que Boule de Suif refuse d'accepter/. Les **bourgeois** /dont l'égoïsme est immense/ élaborent un **stratagème** /qui doit la faire céder/. La **religieuse** /qui invoque la volonté de Dieu/ finit par convaincre la **jeune femme** /dont le coeur est patriote/. C'est un **sacrifice** /que personne ne saluera/ sauf lorsque le **voyage** /qui reprend/ sera terminé.";
+
+/** 2. Parsing robuste **/
+function parseSource(text) {
+    const regex = /\/([^\/]+)\/|\*\*([^*]+)\*\*|([^\/\s*]+)/g;
+    let match, result = [], groupId = 1;
+
+    while ((match = regex.exec(text)) !== null) {
+        if (match[1]) { // PSR
+            match[1].trim().split(/\s+/).forEach(word => {
+                const parts = word.match(/^([a-zA-ZÀ-ÿ0-9'’]+)(.*)$/);
+                result.push({ 
+                    text: parts ? parts[1] : word, 
+                    punc: parts ? parts[2] : "", 
+                    id: groupId, 
+                    isPivot: false 
+                });
+            });
+            groupId++;
+        } else if (match[2]) { // Pivot Gras
+            result.push({ text: match[2], punc: "", id: 0, isPivot: true });
+        } else if (match[3]) { // Neutre
+            result.push({ text: match[3], punc: "", id: 0, isPivot: false });
+        }
+    }
+    return result;
+}
+
+const data = parseSource(rawText);
+const totalGroups = Math.max(...data.map(w => w.id));
+let groupsFound = 0;
+let errorsByGroup = new Set();
+
+const zone = document.getElementById('exercise-zone');
+
+/** 3. Rendu de l'exercice **/
+data.forEach((item) => {
+    const span = document.createElement('span');
+    span.textContent = item.text;
+    span.className = 'word' + (item.isPivot ? ' pivot' : '');
+    span.dataset.id = item.id;
+    
+    if (item.id > 0) {
+        span.addEventListener('pointerdown', () => { // Réactif sur iPad
+            if (!span.classList.contains('correct')) span.classList.toggle('selected');
+        });
+    }
+
+    zone.appendChild(span);
+    if (item.punc) {
+        const puncSpan = document.createElement('span');
+        puncSpan.textContent = item.punc;
+        zone.appendChild(puncSpan);
+    }
+    zone.appendChild(document.createTextNode(' '));
+});
+
+/** 4. Validation **/
+function validateSelection() {
+    const selected = Array.from(document.querySelectorAll('.word.selected'));
+    if (!selected.length) return;
+
+    const ids = [...new Set(selected.map(s => parseInt(s.dataset.id)))];
+
+    if (ids.length === 1 && ids[0] > 0) {
+        const targetId = ids[0];
+        const expectedCount = data.filter(w => w.id === targetId).length;
+
+        if (selected.length === expectedCount) {
+            selected.forEach(s => s.classList.replace('selected', 'correct'));
+            if (!errorsByGroup.has(targetId)) {
+                document.getElementById('score-gold').textContent = parseInt(document.getElementById('score-gold').textContent) + 1;
+            }
+            groupsFound++;
+            updateUI();
+            return;
+        }
+    }
+    
+    // Si erreur
+    ids.forEach(id => { if(id > 0) errorsByGroup.add(id); });
+    selected.forEach(s => {
+        s.classList.add('wrong');
+        setTimeout(() => s.classList.remove('wrong', 'selected'), 400);
+    });
+}
+
+function updateUI() {
+    document.getElementById('count-left').textContent = totalGroups - groupsFound;
+    if (groupsFound === totalGroups) {
+        const endMsg = document.createElement('div');
+        endMsg.style = "margin-top:20px; text-align:center; font-weight:bold; color:var(--success); font-size:1.4rem;";
+        endMsg.innerHTML = "✨ Exercice terminé avec succès !";
+        zone.appendChild(endMsg);
+    }
+}
+
+updateUI();
+</script>
+</body>
+</html>
