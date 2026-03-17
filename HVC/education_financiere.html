@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Moteur d'Exercice EDUCFI - 30 Questions</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --selected: #D6EAF8;
+            --correct: #D5F5E3;
+            --wrong: #FADBD8;
+            --accent: #3498db;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 14pt; /* Ta préférence */
+            line-height: 1.6;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            border-bottom: 2px solid var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .progress-bar {
+            flex-grow: 1;
+            height: 12px;
+            background: #eee;
+            border-radius: 6px;
+            margin: 0 20px;
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .option {
+            padding: 18px 20px; /* Zones de clic larges iPad */
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .option.selected {
+            background-color: var(--selected);
+            border-color: var(--accent);
+        }
+
+        .option.correct {
+            background-color: var(--correct);
+            border-color: #2ecc71;
+        }
+
+        .option.wrong {
+            background-color: var(--wrong);
+            border-color: #e74c3c;
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        button {
+            padding: 18px 30px;
+            font-size: 1.1rem;
+            border-radius: 12px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .stats { font-size: 0.9rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="stats">Restantes: <span id="rem">30</span></div>
+        <div class="progress-bar"><div id="progress-fill"></div></div>
+        <div class="stats">1er essai: <span id="score">0</span></div>
+    </div>
+
+    <div id="q-text" class="question-text"></div>
+    <div id="options" class="options-grid"></div>
+    <div id="feedback"></div>
+
+    <div class="controls">
+        <button id="val-btn" onclick="check()">Valider</button>
+        <button id="next-btn" onclick="next()" style="display:none;">Continuer ▶</button>
+    </div>
+</div>
+
+<script>
+const data = [
+    // LES 10 QUESTIONS DU DOCUMENT
+    { q: "Quelles sont les ressources parmi ces réponses ?", opt: ["Un salaire", "Un billet de banque", "Une pension de retraite", "Un revenu commercial ou agricole", "Une allocation familiale"], cor: [0, 2, 3, 4], multi: true },
+    { q: "Quelles sont les dépenses que vous pouvez faire baisser ?", opt: ["Le loyer", "Les loisirs", "Frais de téléphone/internet hors forfait", "L'assurance voiture"], cor: [1, 2], multi: true },
+    { q: "Comment faire des économies d’eau ou d’énergie ?", opt: ["Éteindre l’ordinateur/TV", "Éteindre la lumière", "Douches plutôt que bains", "Prendre le vélo", "Programme éco machine", "Climatisation à fond"], cor: [0, 1, 2, 3, 4], multi: true },
+    { q: "Quelle est la température conseillée pour maîtriser ses dépenses ?", opt: ["16 degrés", "19 degrés", "22 degrés", "24 degrés"], cor: [1], multi: false },
+    { q: "Qu’est-ce qu’un découvert autorisé par la banque?", opt: ["Un droit pour moi", "Une somme offerte", "Une somme prêtée avec frais"], cor: [2], multi: false },
+    { q: " Si tu places  à la banque 200€  rémunéré à hauteur de 2% , combien cela te rapportes-tu au bout d'un an ? ", opt: ["201 €", "202 €", "203 €", "204 €"], cor: [3], multi: false },
+    { q: "Quels sont les signes de sécurité pour reconnaître un vrai billet :", opt: ["Bande argentée réfléchissante", "Puce électronique", "Nombre qui change de couleur", "Filigrane par transparence"], cor: [0, 2, 3], multi: true },
+    { q: "Quelles sont les questions à te poser avant de demander un crédit à la banque? :", opt: ["Ai-je besoin de ce crédit ?", "Vais-je pouvoir rembourser ?", "Combien me coûtera-t-il au total ?"], cor: [0, 1, 2], multi: true },
+    { q: "Un placement qui rapporte beaucoup est risqué :", opt: ["Vrai", "Faux"], cor: [0], multi: false },
+    { q: "Si tu reçois un lien SMS  te demandant ton numéro de carte :", opt: ["Je fais ce qui est demandé", "Je ne fais pas ce qui est demandé", "Je ne sais pas"], cor: [1], multi: false },
+    { q: "Qu'est-ce qu'un 'créancier' ?", opt: ["Celui qui doit de l'argent", "Celui à qui on doit de l'argent"], cor: [1], multi: false },
+    { q: "Le Relevé d'Identité Bancaire (RIB) sert à :", opt: ["Retirer de l'argent au distributeur", "Communiquer ses coordonnées bancaires"], cor: [1], multi: false },
+    { q: "Quelle dépense prioritaire parmi celles-ci :", opt: ["Cinéma", "Loyer", "Nouveaux vêtements de marque", "un nouvel iPhone"], cor: [1], multi: false },
+    { q: "Quel est le plafond habituel du paiement sans contact :", opt: ["20 €", "30 €", "50 €"], cor: [2], multi: false },
+    { q: "Faire 'opposition' permet de :", opt: ["Changer de banque", "Bloquer sa carte perdue ou volée" , "de ne pas payer"], cor: [1], multi: false },
+    { q: "Le virement instantané arrive en :", opt: ["24 heures", "Moins de 10 secondes", "2 jours"], cor: [1], multi: false },
+    { q: "Le surendettement, c'est :", opt: ["Avoir trop d'épargne", "Ne plus pouvoir payer ses dettes", "Ne plus pouvoir payer travailler"], cor: [1], multi: false },
+    { q: "Quelle est la durée de validité d'un chèque ?", opt: ["6 mois", "1 an et 8 jours", "10 ans"], cor: [1], multi: false },
+    { q: "L'assurance emprunteur est :", opt: ["Inutile", "Une sécurité en cas d'accident/maladie"], cor: [1], multi: false },
+    { q: "Un budget 'déficitaire' signifie :", opt: ["Dépenses > Ressources", "Ressources > Dépenses", "Ressources = Dépenses"], cor: [0], multi: false },
+    { q: "Où se trouve le cryptogramme d'une carte bancaire ?", opt: ["Devant la carte", "Au dos de la carte"], cor: [1], multi: false },
+    { q: "Le Livret A est un produit :", opt: ["De crédit", "D'épargne", "De dépense"], cor: [1], multi: false },
+    { q: "Que signifie 'débiter' un compte ?", opt: ["Ajouter de l'argent", "Retirer de l'argent", "Multiplier l'argent" ], cor: [1], multi: false },
+    { q: "Le phishing est une arnaque par :", opt: ["Courrier papier", "Email ou SMS"], cor: [1], multi: false },
+    { q: "Peut-on refuser un paiement en espèces ?", opt: ["Non (sauf appoint non fait)", "Oui, toujours", "Parfois"], cor: [0], multi: false },
+    { q: "Le TAEG concerne :", opt: ["L'épargne", "Le coût d'un crédit", "le cout d'un débit"], cor: [1], multi: false },
+    { q: "Épargner en début de mois est :", opt: ["Une mauvaise idée", "Une bonne pratique"], cor: [1], multi: false },
+    { q: "Le solde est 'créditeur' si :", opt: ["Il est positif: tu as de l'argent", "Il est négatif : tu dois de l'argent"], cor: [0], multi: false },
+    { q: "Les agios sont :", opt: ["Des intérêts perçus", "Des frais de découvert", "Des revenus"], cor: [1], multi: false },
+    { q: "L'éducation financière aide à :", opt: ["Gagner au casino", "Mieux gérer son quotidien", "Investir en bourse"], cor: [1], multi: false }
+];
+
+let cur = 0, score = 0, selected = [], firstTry = true;
+
+function load() {
+    const q = data[cur];
+    document.getElementById('q-text').innerText = `${cur+1}. ${q.q} ${q.multi ? '(Plusieurs choix)' : ''}`;
+    const optDiv = document.getElementById('options');
+    optDiv.innerHTML = '';
+    selected = [];
+    firstTry = true;
+    
+    q.opt.forEach((o, i) => {
+        const d = document.createElement('div');
+        d.className = 'option';
+        d.innerText = o;
+        d.onclick = () => {
+            if (!q.multi) {
+                document.querySelectorAll('.option').forEach(el => el.classList.remove('selected'));
+                selected = [i];
+                d.classList.add('selected');
+            } else {
+                if (selected.includes(i)) {
+                    selected = selected.filter(x => x !== i);
+                    d.classList.remove('selected');
+                } else {
+                    selected.push(i);
+                    d.classList.add('selected');
+                }
+            }
+        };
+        optDiv.appendChild(d);
+    });
+    document.getElementById('rem').innerText = data.length - cur;
+    document.getElementById('progress-fill').style.width = (cur / data.length * 100) + '%';
+}
+
+function check() {
+    const q = data[cur];
+    const isCor = JSON.stringify(selected.sort()) === JSON.stringify(q.cor.sort());
+    const f = document.getElementById('feedback');
+    
+    if (isCor) {
+        f.style.display = 'block'; f.style.background = 'var(--correct)';
+        f.innerText = "Bravo ! C'est juste.";
+        if (firstTry) score++;
+        document.getElementById('score').innerText = score;
+        document.getElementById('val-btn').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'block';
+        document.querySelectorAll('.option').forEach((el, i) => { if(q.cor.includes(i)) el.className = 'option correct'; });
+    } else {
+        firstTry = false;
+        f.style.display = 'block'; f.style.background = 'var(--wrong)';
+        f.innerText = "Erreur, réessaie encore.";
+    }
+}
+
+function next() {
+    cur++;
+    if (cur < data.length) {
+        document.getElementById('next-btn').style.display = 'none';
+        document.getElementById('val-btn').style.display = 'block';
+        document.getElementById('feedback').style.display = 'none';
+        load();
+    } else {
+        document.querySelector('.container').innerHTML = `<h2>Terminé !</h2><p>Score 1er essai : ${score}/${data.length}</p><button onclick="location.reload()">Recommencer</button>`;
+    }
+}
+
+load();
+</script>
+</body>
+</html>
