@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bilan Expansions - Compteur Global</title>
+    <style>
+        :root {
+            --primary: #2980b9; --success: #27ae60; --error: #e74c3c; --bg: #f4f7f6;
+        }
+        body {
+            font-family: -apple-system, sans-serif; background: var(--bg);
+            margin: 0; display: flex; height: 100vh; font-size: 14pt;
+            -webkit-user-select: none; touch-action: manipulation;
+        }
+        .sidebar {
+            width: 240px; background: white; border-right: 2px solid #ddd;
+            display: flex; flex-direction: column; padding: 20px;
+        }
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 15px; }
+        
+        .word {
+            display: inline-block; padding: 2px 6px; border-radius: 6px;
+            cursor: pointer; border: 1px solid transparent;
+        }
+        .pivot { font-weight: 800; border-bottom: 2px solid #333; }
+        .selected { background: #d1ecf1; border-color: var(--primary); }
+        .correct { background: var(--success) !important; color: white !important; cursor: default; }
+        
+        #energy-container {
+            width: 100%; height: 20px; background: #eee; border-radius: 10px; margin: 10px 0; overflow: hidden;
+        }
+        #energy-bar {
+            height: 100%; width: 100%; background: var(--success); transition: 0.3s;
+        }
+        .btn-valider {
+            width: 100%; padding: 20px; background: var(--primary);
+            color: white; border: none; border-radius: 15px; font-weight: bold; margin-top: auto;
+        }
+        .game-over { color: var(--error); font-weight: bold; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div style="margin-bottom:5px">Énergie (clics) :</div>
+    <div id="energy-container"><div id="energy-bar"></div></div>
+    <div style="margin-bottom:20px"><b id="clics-count">0</b> clics restants</div>
+    
+    <div style="margin-bottom:20px">Trouvés : <b id="count-found">0</b> / <span id="count-total">0</span></div>
+    
+    <button id="btn-val" class="btn-valider" onclick="validate()">VALIDER</button>
+</div>
+
+<div class="main-content">
+    <div class="container" id="exercise-zone"></div>
+</div>
+
+<script>
+const rawText = `
+1. **Élisabeth Rousset** /que l'on surnomme Boule de Suif/ attire les **regards** /des voyageurs/.
+2. La **voiture** /pesante/ s'enfonce lentement dans la **neige** /épaisse/.
+3. Les **passagers** /de la diligence/ affichent une **mine** /sombre/.
+`;
+
+let totalGroups = 0;
+let groupsFound = 0;
+let clicsMax = 0;
+let clicsRestants = 0;
+
+function init() {
+    const zone = document.getElementById('exercise-zone');
+    let gid = 1;
+
+    rawText.trim().split('\n').forEach(line => {
+        const p = document.createElement('p');
+        line.split(/(\/[^\/]+\/|\*\*[^*]+\*\*)/g).forEach(token => {
+            if (!token) return;
+            if (token.startsWith('/')) {
+                const id = gid++;
+                totalGroups++;
+                token.slice(1, -1).split(/\s+/).forEach(w => addWord(w, p, id, false));
+            } else if (token.startsWith('**')) {
+                addWord(token.slice(2, -2), p, 0, true);
+            } else {
+                token.split(/\s+/).forEach(w => { if(w) addWord(w, p, 0, false) });
+            }
+        });
+        zone.appendChild(p);
+    });
+
+    // Réglage du limiteur : 2 fois le nombre de groupes
+    clicsMax = totalGroups * 2;
+    clicsRestants = clicsMax;
+    document.getElementById('count-total').innerText = totalGroups;
+    updateUI();
+}
+
+function addWord(txt, parent, id, isPivot) {
+    const span = document.createElement('span');
+    span.className = 'word' + (isPivot ? ' pivot' : '');
+    span.innerText = txt;
+    span.dataset.id = id;
+    
+    if (txt.match(/[a-zA-ZÀ-ÿ0-9]/)) {
+        span.onclick = () => {
+            if (clicsRestants <= 0 || span.classList.contains('correct')) return;
+
+            // Si on déselectionne, on ne perd pas de point. 
+            // Si on sélectionne, on consomme 1 clic.
+            if (!span.classList.contains('selected')) {
+                clicsRestants--;
+                span.classList.add('selected');
+            } else {
+                span.classList.remove('selected');
+                clicsRestants++; // On rend le point si on désélectionne
+            }
+            updateUI();
+        };
+    }
+    parent.appendChild(span);
+    parent.appendChild(document.createTextNode(' '));
+}
+
+function validate() {
+    const sel = Array.from(document.querySelectorAll('.word.selected'));
+    if (!sel.length) return;
+
+    const ids = [...new Set(sel.map(s => parseInt(s.dataset.id)))];
+
+    // Erreur : Intrus ou mélange
+    if (ids.includes(0) || ids.length > 1) {
+        alert("Sélection incorrecte !");
+        sel.forEach(s => s.classList.remove('selected'));
+        // Les points consommés pour ces mauvais clics sont PERDUS
+        updateUI();
+        return;
+    }
+
+    const curId = ids[0];
+    const fullGroup = document.querySelectorAll(`.word[data-id="${curId}"]`);
+
+    if (sel.length === fullGroup.length) {
+        // SUCCÈS : On rend les points consommés par ce groupe pour récompenser la bonne réponse
+        clicsRestants += sel.length; 
+        sel.forEach(s => {
+            s.classList.remove('selected');
+            s.classList.add('correct');
+        });
+        groupsFound++;
+    } else {
+        alert("Groupe incomplet !");
+        sel.forEach(s => s.classList.remove('selected'));
+    }
+    updateUI();
+}
+
+function updateUI() {
+    document.getElementById('clics-count').innerText = clicsRestants;
+    document.getElementById('count-found').innerText = groupsFound;
+    
+    const percent = (clicsRestants / clicsMax) * 100;
+    const bar = document.getElementById('energy-bar');
+    bar.style.width = percent + "%";
+
+    // Couleur de la barre selon l'urgence
+    if (percent < 25) bar.style.background = "var(--error)";
+    else if (percent < 50) bar.style.background = "#f39c12";
+
+    if (clicsRestants <= 0) {
+        document.getElementById('exercise-zone').classList.add('game-over');
+        document.getElementById('btn-val').disabled = true;
+        alert("Plus d'énergie ! L'exercice est terminé.");
+    }
+}
+
+init();
+</script>
+</body>
+</html>
