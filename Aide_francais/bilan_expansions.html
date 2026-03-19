@@ -3,61 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bilan Expansions - Compteur Global</title>
+    <title>Bilan Expansions - Moteur de Repérage</title>
     <style>
         :root {
-            --primary: #2980b9; --success: #27ae60; --error: #e74c3c; --bg: #f4f7f6;
+            --primary: #2980b9; 
+            --success: #27ae60; 
+            --error: #e74c3c; 
+            --bg: #f4f7f6;
+            --sel-bg: #D6EAF8; /* Bleu clair pour sélection selon vos paramètres */
         }
         body {
-            font-family: -apple-system, sans-serif; background: var(--bg);
-            margin: 0; display: flex; height: 100vh; font-size: 14pt;
-            -webkit-user-select: none; touch-action: manipulation;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            margin: 0; 
+            display: flex; 
+            height: 100vh; 
+            font-size: 14pt; /* Taille de texte préférée */
+            -webkit-user-select: none; 
+            touch-action: manipulation;
         }
         .sidebar {
-            width: 240px; background: white; border-right: 2px solid #ddd;
-            display: flex; flex-direction: column; padding: 20px;
+            width: 260px; 
+            background: white; 
+            border-right: 2px solid #ddd;
+            display: flex; 
+            flex-direction: column; 
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
         }
-        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 15px; }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .container { 
+            max-width: 850px; 
+            margin: auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
         
+        /* Interface iPad-Friendly */
         .word {
-            display: inline-block; padding: 2px 6px; border-radius: 6px;
-            cursor: pointer; border: 1px solid transparent;
+            display: inline-block; 
+            padding: 6px 8px; /* Zones de clic larges pour iPad */
+            margin: 2px 1px;
+            border-radius: 6px;
+            cursor: pointer; 
+            border: 1px solid transparent;
+            transition: all 0.2s;
         }
-        .pivot { font-weight: 800; border-bottom: 2px solid #333; }
-        .selected { background: #d1ecf1; border-color: var(--primary); }
-        .correct { background: var(--success) !important; color: white !important; cursor: default; }
+        .pivot { 
+            font-weight: 800; 
+            border-bottom: 2px solid #333; 
+        }
+        .selected { 
+            background: var(--sel-bg); 
+            border-color: var(--primary); 
+        }
+        .correct { 
+            background: var(--success) !important; 
+            color: white !important; 
+            cursor: default; 
+        }
         
+        .instruction-box {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        .instruction-title {
+            color: var(--primary);
+            font-size: 1.3rem;
+            margin: 0 0 10px 0;
+        }
+
         #energy-container {
-            width: 100%; height: 20px; background: #eee; border-radius: 10px; margin: 10px 0; overflow: hidden;
+            width: 100%; height: 15px; background: #eee; border-radius: 10px; margin: 10px 0; overflow: hidden;
         }
         #energy-bar {
-            height: 100%; width: 100%; background: var(--success); transition: 0.3s;
+            height: 100%; width: 100%; background: var(--success); transition: 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
         }
         .btn-valider {
             width: 100%; padding: 20px; background: var(--primary);
-            color: white; border: none; border-radius: 15px; font-weight: bold; margin-top: auto;
+            color: white; border: none; border-radius: 15px; font-weight: bold; 
+            margin-top: auto; font-size: 1.1rem; box-shadow: 0 4px 0 #1c5982;
         }
-        .game-over { color: var(--error); font-weight: bold; text-align: center; }
+        .btn-valider:active { transform: translateY(2px); box-shadow: 0 2px 0 #1c5982; }
+        .btn-valider:disabled { background: #ccc; box-shadow: none; }
+        
+        .game-over { opacity: 0.6; pointer-events: none; }
+        .stats-label { font-size: 0.9rem; color: #666; margin-top: 15px; }
+        .stats-value { font-weight: bold; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <div style="margin-bottom:5px">Énergie (clics) :</div>
+    <div class="stats-label">Énergie (clics restants) :</div>
     <div id="energy-container"><div id="energy-bar"></div></div>
-    <div style="margin-bottom:20px"><b id="clics-count">0</b> clics restants</div>
+    <div class="stats-value" id="clics-count">0</div>
     
-    <div style="margin-bottom:20px">Trouvés : <b id="count-found">0</b> / <span id="count-total">0</span></div>
+    <div class="stats-label">Expansions trouvées :</div>
+    <div class="stats-value"><span id="count-found">0</span> / <span id="count-total">0</span></div>
+    
+    <div class="stats-label">Score essais :</div>
+    <div id="score-detail" style="font-size: 0.85rem;">
+        1er essai : <span id="score-direct" style="font-weight:bold; color:var(--success)">0</span><br>
+        2ème essai+ : <span id="score-retry" style="font-weight:bold; color:#f39c12">0</span>
+    </div>
     
     <button id="btn-val" class="btn-valider" onclick="validate()">VALIDER</button>
 </div>
 
 <div class="main-content">
-    <div class="container" id="exercise-zone"></div>
+    <div class="container" id="app-container">
+        <div class="instruction-box">
+            <h2 class="instruction-title">Consigne :</h2>
+            <p style="margin:0;">Sélectionnez correctement les <b>expansions du nom</b> rattachées aux noyaux soulignés.</p>
+        </div>
+        
+        <div id="exercise-zone"></div>
+    </div>
 </div>
 
 <script>
+/* Structure de données sécurisée : cibles entre / / */
 const rawText = `
 1. **Élisabeth Rousset** /que l'on surnomme Boule de Suif/ attire les **regards** /des voyageurs/.
 2. La **voiture** /pesante/ s'enfonce lentement dans la **neige** /épaisse/.
@@ -68,6 +137,9 @@ let totalGroups = 0;
 let groupsFound = 0;
 let clicsMax = 0;
 let clicsRestants = 0;
+let scoreDirect = 0;
+let scoreRetry = 0;
+let groupErrors = {}; // Suivi des erreurs par groupe
 
 function init() {
     const zone = document.getElementById('exercise-zone');
@@ -75,23 +147,25 @@ function init() {
 
     rawText.trim().split('\n').forEach(line => {
         const p = document.createElement('p');
+        p.style.marginBottom = "25px";
+        
         line.split(/(\/[^\/]+\/|\*\*[^*]+\*\*)/g).forEach(token => {
             if (!token) return;
             if (token.startsWith('/')) {
                 const id = gid++;
                 totalGroups++;
-                token.slice(1, -1).split(/\s+/).forEach(w => addWord(w, p, id, false));
+                groupErrors[id] = 0;
+                token.slice(1, -1).trim().split(/\s+/).forEach(w => addWord(w, p, id, false));
             } else if (token.startsWith('**')) {
                 addWord(token.slice(2, -2), p, 0, true);
             } else {
-                token.split(/\s+/).forEach(w => { if(w) addWord(w, p, 0, false) });
+                token.split(/(\s+)/).forEach(w => { if(w) addWord(w, p, 0, false) });
             }
         });
         zone.appendChild(p);
     });
 
-    // Réglage du limiteur : 2 fois le nombre de groupes
-    clicsMax = totalGroups * 2;
+    clicsMax = totalGroups * 3; // Marge un peu plus souple pour l'iPad
     clicsRestants = clicsMax;
     document.getElementById('count-total').innerText = totalGroups;
     updateUI();
@@ -103,24 +177,22 @@ function addWord(txt, parent, id, isPivot) {
     span.innerText = txt;
     span.dataset.id = id;
     
+    // On ne rend cliquable que les mots (pas les espaces/ponctuation seule)
     if (txt.match(/[a-zA-ZÀ-ÿ0-9]/)) {
         span.onclick = () => {
             if (clicsRestants <= 0 || span.classList.contains('correct')) return;
 
-            // Si on déselectionne, on ne perd pas de point. 
-            // Si on sélectionne, on consomme 1 clic.
             if (!span.classList.contains('selected')) {
                 clicsRestants--;
                 span.classList.add('selected');
             } else {
                 span.classList.remove('selected');
-                clicsRestants++; // On rend le point si on désélectionne
+                clicsRestants++; 
             }
             updateUI();
         };
     }
     parent.appendChild(span);
-    parent.appendChild(document.createTextNode(' '));
 }
 
 function validate() {
@@ -129,12 +201,13 @@ function validate() {
 
     const ids = [...new Set(sel.map(s => parseInt(s.dataset.id)))];
 
-    // Erreur : Intrus ou mélange
+    // Logique de validation stricte
     if (ids.includes(0) || ids.length > 1) {
-        alert("Sélection incorrecte !");
-        sel.forEach(s => s.classList.remove('selected'));
-        // Les points consommés pour ces mauvais clics sont PERDUS
-        updateUI();
+        alert("Attention : votre sélection contient un intrus ou mélange plusieurs groupes.");
+        if(ids.length === 1 && ids[0] === 0) { /* clic dans le vide */ } 
+        else { ids.forEach(id => { if(id > 0) groupErrors[id]++; }); }
+        
+        resetSelection(sel);
         return;
     }
 
@@ -142,36 +215,52 @@ function validate() {
     const fullGroup = document.querySelectorAll(`.word[data-id="${curId}"]`);
 
     if (sel.length === fullGroup.length) {
-        // SUCCÈS : On rend les points consommés par ce groupe pour récompenser la bonne réponse
-        clicsRestants += sel.length; 
+        // SUCCÈS : Calcul du score différencié
+        if (groupErrors[curId] === 0) scoreDirect++;
+        else scoreRetry++;
+        
+        clicsRestants += sel.length; // Bonus : rend les points du groupe réussi
         sel.forEach(s => {
             s.classList.remove('selected');
             s.classList.add('correct');
         });
         groupsFound++;
     } else {
-        alert("Groupe incomplet !");
-        sel.forEach(s => s.classList.remove('selected'));
+        alert("Expansion incomplète ! Sélectionnez tout le groupe de mots.");
+        groupErrors[curId]++;
+        resetSelection(sel);
     }
+    updateUI();
+}
+
+function resetSelection(elements) {
+    elements.forEach(s => s.classList.remove('selected'));
     updateUI();
 }
 
 function updateUI() {
     document.getElementById('clics-count').innerText = clicsRestants;
     document.getElementById('count-found').innerText = groupsFound;
+    document.getElementById('score-direct').innerText = scoreDirect;
+    document.getElementById('score-retry').innerText = scoreRetry;
     
-    const percent = (clicsRestants / clicsMax) * 100;
+    const percent = Math.max(0, (clicsRestants / clicsMax) * 100);
     const bar = document.getElementById('energy-bar');
     bar.style.width = percent + "%";
 
-    // Couleur de la barre selon l'urgence
     if (percent < 25) bar.style.background = "var(--error)";
     else if (percent < 50) bar.style.background = "#f39c12";
+    else bar.style.background = "var(--success)";
 
-    if (clicsRestants <= 0) {
+    if (clicsRestants <= 0 && groupsFound < totalGroups) {
         document.getElementById('exercise-zone').classList.add('game-over');
         document.getElementById('btn-val').disabled = true;
-        alert("Plus d'énergie ! L'exercice est terminé.");
+        alert("Plus d'énergie ! L'exercice est terminé. Score final : " + scoreDirect + " (1er essai)");
+    }
+    
+    if (groupsFound === totalGroups) {
+        alert("Félicitations ! Vous avez repéré toutes les expansions.");
+        document.getElementById('btn-val').disabled = true;
     }
 }
 
