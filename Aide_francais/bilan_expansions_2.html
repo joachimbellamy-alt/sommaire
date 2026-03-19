@@ -206,7 +206,7 @@ function validate() {
         if (groupErrors[curId] === 0) scoreDirect++;
         else scoreRetry++;
         
-        // On NE REND PAS les clics lors d'un succès pour rester sur la limite de 12
+        // On NE REND PAS les clics lors d'un succès pour rester sur la limite de 20
         sel.forEach(s => {
             s.classList.remove('selected');
             s.classList.add('correct');
