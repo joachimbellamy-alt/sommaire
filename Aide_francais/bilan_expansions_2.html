@@ -3,257 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bilan Expansions - Moteur de Repérage</title>
+    <title>Expertise : Natures des Expansions</title>
     <style>
         :root {
-            --primary: #2980b9; 
-            --success: #27ae60; 
-            --error: #e74c3c; 
-            --bg: #f4f7f6;
-            --sel-bg: #D6EAF8;
+            --noyau: #F39C12;
+            --adj: #27AE60;
+            --cdn: #2980B9;
+            --rel: #8E44AD;
+            --select: #D6EAF8;
+            --error: #e74c3c;
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg);
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #F4F7F6; 
             margin: 0; 
             display: flex; 
-            height: 100vh; 
+            height: 100vh;
             font-size: 14pt;
             -webkit-user-select: none; 
             touch-action: manipulation;
         }
+
+        /* Barre latérale */
         .sidebar {
-            width: 260px; 
-            background: white; 
+            width: 260px;
+            background: white;
             border-right: 2px solid #ddd;
-            display: flex; 
-            flex-direction: column; 
+            display: flex;
+            flex-direction: column;
             padding: 20px;
             box-shadow: 2px 0 5px rgba(0,0,0,0.05);
         }
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
-        .container { 
-            max-width: 850px; 
-            margin: auto; 
-            background: white; 
-            padding: 30px; 
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .word {
-            display: inline-block; 
-            padding: 6px 8px;
-            margin: 2px 1px;
-            border-radius: 6px;
-            cursor: pointer; 
-            border: 1px solid transparent;
-            transition: all 0.2s;
-        }
-        .pivot { font-weight: 800; border-bottom: 2px solid #333; }
-        .selected { background: var(--sel-bg); border-color: var(--primary); }
-        .correct { background: var(--success) !important; color: white !important; cursor: default; }
-        
-        .instruction-box {
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #eee;
-        }
-        .instruction-title {
-            color: var(--primary);
-            font-size: 1.3rem;
-            margin: 0 0 10px 0;
-        }
 
-        #energy-container {
-            width: 100%; height: 15px; background: #eee; border-radius: 10px; margin: 10px 0; overflow: hidden;
-        }
-        #energy-bar {
-            height: 100%; width: 100%; background: var(--success); transition: 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
-        }
-        .btn-valider {
-            width: 100%; padding: 20px; background: var(--primary);
-            color: white; border: none; border-radius: 15px; font-weight: bold; 
-            margin-top: auto; font-size: 1.1rem; box-shadow: 0 4px 0 #1c5982;
-        }
-        .btn-valider:active { transform: translateY(2px); box-shadow: 0 2px 0 #1c5982; }
-        .btn-valider:disabled { background: #ccc; box-shadow: none; }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+
+        .header { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 25px;}
+        .legend { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; font-size: 0.9rem; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        
+        .exercise-card { background: white; padding: 35px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .sentence { font-size: 1.35rem; line-height: 2.8; margin-bottom: 30px; border-bottom: 1px solid #EEE; padding-bottom: 10px; }
+        
+        /* Mots interactifs */
+        .word { padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; display: inline-block; }
+        .word.selected { background: var(--select); border-color: #85C1E9; }
+        
+        /* États de succès */
+        .found-noyau { background: var(--noyau) !important; color: white; font-weight: bold; }
+        .found-adj { background: var(--adj) !important; color: white; }
+        .found-cdn { background: var(--cdn) !important; color: white; }
+        .found-rel { background: var(--rel) !important; color: white; }
+        
+        /* Jauge d'énergie */
+        #energy-container { width: 100%; height: 18px; background: #eee; border-radius: 10px; margin: 12px 0; overflow: hidden; border: 1px solid #ddd; }
+        #energy-bar { height: 100%; width: 100%; background: var(--adj); transition: 0.5s cubic-bezier(0.1, 0.7, 0.1, 1); }
+        .stats-label { font-size: 0.95rem; color: #555; margin-top: 20px; font-weight: 600; }
+        .stats-value { font-weight: 800; font-size: 1.4rem; color: #2C3E50; }
+
+        .shake { animation: shake 0.4s; background: #FADBD8 !important; }
+        @keyframes shake { 0%, 100% {transform: translateX(0)} 25% {transform: translateX(-4px)} 75% {transform: translateX(4px)} }
+        
+        .controls { display: flex; gap: 10px; margin-top: 25px; }
+        button { padding: 18px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .btn-val { background: #2C3E50; color: white; flex: 2; box-shadow: 0 4px 0 #1a252f; }
+        .btn-val:active { transform: translateY(2px); box-shadow: 0 2px 0 #1a252f; }
+        .btn-val:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
+        
+        .btn-reset { background: #ecf0f1; color: #7f8c8d; flex: 1; }
         
         .game-over { opacity: 0.5; pointer-events: none; }
-        .stats-label { font-size: 0.9rem; color: #666; margin-top: 15px; }
-        .stats-value { font-weight: bold; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <div class="stats-label">Énergie (clics restants) :</div>
+    <div class="stats-label">Capital de clics :</div>
     <div id="energy-container"><div id="energy-bar"></div></div>
-    <div class="stats-value" id="clics-count">12</div>
+    <div class="stats-value" id="clics-count">32</div>
     
-    <div class="stats-label">Expansions trouvées :</div>
-    <div class="stats-value"><span id="count-found">0</span> / <span id="count-total">0</span></div>
-    
-    <div class="stats-label">Score essais :</div>
-    <div id="score-detail" style="font-size: 0.85rem;">
-        1er essai : <span id="score-direct" style="font-weight:bold; color:var(--success)">0</span><br>
-        2ème essai+ : <span id="score-retry" style="font-weight:bold; color:#f39c12">0</span>
+    <div class="stats-label">Codes couleurs :</div>
+    <div class="legend">
+        <span><span class="dot" style="background:var(--noyau)"></span> Noyau (Orange)</span>
+        <span><span class="dot" style="background:var(--adj)"></span> Adjectif (Vert)</span>
+        <span><span class="dot" style="background:var(--cdn)"></span> C. du Nom (Bleu)</span>
+        <span><span class="dot" style="background:var(--rel)"></span> Relative (Violet)</span>
     </div>
-    
-    <button id="btn-val" class="btn-valider" onclick="validate()">VALIDER</button>
+
+    <button class="btn-val" id="main-val" style="margin-top: auto;" onclick="validate()">VALIDER LA SÉLECTION</button>
 </div>
 
 <div class="main-content">
-    <div class="container" id="app-container">
-        <div class="instruction-box">
-            <h2 class="instruction-title">Consigne :</h2>
-            <p style="margin:0;">Sélectionnez les <b>expansions du nom</b> rattachées aux noyaux soulignés. <br>
-            <small style="color: #e74c3c;">Attention : vous n'avez que 12 clics pour tout l'exercice !</small></p>
+    <div class="header">
+        <p style="margin:0;"><strong>Méthode :</strong> 1. Cliquez sur le <b>noyau</b> seul, puis validez. <br> 2. Cliquez sur l'<b>expansion</b> complète, puis validez.</p>
+    </div>
+
+    <div class="exercise-card" id="card">
+        <div id="display-zone"></div>
+        <div class="controls">
+            <button class="btn-reset" onclick="reset()">Effacer la sélection</button>
         </div>
-        
-        <div id="exercise-zone"></div>
     </div>
 </div>
 
 <script>
-const rawText = `
-1. **Élisabeth Rousset** /que l'on surnomme Boule de Suif/ attire les **regards** /des voyageurs/.
-2. La **voiture** /pesante/ s'enfonce lentement dans la **neige** /épaisse/.
-3. Les **passagers** /de la diligence/ affichent une **mine** /sombre/.
-`;
+    // 26 cibles totales dans ce texte
+    const data = [
+        "L' [1|pivot|officier] [1|adj|prussien] exige une [2|pivot|condition] [2|adj|révoltante] pour laisser repartir le groupe.",
+        "Les [3|pivot|voyageurs] [3|adj|retenus] [3|adj|à] [3|adj|l'auberge] s'impatientent de ce [4|pivot|retard] [4|adj|imprévu].",
+        "La [5|pivot|résistance] [5|adj|héroïque] de Boule de Suif se heurte à l' [6|pivot|égoïsme] [6|cdn|des] [6|cdn|autres].",
+        "Le [13|pivot|mépris] [13|cdn|des] [13|cdn|honnêtes] [13|cdn|gens] envers [14|pivot|celle] [14|rel|qui] [14|rel|les] [14|rel|a] [14|rel|sauvés] souligne la cruauté."
+    ];
 
-let totalGroups = 0;
-let groupsFound = 0;
-let clicsMax = 12; // Limite fixée à 12 clics
-let clicsRestants = 12;
-let scoreDirect = 0;
-let scoreRetry = 0;
-let groupErrors = {};
+    let selected = [];
+    let validatedNoyaux = {}; 
+    let clicsMax = 32; 
+    let clicsRestants = 32;
 
-function init() {
-    const zone = document.getElementById('exercise-zone');
-    let gid = 1;
+    function init() {
+        const zone = document.getElementById('display-zone');
+        data.forEach(line => {
+            const p = document.createElement('div'); p.className = 'sentence';
+            const regex = /\[(\d+)\|([^|]+)\|([^\]]+)\]|([^\s\[\]]+)/g;
+            let m;
+            while ((m = regex.exec(line)) !== null) {
+                let id = 0, type = "", text = "";
+                if (m[1]) { id = m[1]; type = m[2]; text = m[3]; } else { text = m[4]; }
 
-    rawText.trim().split('\n').forEach(line => {
-        const p = document.createElement('p');
-        p.style.marginBottom = "25px";
-        
-        line.split(/(\/[^\/]+\/|\*\*[^*]+\*\*)/g).forEach(token => {
-            if (!token) return;
-            if (token.startsWith('/')) {
-                const id = gid++;
-                totalGroups++;
-                groupErrors[id] = 0;
-                token.slice(1, -1).trim().split(/\s+/).forEach(w => addWord(w, p, id, false));
-            } else if (token.startsWith('**')) {
-                addWord(token.slice(2, -2), p, 0, true);
-            } else {
-                token.split(/(\s+)/).forEach(w => { if(w) addWord(w, p, 0, false) });
+                const span = document.createElement('span');
+                span.className = 'word'; span.textContent = text;
+                span.dataset.id = id; span.dataset.type = type;
+                
+                span.onclick = () => {
+                    // Ignorer si déjà trouvé
+                    if (span.classList.contains('found-noyau') || span.classList.contains('found-adj') || 
+                        span.classList.contains('found-cdn') || span.classList.contains('found-rel')) return;
+                    
+                    if (!span.classList.contains('selected')) {
+                        if (clicsRestants <= 0) return;
+                        clicsRestants--;
+                        span.classList.add('selected');
+                        selected.push(span);
+                    } else {
+                        // On rend le clic si désélection manuelle avant validation
+                        clicsRestants++;
+                        span.classList.remove('selected');
+                        selected = selected.filter(x => x !== span);
+                    }
+                    updateUI();
+                };
+                p.appendChild(span); p.appendChild(document.createTextNode(" "));
             }
+            zone.appendChild(p);
         });
-        zone.appendChild(p);
-    });
+        updateUI();
+    }
 
-    document.getElementById('count-total').innerText = totalGroups;
-    updateUI();
-}
+    function validate() {
+        if (!selected.length) return;
+        
+        const id = selected[0].dataset.id;
+        const type = selected[0].dataset.type;
+        const allSame = selected.every(el => el.dataset.id === id && el.dataset.type === type);
 
-function addWord(txt, parent, id, isPivot) {
-    const span = document.createElement('span');
-    span.className = 'word' + (isPivot ? ' pivot' : '');
-    span.innerText = txt;
-    span.dataset.id = id;
-    
-    if (txt.match(/[a-zA-ZÀ-ÿ0-9]/)) {
-        span.onclick = () => {
-            if (span.classList.contains('correct')) return;
+        // Validation Noyau (Pivot)
+        if (allSame && type === 'pivot' && selected.length === 1) {
+            selected[0].className = 'word found-noyau';
+            validatedNoyaux[id] = true;
+            selected = [];
+        } 
+        // Validation Expansion (Adj, CDN, Rel)
+        else if (allSame && type !== 'pivot' && validatedNoyaux[id]) {
+            const totalRequired = document.querySelectorAll(`.word[data-id="${id}"][data-type="${type}"]`).length;
+            if (selected.length === totalRequired) {
+                selected.forEach(el => el.className = `word found-${type}`);
+                selected = [];
+            } else { error(); }
+        } else {
+            // Mauvais type, mauvais mot ou noyau non validé
+            error();
+        }
+        updateUI();
+    }
 
-            if (!span.classList.contains('selected')) {
-                // On vérifie s'il reste des clics AVANT de sélectionner
-                if (clicsRestants <= 0) {
-                    alert("Plus de clics disponibles ! Réfléchissez bien avant de valider ou désélectionnez un mot.");
-                    return;
-                }
-                clicsRestants--;
-                span.classList.add('selected');
-            } else {
-                // Désélectionner rend un clic
-                span.classList.remove('selected');
-                clicsRestants++; 
-            }
+    function error() {
+        selected.forEach(el => { 
+            el.classList.add('shake'); 
+            setTimeout(() => el.classList.remove('shake'), 400); 
+        });
+        // Les clics de l'erreur sont définitivement consommés
+        setTimeout(() => {
+            selected.forEach(el => el.classList.remove('selected'));
+            selected = [];
             updateUI();
-        };
-    }
-    parent.appendChild(span);
-}
-
-function validate() {
-    const sel = Array.from(document.querySelectorAll('.word.selected'));
-    if (!sel.length) return;
-
-    const ids = [...new Set(sel.map(s => parseInt(s.dataset.id)))];
-
-    if (ids.includes(0) || ids.length > 1) {
-        alert("Erreur : la sélection contient un intrus ou mélange plusieurs groupes.");
-        ids.forEach(id => { if(id > 0) groupErrors[id]++; });
-        resetSelection(sel);
-        return;
+        }, 500);
     }
 
-    const curId = ids[0];
-    const fullGroup = document.querySelectorAll(`.word[data-id="${curId}"]`);
-
-    if (sel.length === fullGroup.length) {
-        if (groupErrors[curId] === 0) scoreDirect++;
-        else scoreRetry++;
-        
-        // On NE REND PAS les clics lors d'un succès pour rester sur la limite de 20
-        sel.forEach(s => {
-            s.classList.remove('selected');
-            s.classList.add('correct');
+    function reset() {
+        selected.forEach(el => {
+            el.classList.remove('selected');
+            clicsRestants++; // On rend les clics lors d'un reset manuel
         });
-        groupsFound++;
-    } else {
-        alert("Expansion incomplète !");
-        groupErrors[curId]++;
-        resetSelection(sel);
+        selected = [];
+        updateUI();
     }
-    updateUI();
-}
 
-function resetSelection(elements) {
-    // Quand on réinitialise à cause d'une erreur, les clics utilisés sont PERDUS
-    elements.forEach(s => s.classList.remove('selected'));
-    updateUI();
-}
+    function updateUI() {
+        document.getElementById('clics-count').innerText = clicsRestants;
+        const bar = document.getElementById('energy-bar');
+        const percent = (clicsRestants / clicsMax) * 100;
+        bar.style.width = percent + "%";
 
-function updateUI() {
-    document.getElementById('clics-count').innerText = clicsRestants;
-    document.getElementById('count-found').innerText = groupsFound;
-    document.getElementById('score-direct').innerText = scoreDirect;
-    document.getElementById('score-retry').innerText = scoreRetry;
-    
-    const percent = Math.max(0, (clicsRestants / clicsMax) * 100);
-    const bar = document.getElementById('energy-bar');
-    bar.style.width = percent + "%";
+        // Changement de couleur de la jauge
+        if (percent < 20) bar.style.background = "var(--error)";
+        else if (percent < 50) bar.style.background = "var(--noyau)";
+        else bar.style.background = "var(--adj)";
 
-    if (percent < 20) bar.style.background = "var(--error)";
-    else if (percent < 50) bar.style.background = "#f39c12";
-    else bar.style.background = "var(--success)";
-
-    // Vérification de fin de partie
-    if (clicsRestants <= 0 && groupsFound < totalGroups && !document.querySelector('.word.selected')) {
-        document.getElementById('exercise-zone').classList.add('game-over');
-        document.getElementById('btn-val').disabled = true;
-        alert("Échec : 12 clics épuisés. Score : " + scoreDirect + " au 1er essai.");
+        // Vérification Game Over
+        if (clicsRestants <= 0 && selected.length === 0) {
+            // On vérifie s'il reste des mots à trouver
+            const remaining = document.querySelectorAll('.word[data-id]:not([data-id="0"]):not(.found-noyau):not(.found-adj):not(.found-cdn):not(.found-rel)');
+            if (remaining.length > 0) {
+                document.getElementById('card').classList.add('game-over');
+                document.getElementById('main-val').disabled = true;
+                alert("Plus de clics ! L'analyse s'arrête ici. Relisez bien le texte pour la prochaine fois.");
+            }
+        }
     }
-    
-    if (groupsFound === totalGroups && totalGroups > 0) {
-        alert("Bravo ! Exercice terminé avec " + clicsRestants + " clics restants.");
-        document.getElementById('btn-val').disabled = true;
-    }
-}
 
-init();
+    init();
 </script>
 </body>
 </html>
