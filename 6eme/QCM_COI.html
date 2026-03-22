@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QCM : Le COI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #e0f0fd; 
+            --card-bg: #ffffff;
+            --primary: #4a90e2;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --text: #2c3e50;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            padding: 20px;
+            text-align: center;
+            background: var(--card-bg);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        h1 { margin: 0; font-size: 1.4rem; color: var(--primary); }
+
+        .content-container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .main-card {
+            max-width: 800px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 100px;
+        }
+
+        .question-block {
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .question-text {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: block;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            padding: 15px 20px;
+            border: 2px solid #eee;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            position: relative;
+        }
+
+        .option:active { transform: scale(0.98); }
+
+        /* États */
+        .selected { border-color: var(--primary); background: #f0f7ff; }
+        .correct { background-color: var(--success) !important; color: white; border-color: var(--success); }
+        .wrong { background-color: var(--error) !important; color: white; border-color: var(--error); }
+
+        .sticky-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+        }
+
+        #check-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        #result-box {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>QCM : Identifier le COI</h1>
+</header>
+
+<div class="content-container">
+    <div class="main-card" id="quiz-body">
+        </div>
+</div>
+
+<div class="sticky-footer">
+    <button id="check-btn">Valider mes réponses</button>
+    <div id="result-box"></div>
+</div>
+
+<script>
+const quizData = [
+    {
+        q: "1. Selon le je retiens, un COI est avant tout le complément :",
+        options: ["D'un nom ou d'un adjectif.", "D'un verbe d'action.", "D'une phrase entière."],
+        answer: 1 // B
+    },
+    {
+        q: "2. Concernant sa place dans la phrase, le COI est un :",
+        options: ["Complément déplaçable librement.", "Complément que l'on peut supprimer sans changer le sens.", "Complément non déplaçable librement."],
+        answer: 2 // C
+    },
+    {
+        q: "3. Quelle est la particularité de la construction d'un COI ?",
+        options: ["Il est directement rattaché au verbe sans mot de liaison.", "Il est construit avec un verbe et une préposition comme de, à ou avec.", "Il est toujours placé entre deux virgules."],
+        answer: 1 // B
+    },
+    {
+        q: "4. Si j'essaie d'enlever le COI de la phrase, que se passe-t-il ?",
+        options: ["C'est impossible, car c'est un complément non supprimable.", "La phrase reste parfaitement correcte et garde le même sens.", "Le verbe change automatiquement de temps."],
+        answer: 0 // A
+    },
+    {
+        q: "5. Pour identifier un COI, quelle manipulation faut-il faire ?",
+        options: ["Poser la question 'Qui ?' ou 'Quoi ?' juste après le verbe.", "Poser une question qui débute par une préposition comme à ou de.", "Chercher le sujet de l'action."],
+        answer: 1 // B
+    }
+];
+
+const quizBody = document.getElementById('quiz-body');
+
+// Génération du QCM
+quizData.forEach((data, qIdx) => {
+    const div = document.createElement('div');
+    div.className = 'question-block';
+    div.innerHTML = `
+        <span class="question-text">${data.q}</span>
+        <div class="options-container" id="q${qIdx}">
+            ${data.options.map((opt, oIdx) => `
+                <div class="option" onclick="selectOption(${qIdx}, ${oIdx})">${opt}</div>
+            `).join('')}
+        </div>
+    `;
+    quizBody.appendChild(div);
+});
+
+let userSelections = new Array(quizData.length).fill(null);
+
+function selectOption(qIdx, oIdx) {
+    userSelections[qIdx] = oIdx;
+    const options = document.querySelectorAll(`#q${qIdx} .option`);
+    options.forEach((el, i) => {
+        el.classList.toggle('selected', i === oIdx);
+    });
+}
+
+document.getElementById('check-btn').onclick = function() {
+    if (userSelections.includes(null)) {
+        alert("Merci de répondre à toutes les questions !");
+        return;
+    }
+
+    let score = 0;
+    quizData.forEach((data, qIdx) => {
+        const options = document.querySelectorAll(`#q${qIdx} .option`);
+        options.forEach((el, oIdx) => {
+            el.classList.remove('selected');
+            if (oIdx === data.answer) {
+                el.classList.add('correct');
+                if (userSelections[qIdx] === oIdx) score++;
+            } else if (userSelections[qIdx] === oIdx) {
+                el.classList.add('wrong');
+            }
+        });
+    });
+
+    document.getElementById('result-box').innerHTML = `Score : ${score} / ${quizData.length}`;
+    this.disabled = true;
+    this.textContent = "Exercice terminé";
+};
+</script>
+
+</body>
+</html>

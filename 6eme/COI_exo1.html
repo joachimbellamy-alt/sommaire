@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Repérage Grammatical - iPad</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --border-color: #e2e8f0;
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background: var(--card-bg);
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        h1 { margin: 0; font-size: 1.25rem; color: var(--primary-color); }
+
+        .instruction-box {
+            background: #eff6ff;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            border: 1px solid #bfdbfe;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        #content-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .sentence-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        .words-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            line-height: 2;
+        }
+
+        .word {
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: #f1f5f9;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.1rem;
+            user-select: none;
+        }
+
+        .word.selected {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .word.correct { background: var(--success) !important; color: white; border-color: var(--success); }
+        .word.wrong { background: var(--error) !important; color: white; border-color: var(--error); }
+        .word.excluded { background: transparent; border: none; cursor: default; font-weight: bold; color: #64748b; }
+
+        #sticky-footer {
+            background: var(--card-bg);
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        #score-display { font-weight: bold; min-width: 80px; text-align: right; }
+
+        button#validate-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        button#validate-btn:disabled { opacity: 0.5; }
+        
+        .attempt-indicator {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--warning);
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Identification du COI</h1>
+</header>
+
+<div id="content-container">
+    <div class="instruction-box">
+        <strong>Consigne :</strong> Sélectionne tous les mots qui composent le COI. <br>
+        🎯 <strong>1 pt</strong> au 1er essai | 💡 <strong>0,5 pt</strong> au 2ème essai.
+    </div>
+    <div id="exercise-wrapper"></div>
+</div>
+
+<div id="sticky-footer">
+    <div class="progress-bar"><div id="progress-fill"></div></div>
+    <div id="score-display">0/0</div>
+    <button id="validate-btn">Valider</button>
+</div>
+
+<script>
+    const rawText = `
+    [1.] Le petit prince, sur sa minuscule planète, s'occupe quotidiennement *de l'unique fleur qui a poussé un matin d'été* .
+    [2.] L'aviateur, perdu au milieu du désert du Sahara, réfléchit longuement *à la réparation complexe de son moteur d'avion brisé* .
+    [3.] Le petit garçon s'intéresse énormément *aux épines des roses* pour protéger sa fleur des moutons gourmands.
+    [4.] Sur la première planète, le vieux roi magnifique mais solitaire commande *à ses rares sujets* pour affirmer son autorité.
+    [5.] Le vaniteux prête attention *aux louanges* et il ne répond jamais *aux questions sérieuses du petit visiteur de passage*.
+    [6.] L'astronome turc a dû faire face *au mépris injuste des savants européens* à cause de ses vêtements traditionnels très colorés.
+    [7.] Le petit prince renonce *à la protection de son globe de verre* car sa fleur doit apprendre *à vivre seule *.
+    [8.] Le renard, assis sous le pommier sauvage, propose *au petit garçon* une amitié durable venu .
+    [9.] L'explorateur s'oppose *à l'oubli des choses importantes* .
+    [10.] Les grandes personnes s'intéressent uniquement *aux chiffres inutiles* et *aux statistiques ennuyeuses* .
+    `;
+
+    let currentSentenceIdx = 0;
+    let score = 0;
+    let attempts = 0;
+    const sentences = rawText.trim().split('\n').filter(s => s.trim() !== '');
+
+    function initExercise() {
+        attempts = 0;
+        const wrapper = document.getElementById('exercise-wrapper');
+        wrapper.innerHTML = '';
+        const s = sentences[currentSentenceIdx];
+        
+        const card = document.createElement('div');
+        card.className = 'sentence-card';
+
+        const indicator = document.createElement('div');
+        indicator.id = 'attempt-text';
+        indicator.className = 'attempt-indicator';
+        indicator.textContent = 'Premier essai (1 point)';
+        card.appendChild(indicator);
+        
+        const container = document.createElement('div');
+        container.className = 'words-container';
+
+        const regex = /\[(.*?)\]|\*(.*?)\*|(\S+)/g;
+        let match;
+
+        while ((match = regex.exec(s)) !== null) {
+            if (match[1]) {
+                const span = document.createElement('span');
+                span.className = 'word excluded';
+                span.textContent = match[1];
+                container.appendChild(span);
+            } else if (match[2]) {
+                const wordsInBlock = match[2].trim().split(/\s+/);
+                wordsInBlock.forEach(word => {
+                    const span = document.createElement('span');
+                    span.className = 'word';
+                    span.textContent = word;
+                    span.dataset.correct = "true";
+                    span.onclick = () => { if(!document.getElementById('validate-btn').disabled) span.classList.toggle('selected'); };
+                    container.appendChild(span);
+                });
+            } else if (match[3]) {
+                const span = document.createElement('span');
+                span.className = 'word';
+                span.textContent = match[3];
+                span.onclick = () => { if(!document.getElementById('validate-btn').disabled) span.classList.toggle('selected'); };
+                container.appendChild(span);
+            }
+        }
+
+        card.appendChild(container);
+        wrapper.appendChild(card);
+        updateUI();
+    }
+
+    function updateUI() {
+        const progress = (currentSentenceIdx / sentences.length) * 100;
+        document.getElementById('progress-fill').style.width = `${progress}%`;
+        document.getElementById('score-display').textContent = `${score} / ${sentences.length}`;
+    }
+
+    document.getElementById('validate-btn').onclick = function() {
+        const words = document.querySelectorAll('.word:not(.excluded)');
+        let errorsFound = false;
+        
+        words.forEach(w => {
+            const shouldBeSelected = w.dataset.correct === "true";
+            const isSelected = w.classList.contains('selected');
+            if ((shouldBeSelected && !isSelected) || (!shouldBeSelected && isSelected)) {
+                errorsFound = true;
+            }
+        });
+
+        if (!errorsFound) {
+            words.forEach(w => { if (w.dataset.correct === "true") w.classList.add('correct'); });
+            score += (attempts === 0) ? 1 : 0.5;
+            endSentence();
+        } else {
+            attempts++;
+            if (attempts === 1) {
+                words.forEach(w => {
+                    if (w.classList.contains('selected') && w.dataset.correct !== "true") w.classList.add('wrong');
+                });
+                document.getElementById('attempt-text').textContent = 'Erreur ! Réessaie (0,5 point)';
+                document.getElementById('attempt-text').style.color = 'var(--error)';
+                this.disabled = true;
+
+                setTimeout(() => {
+                    words.forEach(w => { w.classList.remove('correct', 'wrong', 'selected'); });
+                    document.getElementById('attempt-text').textContent = 'Deuxième essai';
+                    document.getElementById('attempt-text').style.color = 'var(--warning)';
+                    this.disabled = false;
+                }, 1500);
+            } else {
+                words.forEach(w => {
+                    if (w.dataset.correct === "true") w.classList.add('correct');
+                    if (w.classList.contains('selected') && w.dataset.correct !== "true") w.classList.add('wrong');
+                });
+                document.getElementById('attempt-text').textContent = 'Correction';
+                endSentence();
+            }
+        }
+    };
+
+    function endSentence() {
+        document.getElementById('validate-btn').disabled = true;
+        setTimeout(() => {
+            currentSentenceIdx++;
+            if (currentSentenceIdx < sentences.length) {
+                document.getElementById('validate-btn').disabled = false;
+                initExercise();
+            } else {
+                updateUI();
+                const total = sentences.length;
+                document.getElementById('exercise-wrapper').innerHTML = `
+                    <div class="sentence-card">
+                        <h2>Exercice terminé !</h2>
+                        <p>Ton score final : <strong>${score} / ${total}</strong></p>
+                    </div>`;
+                document.getElementById('validate-btn').style.display = 'none';
+            }
+        }, 2000);
+    }
+
+    initExercise();
+</script>
+
+</body>
+</html>

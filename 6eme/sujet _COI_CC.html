@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Analyse des fonctions : Sujet, COI et Compléments Facultatifs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f0f4f8; 
+            --card-bg: #ffffff;
+            --sujet: #f39c12;    /* Orange pour Sujet */
+            --primary: #4a90e2;  /* Bleu pour COI */
+            --optional: #9b59b6; /* Violet pour Facultatifs */
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --text: #2c3e50;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text);
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column;
+            min-height: 100vh;
+            -webkit-user-select: none;
+        }
+
+        header {
+            padding: 15px;
+            text-align: center;
+            background: var(--card-bg);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .instruction-box {
+            background: #fff;
+            border: 2px solid #ddd;
+            padding: 15px;
+            margin: 10px auto;
+            max-width: 850px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .attempt-indicator {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+        }
+
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .mode-btn {
+            padding: 10px 18px;
+            border-radius: 25px;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: 0.3s;
+        }
+
+        .mode-btn.active-sujet { background: var(--sujet); color: white; border-color: var(--sujet); }
+        .mode-btn.active-coi { background: var(--primary); color: white; border-color: var(--primary); }
+        .mode-btn.active-opt { background: var(--optional); color: white; border-color: var(--optional); }
+
+        .content-container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .main-card {
+            max-width: 900px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 120px;
+        }
+
+        #text-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            line-height: 2.8;
+        }
+
+        .word {
+            padding: 4px 10px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.15rem;
+            transition: all 0.2s;
+        }
+
+        .sel-sujet { background-color: var(--sujet) !important; color: white !important; border-color: #d35400 !important; }
+        .sel-coi { background-color: var(--primary) !important; color: white !important; border-color: #2c7ac5 !important; }
+        .sel-opt { background-color: var(--optional) !important; color: white !important; border-color: #8e44ad !important; }
+        
+        .correct { background-color: var(--success) !important; color: white !important; border-color: #27ae60 !important; }
+        .wrong { background-color: var(--error) !important; color: white !important; animation: shake 0.4s; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .sticky-footer {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(255,255,255,0.95);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        #val-btn {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 15px 45px;
+            border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+        
+        #val-btn:disabled { background: #bdc3c7; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Analyse des fonctions dans la phrase</h1>
+</header>
+
+<div class="instruction-box">
+    <b>Barème :</b> 1er essai = 1pt | 2ème essai = 0,5pt.<br>
+    Sélectionnez une fonction puis cliquez sur un mot pour colorer son groupe.
+    <div class="mode-selector">
+        <div id="btn-sujet" class="mode-btn active-sujet" onclick="setMode('sujet')">Sujet du verbe</div>
+        <div id="btn-coi" class="mode-btn" onclick="setMode('coi')">COI du verbe</div>
+        <div id="btn-opt" class="mode-btn" onclick="setMode('opt')">Complément supprimable</div>
+    </div>
+</div>
+
+<div class="content-container">
+    <div class="main-card">
+        <div id="attempt-msg" class="attempt-indicator">Premier essai</div>
+        <div id="text-container"></div>
+    </div>
+</div>
+
+<div class="sticky-footer">
+    <div>Phrase : <b id="phrase-idx">1</b> / 5 | Score : <b id="score-val">0</b> pts</div>
+    <button id="val-btn">Valider la phrase</button>
+</div>
+
+<script>
+const exercises = [
+    "[À l'aube naissante], {le petit prince} s'adresse *à sa fleur* [avec une grande douceur] [au moment du lever du soleil] .",
+    "{L'aviateur} réfléchit *à sa réparation mécanique* [à l'ombre de l'aile de son avion brisé dans le sable] .",
+    "{Le petit garçon} se plaint *de sa solitude* [de façon très touchante] .",
+    "[De bon matin], {le businessman} parle *de ses millions d'étoiles* [sans même saluer le petit prince] .",
+    "[À travers l'immensité du désert], {l'enfant} pense *à un puits caché quelque part* [pour calmer sa soif] ."
+];
+
+let currentIdx = 0;
+let currentMode = 'sujet';
+let totalScore = 0;
+let attempts = 1;
+let wordsData = [];
+let groupCounter = 0;
+
+function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('btn-sujet').className = 'mode-btn' + (mode === 'sujet' ? ' active-sujet' : '');
+    document.getElementById('btn-coi').className = 'mode-btn' + (mode === 'coi' ? ' active-coi' : '');
+    document.getElementById('btn-opt').className = 'mode-btn' + (mode === 'opt' ? ' active-opt' : '');
+}
+
+function init() {
+    const rawText = exercises[currentIdx];
+    const container = document.getElementById('text-container');
+    container.innerHTML = '';
+    wordsData = [];
+    attempts = 1;
+    groupCounter = 0;
+    document.getElementById('phrase-idx').textContent = currentIdx + 1;
+    document.getElementById('attempt-msg').textContent = "Premier essai";
+    document.getElementById('attempt-msg').style.color = "var(--primary)";
+    document.getElementById('val-btn').disabled = false;
+    document.getElementById('val-btn').textContent = "Valider la phrase";
+
+    const tokens = rawText.split(/(\{.*?\}|\[.*?\]|\*.*?\*|\s+)/);
+    
+    tokens.forEach(token => {
+        if (!token || token.trim() === "") return;
+        
+        groupCounter++;
+        if (token.startsWith('{')) {
+            addWordsFromGroup(token.slice(1, -1), 'sujet', groupCounter);
+        } else if (token.startsWith('*')) {
+            addWordsFromGroup(token.slice(1, -1), 'coi', groupCounter);
+        } else if (token.startsWith('[')) {
+            addWordsFromGroup(token.slice(1, -1), 'opt', groupCounter);
+        } else {
+            addWordsFromGroup(token, 'none', groupCounter);
+        }
+    });
+    render();
+}
+
+function addWordsFromGroup(text, type, groupId) {
+    text.trim().split(/\s+/).forEach(w => {
+        wordsData.push({ text: w, type: type, groupId: groupId, selected: null, validated: null });
+    });
+}
+
+function render() {
+    const container = document.getElementById('text-container');
+    container.innerHTML = '';
+    wordsData.forEach((w, i) => {
+        const span = document.createElement('span');
+        span.className = 'word';
+        if (w.selected === 'sujet') span.classList.add('sel-sujet');
+        if (w.selected === 'coi') span.classList.add('sel-coi');
+        if (w.selected === 'opt') span.classList.add('sel-opt');
+        if (w.validated === 'correct') span.classList.add('correct');
+        
+        span.textContent = w.text;
+        span.onclick = () => {
+            if (w.validated === 'correct') return;
+            const targetMode = (w.selected === currentMode) ? null : currentMode;
+            // Sélection par groupe : tous les mots du même groupId
+            wordsData.forEach(word => {
+                if (word.groupId === w.groupId) word.selected = targetMode;
+            });
+            render();
+        };
+        container.appendChild(span);
+    });
+}
+
+document.getElementById('val-btn').onclick = () => {
+    const isCorrect = wordsData.every(w => {
+        if (w.type === 'none') return w.selected === null;
+        return w.selected === w.type;
+    });
+
+    const spans = document.querySelectorAll('.word');
+    if (isCorrect) {
+        wordsData.forEach(w => { if(w.type !== 'none') w.validated = 'correct'; });
+        totalScore += (attempts === 1 ? 1 : 0.5);
+        document.getElementById('score-val').textContent = totalScore;
+        document.getElementById('val-btn').textContent = "Bravo !";
+        nextPhrase();
+    } else {
+        if (attempts === 1) {
+            wordsData.forEach((w, i) => {
+                if (w.selected && w.selected !== w.type) spans[i].classList.add('wrong');
+            });
+            setTimeout(() => {
+                attempts = 2;
+                document.getElementById('attempt-msg').textContent = "Deuxième essai";
+                document.getElementById('attempt-msg').style.color = "#e67e22";
+                wordsData.forEach(w => { if(w.validated !== 'correct') w.selected = null; });
+                render();
+            }, 1200);
+        } else {
+            wordsData.forEach((w, i) => {
+                if (w.type !== 'none') w.validated = 'correct';
+                if (w.selected && w.selected !== w.type) spans[i].classList.add('wrong');
+            });
+            document.getElementById('val-btn').textContent = "Correction...";
+            nextPhrase();
+        }
+    }
+    render();
+};
+
+function nextPhrase() {
+    document.getElementById('val-btn').disabled = true;
+    setTimeout(() => {
+        if (currentIdx < exercises.length - 1) {
+            currentIdx++;
+            init();
+        } else {
+            document.getElementById('attempt-msg').innerHTML = `<b>Terminé !</b> Score final : ${totalScore} / ${exercises.length}`;
+            document.getElementById('val-btn').textContent = "Fin";
+        }
+    }, 2500);
+}
+
+init();
+</script>
+</body>
+</html>
