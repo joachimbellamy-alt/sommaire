@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        :root {
+            --text-size: 14pt;
+            --main-blue: #2C3E50;
+            --accent-blue: #3498DB;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F4F7F6;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* TITRE ET CONSIGNE */
+        header {
+            background-color: var(--main-blue);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+        }
+
+        h1 { margin: 0; font-size: 1.4rem; text-transform: uppercase; letter-spacing: 1px; }
+        
+        #consigne {
+            background-color: #D6EAF8;
+            padding: 10px;
+            font-size: 1rem;
+            color: #1B4F72;
+            text-align: center;
+            font-style: italic;
+            border-bottom: 2px solid #AED6F1;
+        }
+
+        /* ZONE DU TEXTE DE RÉFÉRENCE */
+        #text-reference {
+            background: white;
+            padding: 20px;
+            margin: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            font-size: var(--text-size);
+            line-height: 1.8;
+            border-left: 6px solid var(--accent-blue);
+        }
+
+        /* ZONE DU QUESTIONNAIRE */
+        #quiz-container {
+            flex-grow: 1;
+            padding: 20px;
+            background: #E5E8E8;
+            border-top-left-radius: 30px;
+            border-top-right-radius: 30px;
+            overflow-y: auto;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .question-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--main-blue);
+            line-height: 1.3;
+        }
+
+        .option-card {
+            display: flex;
+            align-items: center;
+            background: white;
+            margin: 10px 0;
+            padding: 16px;
+            border-radius: 12px;
+            border: 2px solid #BDC3C7;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .option-card input {
+            transform: scale(1.6);
+            margin-right: 20px;
+        }
+
+        #btn-action {
+            width: 100%;
+            padding: 18px;
+            background: var(--main-blue);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 15px;
+            box-shadow: 0 4px 0 #1A252F;
+        }
+
+        #btn-action:active { transform: translateY(2px); box-shadow: 0 2px 0 #1A252F; }
+
+        .feedback-area {
+            text-align: center;
+            height: 30px;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Le rôle important de la ponctuation</h1>
+</header>
+
+<div id="consigne">
+    Version 1 : Lisez attentivement le texte ci-dessous, puis répondez aux questions pour vérifier si vous avez bien compris qui fait quoi.
+</div>
+
+<div id="text-reference">
+    L’extraterrestre arrive dans le jardin un pistolet à la main. 
+    La tête haute, je l’attends debout. Derrière la porte, 
+    mon mari se cache en tremblant de peur. 
+    L’étranger phosphorescent pousse la porte. 
+    Sans crainte, je m’avance.
+</div>
+
+<div id="quiz-container">
+    <div class="question-header">
+        <div class="question-title" id="q-title">Chargement de la question...</div>
+        <div id="q-count" style="font-weight:bold; color:#7F8C8D; background:white; padding:5px 10px; border-radius:15px;">1/6</div>
+    </div>
+    
+    <div id="options-list"></div>
+    <div id="msg-feedback" class="feedback-area"></div>
+    
+    <button id="btn-action" onclick="handleAction()">Valider ma réponse</button>
+</div>
+
+<script>
+    const questions = [
+        {
+            title: "Dans ce texte, qui a un pistolet à la main ?",
+            options: ["L'extraterrestre", "La narratrice", "Le mari"],
+            correct: 0
+        },
+        {
+            title: "Dans ce texte, qui attend debout la tête haute ?",
+            options: ["L'extraterrestre", "La narratrice", "Le mari"],
+            correct: 1
+        },
+        {
+            title: "Dans ce texte, qui se cache derrière la porte ?",
+            options: ["L'extraterrestre", "La narratrice", "Le mari"],
+            correct: 2
+        },
+        {
+            title: "Dans ce texte, qui tremble de peur ?",
+            options: ["L'extraterrestre", "La narratrice", "Le mari"],
+            correct: 2
+        },
+        {
+            title: "Dans ce texte, qui pousse la porte ?",
+            options: ["L'extraterrestre", "La narratrice", "Le mari"],
+            correct: 0
+        },
+        {
+            title: "Dans ce texte, qui s'avance sans crainte ?",
+            options: ["L'extraterrestre", "La narratrice", "Le mari"],
+            correct: 1
+        }
+    ];
+
+    let currentQ = 0;
+    let isValidated = false;
+
+    function displayQuestion() {
+        const q = questions[currentQ];
+        document.getElementById('q-title').innerText = q.title;
+        document.getElementById('q-count').innerText = `${currentQ + 1}/${questions.length}`;
+        
+        document.getElementById('options-list').innerHTML = q.options.map((opt, i) => `
+            <label class="option-card">
+                <input type="radio" name="answer" value="${i}">
+                <span>${opt}</span>
+            </label>
+        `).join('');
+        
+        document.getElementById('msg-feedback').innerText = "";
+        document.getElementById('btn-action').innerText = "Valider ma réponse";
+        document.getElementById('btn-action').style.background = "var(--main-blue)";
+        isValidated = false;
+    }
+
+    function handleAction() {
+        const btn = document.getElementById('btn-action');
+        const feedback = document.getElementById('msg-feedback');
+
+        if (!isValidated) {
+            const selected = document.querySelector('input[name="answer"]:checked');
+            if (!selected) return;
+
+            if (parseInt(selected.value) === questions[currentQ].correct) {
+                feedback.innerText = "✅ Excellent !";
+                feedback.style.color = "#27AE60";
+                btn.innerText = "Continuer ▶";
+                btn.style.background = "#27AE60";
+                isValidated = true;
+            } else {
+                feedback.innerText = "❌  Prends le temps de bien observer la ponctuation pour savoir où commencent et finissent les différentes idées. ";
+                feedback.style.color = "#E74C3C";
+            }
+        } else {
+            currentQ++;
+            if (currentQ < questions.length) {
+                displayQuestion();
+            } else {
+                document.getElementById('quiz-container').innerHTML = `
+                <div style="text-align:center; padding-top:20px;">
+                    <h2 style="color:var(--main-blue)">Analyse terminée !</h2>
+                    <p>Tu as bien compris l'importance des points et des virgules dans ce premier texte.</p>
+                    <button onclick='location.reload()' style="padding:15px; border-radius:10px; border:none; background:var(--accent-blue); color:white; font-weight:bold;">Recommencer l'exercice</button>
+                </div>`;
+            }
+        }
+    }
+
+    displayQuestion();
+</script>
+
+</body>
+</html>

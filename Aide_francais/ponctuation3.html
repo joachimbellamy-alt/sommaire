@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        :root {
+            --text-size: 14pt;
+            --main-blue: #2C3E50;
+            --accent-blue: #3498DB;
+            --valid-green: #27AE60;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #F4F7F6;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header { background: var(--main-blue); color: white; padding: 15px; text-align: center; }
+        
+        #sense-goals {
+            background: #EBF5FB;
+            margin: 10px;
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid #AED6F1;
+        }
+
+        .goal-title { font-weight: bold; color: #1B4F72; margin-bottom: 8px; font-size: 1rem; text-align: center;}
+
+        .grid-container {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+        }
+
+        .goal-card {
+            background: white; padding: 8px; border-radius: 8px; font-size: 0.9rem;
+            border-left: 4px solid var(--accent-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        #text-editor {
+            flex-grow: 1; padding: 25px; margin: 10px; background: white;
+            border-radius: 15px; line-height: 4.5; font-size: var(--text-size);
+            overflow-y: auto; border: 1px solid #D5DBDB;
+        }
+
+        .punc-btn {
+            display: inline-block; min-width: 40px; height: 40px; background: #EBEDEF;
+            margin: 0 4px; border-radius: 8px; text-align: center; cursor: pointer;
+            font-weight: bold; color: var(--main-blue); border: 2px solid #BDC3C7;
+            vertical-align: middle; line-height: 40px; font-size: 1.2rem;
+        }
+
+        .punc-btn.active { 
+            background: #D6EAF8; 
+            border: 2px solid var(--accent-blue); 
+        }
+
+        #btn-check {
+            margin: 20px; padding: 20px; background: var(--main-blue); color: white;
+            border: none; border-radius: 12px; font-size: 1.2rem; font-weight: bold;
+        }
+
+        .feedback { text-align: center; font-weight: bold; min-height: 30px; padding: 10px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Le rôle important de la Ponctuation </h1>
+</header>
+
+<div id="sense-goals">
+    <div class="goal-title">🎯 MISSION : tu vas devoir ponctuer le texte suivant pour qu'il ait ce sens précis :</div>
+    <div class="grid-container">
+        <div class="goal-card">1. Qui a l'arme ? <br><b>L'extraterrestre</b></div>
+        <div class="goal-card">2. Qui attend tête haute ? <br><b>La narratrice</b></div>
+        <div class="goal-card">3. Où est le mari ? <br><b>Derrière la porte</b></div>
+        <div class="goal-card">4. Qui tremble de peur ? <br><b>Le mari</b></div>
+        <div class="goal-card">5. Qui pousse la porte ? <br><b>L'étranger</b></div>
+        <div class="goal-card">6. Qui est sans crainte ? <br><b>La narratrice</b></div>
+    </div>
+</div>
+
+<div id="text-editor">
+    L’extraterrestre arrive dans le jardin un pistolet à la main<span class="punc-btn" id="p1"> </span>
+    la tête haute<span class="punc-btn" id="p2"> </span>je l’attends debout<span class="punc-btn" id="p3"> </span>
+    derrière la porte<span class="punc-btn" id="p4"> </span>mon mari se cache<span class="punc-btn" id="p5"> </span>
+    en tremblant de peur<span class="punc-btn" id="p6"> </span>l’étranger phosphorescent pousse la porte<span class="punc-btn" id="p7"> </span>
+    sans crainte<span class="punc-btn" id="p8"> </span>je m’avance
+</div>
+
+<div id="msg-feedback" class="feedback"></div>
+
+<button id="btn-check" onclick="verify()">Vérifier ma ponctuation</button>
+
+<script>
+    // État initial : tous les boutons sont vides " "
+    const currentPunc = { p1: ' ', p2: ' ', p3: ' ', p4: ' ', p5: ' ', p6: ' ', p7: ' ', p8: ' ' };
+
+    // SOLUTION V3 : Le mari tremble (Ø entre "cache" et "en tremblant")
+    const solution = {
+        p1: '.', p2: ',', p3: '.', p4: ',', p5: 'Ø', p6: '.', p7: '.', p8: ','
+    };
+
+    document.querySelectorAll('.punc-btn').forEach(btn => {
+        btn.onclick = function() {
+            const id = this.id;
+            let val = currentPunc[id];
+            
+            // Cycle : Vide -> , -> . -> Ø -> Vide
+            if (val === ' ') val = ',';
+            else if (val === ',') val = '.';
+            else if (val === '.') val = 'Ø';
+            else val = ' ';
+            
+            currentPunc[id] = val;
+            this.innerText = (val === ' ') ? ' ' : val;
+            
+            if (val !== ' ') {
+                this.classList.add('active');
+            } else {
+                this.classList.remove('active');
+            }
+        };
+    });
+
+    function verify() {
+        let errors = 0;
+        let notSelected = 0;
+
+        for (let key in solution) {
+            // On considère que si c'est resté vide " ", l'élève n'a pas encore fait de choix conscient
+            if (currentPunc[key] === ' ') notSelected++;
+            if (currentPunc[key] !== solution[key]) errors++;
+        }
+
+        const fb = document.getElementById('msg-feedback');
+        if (notSelected > 0) {
+            fb.innerText = "⚠️ Sélectionne un signe dans chaque zone (utilise Ø pour 'pas de ponctuation').";
+            fb.style.color = "#E67E22";
+        } else if (errors === 0) {
+            fb.innerText = "✅ Bravo ! Le texte est parfaitement ponctué selon la mission.";
+            fb.style.color = "var(--valid-green)";
+            document.getElementById('btn-check').style.background = "var(--valid-green)";
+        } else {
+            fb.innerText = "❌ Le sens ne correspond pas encore. Relis bien l'objectif 4.";
+            fb.style.color = "#E74C3C";
+        }
+    }
+</script>
+
+</body>
+</html>
