@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Laboratoire de Syntaxe</title>
+    <style>
+        body { 
+            font-family: sans-serif; background: #f0f0f0; margin: 0; 
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden; touch-action: none;
+        }
+        
+        h1 { font-size: 1.1rem; text-align: center; color: #444; margin: 10px 0; text-transform: uppercase; }
+
+        #plateau {
+            flex: 1; background: #fff; margin: 15px; padding: 30px;
+            display: flex; flex-wrap: wrap; gap: 12px; align-content: flex-start;
+            align-items: center; border: 2px solid #bbb; border-radius: 8px;
+        }
+
+        /* --- CORRECTION MAJUSCULE --- */
+        /* On force le bloc à se comporter comme un bloc de texte pour activer la majuscule */
+        #plateau .bloc:first-child .label-text {
+            display: inline-block;
+        }
+        #plateau .bloc:first-child .label-text::first-letter {
+            text-transform: uppercase !important;
+        }
+
+        #sac {
+            height: 320px; background: #ddd; padding: 15px;
+            border-top: 3px solid #999; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+
+        .ligne-reserve {
+            display: flex; flex-wrap: wrap; gap: 10px; padding: 10px;
+            background: rgba(255,255,255,0.4); border-radius: 6px; border: 1px dashed #aaa;
+        }
+
+        .bloc {
+            background: #fdfdfd; border: 1px solid #777; padding: 10px 18px;
+            border-radius: 4px; font-size: 1.15rem; cursor: grab;
+            user-select: none; -webkit-user-select: none; 
+            display: inline-flex; align-items: center;
+        }
+
+        .dragging {
+            position: fixed !important; z-index: 1000; opacity: 0.85; 
+            pointer-events: none; background: #fff; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .placeholder { border: 2px dashed #888; background: transparent; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<h1>Déplacez les groupes sur le plateau blanc</h1>
+
+<div id="plateau"></div>
+
+<div id="sac"></div>
+
+<script>
+const corpus = [
+    "l'aviateur / s'ennuie / à mille milles de toute terre habitée /, /.",
+    "le Petit Prince / s'attache / à sa rose /, /.",
+    "le voyageur / arrive / à l'improviste / sur l'astéroïde B 612 /, /.",
+    "le renard / demande / à l'enfant / de l'apprivoiser.",
+    "les baobabs / ne poussent pas / à Paris/, /. /",
+    "l'allumeur de réverbères / obéit / à la consigne/, /.",
+    "le Petit Prince / s'endort / à minuit/, /.",
+    "le serpent / propose / son aide / au voyageur/, /.",
+    "le renard / reste / immobile / à l'ombre de son pommier/, /.",
+    "le vaniteux / ne répond jamais / aux questions / du petit garçon/, /."
+];
+
+let dragEl = null;
+let offset = { x: 0, y: 0 };
+let placeholder = document.createElement('div');
+placeholder.className = 'placeholder';
+
+function init() {
+    const sac = document.getElementById('sac');
+    corpus.forEach(phrase => {
+        const ligne = document.createElement('div');
+        ligne.className = 'ligne-reserve';
+        let groupes = phrase.split('/').map(t => t.trim()).filter(t => t !== "");
+        groupes.sort(() => Math.random() - 0.5);
+        
+        groupes.forEach(txt => {
+            const div = document.createElement('div');
+            div.className = 'bloc';
+            // On enveloppe le texte dans un span pour le CSS
+            div.innerHTML = `<span class="label-text">${txt}</span>`;
+            div.onpointerdown = start;
+            ligne.appendChild(div);
+        });
+        sac.appendChild(ligne);
+    });
+}
+
+function start(e) {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    dragEl = e.currentTarget;
+    const r = dragEl.getBoundingClientRect();
+    offset.x = e.clientX - r.left;
+    offset.y = e.clientY - r.top;
+    placeholder.style.width = r.width + 'px';
+    placeholder.style.height = r.height + 'px';
+    dragEl.classList.add('dragging');
+    dragEl.parentNode.insertBefore(placeholder, dragEl);
+    updatePos(e.clientX, e.clientY);
+    document.onpointermove = move;
+    document.onpointerup = end;
+    dragEl.setPointerCapture(e.pointerId);
+}
+
+function move(e) {
+    if (!dragEl) return;
+    updatePos(e.clientX, e.clientY);
+    const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('#plateau, .ligne-reserve');
+    if (target) {
+        const afterEl = getAfter(target, e.clientX);
+        if (afterEl) target.insertBefore(placeholder, afterEl);
+        else target.appendChild(placeholder);
+    }
+}
+
+function end(e) {
+    if (!dragEl) return;
+    document.onpointermove = null;
+    document.onpointerup = null;
+    if (placeholder.parentNode) placeholder.parentNode.replaceChild(dragEl, placeholder);
+    dragEl.classList.remove('dragging');
+    dragEl.style.position = ''; dragEl.style.left = ''; dragEl.style.top = '';
+    dragEl.releasePointerCapture(e.pointerId);
+    dragEl = null;
+}
+
+function updatePos(x, y) {
+    dragEl.style.left = (x - offset.x) + 'px';
+    dragEl.style.top = (y - offset.y) + 'px';
+}
+
+function getAfter(container, x) {
+    const els = [...container.querySelectorAll('.bloc:not(.dragging)')];
+    return els.find(el => {
+        const r = el.getBoundingClientRect();
+        return x < r.left + r.width / 2;
+    });
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
