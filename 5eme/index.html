@@ -8,27 +8,67 @@
         /* Couleur distinctive pour la 5ème : Vert */
         :root { --couleur-classe: forestgreen; }
 
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; padding: 20px; color: #2c3e50; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 15px; border-top: 10px solid var(--couleur-classe); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #f4f4f4; 
+            padding: 20px; 
+            color: #2c3e50; 
+        }
+        
+        .container { 
+            max-width: 600px; 
+            margin: auto; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 15px; 
+            border-top: 10px solid var(--couleur-classe); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+
         h1 { color: var(--couleur-classe); text-align: center; margin-bottom: 5px; }
         p { text-align: center; font-style: italic; color: #7f8c8d; margin-bottom: 25px; }
         
         .btn { 
-            display: flex; justify-content: center; align-items: center; gap: 10px;
-            padding: 18px; margin: 12px 0; 
-            background: #fff; border: 2px solid var(--couleur-classe); 
-            color: var(--couleur-classe); text-decoration: none; 
-            border-radius: 8px; font-weight: bold; transition: 0.3s;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 10px;
+            padding: 18px; 
+            margin: 12px 0; 
+            background: #fff; 
+            border: 2px solid var(--couleur-classe); 
+            color: var(--couleur-classe); 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            transition: 0.3s;
         }
-        .btn:hover { background: var(--couleur-classe); color: white; transform: scale(1.02); }
+
+        .btn:hover { 
+            background: var(--couleur-classe); 
+            color: white; 
+            transform: scale(1.02); 
+        }
         
         .nouveau {
-            background: #e74c3c; color: white; font-size: 0.75em;
-            padding: 2px 10px; border-radius: 20px; text-transform: uppercase;
+            background: #e74c3c; 
+            color: white; 
+            font-size: 0.75em;
+            padding: 2px 10px; 
+            border-radius: 20px; 
+            text-transform: uppercase;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        .retour { display: block; text-align: center; margin-top: 30px; color: #95a5a6; text-decoration: none; font-weight: bold; }
+        .retour { 
+            display: block; 
+            text-align: center; 
+            margin-top: 30px; 
+            color: #95a5a6; 
+            text-decoration: none; 
+            font-weight: bold; 
+        }
+
         .retour:hover { color: var(--couleur-classe); }
     </style>
 </head>
@@ -36,19 +76,21 @@
 
 <div class="container">
     <h1>📚 Espace Français 5ème</h1>
-    <p>« Celui qui déplace la montagne, c'est celui qui commence par enlever les petites pierres.  — Confucius »</p>
+    <p>« Celui qui déplace la montagne, c'est celui qui commence par enlever les petites pierres. — Confucius »</p>
     
     <div class="list">
         <a href="chef_des_voleurs_COD.html" class="btn">
-            🏰 Repérer le COD dans un texte<span class="nouveau">nouveau</span>
+            🏰 Repérer le COD dans un texte <span class="nouveau">nouveau</span>
         </a>
+
         <a href="revisions_des_temps_du_passe.html" class="btn">
-            🏰 identifier la forme correcte des temps du passé<span class="nouveau">nouveau</span>
+            🏰 Identifier la forme correcte des temps du passé <span class="nouveau">nouveau</span>
         </a>
-            🏰 lundi 30 mars :identifier les fonctions<span class="nouveau">nouveau</span>
-<a href="COD_COI_CC.html" class="btn">
-           
-        </div>
+
+        <a href="COD_COI_CC.html" class="btn">
+            🏰 Lundi 30 mars : identifier les fonctions <span class="nouveau">nouveau</span>
+        </a>
+    </div>
 
     <a href="../index.html" class="retour">🏠 Retour à l'accueil</a>
 </div>
