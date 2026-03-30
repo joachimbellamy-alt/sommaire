@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Analyse Héroïque Complète</title>
+    <style>
+        :root {
+            --subject-color: #3498DB;
+            --cod-color: #27AE60;
+            --coi-color: #E67E22;
+            --selected-bg: #D6EAF8;
+            --verb-highlight: #FADBD8;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #F4F7F6;
+            margin: 0; padding: 20px;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+        }
+
+        #app { max-width: 900px; margin: 0 auto; padding-bottom: 220px; }
+
+        #instruction-header {
+            background: #2C3E50; color: white; padding: 20px;
+            border-radius: 12px; margin-bottom: 20px; border-left: 6px solid var(--subject-color);
+        }
+
+        #sentence-box {
+            background: white; padding: 50px 30px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            line-height: 3; font-size: 1.3rem; text-align: center; min-height: 120px;
+        }
+
+        .word {
+            display: inline-block; padding: 4px 8px; margin: 0 2px;
+            border-radius: 8px; cursor: pointer; transition: all 0.3s;
+        }
+
+        .word.selected { background-color: var(--selected-bg); box-shadow: 0 0 0 2px var(--subject-color); }
+
+        .word.hidden { opacity: 0; transform: translateY(-20px); pointer-events: none; width: 0; margin: 0; }
+
+        .pulse-verb { animation: pulse 0.6s ease-in-out 3; background-color: var(--verb-highlight) !important; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+        /* Contrôles */
+        #control-panel {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: white; padding: 20px; border-top: 1px solid #D5DBDB;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+        }
+
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+
+        button {
+            height: 70px; border: none; border-radius: 12px;
+            color: white; font-weight: bold; font-size: 0.9rem; cursor: pointer;
+        }
+
+        .btn-sujet { background: var(--subject-color); }
+        .btn-cc { background: #95A5A6; }
+        .btn-cod { background: var(--cod-color); }
+        .btn-coi { background: var(--coi-color); }
+        
+        #btn-next { background: #2C3E50; grid-column: span 4; display: none; height: 50px; }
+
+        .status { display: flex; justify-content: space-between; color: #7F8C8D; font-weight: bold; font-size: 0.85rem; }
+
+        #info-toast {
+            position: fixed; top: 15%; left: 50%; transform: translateX(-50%);
+            background: #2C3E50; color: white; padding: 15px 30px;
+            border-radius: 40px; display: none; z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+<div id="info-toast">Message</div>
+
+<div id="app">
+    <div id="instruction-header">
+        <strong>📝 Consigne :</strong> Analyse la phrase héroïque. <br>
+        Trouve le <b>Sujet des verbes</b>, les <b>COD/COI du verbe</b> et les <b>Compléments que tu peux supprimer et déplacer librement</b>.
+    </div>
+
+    <div id="sentence-box"></div>
+
+    <div id="control-panel">
+        <div class="btn-grid">
+            <button class="btn-sujet" onclick="verify('S')">SUJET du verbe<br><small></small></button>
+            <button class="btn-cc" onclick="verify('CC')">Compléments que tu peux supprimer et déplacer librement<br><small></small></button>
+            <button class="btn-cod" onclick="verify('COD')">COD du verbe<br><small></small></button>
+            <button class="btn-coi" onclick="verify('COI')">COI du verbe<br><small></small></button>
+            <button id="btn-next" onclick="loadNext()">Phrase Suivante ▶</button>
+        </div>
+        <div class="status">
+            <span id="score-lab">Score : 0</span>
+            <span id="target-lab">Restants : 0</span>
+        </div>
+    </div>
+</div>
+
+<script>
+const corpusFinal = [
+    // BATMAN
+    [{text:"Chaque",id:101},{text:"nuit,",id:101},{text:"le",id:1},{text:"héros",id:1},{text:"solitaire",id:1},{text:"surveille",id:0,v:1},{text:"la",id:201},{text:"ville",id:201},{text:"entière",id:201},{text:"avec",id:102},{text:"une",id:102},{text:"vigilance",id:102},{text:"extrême.",id:102}],
+    [{text:"Dans",id:103},{text:"la",id:103},{text:"Batcave,",id:103},{text:"Batman",id:2},{text:"examine",id:0,v:1},{text:"les",id:202},{text:"vidéos",id:202},{text:"de",id:202},{text:"surveillance.",id:202}],
+    [{text:"Le",id:3},{text:"justicier",id:3},{text:"livre",id:0,v:1},{text:"les",id:203},{text:"criminels",id:203},{text:"au",id:301},{text:"commissaire",id:301},{text:"Gordon.",id:301}],
+    // JEANNE D'ARC
+    [{text:"Dans",id:104},{text:"le",id:104},{text:"jardin,",id:104},{text:"la",id:4},{text:"jeune",id:4},{text:"bergère",id:4},{text:"entend",id:0,v:1},{text:"des",id:204},{text:"voix",id:204},{text:"mystérieusement.",id:105}],
+    [{text:"Jeanne",id:5},{text:"d'Arc",id:5},{text:"parle",id:0,v:1},{text:"au",id:302},{text:"dauphin",id:302},{text:"Charles",id:302},{text:"avec",id:106},{text:"conviction.",id:106}],
+    [{text:"En",id:107},{text:"1429,",id:107},{text:"l'armée",id:6},{text:"française",id:6},{text:"libère",id:0,v:1},{text:"enfin",id:0},{text:"la",id:205},{text:"cité",id:205},{text:"d'Orléans.",id:205}],
+    // KATNISS
+    [{text:"Le",id:7},{text:"Geai",id:7},{text:"Moqueur",id:7},{text:"succède",id:0,v:1},{text:"à",id:303},{text:"sa",id:303},{text:"sœur",id:303},{text:"Prim",id:303},{text:"par",id:108},{text:"amour.",id:108}],
+    [{text:"Dans",id:109},{text:"l'arène,",id:109},{text:"Katniss",id:8},{text:"décoche",id:0,v:1},{text:"une",id:206},{text:"flèche",id:206},{text:"enflammée.",id:206}],
+    [{text:"L'héroïne",id:9},{text:"du",id:9},{text:"District",id:9},{text:"12",id:9},{text:"protège",id:0,v:1},{text:"ses",id:207},{text:"alliés.",id:207}],
+    // HERCULE
+    [{text:"Durant",id:110},{text:"ses",id:110},{text:"travaux,",id:110},{text:"Hercule",id:10},{text:"affronte",id:0,v:1},{text:"le",id:208},{text:"lion.",id:208}],
+    [{text:"Le",id:11},{text:"demi-dieu",id:11},{text:"obéit",id:0,v:1},{text:"au",id:304},{text:"roi",id:304},{text:"Eurysthée",id:304},{text:"à",id:111},{text:"cause",id:111},{text:"d'Héra.",id:111}],
+    [{text:"Hercule",id:12},{text:"nettoie",id:0,v:1},{text:"les",id:209},{text:"écuries",id:209},{text:"en",id:112},{text:"déviant",id:112},{text:"le",id:112},{text:"fleuve.",id:112}]
+];
+
+let cursor = 0, targets = 0, points = 0;
+
+function build() {
+    const box = document.getElementById('sentence-box');
+    box.innerHTML = "";
+    const s = corpusFinal[cursor];
+    targets = new Set(s.map(w => w.id).filter(id => id > 0)).size;
+    updateUI();
+
+    s.forEach(w => {
+        const span = document.createElement('span');
+        span.className = "word"; span.innerText = w.text + " ";
+        span.dataset.id = w.id; if(w.v) span.dataset.v = "1";
+        
+        span.onclick = () => {
+            if(w.id === 0) return;
+            const isS = span.classList.contains('selected');
+            document.querySelectorAll('.word').forEach(x => x.classList.remove('selected'));
+            if(!isS) document.querySelectorAll(`[data-id='${w.id}']`).forEach(x => x.classList.add('selected'));
+        };
+        box.appendChild(span);
+    });
+}
+
+function verify(type) {
+    const sel = document.querySelector('.word.selected');
+    if(!sel) return;
+    const id = parseInt(sel.dataset.id);
+    let ok = (type==='S' && id>0 && id<100) || (type==='CC' && id>=100 && id<200) || (type==='COD' && id>=200 && id<300) || (type==='COI' && id>=300);
+
+    if(ok) {
+        const g = document.querySelectorAll(`[data-id='${id}']`);
+        if(type==='S') {
+            toast("✨ Pronominalisation : Il / Elle / Ils / Elles");
+            g.forEach(x => x.style.color = "var(--subject-color)");
+        } else if(type==='CC') {
+            g.forEach(x => x.classList.add('hidden'));
+        } else if(type==='COD') {
+            toast("💡 Remplacement : le / la / les");
+            g.forEach(x => x.style.color = "var(--cod-color)");
+        } else {
+            const v = document.querySelector('[data-v="1"]'); v.classList.add('pulse-verb');
+            setTimeout(()=>v.classList.remove('pulse-verb'), 1500);
+            g.forEach(x => x.style.color = "var(--coi-color)");
+        }
+        g.forEach(x => { x.classList.remove('selected'); x.onclick=null; x.style.fontWeight="bold"; });
+        targets--; points++; updateUI();
+        if(targets === 0) document.getElementById('btn-next').style.display="block";
+    } else {
+        sel.parentElement.style.animation = "shake 0.4s";
+        setTimeout(()=>sel.parentElement.style.animation="", 400);
+    }
+}
+
+function toast(m) {
+    const t = document.getElementById('info-toast'); t.innerText = m;
+    t.style.display="block"; setTimeout(()=>t.style.display="none", 1500);
+}
+
+function updateUI() {
+    document.getElementById('score-lab').innerText = `Score : ${points}`;
+    document.getElementById('target-lab').innerText = `Restants : ${targets}`;
+}
+
+function loadNext() {
+    cursor++;
+    if(cursor < corpusFinal.length) {
+        document.getElementById('btn-next').style.display="none"; build();
+    } else {
+        document.getElementById('sentence-box').innerHTML = "<h2>🥇 Entraînement terminé !</h2>";
+    }
+}
+
+build();
+</script>
+
+<style> @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} } </style>
+</body>
+</html>
