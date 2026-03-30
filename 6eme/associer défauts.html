@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Le Petit Prince - Moteur d'Association</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --perso-color: #D6EAF8;
+            --action-color: #ffffff;
+            --symbole-color: #fdf2e9;
+            --correct-green: #27ae60;
+            --error-red: #e74c3c;
+            --text-size: 14pt;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 12px 20px;
+            background: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 2000;
+        }
+
+        #exercise-zone {
+            flex-grow: 1;
+            position: relative;
+            background-image: radial-gradient(#d1d1d1 0.5px, transparent 0.5px);
+            background-size: 30px 30px;
+        }
+
+        .card {
+            position: absolute;
+            padding: 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 10px;
+            background: white;
+            cursor: grab;
+            touch-action: none;
+            font-size: var(--text-size);
+            width: 210px;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, left 0.7s cubic-bezier(0.19, 1, 0.22, 1), top 0.7s cubic-bezier(0.19, 1, 0.22, 1), background-color 0.3s;
+            z-index: 100;
+        }
+
+        /* Styles par catégorie */
+        .type-perso { border: 3px solid #3498db; background-color: var(--perso-color); font-weight: bold; }
+        .type-action { border: 1px dashed #95a5a6; font-style: italic; }
+        .type-symbole { border: 1px solid #e67e22; background-color: var(--symbole-color); }
+
+        /* État validé et rangé */
+        .group-locked {
+            cursor: default !important;
+            box-shadow: none;
+            transform: scale(0.85) !important;
+            z-index: 10 !important;
+            border: 2px solid var(--correct-green) !important;
+        }
+
+        .check-mark {
+            display: none;
+            color: var(--correct-green);
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            font-size: 20px;
+        }
+
+        .group-locked .check-mark { display: block; }
+
+        #win-msg {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white; padding: 40px;
+            border-radius: 20px; box-shadow: 0 0 100px rgba(0,0,0,0.4);
+            text-align: center; z-index: 3000;
+        }
+
+        button {
+            padding: 12px 25px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div><b>Le Petit Prince : Associe chaque personnage à son comportement et à son défaut en empilant les tuiles les unes sur les autres.</b></div>
+    <div>Réussites : <span id="count-score">0</span> / 6</div>
+</header>
+
+<div id="exercise-zone"></div>
+
+<div id="win-msg">
+    <h2>Analyse terminée !</h2>
+    <p>Tous les personnages sont correctement associés à leur défaut et à leur comportement.</p>
+    <button onclick="location.reload()">Recommencer</button>
+</div>
+
+<script>
+const rawData = [
+    { g: 1, type: "perso", t: "Le Roi" }, { g: 1, type: "action", t: "Il donne des ordres à tout le monde et veut être obéi absolument." }, { g: 1, type: "symbole", t: "L'autorité inutile." },
+    { g: 2, type: "perso", t: "Le Vaniteux" }, { g: 2, type: "action", t: "Il demande qu'on l'admire et qu'on l'applaudisse sans arrêt." }, { g: 2, type: "symbole", t: "L'orgueil." },
+    { g: 3, type: "perso", t: "Le Buveur" }, { g: 3, type: "action", t: "Il consomme de l'alcool pour oublier qu'il a honte d'en consommer." }, { g: 3, type: "symbole", t: " la lâcheté." },
+    { g: 4, type: "perso", t: "Le Businessman" }, { g: 4, type: "action", t: "Il compte les étoiles et pense qu'il les possède." }, { g: 4, type: "symbole", t: "la cupidité." },
+    { g: 5, type: "perso", t: "L'Allumeur" }, { g: 5, type: "action", t: "Il allume et éteint son réverbère sans arrêt parce que c'est les ordres." }, { g: 5, type: "symbole", t: "La docilité." },
+    { g: 6, type: "perso", t: "Le Géographe" }, { g: 6, type: "action", t: "Il écrit des livres mais ne sort jamais de son bureau pour vérifier ses informations parce que c'est un travail qui n'est pas de son niveau." }, { g: 6, type: "symbole", t: "l'arrogance." }
+];
+
+const zone = document.getElementById('exercise-zone');
+const MAGNET_DIST = 110;
+let score = 0;
+
+function init() {
+    const types = ["perso", "action", "symbole"];
+    // On calcule les colonnes sur la partie DROITE de l'écran
+    const columnsX = [
+        window.innerWidth * 0.42, 
+        window.innerWidth * 0.62, 
+        window.innerWidth * 0.82  
+    ];
+
+    const shuffledData = [...rawData].sort(() => Math.random() - 0.5);
+    const counters = { perso: 0, action: 0, symbole: 0 };
+    const verticalGap = (window.innerHeight - 160) / 6;
+
+    shuffledData.forEach(item => {
+        const card = document.createElement('div');
+        card.className = `card type-${item.type}`;
+        card.innerHTML = `<span class="check-mark">✓</span>${item.t}`;
+        card.dataset.group = item.g;
+        card.dataset.type = item.type;
+        
+        const colIndex = types.indexOf(item.type);
+        const xBase = columnsX[colIndex];
+        const yBase = 70 + (counters[item.type] * verticalGap);
+        
+        // Petit décalage aléatoire pour le naturel
+        const jitterX = (Math.random() - 0.5) * 30;
+        const jitterY = (Math.random() - 0.5) * 15;
+
+        card.style.left = (xBase + jitterX) + 'px';
+        card.style.top = (yBase + jitterY) + 'px';
+        
+        counters[item.type]++;
+        setupDraggable(card);
+        zone.appendChild(card);
+    });
+}
+
+function setupDraggable(el) {
+    let isDragging = false;
+    let startX, startY;
+
+    el.onpointerdown = (e) => {
+        if (el.classList.contains('group-locked')) return;
+        isDragging = true;
+        el.setPointerCapture(e.pointerId);
+        startX = e.clientX - el.offsetLeft;
+        startY = e.clientY - el.offsetTop;
+        el.style.zIndex = 1000;
+        el.style.transition = "none";
+    };
+
+    el.onpointermove = (e) => {
+        if (!isDragging) return;
+        el.style.left = (e.clientX - startX) + 'px';
+        el.style.top = (e.clientY - startY) + 'px';
+        checkMagnetFeedback(el);
+    };
+
+    el.onpointerup = (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        el.style.zIndex = "";
+        el.style.transition = "all 0.7s cubic-bezier(0.19, 1, 0.22, 1)";
+        validateGroup(el.dataset.group);
+    };
+}
+
+function checkMagnetFeedback(dragged) {
+    const others = document.querySelectorAll('.card:not(.group-locked)');
+    others.forEach(other => {
+        if (other === dragged) return;
+        const dist = getDistance(dragged, other);
+        if (dist < MAGNET_DIST) {
+            dragged.style.backgroundColor = (dragged.dataset.group === other.dataset.group) ? "#D5F5E3" : "#FADBD8";
+        }
+    });
+}
+
+function getDistance(el1, el2) {
+    const r1 = el1.getBoundingClientRect();
+    const r2 = el2.getBoundingClientRect();
+    return Math.sqrt(Math.pow((r1.left+r1.width/2)-(r2.left+r2.width/2), 2) + Math.pow((r1.top+r1.height/2)-(r2.top+r2.height/2), 2));
+}
+
+function validateGroup(groupId) {
+    const members = Array.from(document.querySelectorAll(`.card[data-group="${groupId}"]`));
+    
+    // On vérifie si les membres du groupe sont proches les uns des autres
+    const isLinked = members.every((m1, i) => {
+        return members.some((m2, j) => i !== j && getDistance(m1, m2) < MAGNET_DIST + 40);
+    });
+
+    if (isLinked) {
+        lockAndRank(members);
+    }
+}
+
+function lockAndRank(members) {
+    score++;
+    document.getElementById('count-score').innerText = score;
+
+    // Rangement automatique en colonnes à GAUCHE
+    const xCols = [15, 240, 465]; 
+    const yPos = (score - 1) * 95 + 20; 
+
+    members.forEach(m => {
+        m.classList.add('group-locked');
+        
+        let targetX;
+        if (m.dataset.type === "perso") targetX = xCols[0];
+        else if (m.dataset.type === "action") targetX = xCols[1];
+        else targetX = xCols[2];
+
+        m.style.left = targetX + "px";
+        m.style.top = yPos + "px";
+        m.style.backgroundColor = ""; 
+    });
+
+    if (score === 6) {
+        setTimeout(() => document.getElementById('win-msg').style.display = "block", 1200);
+    }
+}
+
+init();
+</script>
+</body>
+</html>
