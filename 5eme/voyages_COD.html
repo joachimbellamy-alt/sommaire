@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Exercice COD : Saint-Exupéry</title>
+    <style>
+        :root {
+            --primary: #2196F3;
+            --success: #4CAF50;
+            --error: #FF5252;
+            --selected: #BBDEFB;
+            --text: #2c3e50;
+            --bg: #f4f7f9;
+        }
+
+        body {
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            padding: 15px;
+            margin: 0;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 { 
+            text-align: center; 
+            color: var(--primary); 
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+        }
+
+        #stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .score-box { text-align: center; }
+        .score-val { display: block; font-size: 1.2rem; color: var(--primary); font-weight: bold; }
+
+        #text-engine {
+            font-size: 1.25rem;
+            text-align: justify;
+            margin-bottom: 30px;
+            padding: 10px;
+        }
+
+        .word {
+            display: inline-block;
+            padding: 3px 5px;
+            margin: 2px 1px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        /* Optimisation pour les doigts sur iPad */
+        @media (pointer: coarse) {
+            .word { padding: 6px 8px; margin: 3px 1px; }
+        }
+
+        .word.selected {
+            background-color: var(--selected);
+            border-bottom-color: var(--primary);
+        }
+
+        .word.correct {
+            background-color: var(--success) !important;
+            color: white;
+            cursor: default;
+            border-bottom-color: transparent;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 16px 35px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3);
+            cursor: pointer;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        #feedback {
+            text-align: center;
+            min-height: 4em;
+            padding: 10px;
+            font-style: italic;
+            border-top: 1px solid #eee;
+        }
+
+        .error-msg { color: var(--error); font-weight: 600; }
+        .success-msg { color: var(--success); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Repère les 16 COD dans le texte</h1>
+    
+    <div id="stats">
+        <div class="score-box">Réussis (1er essai)<span id="score1" class="score-val">0</span></div>
+        <div class="score-box">Réussis (2ème essai +)<span id="score2" class="score-val">0</span></div>
+    </div>
+
+    <div id="text-engine"></div>
+
+    <div class="controls">
+        <button id="btn-validate">Valider la sélection</button>
+    </div>
+
+    <div id="feedback"></div>
+</div>
+
+<script>
+/**
+ * DONNÉES DE L'EXERCICE
+ * id: 0 (neutre), 1+ (groupe COD)
+ **/
+const data = [
+    { text: "Antoine", id: 0 }, { text: "de", id: 0 }, { text: "Saint-Exupéry", id: 0 }, { text: "aimait", id: 0 }, { text: "le", id: 1 }, { text: "ciel", id: 1 }, { text: "depuis", id: 0 }, { text: "son", id: 0 }, { text: "enfance.", id: 0 },
+    { text: "Devenu", id: 0 }, { text: "pilote", id: 0 }, { text: "pour", id: 0 }, { text: "l'Aéropostale,", id: 0 }, { text: "il", id: 0 }, { text: "survolait", id: 0 }, { text: "le", id: 2 }, { text: "ciel", id: 2 }, { text: "du", id: 2 }, { text: "Sahara", id: 2 }, { text: "chaque", id: 0 }, { text: "semaine.", id: 0 },
+    { text: "L'aviateur", id: 0 }, { text: "transportait", id: 0 }, { text: "le", id: 3 }, { text: "courrier", id: 3 }, { text: "dans", id: 0 }, { text: "des", id: 0 }, { text: "conditions", id: 0 }, { text: "périlleuses.", id: 0 },
+    { text: "Souvent,", id: 0 }, { text: "il", id: 0 }, { text: "affrontait", id: 0 }, { text: "des", id: 4 }, { text: "conditions", id: 4 }, { text: "climatiques", id: 4 }, { text: "pour", id: 0 }, { text: "livrer", id: 0 }, { text: "ses", id: 5 }, { text: "sacs", id: 5 }, { text: "postaux.", id: 5 },
+    { text: "Un", id: 0 }, { text: "jour,", id: 0 }, { text: "il", id: 0 }, { text: "connut", id: 0 }, { text: "une", id: 6 }, { text: "panne", id: 6 }, { text: "mécanique", id: 6 }, { text: "en", id: 0 }, { text: "plein", id: 0 }, { text: "vol.", id: 0 },
+    { text: "Le", id: 0 }, { text: "pilote", id: 0 }, { text: "posa", id: 0 }, { text: "son", id: 7 }, { text: "avion", id: 7 }, { text: "sur", id: 0 }, { text: "les", id: 0 }, { text: "dunes", id: 0 }, { text: "brûlantes", id: 0 }, { text: "du", id: 0 }, { text: "Liban.", id: 0 },
+    { text: "Plus", id: 0 }, { text: "tard,", id: 0 }, { text: "Antoine", id: 0 }, { text: "explora", id: 0 }, { text: "l'", id: 8 }, { text: "Amérique", id: 8 }, { text: "du", id: 8 }, { text: "sud", id: 8 }, { text: "avec", id: 0 }, { text: "ses", id: 0 }, { text: "camarades.", id: 0 },
+    { text: "Il", id: 0 }, { text: "traçait", id: 0 }, { text: "de", id: 9 }, { text: "nouvelles", id: 9 }, { text: "lignes", id: 9 }, { text: "au-dessus", id: 0 }, { text: "des", id: 0 }, { text: "Andes.", id: 0 },
+    { text: "L'écrivain", id: 0 }, { text: "notait", id: 0 }, { text: "ses", id: 10 }, { text: "souvenirs", id: 10 }, { text: "dans", id: 0 }, { text: "des", id: 0 }, { text: "carnets", id: 0 }, { text: "de", id: 0 }, { text: "vol.", id: 0 },
+    { text: "Il", id: 0 }, { text: "décrivait", id: 0 }, { text: "la", id: 11 }, { text: "beauté", id: 11 }, { text: "de", id: 11 }, { text: "ses", id: 11 }, { text: "territoires.", id: 11 },
+    { text: "En", id: 0 }, { text: "1944,", id: 0 }, { text: "l'aviateur", id: 0 }, { text: "rejoignit", id: 0 }, { text: "la", id: 12 }, { text: "France", id: 12 }, { text: "combattante.", id: 12 },
+    { text: "Il", id: 0 }, { text: "pilotait", id: 0 }, { text: "un", id: 13 }, { text: "Lightning", id: 13 }, { text: "P-38", id: 13 }, { text: "pour", id: 0 }, { text: "des", id: 0 }, { text: "missions", id: 0 }, { text: "de", id: 0 }, { text: "reconnaissance.", id: 0 },
+    { text: "Le", id: 0 }, { text: "31", id: 0 }, { text: "juillet,", id: 0 }, { text: "il", id: 0 }, { text: "quitta", id: 0 }, { text: "la", id: 14 }, { text: "Corse", id: 14 }, { text: "pour", id: 0 }, { text: "son", id: 0 }, { text: "ultime", id: 0 }, { text: "voyage.", id: 0 },
+    { text: "Jamais", id: 0 }, { text: "personne", id: 0 }, { text: "ne", id: 0 }, { text: "retrouva", id: 0 }, { text: "son", id: 15 }, { text: "corps,", id: 15 }, { text: "mais", id: 0 }, { text: "ses", id: 0 }, { text: "livres", id: 0 }, { text: "conservent", id: 0 }, { text: "sa", id: 16 }, { text: "légende", id: 16 }, { text: "aujourd'hui", id: 0 }, { text: "encore.", id: 0 }
+];
+
+let score1 = 0;
+let score2 = 0;
+let attempts = {}; 
+
+const engine = document.getElementById('text-engine');
+const feedback = document.getElementById('feedback');
+
+// Génération du texte
+data.forEach((item, index) => {
+    const span = document.createElement('span');
+    span.textContent = item.text + " ";
+    span.className = 'word';
+    span.dataset.index = index;
+    span.onclick = () => {
+        if (!span.classList.contains('correct')) {
+            span.classList.toggle('selected');
+            feedback.innerHTML = "";
+        }
+    };
+    engine.appendChild(span);
+});
+
+document.getElementById('btn-validate').onclick = () => {
+    const selectedNodes = Array.from(document.querySelectorAll('.word.selected'));
+    const selectedIndices = selectedNodes.map(el => parseInt(el.dataset.index));
+
+    if (selectedIndices.length === 0) {
+        showFeedback("Sélectionne d'abord les mots qui forment le COD.", "error");
+        return;
+    }
+
+    // On identifie le groupe visé par le premier mot sélectionné
+    const firstIndex = selectedIndices[0];
+    const targetId = data[firstIndex].id;
+
+    if (targetId === 0) {
+        showFeedback("Es-tu sûr.e d'avoir bien remplacé ce que tu penses être le COD par \"le, la, les, l'\" ? Le groupe est-il complet ?", "error");
+        return;
+    }
+
+    // Vérification de l'intégralité du groupe
+    const expectedIndices = data.reduce((acc, curr, idx) => {
+        if (curr.id === targetId) acc.push(idx);
+        return acc;
+    }, []);
+
+    const isComplete = expectedIndices.every(i => selectedIndices.includes(i));
+    const isExact = isComplete && (selectedIndices.length === expectedIndices.length);
+
+    if (isExact) {
+        // SUCCÈS
+        selectedNodes.forEach(el => {
+            el.classList.remove('selected');
+            el.classList.add('correct');
+        });
+
+        if (!attempts[targetId]) {
+            score1++;
+            document.getElementById('score1').textContent = score1;
+            showFeedback("Excellent ! Tu as bien identifié le groupe.", "success");
+        } else {
+            score2++;
+            document.getElementById('score2').textContent = score2;
+            showFeedback("C'est ça ! Tu as corrigé ta sélection.", "success");
+        }
+    } else {
+        // ERREUR
+        attempts[targetId] = true;
+        showFeedback("Es-tu sûr.e d'avoir bien remplacé ce que tu penses être le COD par \"le, la, les, l'\" ? Le groupe est-il complet ?", "error");
+    }
+};
+
+function showFeedback(msg, type) {
+    feedback.innerHTML = `<span class="${type}-msg">${msg}</span>`;
+}
+</script>
+
+</body>
+</html>

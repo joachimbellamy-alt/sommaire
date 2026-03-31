@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz : Le Complément d'Objet Direct</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 600px; margin: 40px auto; padding: 20px; color: #333; }
+        h1 { color: #2e7d32; border-bottom: 2px solid #2e7d32; padding-bottom: 10px; }
+        .score-board { background: #2e7d32; color: white; padding: 10px 20px; border-radius: 5px; margin-bottom: 20px; font-size: 1.2em; position: sticky; top: 10px; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); text-align: center; }
+        .question { background: #f1f8e9; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .options { margin-top: 15px; display: flex; gap: 10px; }
+        button { padding: 10px 20px; cursor: pointer; background: #2e7d32; color: white; border: none; border-radius: 5px; font-weight: bold; transition: background 0.3s; }
+        button:hover { background: #1b5e20; }
+        button:disabled { background: #9e9e9e; cursor: not-allowed; opacity: 0.7; }
+        .feedback { margin-top: 15px; font-weight: bold; display: none; padding: 10px; border-radius: 5px; }
+        .correct { background-color: #c8e6c9; color: #2e7d32; display: block; }
+        .incorrect { background-color: #ffcdd2; color: #c62828; display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="score-board">
+        Mon score : <span id="score">0</span> / 5
+    </div>
+
+    <h1>Quiz : Je retiens le COD</h1>
+    <p>Réponds aux questions ci-dessous. Attention, seule ta première réponse compte pour le score !</p>
+
+    <div class="question" id="q1">
+        <p><strong>1.</strong> Le COD est le complément d'un verbe d'action.</p>
+        <div class="options">
+            <button onclick="check(1, true)">Vrai</button>
+            <button onclick="check(1, false)">Faux</button>
+        </div>
+        <div id="f1" class="feedback"></div>
+    </div>
+
+    <div class="question" id="q2">
+        <p><strong>2.</strong> On peut supprimer le COD sans changer le sens de la phrase.</p>
+        <div class="options">
+            <button onclick="check(2, false)">Vrai</button>
+            <button onclick="check(2, true)">Faux</button>
+        </div>
+        <div id="f2" class="feedback"></div>
+    </div>
+
+    <div class="question" id="q3">
+        <p><strong>3.</strong> Le COD ne peut pas être déplacé librement dans la phrase.</p>
+        <div class="options">
+            <button onclick="check(3, true)">Vrai</button>
+            <button onclick="check(3, false)">Faux</button>
+        </div>
+        <div id="f3" class="feedback"></div>
+    </div>
+
+    <div class="question" id="q4">
+        <p><strong>4.</strong> Le COD est construit avec une préposition (comme "à" ou "de").</p>
+        <div class="options">
+            <button onclick="check(4, false)">Vrai</button>
+            <button onclick="check(4, true)">Faux</button>
+        </div>
+        <div id="f4" class="feedback"></div>
+    </div>
+
+    <div class="question" id="q5">
+        <p><strong>5.</strong> On peut remplacer le COD par les pronoms "le", "la" ou "les".</p>
+        <div class="options">
+            <button onclick="check(5, true)">Vrai</button>
+            <button onclick="check(5, false)">Faux</button>
+        </div>
+        <div id="f5" class="feedback"></div>
+    </div>
+
+    <script>
+        let score = 0;
+        let answeredQuestions = new Set();
+
+        function check(id, isCorrect) {
+            if (!answeredQuestions.has(id)) {
+                const feedback = document.getElementById('f' + id);
+                const questionDiv = document.getElementById('q' + id);
+                const buttons = questionDiv.querySelectorAll('button');
+
+                if (isCorrect) {
+                    score++;
+                    document.getElementById('score').innerText = score;
+                    feedback.innerHTML = "Bravo ! C'est la bonne réponse.";
+                    feedback.className = "feedback correct";
+                } else {
+                    feedback.innerHTML = "Dommage ! Relis bien la règle dans ton cours.";
+                    feedback.className = "feedback incorrect";
+                }
+                
+                answeredQuestions.add(id);
+                buttons.forEach(btn => btn.disabled = true);
+            }
+        }
+    </script>
+
+</body>
+</html>

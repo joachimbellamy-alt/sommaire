@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Générateur d'Exercices de Repérage</title>
+    <style>
+        :root {
+            --primary: #6366f1; --success: #22c55e; --error: #ef4444;
+            --selected: #e0e7ff; --text: #1e293b; --bg: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg); color: var(--text);
+            line-height: 1.7; padding: 20px; margin: 0;
+            -webkit-user-select: none; touch-action: manipulation;
+        }
+
+        .container {
+            max-width: 850px; margin: 0 auto; background: white;
+            padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        .header { text-align: center; margin-bottom: 25px; }
+        h1 { color: var(--primary); margin: 0; font-size: 1.6rem; }
+        p.consigne { color: #64748b; font-style: italic; margin-top: 5px; font-size: 1.1rem; }
+
+        #progress-container {
+            width: 100%; background: #f1f5f9; height: 12px; border-radius: 10px; margin: 20px 0; overflow: hidden;
+        }
+        #progress-bar { width: 0%; height: 100%; background: var(--success); transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        #stats {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+            margin-bottom: 25px; text-align: center;
+        }
+        .stat-card { background: #f8fafc; padding: 10px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .stat-label { font-size: 0.75rem; text-transform: uppercase; color: #64748b; display: block; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+
+        #text-engine { font-size: 1.3rem; text-align: justify; margin-bottom: 30px; min-height: 200px; }
+
+        .word {
+            display: inline-block; padding: 2px 4px; margin: 2px 1px;
+            border-radius: 6px; cursor: pointer; transition: 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+
+        /* Optimisation iPad / Tactile */
+        @media (pointer: coarse) { 
+            .word { padding: 6px 8px; margin: 4px 2px; } 
+            .btn-valider { padding: 22px !important; }
+        }
+
+        .word.selected { background: var(--selected); border-bottom-color: var(--primary); color: var(--primary); }
+        .word.correct { background: var(--success) !important; color: white !important; cursor: default; border-bottom-color: transparent; }
+
+        .btn-valider {
+            display: block; width: 100%; max-width: 350px; margin: 0 auto;
+            padding: 18px; font-size: 1.2rem; font-weight: bold;
+            border: none; border-radius: 15px; background: var(--primary);
+            color: white; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        .btn-valider:active { transform: scale(0.96); opacity: 0.9; }
+
+        #feedback { text-align: center; margin-top: 25px; min-height: 4em; font-weight: 500; padding: 0 10px; }
+        .error-msg { color: var(--error); animation: shake 0.4s; }
+        .success-msg { color: var(--success); font-size: 1.2rem; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        #bilan-final { display: none; text-align: center; padding: 40px 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="exercice-content">
+        <div class="header">
+            <h1 id="titre-ex">Identification du COD</h1>
+            <p class="consigne" id="consigne-ex">Clique sur tous les mots qui composent le COD.</p>
+        </div>
+
+        <div id="progress-container"><div id="progress-bar"></div></div>
+        
+        <div id="stats">
+            <div class="stat-card"><span class="stat-label">1er essai</span><span id="score1" class="stat-val">0</span></div>
+            <div class="stat-card"><span class="stat-label">Corrigé</span><span id="score2" class="stat-val">0</span></div>
+            <div class="stat-card"><span class="stat-label">Restants</span><span id="remain" class="stat-val">0</span></div>
+        </div>
+
+        <div id="text-engine"></div>
+
+        <button class="btn-valider" id="btn-validate">VÉRIFIER LA SÉLECTION</button>
+        <div id="feedback"></div>
+    </div>
+
+    <div id="bilan-final">
+        <h2 style="color: var(--success)">🏆 Exercice terminé !</h2>
+        <p id="bilan-text" style="font-size: 1.2rem; margin: 20px 0;"></p>
+        <button onclick="location.reload()" style="background: none; border: 2px solid var(--primary); color: var(--primary); padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: bold;">Recommencer</button>
+    </div>
+</div>
+
+<script>
+/** ⚙️ CONFIGURATION **/
+const CONFIG = {
+    titre: "Repérage des COD",
+    consigne: "Clique sur tous les mots qui composent le groupe COD.",
+    feedbackErreur: "Attention : le groupe est-il complet ? N'as-tu pas sélectionné un mot en trop ? Rappel : on peut remplacer le COD par 'le, la, les, l' ' devant le verbe.",
+    texte: "Au lendemain de la Grande Guerre, des aventuriers décident de défier /le désert et l'océan/. Pierre-Georges Latécoère imagine /une ligne aérienne audacieuse/  pour relier la France à l'Amérique du Sud. Pour réussir ce pari, il recrute /des pilotes courageux comme Mermoz ou Saint-Exupéry/. Ces hommes survolent /des sommets enneigés/  au péril de leur vie. Chaque matin, le mécanicien vérifie /le moteur de l'appareil/  avec une précision chirurgicale. Une fois en vol, le pilote doit affronter /les tempêtes de sable qui masquent l'horizon/. Malgré la peur, il ne quitte jamais /sa trajectoire/ . Parfois, une panne oblige /l'aviateur/ à poser /son avion/ en plein territoire inconnu. Dans les bureaux de Toulouse, les directeurs étudient /chaque rapport de vol/  pour améliorer la sécurité. Le public, fasciné, admire /ces héros du ciel/  car ils transportent /le courrier/ plus vite que les navires."
+};
+
+/** 🧠 MOTEUR LOGIQUE **/
+let data = [];
+let totalGroups = 0;
+let foundGroups = 0;
+let score1 = 0, score2 = 0;
+let attempts = {}; // Stocke si un groupe ID a déjà subi une erreur
+
+function init() {
+    document.getElementById('titre-ex').textContent = CONFIG.titre;
+    document.getElementById('consigne-ex').textContent = CONFIG.consigne;
+
+    // Découpage : on sépare les parties entre slashes du reste
+    const parts = CONFIG.texte.split(/(\/.*?\/)/g);
+    let currentGroupId = 1;
+
+    parts.forEach(part => {
+        if (part.startsWith('/') && part.endsWith('/')) {
+            const content = part.replace(/\//g, '').trim();
+            const words = content.split(/\s+/);
+            words.forEach(w => {
+                data.push({ text: w, id: currentGroupId });
+            });
+            currentGroupId++;
+            totalGroups++;
+        } else {
+            const words = part.split(/(\s+)/); // Garde les espaces pour le rendu
+            words.forEach(w => {
+                if (w.trim().length > 0) {
+                    data.push({ text: w, id: 0 });
+                }
+            });
+        }
+    });
+
+    document.getElementById('remain').textContent = totalGroups;
+    render();
+}
+
+function render() {
+    const engine = document.getElementById('text-engine');
+    engine.innerHTML = "";
+    
+    data.forEach((item, i) => {
+        const span = document.createElement('span');
+        span.className = 'word';
+        span.textContent = item.text;
+        span.dataset.index = i;
+        
+        if (item.solved) span.classList.add('correct');
+
+        span.onclick = () => {
+            if(!item.solved) {
+                span.classList.toggle('selected');
+                document.getElementById('feedback').innerHTML = "";
+            }
+        };
+        engine.appendChild(span);
+        // Ajout d'un espace invisible pour le flow naturel du texte
+        engine.appendChild(document.createTextNode(' '));
+    });
+}
+
+document.getElementById('btn-validate').onclick = () => {
+    const selectedSpans = Array.from(document.querySelectorAll('.word.selected'));
+    if (selectedSpans.length === 0) return;
+
+    const selectedIndices = selectedSpans.map(s => parseInt(s.dataset.index));
+    const firstWord = data[selectedIndices[0]];
+    const targetId = firstWord.id;
+
+    // Validation : 
+    // 1. L'ID ne doit pas être 0 (mot neutre)
+    // 2. Tous les mots du même ID doivent être sélectionnés
+    // 3. Aucun mot d'un autre ID ou ID 0 ne doit être sélectionné
+    
+    const expectedIndices = data.map((d, i) => d.id === targetId && targetId !== 0 ? i : -1).filter(i => i !== -1);
+    
+    const isCorrect = targetId !== 0 && 
+                      expectedIndices.length === selectedIndices.length && 
+                      expectedIndices.every(idx => selectedIndices.includes(idx));
+
+    if (isCorrect) {
+        // Succès
+        expectedIndices.forEach(idx => {
+            data[idx].solved = true;
+        });
+        
+        if (!attempts[targetId]) {
+            score1++;
+        } else {
+            score2++;
+        }
+        
+        foundGroups++;
+        showFeedback("Bien joué ! C'est le bon groupe.", "success");
+        updateUI();
+        render(); // Re-génère pour fixer les classes 'correct'
+        
+        if(foundGroups === totalGroups) finish();
+    } else {
+        // Erreur
+        selectedIndices.forEach(idx => {
+            const idErr = data[idx].id;
+            if (idErr !== 0) attempts[idErr] = true; 
+        });
+        // Si l'élève a cliqué sur un mot neutre mais qu'un groupe était visé
+        if (targetId !== 0) attempts[targetId] = true;
+
+        showFeedback(CONFIG.feedbackErreur, "error");
+        // Optionnel : déselectionner après erreur
+        selectedSpans.forEach(s => s.classList.remove('selected'));
+    }
+};
+
+function updateUI() {
+    document.getElementById('score1').textContent = score1;
+    document.getElementById('score2').textContent = score2;
+    document.getElementById('remain').textContent = totalGroups - foundGroups;
+    document.getElementById('progress-bar').style.width = (foundGroups / totalGroups * 100) + "%";
+}
+
+function showFeedback(msg, type) {
+    const f = document.getElementById('feedback');
+    f.innerHTML = `<p class="${type}-msg">${msg}</p>`;
+}
+
+function finish() {
+    setTimeout(() => {
+        document.getElementById('exercice-content').style.display = 'none';
+        const bf = document.getElementById('bilan-final');
+        bf.style.display = 'block';
+        const ratio = Math.round((score1 / totalGroups) * 100);
+        document.getElementById('bilan-text').innerHTML = `
+            Tu as trouvé les <b>${totalGroups}</b> groupes COD.<br><br>
+            🚀 Sans erreur : <b>${score1}</b><br>
+            🔄 Après correction : <b>${score2}</b><br><br>
+            Précision : <b>${ratio}%</b>
+        `;
+    }, 600);
+}
+
+init();
+</script>
+</body>
+</html>

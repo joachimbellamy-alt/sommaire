@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Expert Grammaire : Sujet ou COD ?</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 850px;
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header { text-align: center; margin-bottom: 10px; }
+        
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .progress-bar { height: 10px; background: #eee; border-radius: 5px; flex-grow: 1; margin-right: 15px; overflow: hidden; }
+        #fill { height: 100%; background: var(--accent); width: 0%; transition: 0.4s; }
+
+        .sentence-card {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .sentence-text { font-size: 1.5rem; line-height: 1.6; margin-bottom: 15px; }
+        .blue-target { color: #3498db; font-weight: bold; border-bottom: 3px solid #3498db; }
+
+        .work-zone { display: flex; flex-direction: column; gap: 15px; }
+
+        .choice-zone {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .choice-btn {
+            min-height: 60px;
+            font-size: 1.2rem;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            background: #fff;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .choice-btn.selected { background: var(--accent); color: white; border-color: var(--accent); }
+
+        .manipulation-zone label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+
+        input[type="text"] {
+            width: 100%;
+            height: 60px;
+            font-size: 1.2rem;
+            padding: 0 15px;
+            border: 2px solid #ccc;
+            border-radius: 12px;
+            box-sizing: border-box;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        button#validate-btn {
+            background: var(--primary);
+            color: white;
+            min-height: 65px;
+            font-size: 1.3rem;
+            border: none;
+            border-radius: 12px;
+            margin-top: 10px;
+            width: 100%;
+            touch-action: manipulation;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+            line-height: 1.5;
+            font-size: 1.1rem;
+        }
+
+        #next-btn { 
+            background: var(--success); 
+            color: white; 
+            border: none; 
+            min-height: 65px; 
+            border-radius: 12px; 
+            width: 100%; 
+            display: none; 
+            margin-top: 10px; 
+            font-size: 1.2rem; 
+            touch-action: manipulation;
+        }
+
+        .final-screen { text-align: center; padding: 40px 0; }
+        .big-score { font-size: 4rem; font-weight: bold; color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="header"><h2>Sujet ou COD ? (Niveau Expert)</h2></div>
+
+    <div class="meta-info">
+        <div class="progress-bar"><div id="fill"></div></div>
+        <div id="counter">Question 1 / 10</div>
+    </div>
+
+    <div id="quiz-ui">
+        <div class="sentence-card">
+            <div class="sentence-text" id="sentence-display"></div>
+        </div>
+
+        <div class="work-zone">
+            <div class="choice-zone">
+                <button class="choice-btn" onclick="app.selectFunction('Sujet')" id="btn-sujet">SUJET</button>
+                <button class="choice-btn" onclick="app.selectFunction('COD')" id="btn-cod">COD</button>
+            </div>
+
+            <div class="manipulation-zone">
+                <label>Pronominalise le groupe bleu pour prouver ta réponse :</label>
+                <input type="text" id="manip-input" placeholder="Ex: Il règne ou Il le regarde..." autocomplete="off" autocapitalize="off" spellcheck="false">
+            </div>
+
+            <button id="validate-btn" onclick="app.checkAnswer()">Vérifier ma réponse</button>
+            <div id="feedback"></div>
+            <button id="next-btn" onclick="app.nextQuestion()">Continuer ➜</button>
+        </div>
+    </div>
+
+    <div id="result-ui" style="display:none" class="final-screen">
+        <h3>Résultat Final</h3>
+        <div class="big-score" id="final-score"></div>
+        <p id="final-msg"></p>
+        <button onclick="location.reload()" style="width:100%; min-height:60px; border-radius:12px; margin-top:20px;">Recommencer</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { 
+            txt: "Dans le désert tombe <span class='blue-target'>une étoile d'or</span>.", 
+            func: "Sujet", 
+            manip: ["elle tombe", "elle y tombe"],
+            expl: "C'est un <b>sujet inversé</b>. On le place souvent après le verbe. Manipulation : 'Elle tombe'."
+        },
+        { 
+            txt: "Près du puits se tenait <span class='blue-target'>un serpent de couleur d'or</span>.", 
+            func: "Sujet", 
+            manip: ["il se tenait près du puits", "il se tenait"],
+            expl: "C'est un <b>sujet inversé</b>. Le serpent est celui qui se tient près du puits."
+        },
+        { 
+            txt: "Sur l'astéroïde travaille <span class='blue-target'>un allumeur très sérieux</span>.", 
+            func: "Sujet", 
+            manip: ["il travaille sur l'astéroïde", "il travaille"], 
+            expl: "C'est un <b>sujet inversé</b>. Manipulation : 'Il travaille'."
+        },
+        { 
+            txt: "Le Vaniteux attend <span class='blue-target'>des compliments</span>.", 
+            func: "COD", 
+            manip: ["le vaniteux les attend", "il les attend"],
+            expl: "C'est un <b>COD</b> classique placé après le verbe."
+        },
+        { 
+            txt: "<span class='blue-target'>Le Businessman</span> compte sans s'arrêter.", 
+            func: "Sujet", 
+            manip: ["il compte sans s'arrêter", "il compte"],
+            expl: "C'est le <b>sujet</b> classique."
+        },
+        { 
+            txt: "Le Petit Prince arrose <span class='blue-target'>sa fleur</span> chaque jour.", 
+            func: "COD", 
+            manip: ["le petit prince l'arrose", "il l'arrose"],
+            expl: "Le pronom 'l'' est un <b>COD</b>. On remplace 'sa fleur' par 'la' (qui devient 'l'')."
+        },
+        { 
+            txt: "D'un geste majestueux, <span class='blue-target'>le Roi</span> ramassa son manteau.", 
+            func: "Sujet", 
+            manip: ["d'un geste majestueux il ramassa son manteau", "il ramassa son manteau", "il ramassa"],
+            expl: "C'est le <b>sujet</b> qui fait l'action de ramasser."
+        },
+        { 
+            txt: "Le Géographe écrit <span class='blue-target'>des grands récits de voyage</span>.", 
+            func: "COD", 
+            manip: ["le géographe les écrit", "il les écrit"],
+            expl: "C'est le <b>COD</b> du verbe écrire."
+        },
+        { 
+            txt: "Soudain surgit <span class='blue-target'>un renard</span>.", 
+            func: "Sujet", 
+            manip: ["soudain il surgit", "il surgit"],
+            expl: "C'est un <b>sujet inversé</b> après un adverbe de temps. Manipulation : 'Il surgit'."
+        },
+        { 
+            txt: "Le géographe interroge <span class='blue-target'>les explorateurs de la planète entière</span>.", 
+            func: "COD", 
+            manip: ["il les interroge", "le geographe les interroge"],
+            expl: "C'est un <b>COD</b> classique. Il suit directement le verbe transitif."
+        }
+    ];
+
+    const app = {
+        idx: 0,
+        score: 0,
+        attempts: 0,
+        selectedFunc: null,
+
+        init() {
+            this.showQuestion();
+        },
+
+        // Fonction de nettoyage pour ignorer ponctuation et majuscules
+        sanitize(str) {
+            return str
+                .toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Supprime les accents
+                .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")      // Supprime la ponctuation
+                .replace(/\s+/g, " ")                             // Supprime les doubles espaces
+                .trim();
+        },
+
+        showQuestion() {
+            this.attempts = 0;
+            this.selectedFunc = null;
+            const q = questions[this.idx];
+            document.getElementById('sentence-display').innerHTML = q.txt;
+            document.getElementById('counter').innerText = `Question ${this.idx + 1} / 10`;
+            document.getElementById('fill').style.width = (this.idx / 10 * 100) + "%";
+            document.getElementById('manip-input').value = "";
+            document.getElementById('feedback').style.display = "none";
+            document.getElementById('next-btn').style.display = "none";
+            document.getElementById('validate-btn').style.display = "block";
+            document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+        },
+
+        selectFunction(f) {
+            this.selectedFunc = f;
+            document.getElementById('btn-sujet').classList.toggle('selected', f === 'Sujet');
+            document.getElementById('btn-cod').classList.toggle('selected', f === 'COD');
+        },
+
+        checkAnswer() {
+            if (!this.selectedFunc) { alert("Choisis d'abord Sujet ou COD !"); return; }
+            
+            const q = questions[this.idx];
+            const manipUser = this.sanitize(document.getElementById('manip-input').value);
+            const isFuncCorrect = (this.selectedFunc === q.func);
+            
+            // On vérifie si l'entrée nettoyée correspond à l'une des réponses attendues (nettoyées elles aussi)
+            const isManipCorrect = q.manip.some(m => manipUser.includes(this.sanitize(m)) || this.sanitize(m).includes(manipUser));
+
+            const feedback = document.getElementById('feedback');
+            feedback.style.display = "block";
+
+            if (isFuncCorrect && isManipCorrect) {
+                if (this.attempts === 0) this.score += 2; else this.score += 1;
+                this.finishQuestion(true, q.expl);
+            } else {
+                this.attempts++;
+                if (this.attempts === 1) {
+                    feedback.style.background = "#fff3cd";
+                    feedback.innerHTML = "❌ <b>Erreur :</b> Vérifie bien ta catégorie OU ta phrase de manipulation. Réessaie !";
+                } else {
+                    this.finishQuestion(false, q.expl);
+                }
+            }
+        },
+
+        finishQuestion(success, expl) {
+            const feedback = document.getElementById('feedback');
+            feedback.style.background = success ? "#d4edda" : "#f8d7da";
+            feedback.innerHTML = `<strong>${success ? 'Bravo !' : 'Analyse :'}</strong><br>${expl}`;
+            document.getElementById('validate-btn').style.display = "none";
+            document.getElementById('next-btn').style.display = "block";
+        },
+
+        nextQuestion() {
+            this.idx++;
+            if (this.idx < 10) this.init();
+            else this.showFinal();
+        },
+
+        showFinal() {
+            document.getElementById('quiz-ui').style.display = "none";
+            document.getElementById('result-ui').style.display = "block";
+            document.getElementById('fill').style.width = "100%";
+            document.getElementById('final-score').innerText = `${this.score} / 20`;
+            const msg = document.getElementById('final-msg');
+            if (this.score >= 16) msg.innerHTML = "🏆 <b>Expert !</b> Tu ne te laisses pas piéger par l'ordre des mots.";
+            else msg.innerHTML = "📚 <b>À réviser :</b> L'ordre des mots peut changer, mais la manipulation du pronom ne trompe jamais !";
+        }
+    };
+
+    app.init();
+</script>
+</body>
+</html>

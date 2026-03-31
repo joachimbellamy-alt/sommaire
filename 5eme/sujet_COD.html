@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Le Petit Prince - 10 Défis de Réécriture</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 850px;
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header { text-align: center; margin-bottom: 10px; }
+        
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .progress-bar { height: 8px; background: #eee; border-radius: 4px; margin-bottom: 25px; flex-grow: 1; margin-right: 15px; }
+        #fill { height: 100%; background: var(--accent); width: 0%; transition: 0.4s; border-radius: 4px; }
+        #question-counter { font-size: 1.1rem; min-width: 120px; text-align: right; }
+
+        .instruction { 
+            background: #eef7ff; 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin-bottom: 20px; 
+            font-size: 1.1rem;
+            border-left: 5px solid var(--accent);
+        }
+
+        .sentence-display {
+            font-size: 1.5rem;
+            line-height: 1.6;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .blue-target {
+            color: white;
+            background-color: #3498db;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 110px;
+            font-size: 1.4rem;
+            padding: 15px;
+            border: 2px solid #ccc;
+            border-radius: 12px;
+            box-sizing: border-box;
+            resize: none;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        textarea:focus { border-color: var(--accent); background: #fafafa; }
+
+        button {
+            width: 100%;
+            min-height: 70px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            margin-top: 10px;
+            touch-action: manipulation;
+        }
+
+        #check-btn { background: var(--accent); color: white; }
+        #next-btn { background: var(--primary); color: white; display: none; }
+
+        #feedback {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+            font-size: 1.2rem;
+            line-height: 1.5;
+        }
+
+        .score-box { text-align: center; padding: 40px 0; }
+        .final-val { font-size: 4rem; font-weight: bold; color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="header">
+        <h2>Grammaire : Le voyage des pronoms</h2>
+    </div>
+
+    <div class="meta-info">
+        <div class="progress-bar"><div id="fill"></div></div>
+        <div id="question-counter">Question 1 / 10</div>
+    </div>
+
+    <div id="quiz-ui">
+        <div class="instruction">
+            Réécris toute la phrase en remplaçant le groupe en bleu par le pronom qui convient (il, elle, ils, elles, le, la, les, l').
+        </div>
+
+        <div class="sentence-display" id="sentence"></div>
+
+        <textarea id="user-text" placeholder="Tape la phrase transformée ici..." autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+
+        <button id="check-btn" onclick="verify()">Valider ma phrase</button>
+        <div id="feedback"></div>
+        <button id="next-btn" onclick="next()">Continuer ➜</button>
+    </div>
+
+    <div id="result-ui" style="display:none">
+        <div class="score-box">
+            <h3>Bilan de ton parcours</h3>
+            <div class="final-val" id="final-score"></div>
+            <p id="final-msg" style="margin: 20px; font-size: 1.3rem;"></p>
+            <button onclick="location.reload()">Recommencer l'exercice</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            original: "<span class='blue-target'>Le vieux roi</span> interdit de bâiller.",
+            accepted: ["il interdit de bâiller.", "il interdit de bâiller"],
+            type: "Sujet",
+            explanation: "'Le vieux roi' est le sujet. On le remplace par 'il'."
+        },
+        {
+            original: "Le Petit Prince ne comprend pas <span class='blue-target'>les grandes personnes</span>.",
+            accepted: ["le petit prince ne les comprend pas.", "le petit prince ne les comprend pas"],
+            type: "COD",
+            explanation: "'Les grandes personnes' est le COD. Le pronom 'les' se place entre 'ne' et le verbe."
+        },
+        {
+            original: "<span class='blue-target'>Son chapeau ridicule</span> sert à saluer.",
+            accepted: ["il sert à saluer.", "il sert à saluer"],
+            type: "Sujet",
+            explanation: "'Son chapeau ridicule' est le sujet (masculin singulier)."
+        },
+        {
+            original: "Le Buveur veut oublier <span class='blue-target'>sa propre honte</span>.",
+            accepted: ["le buveur veut l'oublier.", "le buveur veut l'oublier"],
+            type: "COD",
+            explanation: "'Sa propre honte' est le COD. On utilise 'l'' devant 'oublier' car le verbe commence par une voyelle."
+        },
+        {
+            original: "<span class='blue-target'>Les petites étoiles</span> appartiennent au Businessman.",
+            accepted: ["elles appartiennent au businessman.", "elles appartiennent au businessman"],
+            type: "Sujet",
+            explanation: "'Les petites étoiles' est le sujet (féminin pluriel)."
+        },
+        {
+            original: "L'Allumeur répète <span class='blue-target'>sa consigne fatigante</span>.",
+            accepted: ["l'allumeur la répète.", "l'allumeur la répète"],
+            type: "COD",
+            explanation: "'Sa consigne fatigante' est le COD (féminin singulier)."
+        },
+        {
+            original: "<span class='blue-target'>Cette planète minuscule</span> tourne très vite.",
+            accepted: ["elle tourne très vite.", "elle tourne très vite"],
+            type: "Sujet",
+            explanation: "'Cette planète minuscule' est le sujet (féminin singulier)."
+        },
+        {
+            original: "Le Géographe écrit <span class='blue-target'>ses gros livres</span>.",
+            accepted: ["le géographe les écrit.", "le géographe les écrit"],
+            type: "COD",
+            explanation: "'Ses gros livres' est le COD. On utilise le pronom 'les'."
+        },
+        {
+            original: "<span class='blue-target'>Les savants</span> racontent leurs voyages.",
+            accepted: ["ils racontent leurs voyages.", "ils racontent leurs voyages"],
+            type: "Sujet",
+            explanation: "'Les savants' est le sujet (masculin pluriel)."
+        },
+        {
+            original: "Le Petit Prince quitte <span class='blue-target'>le sixième astéroïde</span>.",
+            accepted: ["le petit prince le quitte.", "le petit prince le quitte"],
+            type: "COD",
+            explanation: "'Le sixième astéroïde' est le COD (masculin singulier)."
+        }
+    ];
+
+    let current = 0;
+    let score = 0;
+    let attempts = 0;
+
+    function init() {
+        const q = questions[current];
+        document.getElementById('sentence').innerHTML = q.original;
+        document.getElementById('user-text').value = "";
+        document.getElementById('user-text').disabled = false;
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+        document.getElementById('check-btn').style.display = 'block';
+        document.getElementById('question-counter').innerText = `Question ${current + 1} / ${questions.length}`;
+        document.getElementById('fill').style.width = (current / questions.length * 100) + "%";
+        attempts = 0;
+    }
+
+    function verify() {
+        const q = questions[current];
+        const input = document.getElementById('user-text').value.trim().toLowerCase().replace(/\s+/g, ' ');
+        const feedback = document.getElementById('feedback');
+
+        if (q.accepted.includes(input)) {
+            if (attempts === 0) score += 2; else score += 1;
+            showFeedback(true, `Parfait ! C'est bien un <b>${q.type}</b>.<br>${q.explanation}`);
+        } else {
+            attempts++;
+            if (attempts === 1) {
+                feedback.innerHTML = "❌ <b>Deuxième essai :</b> Attention au choix du pronom ou à l'ordre des mots dans la phrase.";
+                feedback.style.display = 'block';
+                feedback.style.background = '#fff3cd';
+            } else {
+                showFeedback(false, `Dommage ! La réponse correcte était : <br><i>"${q.accepted[0]}"</i>.<br>${q.explanation}`);
+            }
+        }
+    }
+
+    function showFeedback(success, text) {
+        const feedback = document.getElementById('feedback');
+        feedback.style.display = 'block';
+        feedback.style.background = success ? '#d4edda' : '#f8d7da';
+        feedback.innerHTML = `<strong>${success ? 'Bravo !' : 'Analyse :'}</strong><br>${text}`;
+        document.getElementById('user-text').disabled = true;
+        document.getElementById('check-btn').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    function next() {
+        current++;
+        if (current < questions.length) init();
+        else finish();
+    }
+
+    function finish() {
+        document.getElementById('quiz-ui').style.display = 'none';
+        document.getElementById('result-ui').style.display = 'block';
+        document.getElementById('fill').style.width = '100%';
+        document.getElementById('final-score').innerText = `${score} / 20`;
+        const status = document.getElementById('final-msg');
+        if (score >= 16) {
+            status.innerHTML = "🎯 <b>Objectif atteint !</b> Tu es un expert en pronominalisation.";
+        } else {
+            status.innerHTML = "📚 <b>Objectif non atteint.</b> Prends le temps de bien relire chaque phrase et la place du pronom COD.";
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>

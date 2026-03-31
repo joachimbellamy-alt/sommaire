@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title> COmplément du verbe indirect du verbe ou...</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; text-align: center; -webkit-user-select: none; }
+        #app { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        h1 { color: #2c3e50; margin-bottom: 5px; font-size: 1.8rem; }
+        .consigne { color: #7f8c8d; margin-bottom: 25px; font-style: italic; font-size: 1.1rem; }
+        
+        #timer-container { margin: 20px 0; }
+        #timer { font-size: 3.5rem; color: #e74c3c; font-weight: bold; font-variant-numeric: tabular-nums; }
+        .timer-msg { font-size: 0.9rem; color: #95a5a6; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .sentence-box { min-height: 140px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; line-height: 1.6; padding: 10px; border: 2px dashed #eee; border-radius: 15px; margin-bottom: 30px; }
+        .target { background: #fff3cd; padding: 2px 10px; border-radius: 5px; font-weight: bold; border-bottom: 3px solid #f1c40f; }
+        
+        .btns { display: flex; gap: 20px; justify-content: center; }
+        button { padding: 20px 35px; border: none; border-radius: 15px; font-size: 1.2rem; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+        
+        /* État désactivé */
+        button:disabled { background: #bdc3c7 !important; color: #ecf0f1 !important; cursor: not-allowed; opacity: 0.6; transform: scale(1) !important; }
+        
+        #vrai { background: #3498db; color: white; width: 250px; }
+        #faux { background: #e67e22; color: white; width: 250px; }
+        #next { background: #27ae60; color: white; width: 100%; display: none; margin-top: 20px; font-size: 1.4rem; }
+
+        .shake { animation: shakeAnim 0.4s; background: #fabdb8 !important; border-bottom-color: #c0392b; }
+        @keyframes shakeAnim { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-10px);} 75% {transform: translateX(10px);} }
+        .move-effect { color: #27ae60; background: #d5f5e3 !important; border-bottom-color: #27ae60; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <h1>Complément du verbe indirect du verbe ou...</h1>
+    <p class="consigne">Observe bien la phrase et appuie sur la réponse correcte
+        . Tu as 10 secondes de réflexion.</p>
+
+    <div id="timer-container">
+        <div id="timer">10</div>
+        <div id="timer-msg" class="timer-msg">Réflexion en cours...</div>
+    </div>
+    
+    <div class="sentence-box">
+        <div id="text">Chargement...</div>
+    </div>
+
+    <div class="btns" id="controls">
+        <button id="vrai" onclick="ans(true)" disabled> OUI ,c'est un COI du verbe</button>
+        <button id="faux" onclick="ans(false)" disabled> NON, c'est un complément qu'on peut déplacer et supprimer </button>
+    </div>
+    
+    <button id="next" onclick="loadQ()">Continuer ▶</button>
+    <p id="msg" style="margin-top:25px; font-size: 1.2rem; min-height: 1.5em;"></p>
+</div>
+
+<script>
+    const data = [
+        { s: "Le professeur parle ", t: "à ses élèves", isC: true },
+        { s: "Le vieux phare guide les bateaux ", t: "à l'entrée du port", isC: false },
+        { s: "L'athlète résiste courageusement ", t: "à la fatigue", isC: true },
+        { s: "La sonnerie retentit ", t: "à la fin du cours", isC: false },
+        { s: "Cet ordinateur appartient ", t: "à l'école", isC: true },
+        { s: "Les élèves mangent ", t: "à la cantine", isC: false },
+        { s: "L'enfant désobéit ", t: "à ses parents", isC: true },
+        { s: "Le spectacle commence ", t: "à huit heures", isC: false }
+    ].sort(() => Math.random() - 0.5);
+
+    let idx = 0, time = 10, timer;
+
+    function loadQ() {
+        if(idx >= data.length) {
+            document.getElementById('app').innerHTML = `<h2>Série terminée</h2><button onclick="location.reload()" style="background:#34495e; color:white; margin-top:20px">Recommencer</button>`;
+            return;
+        }
+        const q = data[idx];
+        time = 10;
+        document.getElementById('msg').innerText = "";
+        document.getElementById('next').style.display = "none";
+        document.getElementById('vrai').disabled = true;
+        document.getElementById('faux').disabled = true;
+        document.getElementById('timer-msg').innerText = "Réflexion en cours...";
+        document.getElementById('timer').style.color = "#e74c3c";
+        document.getElementById('text').innerHTML = `${q.s}<span id="tg" class="target">${q.t}</span>`;
+        startT();
+    }
+
+    function startT() {
+        clearInterval(timer);
+        document.getElementById('timer').innerText = time;
+        timer = setInterval(() => {
+            time--;
+            document.getElementById('timer').innerText = time;
+            if(time <= 0) { 
+                clearInterval(timer);
+                enableButtons();
+            }
+        }, 1000);
+    }
+
+    function enableButtons() {
+        document.getElementById('vrai').disabled = false;
+        document.getElementById('faux').disabled = false;
+        document.getElementById('timer').innerText = "✓";
+        document.getElementById('timer').style.color = "#27ae60";
+        document.getElementById('timer-msg').innerText = "Vous pouvez répondre !";
+    }
+
+    function ans(user) {
+        const q = data[idx];
+        const tg = document.getElementById('tg');
+        document.getElementById('vrai').disabled = true;
+        document.getElementById('faux').disabled = true;
+        
+        if(user === q.isC) {
+            document.getElementById('msg').innerText = "✅ Correct !";
+            document.getElementById('msg').style.color = "#27ae60";
+            tg.style.background = "#d5f5e3";
+        } else {
+            if(q.isC) {
+                tg.classList.add('shake');
+                document.getElementById('msg').innerText = "Faux ! Le COI est un complément au verbe, il ne peut  être ni placé en tête de phrase ni supprimé.";
+                document.getElementById('msg').style.color = "#c0392b";
+            } else {
+                tg.classList.add('move-effect');
+                document.getElementById('text').innerHTML = `<span class="target move-effect">${q.t}</span>, ${q.s.toLowerCase()}`;
+                document.getElementById('msg').innerText = "Faux ! On peut déplacer ce groupe et le supprimer.";
+                document.getElementById('msg').style.color = "#d35400";
+            }
+        }
+        idx++;
+        document.getElementById('next').style.display = "block";
+    }
+
+    loadQ();
+</script>
+</body>
+</html>
