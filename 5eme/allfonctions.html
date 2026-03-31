@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Analyse Syntaxique : Les Héros Médiévaux</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --sujet: #D6EAF8;
+            --verbe: #FADBD8;
+            --cod: #D5F5E3;
+            --coi: #FCF3CF;
+            --cc: #E8DAEF;
+            --selected: #3498db;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .top-section {
+            background: white;
+            padding: 15px;
+            text-align: center;
+            border-bottom: 3px solid #34495e;
+        }
+
+        h1 { margin: 0; color: #2c3e50; font-size: 1.5rem; text-transform: uppercase; }
+        
+        .consigne {
+            background: #fdf2e9;
+            border-left: 5px solid #2857af;
+            padding: 8px;
+            margin: 10px auto 0;
+            max-width: 800px;
+            font-size: 1.3rem;
+            color: #0000d3;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px;
+            background: #34495e;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        #exercise-zone {
+            flex-grow: 1;
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        #sentence-container { font-size: 1.6rem; line-height: 3; }
+
+        .word {
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 0 2px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .word.selected { background-color: var(--selected); color: white; }
+        .word.val-sujet { background-color: var(--sujet); border-color: #85c1e9; }
+        .word.val-verbe { background-color: var(--verbe); border-color: #f1948a; }
+        .word.val-cod { background-color: var(--cod); border-color: #82e0aa; }
+        .word.val-coi { background-color: var(--coi); border-color: #f7dc6f; }
+        .word.val-cc { background-color: var(--cc); border-color: #bb8fce; }
+
+        #timer-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.50);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .locked #timer-overlay { display: flex; }
+        #exercise-zone:not(.locked) #timer-overlay { display: none; }
+
+        #validation-panel {
+            height: 160px;
+            background: white;
+            border-top: 4px solid #34495e;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hidden { display: none; }
+        .button-grid { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
+
+        button {
+            padding: 12px 18px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #btn-validate-group { background: #3498db; color: white; }
+        #btn-validate-group:disabled { background: #bdc3c7; }
+        .func-btn { border: 2px solid rgba(0,0,0,0.1); }
+        .func-btn[data-role="Sujet"] { background: var(--sujet); }
+        .func-btn[data-role="Verbe"] { background: var(--verbe); }
+        .func-btn[data-role="COD"] { background: var(--cod); }
+        .func-btn[data-role="COI"] { background: var(--coi); }
+        .func-btn[data-role="CC"] { background: var(--cc); }
+        #btn-continue { background: #27ae60; color: white; }
+    </style>
+</head>
+<body>
+
+    <section class="top-section">
+        <h1>Analyse Médiévale</h1>
+        <div class="consigne"><b>Observation :</b> <b>Consigne :</b> 1. Sélectionne tous les mots d'un groupe. 2. Valide le groupe. 3. indique s'il s'agit du verbe, du sujet, du COD, du COI, ou d'un groupe qu'on peut déplacer et supprimer .</div>
+    </section>
+
+    <div class="stats-bar">
+        <span>Phrase : <span id="phrase-num">1</span>/12</span>
+        <span>Groupes restants : <span id="groups-left">0</span></span>
+        <span>Score : <span id="trial-count">1er essai</span></span>
+    </div>
+
+    <main id="exercise-zone" class="locked">
+        <div id="timer-overlay">
+            <p>Observe bien la structure de la phrase et prépare tes réponses.</p>
+            <h2 id="timer-count">10</h2>
+        </div>
+        <div id="sentence-container"></div>
+    </main>
+
+    <footer id="validation-panel">
+        <div id="step-selection" class="panel-step">
+            <button id="btn-validate-group" disabled>Valider le groupe sélectionné</button>
+        </div>
+        <div id="step-qualification" class="panel-step hidden">
+            <div class="button-grid">
+                <button class="func-btn" data-role="Sujet">Sujet</button>
+                <button class="func-btn" data-role="Verbe">Verbe</button>
+                <button class="func-btn" data-role="COD">COD</button>
+                <button class="func-btn" data-role="COI">COI</button>
+                <button class="func-btn" data-role="CC">Complément supprimable et déplaçable</button>
+            </div>
+        </div>
+        <div id="step-feedback" class="panel-step hidden">
+            <button id="btn-continue">Continuer ▶</button>
+        </div>
+    </footer>
+
+    <script>
+        const corpus = [
+            {
+                words: [{text:"Le",id:1},{text:"courageux",id:1},{text:"chevalier",id:1},{text:"donne",id:2},{text:"un",id:3},{text:"coup",id:3},{text:"d'épée",id:3},{text:"à",id:4},{text:"son",id:4},{text:"adversaire",id:4},{text:"pendant",id:5},{text:"le",id:5},{text:"tournoi",id:5},{text:".",id:0}],
+                solutions: {1:"Sujet",2:"Verbe",3:"COD",4:"COI",5:"CC"}
+            },
+            {
+                words: [{text:"Dans",id:1},{text:"la",id:1},{text:"forêt",id:1},{text:"profonde",id:1},{text:",",id:0},{text:"Lancelot",id:2},{text:"cherche",id:3},{text:"désespérément",id:4},{text:"la",id:5},{text:"reine",id:5},{text:"Guenièvre",id:5},{text:".",id:0}],
+                solutions: {1:"CC",2:"Sujet",3:"Verbe",4:"CC",5:"COD"}
+            },
+            {
+                words: [{text:"Le",id:1},{text:"roi",id:1},{text:"Arthur",id:1},{text:"parle",id:2},{text:"souvent",id:3},{text:"de",id:4},{text:"la",id:4},{text:"Table",id:4},{text:"Ronde",id:4},{text:"à",id:5},{text:"ses",id:5},{text:"fidèles",id:5},{text:"compagnons",id:5},{text:".",id:0}],
+                solutions: {1:"Sujet",2:"Verbe",3:"CC",4:"COI",5:"COI"}
+            },
+            {
+                words: [{text:"Au",id:1},{text:"lever",id:1},{text:"du",id:1},{text:"jour",id:1},{text:",",id:0},{text:"les",id:2},{text:"archers",id:2},{text:"décochèrent",id:3},{text:"leurs",id:4},{text:"flèches",id:4},{text:"avec",id:5},{text:"précision",id:5},{text:".",id:0}],
+                solutions: {1:"CC",2:"Sujet",3:"Verbe",4:"COD",5:"CC"}
+            },
+            {
+                words: [{text:"Le",id:1},{text:"ménestrel",id:1},{text:"raconte",id:2},{text:"une",id:3},{text:"légende",id:3},{text:"héroïque",id:3},{text:"aux",id:4},{text:"villageois",id:4},{text:"attentifs",id:4},{text:"sous",id:5},{text:"les",id:5},{text:"murs",id:5},{text:"du",id:5},{text:"château",id:5},{text:".",id:0}],
+                solutions: {1:"Sujet",2:"Verbe",3:"COD",4:"COI",5:"CC"}
+            },
+            {
+                words: [{text:"Yvain",id:1},{text:"affronte",id:2},{text:"un",id:3},{text:"dragon",id:3},{text:"féroce",id:3},{text:"pour",id:4},{text:"sauver",id:4},{text:"une",id:4},{text:"demoiselle",id:4},{text:".",id:0}],
+                solutions: {1:"Sujet",2:"Verbe",3:"COD",4:"CC"}
+            },
+            {
+                words: [{text:"La",id:1},{text:"dame",id:1},{text:"du",id:1},{text:"lac",id:1},{text:"remit",id:2},{text:"Excalibur",id:3},{text:"au",id:4},{text:"jeune",id:4},{text:"Arthur",id:4},{text:"près",id:5},{text:"du",id:5},{text:"rivage",id:5},{text:".",id:0}],
+                solutions: {1:"Sujet",2:"Verbe",3:"COD",4:"COI",5:"CC"}
+            },
+            {
+                words: [{text:"Les",id:1},{text:"croisés",id:1},{text:"rêvaient",id:2},{text:"de",id:3},{text:"gloire",id:3},{text:"et",id:3},{text:"d'honneur",id:3},{text:"durant",id:4},{text:"leur",id:4},{text:"long",id:4},{text:"périple",id:4},{text:".",id:0}],
+                solutions: {1:"Sujet",2:"Verbe",3:"COI",4:"CC"}
+            },
+            {
+                words: [{text:"Tristan",id:1},{text:"buvait",id:2},{text:"le",id:3},{text:"philtre",id:3},{text:"d'amour",id:3},{text:"par",id:4},{text:"erreur",id:4},{text:"sur",id:5},{text:"le",id:5},{text:"navire",id:5},{text:".",id:0}],
+                solutions: {1:"Sujet",2:"Verbe",3:"COD",4:"CC",5:"CC"}
+            },
+            {
+                words: [{text:"L’écuyer",id:1},{text:"nettoie",id:2},{text:"l’armure",id:3},{text:"de",id:3},{text:"son",id:3},{text:"maître",id:3},{text:"soigneusement",id:4},{text:"avant",id:5},{text:"la",id:5},{text:"grande",id:5},{text:"bataille",id:5},{text:".",id:0}],
+                solutions: {1:"Sujet",2:"Verbe",3:"COD",4:"CC",5:"CC"}
+            },
+            {
+                words: [{text:"En",id:1},{text:"dépit",id:1},{text:"de",id:1},{text:"son",id:1},{text:"armure",id:1},{text:"pesante",id:1},{text:",",id:0},{text:"le",id:2},{text:"héros",id:2},{text:"le",id:3},{text:"poursuivit",id:4},{text:"jusqu’au",id:5},{text:"sommet",id:5},{text:"de",id:5},{text:"la",id:5},{text:"tour",id:5},{text:".",id:0}],
+                solutions: {1:"CC",2:"Sujet",3:"COD",4:"Verbe",5:"CC"}
+            },
+            {
+                words: [{text:"L'épopée",id:1},{text:"nous",id:2},{text:"retrace",id:3},{text:"fidèlement",id:4},{text:"les",id:5},{text:"exploits",id:5},{text:"de",id:5},{text:"Guillaume",id:5},{text:"d'Orange",id:5},{text:".",id:0}],
+                solutions: {1:"Sujet",2:"COI",3:"Verbe",4:"CC",5:"COD"}
+            }
+        ];
+
+        let currentIdx = 0;
+        let selectedIndices = [];
+        let groupsFound = 0;
+        let attempt = 1;
+
+        function loadPhrase() {
+            const container = document.getElementById('sentence-container');
+            container.innerHTML = '';
+            corpus[currentIdx].words.forEach((word, index) => {
+                const span = document.createElement('span');
+                span.innerText = word.text;
+                span.className = 'word';
+                if (word.id !== 0) span.onclick = () => toggle(index);
+                container.appendChild(span);
+            });
+            groupsFound = 0;
+            attempt = 1;
+            selectedIndices = [];
+            document.getElementById('phrase-num').innerText = currentIdx + 1;
+            startTimer();
+            updateUI();
+            showStep('step-selection');
+            document.getElementById('btn-validate-group').disabled = true;
+        }
+
+        function startTimer() {
+            let time = 8;
+            document.getElementById('exercise-zone').classList.add('locked');
+            const counter = document.getElementById('timer-count');
+            counter.innerText = time;
+            const itv = setInterval(() => {
+                time--;
+                counter.innerText = time;
+                if (time <= 0) {
+                    clearInterval(itv);
+                    document.getElementById('exercise-zone').classList.remove('locked');
+                }
+            }, 800);
+        }
+
+        function toggle(idx) {
+            const el = document.querySelectorAll('.word')[idx];
+            if (el.className.includes('val-')) return;
+            el.classList.toggle('selected');
+            selectedIndices = [];
+            document.querySelectorAll('.word').forEach((w, i) => {
+                if (w.classList.contains('selected')) selectedIndices.push(i);
+            });
+            document.getElementById('btn-validate-group').disabled = selectedIndices.length === 0;
+        }
+
+        document.getElementById('btn-validate-group').onclick = () => {
+            const id = corpus[currentIdx].words[selectedIndices[0]].id;
+            const isFull = selectedIndices.every(i => corpus[currentIdx].words[i].id === id) &&
+                           selectedIndices.length === corpus[currentIdx].words.filter(w => w.id === id).length;
+            if (isFull) showStep('step-qualification');
+            else { alert("Groupe incorrect !"); attempt++; updateUI(); clearSelection(); }
+        };
+
+        document.querySelectorAll('.func-btn').forEach(btn => {
+            btn.onclick = () => {
+                const id = corpus[currentIdx].words[selectedIndices[0]].id;
+                const role = btn.getAttribute('data-role');
+                if (corpus[currentIdx].solutions[id] === role) {
+                    document.querySelectorAll('.word').forEach((el, i) => {
+                        if (corpus[currentIdx].words[i].id === id) {
+                            el.classList.remove('selected');
+                            el.classList.add('val-' + role.toLowerCase());
+                        }
+                    });
+                    groupsFound++;
+                    updateUI();
+                    if (groupsFound === new Set(corpus[currentIdx].words.map(w => w.id).filter(id => id > 0)).size) showStep('step-feedback');
+                    else { showStep('step-selection'); selectedIndices = []; document.getElementById('btn-validate-group').disabled = true; }
+                } else { alert("Fausse fonction !"); attempt++; updateUI(); }
+            };
+        });
+
+        document.getElementById('btn-continue').onclick = () => {
+            currentIdx++;
+            if (currentIdx < corpus.length) loadPhrase();
+            else alert("Fin du parcours !");
+        };
+
+        function clearSelection() {
+            document.querySelectorAll('.word').forEach(el => el.classList.remove('selected'));
+            selectedIndices = [];
+        }
+
+        function showStep(id) {
+            document.querySelectorAll('.panel-step').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function updateUI() {
+            const total = new Set(corpus[currentIdx].words.map(w => w.id).filter(id => id > 0)).size;
+            document.getElementById('groups-left').innerText = total - groupsFound;
+            document.getElementById('trial-count').innerText = attempt === 1 ? "1er essai" : `${attempt}ème essai`;
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.word').forEach(el => el.classList.remove('selected'));
+            selectedIndices = [];
+            document.getElementById('btn-validate-group').disabled = true;
+        }
+
+        loadPhrase();
+    </script>
+</body>
+</html>
