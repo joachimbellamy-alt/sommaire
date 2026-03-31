@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Exercice de Tri - Grammaire</title>
+    <style>
+        :root {
+            --cod-color: #D6EAF8;
+            --coi-color: #FADBD8;
+            --cc-color: #D5F5E3;
+            --error-color: #E74C3C;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; touch-action: manipulation; -webkit-user-select: none; }
+        #app { max-width: 900px; margin: 20px auto; text-align: center; padding: 10px; }
+        
+        #header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        #score-display { font-size: 1.4rem; font-weight: bold; }
+        #cooldown { color: var(--error-color); font-weight: bold; min-width: 150px; }
+        #verb-display { font-size: 1.1rem; color: #2c3e50; text-transform: uppercase; border-bottom: 3px solid #3498db; }
+
+        #label-zone { min-height: 100px; background: #fff; border: 2px dashed #bdc3c7; border-radius: 15px; padding: 20px; margin-bottom: 30px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; align-items: center; }
+        
+        .label { padding: 15px 25px; background: white; border: 2px solid #3498db; border-radius: 12px; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 0 #2980b9; transition: all 0.1s; }
+        .label:active { transform: translateY(2px); box-shadow: 0 2px 0 #2980b9; }
+        .label.selected { border-color: #e67e22; background: #fff3e0; transform: scale(1.05); }
+        .label.blocked { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
+
+        #bins { display: flex; justify-content: space-between; gap: 15px; margin-top: 20px; }
+        .bin { flex: 1; min-height: 200px; border-radius: 15px; border: 2px solid #95a5a6; display: flex; flex-direction: column; align-items: center; padding: 10px; transition: all 0.2s; }
+        .bin h3 { margin-top: 0; font-size: 1.1rem; padding: 5px 10px; background: rgba(255,255,255,0.7); border-radius: 8px; }
+        
+        #bin-1 { background-color: var(--cod-color); }
+        #bin-2 { background-color: var(--coi-color); }
+        #bin-3 { background-color: var(--cc-color); }
+
+        .item-in-bin { margin-top: 10px; padding: 8px; background: white; border-radius: 8px; border: 1px solid #ddd; width: 90%; font-size: 0.95rem; animation: popIn 0.3s ease-out; }
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div id="consigne" style="background: #ffffff; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #3498db; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+    <p style="margin: 0; font-size: 1.2rem; color: #34495e; line-height: 1.5;">
+        <strong>Consigne :</strong> Chaque début de phrase contient un sujet et une verbe conjugué. Tu dois cliquer sur les compléments puis les ranger dans   <strong>le sac correspondant</strong> (COD, COI ou Complément supprimable/déplaçable).
+    </p>
+    <p style="margin: 5px 0 0 0; font-size: 0.95rem; color: #e74c3c;">
+        <em>Attention : une erreur coûte 0,5 point et bloque l'exercice pendant 5 secondes.</em>
+    </p>
+</div><div id="header">
+        <div id="score-display">Score : <span id="score">0</span></div>
+        <div id="verb-display"><strong id="current-verb">...</strong></div>
+        <div id="cooldown"></div>
+    </div>
+
+    <div id="label-zone"></div>
+
+    <div id="bins">
+        <div class="bin" id="bin-1" onclick="handleBinClick(1)"><h3>COD</h3></div>
+        <div class="bin" id="bin-2" onclick="handleBinClick(2)"><h3>COI</h3></div>
+        <div class="bin" id="bin-3" onclick="handleBinClick(3)"><h3>Complément supprimable / déplaçable</h3></div>
+    </div>
+</div>
+
+<script>
+const data = [
+    { v: "La maire de Tinténiac parle", items: [{t: "plusieurs langues", c: 1}, {t: "à son adjoint", c: 2}, {t: "avec passion", c: 3}] },
+    { v: "Jean-Patrick écrit", items: [{t: "une rédaction", c: 1}, {t: "à ses cousins", c: 2}, {t: "tous les matins", c: 3}] },
+    { v: "Amadeus joue", items: [{t: "une sonate", c: 1}, {t: "au ballon", c: 2}, {t: "dans le jardin", c: 3}] },
+    { v: "M. Bellamy répond", items: [{t: "des bêtises", c: 1}, {t: "au client", c: 2}, {t: "instantanément", c: 3}] },
+    { v: "Olivia pense", items: [{t: "ce qu'elle dit", c: 1}, {t: "à son avenir", c: 2}, {t: "en silence", c: 3}] }
+];
+
+let currentIdx = 0;
+let score = 0;
+let isWaiting = false;
+let selectedLabel = null;
+
+function initLevel() {
+    if(currentIdx >= data.length) {
+        document.getElementById('app').innerHTML = `<h1>Exercice terminé !</h1><p style="font-size:2rem">Score Final : ${score}</p>`;
+        return;
+    }
+    const level = data[currentIdx];
+    document.getElementById('current-verb').innerText = level.v;
+    const zone = document.getElementById('label-zone');
+    zone.innerHTML = '';
+    document.querySelectorAll('.bin').forEach(b => {
+        const title = b.querySelector('h3');
+        b.innerHTML = '';
+        b.appendChild(title);
+    });
+
+    [...level.items].sort(() => Math.random() - 0.5).forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'label';
+        div.innerText = item.t;
+        div.setAttribute('data-target', item.c); 
+        div.onclick = () => selectLabel(div);
+        zone.appendChild(div);
+    });
+}
+
+function selectLabel(el) {
+    if(isWaiting) return;
+    document.querySelectorAll('.label').forEach(l => l.classList.remove('selected'));
+    selectedLabel = el;
+    el.classList.add('selected');
+}
+
+function handleBinClick(binId) {
+    if(!selectedLabel || isWaiting) return;
+    const correctId = parseInt(selectedLabel.getAttribute('data-target'));
+    
+    if(binId === correctId) {
+        const bin = document.getElementById(`bin-${binId}`);
+        const feedback = document.createElement('div');
+        feedback.className = 'item-in-bin';
+        feedback.innerText = selectedLabel.innerText;
+        bin.appendChild(feedback);
+        selectedLabel.remove();
+        selectedLabel = null;
+        score += 1;
+        updateUI();
+        if(document.querySelectorAll('.label').length === 0) {
+            currentIdx++;
+            setTimeout(initLevel, 800);
+        }
+    } else {
+        score -= 0.5;
+        updateUI();
+        startCooldown();
+    }
+}
+
+function startCooldown() {
+    isWaiting = true;
+    // Correction ici : on retire la classe 'selected' avant de vider selectedLabel
+    if(selectedLabel) {
+        selectedLabel.classList.remove('selected');
+    }
+    selectedLabel = null;
+    
+    document.querySelectorAll('.label').forEach(l => l.classList.add('blocked'));
+    let timeLeft = 5;
+    const display = document.getElementById('cooldown');
+    const timer = setInterval(() => {
+        display.innerText = `⏳ Attente : ${timeLeft}s`;
+        timeLeft--;
+        if(timeLeft < 0) {
+            clearInterval(timer);
+            display.innerText = '';
+            isWaiting = false;
+            document.querySelectorAll('.label').forEach(l => l.classList.remove('blocked'));
+        }
+    }, 1000);
+}
+
+function updateUI() {
+    document.getElementById('score').innerText = score;
+}
+
+initLevel();
+</script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Exercice de Repérage : Le Petit Prince</title>
+    <style>
+        :root {
+            --bg-cod: #D6EAF8; /* Bleu ciel pour COD */
+            --bg-coi: #D5F5E3; /* Vert d'eau pour COI */
+            --selected: #FEF9E7;
+            --error-red: #FADBD8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            -webkit-user-select: none; /* Désactive sélection native iPad */
+        }
+
+        #exercise-container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+
+        .instruction {
+            font-style: italic;
+            color: #555;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #eef;
+            border-radius: 5px;
+        }
+
+        #text-display {
+            font-size: 1.25rem; /* ~14pt */
+            line-height: 2;
+            margin-bottom: 30px;
+        }
+
+        .word {
+            display: inline-block;
+            padding: 4px 6px; /* Zones de clic larges */
+            margin: 2px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .word.selected { background-color: var(--selected); border-color: #f1c40f; }
+        .word.correct-cod { background-color: var(--bg-cod) !important; border-color: #3498db; }
+        .word.correct-coi { background-color: var(--bg-coi) !important; border-color: #27ae60; }
+
+        #feedback-panel {
+            display: none;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .red-flag { background-color: var(--error-red); color: #c0392b; border: 2px solid #c0392b; }
+
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: none;
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:disabled { background: #ccc; cursor: not-allowed; }
+
+        #stats { font-size: 0.9rem; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+
+<div id="exercise-container">
+    <h2 id="title">Partie 1 : Les Compléments d'Objet Directs (COD)</h2>
+    <div class="instruction" id="instruction">Identifiez les 5 COD du texte en cliquant sur les groupes de mots.</div>
+
+    <div id="text-display"></div>
+
+    <div id="feedback-panel"></div>
+
+    <div class="controls">
+        <div id="stats">
+            Restants : <span id="remaining">5</span> | 
+            Essais : <span id="tries">0</span>
+        </div>
+        <button id="validate-btn" onclick="checkSelection()">Vérifier ma sélection</button>
+        <button id="next-btn" style="display:none;" onclick="startPart2()">Passer aux COI ▶</button>
+    </div>
+</div>
+
+<script>
+    // Données (id > 0 correspond aux cibles)
+    const dataPart1 = [
+        {t:"Le", id:0}, {t:"Petit", id:0}, {t:"Prince", id:0}, {t:"aperçut", id:0}, {t:"le", id:1}, {t:"renard", id:1}, {t:"sous", id:0}, {t:"un", id:0}, {t:"pommier", id:0}, {t:"sauvage.", id:0},
+        {t:"Curieux,", id:0}, {t:"il", id:0}, {t:"interrogea", id:0}, {t:"l'", id:2},{t:"animal", id:2}, {t:"avec", id:0}, {t:"douceur.", id:0},
+        {t:"Le", id:0}, {t:"renard", id:0}, {t:"expliqua", id:0}, {t:"son", id:3}, {t:"secret", id:3}, {t:"au", id:0}, {t:"milieu", id:0}, {t:"des", id:0}, {t:"herbes", id:0}, {t:"hautes.", id:0},
+        {t:"« Tu", id:0}, {t:"ne", id:0}, {t:"connais", id:0}, {t:"pas", id:0}, {t:"encore", id:0}, {t:"mon", id:4}, {t:"monde", id:4}, {t:"»,", id:0}, {t:"murmura-t-il.", id:0},
+        {t:"L'enfant", id:0}, {t:"accepta", id:0}, {t:"cette", id:5}, {t:"amitié", id:5}, {t:"naissante.", id:5}
+    ];
+
+    const dataPart2 = [
+        {t:"L'enfant", id:0}, {t:"plaisait", id:0}, {t:"au", id:1}, {t:"renard", id:1}, {t:"par", id:0}, {t:"sa", id:0}, {t:"pureté.", id:0},
+        {t:"Il", id:0}, {t:"parlait", id:0}, {t:"à", id:2}, {t:"son", id:2}, {t:"nouvel", id:2}, {t:"ami", id:2}, {t:"de", id:5}, {t:"ses", id:5}, {t:"voyages.", id:5},
+        {t:"Le", id:0}, {t:"renard", id:0}, {t:"songeait", id:0}, {t:"souvent", id:0}, {t:"à", id:3}, {t:"la", id:3}, {t:"couleur", id:3}, {t:"du", id:3}, {t:"blé", id:3}, {t:"qui", id:0}, {t:"rappelait", id:0}, {t:"l'or.", id:0},
+        {t:"L'enfant", id:0}, {t:"pensa", id:0}, {t:"à", id:4}, {t:"sa", id:4}, {t:"rose", id:4}, {t:"restée", id:4}, {t:"seule.", id:4},
+    ];
+
+    let currentPart = 1;
+    let selectedIds = new Set();
+    let clickCount = 0;
+    let lastClickTime = Date.now();
+    let foundGroups = new Set();
+    let errorCount = 0;
+
+    const textDisplay = document.getElementById('text-display');
+    const feedback = document.getElementById('feedback-panel');
+    const validateBtn = document.getElementById('validate-btn');
+
+    function renderText(data) {
+        textDisplay.innerHTML = '';
+        data.forEach((item, index) => {
+            const span = document.createElement('span');
+            span.innerText = item.t + ' ';
+            span.className = 'word';
+            span.onclick = () => handleWordClick(span, index, data);
+            textDisplay.appendChild(span);
+        });
+    }
+
+    function handleWordClick(el, index, data) {
+        // --- LOGIQUE RED FLAG (Anti-mitraillette) ---
+        const now = Date.now();
+        if (now - lastClickTime < 300) clickCount++;
+        else clickCount = 0;
+        lastClickTime = now;
+
+        if (clickCount > 4) {
+            triggerRedFlag("Stop ! Tu cliques trop vite sans réfléchir. Prends le temps d'analyser la phrase.");
+            return;
+        }
+
+        if (el.classList.contains('correct-cod') || el.classList.contains('correct-coi')) return;
+
+        el.classList.toggle('selected');
+    }
+
+    function triggerRedFlag(msg) {
+        feedback.innerText = msg;
+        feedback.className = 'red-flag';
+        feedback.style.display = 'block';
+        validateBtn.disabled = true;
+        setTimeout(() => {
+            validateBtn.disabled = false;
+            feedback.style.display = 'none';
+        }, 5000); // Bloqué 5 secondes
+    }
+
+    function checkSelection() {
+        const words = document.querySelectorAll('.word');
+        const currentData = currentPart === 1 ? dataPart1 : dataPart2;
+        let currentSelection = [];
+        
+        words.forEach((span, i) => {
+            if (span.classList.contains('selected')) currentSelection.push(i);
+        });
+
+        if (currentSelection.length === 0) return;
+
+        // Vérifier si la sélection correspond à UN groupe cible complet
+        let firstIndex = currentSelection[0];
+        let targetId = currentData[firstIndex].id;
+
+        if (targetId === 0) {
+            applyError("Ceci n'est pas un complément du verbe. Sélectionne un groupe de mots qui forme un COD que tu peux remplacer par le pronom 'le', 'la' ou 'les' ou un COI complet .");
+            return;
+        }
+
+        // Vérifier l'intégralité du groupe
+        let fullGroupIndices = currentData.map((item, idx) => item.id === targetId ? idx : -1).filter(idx => idx !== -1);
+        let isComplete = fullGroupIndices.every(idx => currentSelection.includes(idx)) && currentSelection.length === fullGroupIndices.length;
+
+        if (isComplete) {
+            foundGroups.add(targetId);
+            fullGroupIndices.forEach(idx => {
+                words[idx].classList.remove('selected');
+                words[idx].classList.add(currentPart === 1 ? 'correct-cod' : 'correct-coi');
+            });
+            updateStats();
+        } else {
+            applyError("Groupe incomplet ou intrus détecté. Sélectionne TOUT le groupe .");
+        }
+    }
+
+    function applyError(msg) {
+        errorCount++;
+        document.getElementById('tries').innerText = errorCount;
+        feedback.innerText = msg;
+        feedback.className = 'red-flag';
+        feedback.style.display = 'block';
+        setTimeout(() => feedback.style.display = 'none', 7000);
+        
+        // Détection acharnement
+        if (errorCount % 4 === 0) {
+            triggerRedFlag("Tu as fait plusieurs erreurs. Relis bien le texte avant de retenter.");
+        }
+    }
+
+    function updateStats() {
+        const remaining = 5 - foundGroups.size;
+        document.getElementById('remaining').innerText = remaining;
+        if (remaining === 0) {
+            if (currentPart === 1) {
+                document.getElementById('next-btn').style.display = 'block';
+                validateBtn.style.display = 'none';
+            } else {
+                feedback.innerText = "Félicitations ! Tu as identifié tous les compléments.";
+                feedback.style.display = 'block';
+                feedback.style.backgroundColor = "#D5F5E3";
+                feedback.style.color = "#27ae60";
+            }
+        }
+    }
+
+    function startPart2() {
+        currentPart = 2;
+        foundGroups.clear();
+        errorCount = 0;
+        document.getElementById('title').innerText = "Partie 2 : Les Compléments d'Objet Indirects (COI)";
+        document.getElementById('instruction').innerText = "Identifiez les 5 COI .";
+        document.getElementById('remaining').innerText = "5";
+        document.getElementById('tries').innerText = "0";
+        document.getElementById('next-btn').style.display = 'none';
+        validateBtn.style.display = 'block';
+        renderText(dataPart2);
+    }
+
+    renderText(dataPart1);
+</script>
+
+</body>
+</html>
