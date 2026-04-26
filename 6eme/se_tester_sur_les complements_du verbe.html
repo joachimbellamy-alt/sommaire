@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Le Grand Tableau de Bord des Compléments</title>
+    <style>
+        :root {
+            --cod-red: #e74c3c;
+            --cod-light: #FADBD8;
+            --coi-blue: #3498db;
+            --coi-light: #D6EAF8;
+            --att-green: #2ecc71;
+            --att-light: #D5F5E3;
+            --label-gold: #F9E79F;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: #fef5e7; padding: 10px; }
+        
+        table { 
+            border-collapse: separate; 
+            border-spacing: 8px; 
+            width: 100%; 
+            table-layout: fixed; 
+        }
+
+        th { 
+            height: 50px; 
+            border-radius: 10px; 
+            color: white; 
+            font-size: 1.2rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .label-cell { 
+            background-color: var(--label-gold); 
+            font-weight: bold; 
+            border: 2px solid #f1c40f;
+            border-radius: 10px;
+            padding: 5px;
+            text-align: center;
+        }
+
+        td:not(.label-cell) { 
+            height: 120px; 
+            perspective: 1000px; 
+            padding: 0;
+        }
+
+        .flip-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .flipped { transform: rotateY(180deg); }
+
+        .front, .back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            border: 2px solid rgba(0,0,0,0.1);
+            font-size: 14pt;
+            padding: 10px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        /* Couleurs Front */
+        .cod .front { background-color: var(--cod-light); }
+        .coi .front { background-color: var(--coi-light); }
+        .att .front { background-color: var(--att-light); }
+        .front { color: rgba(0,0,0,0.2); font-size: 2rem; font-weight: bold; }
+
+        /* Couleurs Back */
+        .back { background-color: white; transform: rotateY(180deg); color: #2c3e50; font-size: 12pt; }
+
+        .header-cod { background-color: var(--cod-red); }
+        .header-coi { background-color: var(--coi-blue); }
+        .header-att { background-color: var(--att-green); }
+
+    </style>
+</head>
+<body>
+
+    <h2 style="text-align:center">Tester ses connaissances sur les différentes caractéristiques des Compléments Essentiels du Verbe</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="background:transparent"></th>
+                <th class="header-cod">COD</th>
+                <th class="header-coi">COI</th>
+                <th class="header-att">Attribut du Sujet</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="label-cell">Type de verbe</td>
+                <td class="cod"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">Verbe d'Action</div></div></td>
+                <td class="coi"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">Verbe d'Action</div></div></td>
+                <td class="att"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">Verbe d'état (être, paraître, sembler...)</div></div></td>
+            </tr>
+            <tr>
+                <td class="label-cell">Lien avec le verbe</td>
+                <td class="cod"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">Direct (sans préposition)</div></div></td>
+                <td class="coi"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">Indirect (séparé par à ou de)</div></div></td>
+                <td class="att"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">[SUJET] = [ATTRIBUT]</div></div></td>
+            </tr>
+            <tr>
+                <td class="label-cell">Déplaçable / Supprimable</td>
+                <td class="cod"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">NON</div></div></td>
+                <td class="coi"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">NON</div></div></td>
+                <td class="att"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">NON</div></div></td>
+            </tr>
+            <tr>
+                <td class="label-cell">Identification</td>
+                <td class="cod"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">Remplacer par le, la, les, l'</div></div></td>
+                <td class="coi"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">Poser la question commençant par une prépostion + qui/ quoi suivi du verbe...</div></div></td>
+                <td class="att"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">Balance : Sujet = Attribut du sujet (miroir)</div></div></td>
+            </tr>
+            <tr>
+                <td class="label-cell">Relation sujet</td>
+                <td class="cod"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">Action SUR le COD</div></div></td>
+                <td class="coi"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">Action VERS le COI</div></div></td>
+                <td class="att"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">Identité ou Caractéristique</div></div></td>
+            </tr>
+            <tr>
+                <td class="label-cell">Pronominalisation</td>
+                <td class="cod"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">le, la, les, l'</div></div></td>
+                <td class="coi"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">lui, leur, y, en</div></div></td>
+                <td class="att"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back"> </div></div></td>
+            </tr>
+            <tr>
+                <td class="label-cell">Accord</td>
+                <td class="cod"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">jamais d'accord si le COD est après le verbe</div></div></td>
+                <td class="coi"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">JAMAIS d'accord</div></div></td>
+                <td class="att"><div class="flip-card" onclick="flip(this)"><div class="front">?</div><div class="back">TOUJOURS avec le sujeten genre et en nombre</div></div></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        function flip(card) {
+            if (card.classList.contains('flipped')) return;
+            card.classList.add('flipped');
+            setTimeout(() => { card.classList.remove('flipped'); }, 3000);
+        }
+    </script>
+</body>
+</html>
