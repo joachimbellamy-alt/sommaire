@@ -19,13 +19,16 @@
             background: #fff; border: 2px solid var(--couleur-classe); 
             color: var(--couleur-classe); text-decoration: none; 
             border-radius: 8px; font-weight: bold; transition: 0.3s;
+            text-align: center; /* Pour les textes longs sur mobile */
         }
         .btn:hover { background: var(--couleur-classe); color: white; transform: scale(1.02); }
         
-        .nouveau {
+        /* Harmonisation des badges "Nouveau" */
+        .nouveau, .badge {
             background: #e74c3c; color: white; font-size: 0.75em;
             padding: 2px 10px; border-radius: 20px; text-transform: uppercase;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            margin-left: 10px;
         }
 
         .retour { display: block; text-align: center; margin-top: 30px; color: #95a5a6; text-decoration: none; font-weight: bold; }
@@ -36,58 +39,56 @@
 
 <div class="container">
     <h1>📖 Espace Français 6ème</h1>
-    <p class="subtitle">«Celui qui déplace la montagne, c'est celui qui commence par enlever les petites pierres. — Confucius »</p>
+    <p class="subtitle">« Celui qui déplace la montagne, c'est celui qui commence par enlever les petites pierres. » — Confucius</p>
     
     <div class="list">
-        <a href="malediction-cyclope.html" class="btn">
-            👁️ La malédiction du Cyclope 
-        </a>
-         <a href="inferences_avancees.html" class="btn">
-            📚 Exercices de compréhension en lecture 
-        </a>
-        <a href="temps_du_passe_identifier.html" class="btn">
-            ⏳ Identifier les temps du passé 
-        </a>
+        <a href="malediction-cyclope.html" class="btn">👁️ La malédiction du Cyclope</a>
+        
+        <a href="inferences_avancees.html" class="btn">📚 Exercices de compréhension en lecture</a>
+        
+        <a href="temps_du_passe_identifier.html" class="btn">⏳ Identifier les temps du passé</a>
 
-        <a href="identifier_temps_du_passe_petit_prince.html" class="btn">
-            👑 Les temps du passé dans le Petit Prince 
-        </a>
-        <a href="COD_vrai_faux.html" class="btn">
-            👑 Evaluer sa maitrise du "je retiens" sur les caractétistiques du COD 
-        </a>
-         <a href="COD_petit_prince.html" class="btn">
-            👑 identifier les COD dans un texte inspiré du Petit Prince 
-        </a>
-         <a href="voyages_COD.html" class="btn">
-            👑 Identifier les COD dans un texte inspiré  de la vie de Saint-Exupéry 
-        </a>
-           <a href="aeropostale_COD.html" class="btn">
-            👑 Identifier les COD dans un texte inspiré  des aventuriers de l'Aéropostale 
-        </a>
+        <a href="identifier_temps_du_passe_petit_prince.html" class="btn">👑 Les temps du passé dans le Petit Prince</a>
+        
+        <a href="COD_vrai_faux.html" class="btn">👑 Evaluer sa maîtrise du "je retiens" (COD)</a>
+        
+        <a href="COD_petit_prince.html" class="btn">👑 Identifier les COD (Petit Prince)</a>
+        
+        <a href="voyages_COD.html" class="btn">👑 Les COD (Vie de Saint-Exupéry)</a>
+        
+        <a href="aeropostale_COD.html" class="btn">👑 Les COD (L'Aéropostale)</a>
+        
         <a href="associer_defauts.html" class="btn">
-            👑 associer des personnages à leur comportement et à leur défaut dans le petit prince <span class="badge">Nouveau</span>
-        <a href="QCM_COI.html" class="btn">
-            👑 tester ses connaissances sur le COI <span class="badge">Nouveau</span>
+            👑 Personnages et défauts (Petit Prince) <span class="badge">Nouveau</span>
+        </a> <a href="QCM_COI.html" class="btn">
+            👑 Tester ses connaissances sur le COI <span class="badge">Nouveau</span>
         </a>
+        
         <a href="COI_exo1.html" class="btn">
             👑 Identifier les COI (niveau 1) <span class="badge">Nouveau</span>
         </a>
+        
         <a href="COI_exo2.html" class="btn">
             👑 Identifier les COI (niveau 2) <span class="badge">Nouveau</span>
         </a>
+        
         <a href="COI_pronoms.html" class="btn">
             👑 Identifier les COI (niveau 3) <span class="badge">Nouveau</span>
         </a>
-<a href="sujet_COI_CC.html" class="btn">
-            👑 Identifier le sujet du verbe, le COI et les compléments facultatifs ( supprimables) <span class="badge">Nouveau</span>
+
+        <a href="sujet_COI_CC.html" class="btn">
+            👑 Sujet, COI et compléments facultatifs <span class="badge">Nouveau</span>
         </a>
-       <a href="programme sac groupes.html" class="btn">
-            👑 Faire la différence entre complément essentiel et  complément facultatif <span class="nouveau">nouveau</span>
+
+        <a href="programme_sac_groupes.html" class="btn">
+            👑 Complément essentiel vs facultatif <span class="nouveau">nouveau</span>
         </a>
-             <a href="se_tester_sur_les_complements_du_verbe.html" class="btn">
-            👑 Tester ses connaissances sur les compléments du verbe <span class="nouveau">nouveau</span>
+
+        <a href="se_tester_sur_les_complements_du_verbe.html" class="btn">
+            👑 Tester ses connaissances sur les compléments <span class="nouveau">nouveau</span>
         </a>
     </div>
+    
     <a href="../index.html" class="retour">🏠 Retour à l'accueil</a>
 </div>
 
