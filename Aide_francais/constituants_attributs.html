@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Analyse Syntaxique : Sujet, Verbe & Attribut</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #e0f0fd; 
+            --card-bg: #ffffff;
+            --primary: #4a90e2;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --text: #2c3e50;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            -webkit-user-select: none;
+        }
+
+        header {
+            padding: 20px;
+            text-align: center;
+            background: var(--card-bg);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        h1 { margin: 0; font-size: 1.4rem; color: var(--primary); }
+
+        .instruction-box {
+            background: #f8f9fa;
+            border-left: 5px solid var(--primary);
+            padding: 12px;
+            margin: 10px auto;
+            max-width: 800px;
+            font-size: 0.9rem;
+            text-align: left;
+            border-radius: 8px;
+        }
+
+        .attempt-indicator {
+            text-align: center;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .content-container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .main-card {
+            max-width: 850px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 140px;
+        }
+
+        #text-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            line-height: 2.8;
+            justify-content: center;
+        }
+
+        .word {
+            padding: 8px 15px;
+            background: #fff;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .selected { 
+            background-color: var(--primary) !important; 
+            color: white !important; 
+            border-color: #2c7ac5 !important;
+            transform: translateY(-2px); 
+        }
+        
+        .correct { 
+            background-color: var(--success) !important; 
+            color: white !important; 
+            border-color: #27ae60 !important;
+            pointer-events: none; 
+        }
+
+        .wrong { 
+            background-color: var(--error) !important; 
+            color: white !important; 
+            animation: shake 0.4s; 
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .sticky-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .progress-box { flex: 1; margin-right: 30px; }
+        .bar-bg { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; }
+        #bar-fill { background: var(--success); width: 0%; height: 100%; transition: width 0.5s; }
+
+        #score-display { font-size: 1.1rem; font-weight: 700; margin-right: 20px; }
+        
+        #val-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+        }
+
+        #val-btn:disabled { background: #bdc3c7; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Analyse Syntaxique : Sujet, Verbe & Attribut</h1>
+    <div class="instruction-box">
+        <b>Barème :</b> 1 pt (1er essai) / 0.5 pt (2ème essai). <br>
+        <i>Consigne : Cliquez sur chaque mot du groupe demandé, puis validez.</i>
+    </div>
+</header>
+
+<div class="content-container">
+    <div class="main-card">
+        <div id="attempt-label" class="attempt-indicator">Premier essai</div>
+        <div id="instruction-target" style="text-align:center; margin-bottom:20px; font-weight:700; font-size:1.3rem;">
+            Repérez le <span id="target-type" style="color:var(--primary)">...</span>
+        </div>
+        <div id="text-container"></div>
+    </div>
+</div>
+
+<div class="sticky-footer">
+    <div class="progress-box">
+        <div class="bar-bg"><div id="bar-fill"></div></div>
+        <div style="margin-top:8px; font-size:0.9rem; font-weight:bold; color:#7f8c8d;">
+            Progression : <span id="current-q">1</span> / 10
+        </div>
+    </div>
+    <div id="score-display">Score : 0 / 0</div>
+    <button id="val-btn">Valider</button>
+</div>
+
+<script>
+/**
+ * CONFIGURATION DES PHRASES ENRICHIES
+ * Symboles : * = Sujet, # = Verbe, % = Attribut du sujet
+ */
+const rawPhrases = [
+    "A la pleine lune, *le* *vieux* *manoir* *abandonné* *au* *bout* *du* *chemin* #paraissait# %terriblement% %inquiétant% sous l'orage.",
+    "*Ces* *énormes* *nuages* *noirs* *venant* *de* *l'ouest* #semblent# %particulièrement% %menaçants% aujourd'hui.",
+    "*L'ascension* *de* *ce* *sommet* *enneigé* #devient# %pénible% à cause du vent glacial.",
+    "Lors du championnat UGSEL,*le* *jeune* *athlète* *de* *haut* *niveau* #est# %le% %plus% %rapide% de sa catégorie.",
+    "*Cette* *ancienne* *légende* *méconnue* *des* *historiens* #demeure# %un% %mystère% %insondable% encore de nos jours.",
+    "*Mes* *chers* *amis* *venus* *de* *loin* #paraissent# %heureux% de nous retrouver enfin.",
+    "*Le* *silence* *profond* *de* *la* *forêt* *en* *hiver* #était# %impressionnant% chaque fois qu'on s'y rendait.",
+    "*Votre* *dernière* *proposition* *concernant* *le* *projet* #s'avère# %très% %prometteuse% pour l'avenir de l'entreprise.",
+    "*La* *magnifique* *cathédrale* *située* *sur* *la* *place* #est# %un% %chef-d'œuvre% %d'architecture%.",
+    "*Tous* *les* *étudiants*  #seront# %fiers% malgré la difficulté de l'épreuve."
+];
+
+// Types d'analyses successives par phrase
+const steps = ["SUJET", "VERBE", "ATTRIBUT"];
+
+let currentIndex = 0; // Index de la phrase
+let currentStep = 0;  // Index du type (0=Sujet, 1=Verbe, 2=Attribut)
+let attempt = 1;
+let score = 0;
+let totalSteps = rawPhrases.length * steps.length;
+let selectedIndices = new Set();
+let wordsData = [];
+
+function init() {
+    selectedIndices.clear();
+    const raw = rawPhrases[currentIndex];
+    const targetType = steps[currentStep];
+    
+    // Découpage et marquage
+    const tokens = raw.split(/\s+/);
+    wordsData = tokens.map(t => {
+        let isTarget = false;
+        if (targetType === "SUJET" && t.startsWith('*') && t.endsWith('*')) isTarget = true;
+        if (targetType === "VERBE" && t.startsWith('#') && t.endsWith('#')) isTarget = true;
+        if (targetType === "ATTRIBUT" && t.startsWith('%') && t.endsWith('%')) isTarget = true;
+        
+        return {
+            text: t.replace(/[\*\#\%]/g, '').replace(/\*/g, ' '),
+            isTarget: isTarget
+        };
+    });
+
+    render();
+    updateUI();
+}
+
+function render() {
+    const container = document.getElementById('text-container');
+    container.innerHTML = '';
+    wordsData.forEach((w, i) => {
+        const span = document.createElement('span');
+        span.className = 'word';
+        span.textContent = w.text;
+        span.onclick = () => {
+            if(span.classList.contains('correct')) return;
+            if(selectedIndices.has(i)) {
+                selectedIndices.delete(i);
+                span.classList.remove('selected');
+            } else {
+                selectedIndices.add(i);
+                span.classList.add('selected');
+            }
+        };
+        container.appendChild(span);
+    });
+}
+
+function updateUI() {
+    document.getElementById('target-type').textContent = steps[currentStep];
+    document.getElementById('attempt-label').textContent = attempt === 1 ? "Premier essai" : "Deuxième essai";
+    document.getElementById('current-q').textContent = currentIndex + 1;
+    document.getElementById('score-display').textContent = `Score : ${score} / ${currentIndex * steps.length + currentStep}`;
+    document.getElementById('bar-fill').style.width = `${((currentIndex * steps.length + currentStep) / totalSteps) * 100}%`;
+}
+
+document.getElementById('val-btn').onclick = () => {
+    if(selectedIndices.size === 0) return;
+
+    const correctIndices = wordsData.reduce((acc, w, i) => {
+        if(w.isTarget) acc.push(i);
+        return acc;
+    }, []);
+
+    const isSuccess = correctIndices.length === selectedIndices.size && 
+                      correctIndices.every(idx => selectedIndices.has(idx));
+
+    const allSpans = document.querySelectorAll('.word');
+
+    if (isSuccess) {
+        score += (attempt === 1 ? 1 : 0.5);
+        allSpans.forEach((s, i) => { if(correctIndices.includes(i)) s.className = 'word correct'; });
+        proceed();
+    } else {
+        if (attempt === 1) {
+            selectedIndices.forEach(idx => allSpans[idx].classList.add('wrong'));
+            setTimeout(() => {
+                attempt = 2;
+                selectedIndices.clear();
+                allSpans.forEach(s => s.classList.remove('wrong', 'selected'));
+                updateUI();
+            }, 1500);
+        } else {
+            allSpans.forEach((s, i) => {
+                if(wordsData[i].isTarget) s.className = 'word correct';
+                else if(selectedIndices.has(i)) s.className = 'word wrong';
+            });
+            proceed();
+        }
+    }
+};
+
+function proceed() {
+    setTimeout(() => {
+        currentStep++;
+        if(currentStep >= steps.length) {
+            currentStep = 0;
+            currentIndex++;
+        }
+        attempt = 1;
+        
+        if(currentIndex < rawPhrases.length) {
+            init();
+        } else {
+            finish();
+        }
+    }, 2000);
+}
+
+function finish() {
+    document.querySelector('.main-card').innerHTML = `
+        <div style="text-align:center; padding:30px;">
+            <h2 style="color:var(--success)">Félicitations !</h2>
+            <p style="font-size:1.4rem">Exercice terminé avec un score de <b>${score}</b> / ${totalSteps}</p>
+            <button onclick="location.reload()" id="val-btn" style="margin-top:20px">Recommencer</button>
+        </div>
+    `;
+    document.getElementById('bar-fill').style.width = '100%';
+}
+
+init();
+</script>
+</body>
+</html>
