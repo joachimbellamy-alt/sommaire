@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Moteur d'Exercice : Attribut du Sujet</title>
+    <style>
+        :root {
+            --sujet: #D6EAF8;
+            --verbe: #FADBD8;
+            --attribut: #D5F5E3;
+            --correct: #27ae60;
+            --error: #e74c3c;
+        }
+
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #f0f2f5; 
+            margin: 0; 
+            -webkit-touch-callout: none; 
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* Barre de statut */
+        #status-bar {
+            position: sticky; top: 0; background: white; border-bottom: 3px solid #ddd;
+            padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000;
+        }
+        .score-panel { font-size: 1rem; }
+        .lives-panel { font-size: 1.6rem; letter-spacing: 3px; }
+
+        /* Consigne */
+        #consigne {
+            max-width: 900px; margin: 20px auto; background: white;
+            border-left: 5px solid #2c3e50; padding: 15px 25px; border-radius: 0 10px 10px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .legend { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
+        .pill { padding: 2px 10px; border-radius: 15px; font-size: 0.9rem; font-weight: bold; border: 1px solid #ccc; }
+
+        /* Outils */
+        #toolbar { 
+            display: flex; justify-content: center; gap: 10px; padding: 15px; 
+            background: #e9ecef; position: sticky; top: 75px; z-index: 999;
+        }
+        .tool {
+            padding: 12px 25px; border: 2px solid #adb5bd; border-radius: 12px; 
+            cursor: pointer; font-weight: bold; background: white; font-size: 1.1rem;
+        }
+        .tool.active { transform: translateY(-2px); border-color: #333; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+
+        /* Zone de texte */
+        #exercise-container { 
+            padding: 40px 25px; line-height: 3; font-size: 1.4rem; 
+            max-width: 900px; margin: auto; background: white; border-radius: 15px;
+        }
+        .word { display: inline-block; padding: 0 5px; border-radius: 6px; border-bottom: 3px solid transparent; cursor: pointer; }
+        
+        .sel-sujet { background-color: var(--sujet); }
+        .sel-verbe { background-color: var(--verbe); }
+        .sel-attribut { background-color: var(--attribut); }
+        .is-correct { background-color: var(--correct) !important; color: white; }
+
+        /* Modal */
+        #modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 2000;
+        }
+        #modal-overlay.visible { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; text-align: center; width: 85%; max-width: 400px; }
+        #corr-input { width: 90%; padding: 12px; font-size: 1.3rem; margin: 20px 0; border: 2px solid #ddd; border-radius: 10px; text-align: center; }
+
+        #message-banner {
+            display: none; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--error); color: white; padding: 15px 30px; border-radius: 50px; font-weight: bold; z-index: 3000;
+        }
+
+        .hidden { display: none !important; }
+        .shake { animation: shake 0.4s; }
+        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-10px);} 75% {transform: translateX(10px);} }
+    </style>
+</head>
+<body>
+
+<div id="status-bar">
+    <div class="score-panel">
+        <b>1er essai :</b> <span id="s1">0</span> | <b>2ème+ :</b> <span id="s2">0</span><br>
+        <small>Restants : <span id="rem">6</span></small>
+    </div>
+    <div class="lives-panel" id="lives">❤️❤️❤️❤️❤️</div>
+</div>
+
+<div id="toolbar">
+    <div class="tool" data-type="sujet" style="background: var(--sujet)">Sujet</div>
+    <div class="tool" data-type="verbe" style="background: var(--verbe)">Verbe</div>
+    <div class="tool" data-type="attribut" style="background: var(--attribut)">Attribut</div>
+</div>
+
+<div id="consigne">
+    <strong>📋 Consigne :</strong> Retrouve les verbes d'état, leurs sujets et les attributs, puis corrige les erreurs d'accord. ATTENTION, TU N'AS QUE 5 VIES.
+    <div class="legend">
+        <span><span class="pill" style="background:var(--sujet)">Sujet</span></span>
+        <span><span class="pill" style="background:var(--verbe)">Verbe</span></span>
+        <span><span class="pill" style="background:var(--attribut)">Attribut</span></span>
+    </div>
+</div>
+
+<div id="exercise-container"></div>
+
+<button id="btn-continue" class="hidden" style="display:block; margin:30px auto; padding:15px 40px; background:#2c3e50; color:white; border:none; border-radius:30px; font-size:1.2rem;" onclick="location.reload()">Recommencer ▶</button>
+
+<div id="modal-overlay">
+    <div class="modal-content">
+        <h3>Accord de l'attribut</h3>
+        <p>Sujet : <b id="display-sujet" style="color:#2980b9"></b></p>
+        <input type="text" id="corr-input" placeholder="Correction..." autocomplete="off" spellcheck="false">
+        <br><button id="btn-valider-modal" style="padding:12px 25px; background:var(--correct); color:white; border:none; border-radius:10px; font-weight:bold;">VALIDER</button>
+    </div>
+</div>
+
+<div id="message-banner"></div>
+
+<script>
+const wordsData = [
+    {t:"Sur", id:0}, {t:"l'île,", id:0}, 
+    {t:"la", id:1, type:"sujet"}, {t:"vie", id:1, type:"sujet"}, {t:"est", id:1, type:"verbe"}, {t:"parfois", id:0}, {t:"dur", id:1, type:"attribut", target:"dure"}, {t:", mais", id:0},
+    {t:"la", id:2, type:"sujet"}, {t:"nature", id:2, type:"sujet"}, {t:"reste", id:2, type:"verbe"}, {t:"fascinant", id:2, type:"attribut", target:"fascinante"}, {t:". Près", id:0}, {t:"du", id:0}, {t:"rivage,", id:0},
+    {t:"la", id:3, type:"sujet"}, {t:"plage", id:3, type:"sujet"}, {t:"est", id:3, type:"verbe"}, {t:"blanc", id:3, type:"attribut", target:"blanche"}, {t:"et", id:0},
+    {t:"elle", id:4, type:"sujet"}, {t:"semble", id:4, type:"verbe"}, {t:"infini", id:4, type:"attribut", target:"infinie"}, {t:"sous", id:0}, {t:"le", id:0}, {t:"soleil.", id:0},
+    {t:"Au", id:0}, {t:"loin,", id:0}, {t:"les", id:0}, {t:"montagnes", id:0}, {t:"dominent", id:0}, {t:"la", id:0}, {t:"forêt.", id:0},
+    {t:"Les", id:5, type:"sujet"}, {t:"orangs-outans", id:5, type:"sujet"}, {t:"se", id:5, type:"verbe"}, {t:"montrent", id:5, type:"verbe"}, {t:"prudent", id:5, type:"attribut", target:"prudents"}, {t:"face", id:0}, {t:"aux", id:0}, {t:"étrangers.", id:0},
+    {t:"Ils", id:6, type:"sujet"}, {t:"restent", id:6, type:"verbe"}, {t:"souvent", id:0}, {t:"immobile", id:6, type:"attribut", target:"immobiles"}, {t:"dans", id:0}, {t:"la", id:0}, {t:"canopée.", id:0}
+];
+
+let lives = 5, activeTool = null, currentGroupId = null, scores = { s1: 0, s2: 0 }, groupAttempts = {};
+const TOTAL_GROUPS = new Set(wordsData.filter(w => w.id !== 0).map(w => w.id)).size;
+
+const container = document.getElementById('exercise-container');
+document.getElementById('rem').textContent = TOTAL_GROUPS;
+
+wordsData.forEach((item, index) => {
+    const span = document.createElement('span');
+    span.className = 'word';
+    span.textContent = item.t + " ";
+    span.dataset.index = index;
+    span.onclick = () => handleWordClick(span, item);
+    container.appendChild(span);
+});
+
+document.querySelectorAll('.tool').forEach(t => {
+    t.onclick = () => {
+        document.querySelectorAll('.tool').forEach(b => b.classList.remove('active'));
+        t.classList.add('active');
+        activeTool = t.dataset.type;
+    };
+});
+
+function handleWordClick(el, data) {
+    if (el.classList.contains('is-correct') || !activeTool) return;
+    if (data.id === 0 || data.type !== activeTool) { triggerError(); return; }
+
+    const className = 'sel-' + activeTool;
+    if (el.classList.contains(className)) { el.classList.remove(className); } 
+    else { el.classList.remove('sel-sujet', 'sel-verbe', 'sel-attribut'); el.classList.add(className); }
+    
+    checkGroup(data.id);
+}
+
+function triggerError() {
+    lives--; updateUI();
+    document.body.classList.add('shake');
+    setTimeout(() => document.body.classList.remove('shake'), 400);
+    if (lives <= 0) { showBanner("Vigilance épuisée ! Recommence."); setTimeout(() => location.reload(), 2000); }
+}
+
+function checkGroup(gid) {
+    const comps = wordsData.filter(w => w.id === gid);
+    const complete = comps.every(c => {
+        const el = document.querySelector(`.word[data-index="${wordsData.indexOf(c)}"]`);
+        return el.classList.contains('sel-' + c.type);
+    });
+    if (complete) openModal(gid);
+}
+
+function openModal(gid) {
+    currentGroupId = gid;
+    const sujet = wordsData.filter(w => w.id === gid && w.type === 'sujet').map(w => w.t).join(' ');
+    document.getElementById('display-sujet').textContent = sujet;
+    document.getElementById('modal-overlay').classList.add('visible');
+    setTimeout(() => document.getElementById('corr-input').focus(), 300);
+}
+
+document.getElementById('btn-valider-modal').onclick = validerCorrection;
+document.getElementById('corr-input').onkeydown = (e) => { if(e.key === 'Enter') validerCorrection(); };
+
+function validerCorrection() {
+    const input = document.getElementById('corr-input');
+    const attr = wordsData.find(w => w.id === currentGroupId && w.type === 'attribut');
+    if (input.value.trim().toLowerCase() === attr.target.toLowerCase()) {
+        document.getElementById('modal-overlay').classList.remove('visible');
+        finalize(currentGroupId);
+        input.value = "";
+    } else {
+        groupAttempts[currentGroupId] = true;
+        triggerError();
+        input.value = "";
+    }
+}
+
+function finalize(gid) {
+    if (groupAttempts[gid]) scores.s2++; else scores.s1++;
+    wordsData.forEach((w, idx) => {
+        if (w.id === gid) {
+            const el = document.querySelector(`.word[data-index="${idx}"]`);
+            el.className = 'word is-correct';
+            if (w.type === 'attribut') el.textContent = w.target + " ";
+        }
+    });
+    updateUI();
+}
+
+function updateUI() {
+    document.getElementById('lives').textContent = "❤️".repeat(Math.max(0, lives));
+    document.getElementById('s1').textContent = scores.s1;
+    document.getElementById('s2').textContent = scores.s2;
+    const rem = TOTAL_GROUPS - (scores.s1 + scores.s2);
+    document.getElementById('rem').textContent = rem;
+    if (rem === 0) { document.getElementById('btn-continue').classList.remove('hidden'); document.getElementById('toolbar').classList.add('hidden'); }
+}
+
+function showBanner(msg) {
+    const b = document.getElementById('message-banner');
+    b.textContent = msg; b.style.display = 'block';
+    setTimeout(() => b.style.display = 'none', 2000);
+}
+</script>
+</body>
+</html>
