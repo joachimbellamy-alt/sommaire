@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        :root {
+            --primary-blue: #D6EAF8;
+            --success-green: #D5F5E3;
+            --error-red: #FADBD8;
+            --text-size: 14pt;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: var(--text-size);
+            padding: 20px;
+            background-color: #f8f9fa;
+            -webkit-user-select: none;
+        }
+        #test-container {
+            max-width: 800px;
+            margin: 20px auto 120px auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .step { display: none; }
+        .step.active { display: block; }
+        
+        .option {
+            display: block;
+            padding: 18px;
+            margin: 12px 0;
+            border: 2px solid #eaeded;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        .option.selected { background-color: var(--primary-blue); border-color: #5DADE2; }
+        .option.correct { background-color: var(--success-green); border-color: #58D68D; }
+        .option.wrong { background-color: var(--error-red); border-color: #E74C3C; }
+
+        #bottom-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #2C3E50;
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+        }
+        button {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: bold;
+        }
+        #btn-check { background: #3498DB; color: white; }
+        #btn-next { background: #27AE60; color: white; display: none; }
+    </style>
+</head>
+<body>
+
+<div id="test-container">
+    <div id="header">Question <span id="current-idx">1</span> / 6</div>
+    <hr>
+    
+    <div id="content">
+        <div class="step active">
+            <p><strong>1. La nature du verbe :</strong> L'attribut du sujet est obligatoirement le complément...</p>
+            <div class="option" data-correct="true">d'un verbe d'état comme "être", "paraître", "sembler", "demeurer" ou "rester".</div>
+            <div class="option" data-correct="false">d'un verbe d'action comme "mordre", "trouver" ou "repousser".</div>
+        </div>
+
+        <div class="step">
+            <p><strong>2. La manipulation de remplacement :</strong> Pour vérifier si un mot est un attribut du sujet, on peut essayer de remplacer le verbe par :</p>
+            <div class="option" data-correct="true">Le verbe "être".</div>
+            <div class="option" data-correct="false">Le verbe "avoir".</div>
+            <div class="option" data-correct="false">Un verbe de mouvement.</div>
+        </div>
+
+        <div class="step">
+            <p><strong>3. Le caractère essentiel (Suppression) :</strong> Pourquoi l'attribut est-il un complément "essentiel" ?</p>
+            <div class="option" data-correct="true">Parce qu'on ne peut pas le supprimer sans que la phrase perde son sens.</div>
+            <div class="option" data-correct="false">Parce qu'on peut le supprimer sans changer le sens de la phrase.</div>
+        </div>
+
+        <div class="step">
+            <p><strong>4. Le caractère essentiel (Déplacement) :</strong> Peut-on déplacer l'attribut du sujet à l'intérieur de la phrase ?</p>
+            <div class="option" data-correct="false">Oui, on peut le mettre au début ou à la fin de la phrase librement.</div>
+            <div class="option" data-correct="true">Non, on ne peut pas le déplacer.</div>
+        </div>
+
+        <div class="step">
+            <p><strong>5. La règle d'accord :</strong> Avec quel élément l'attribut du sujet s'accorde-t-il en genre et en nombre ?</p>
+            <div class="option" data-correct="true">Avec le sujet du verbe.</div>
+            <div class="option" data-correct="false">Avec le verbe lui-même.</div>
+            <div class="option" data-correct="false">Il ne s'accorde jamais, il est invariable.</div>
+        </div>
+
+        <div class="step">
+            <p><strong>6. L'objectif :</strong> Quelle information l'attribut apporte-t-il dans la phrase ?</p>
+            <div class="option" data-correct="true">Il précise comment est le sujet du verbe.</div>
+            <div class="option" data-correct="false">Il précise où se passe l'action.</div>
+            <div class="option" data-correct="false">Il précise quand l'action a lieu.</div>
+        </div>
+    </div>
+</div>
+
+<div id="bottom-bar">
+    <div id="score-board">Score : <span id="score">0</span></div>
+    <button id="btn-check">Valider</button>
+    <button id="btn-next">Continuer ▶</button>
+</div>
+
+<script>
+    let index = 0;
+    let currentScore = 0;
+    const steps = document.querySelectorAll('.step');
+    const btnCheck = document.getElementById('btn-check');
+    const btnNext = document.getElementById('btn-next');
+
+    document.querySelectorAll('.option').forEach(opt => {
+        opt.onclick = function() {
+            if (btnNext.style.display === 'block') return;
+            steps[index].querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+            this.classList.add('selected');
+        };
+    });
+
+    btnCheck.onclick = () => {
+        const selected = steps[index].querySelector('.option.selected');
+        if (!selected) return;
+
+        const isRight = selected.dataset.correct === "true";
+        if (isRight) {
+            selected.classList.add('correct');
+            currentScore++;
+            document.getElementById('score').textContent = currentScore;
+        } else {
+            selected.classList.add('wrong');
+            steps[index].querySelector('.option[data-correct="true"]').classList.add('correct');
+        }
+
+        btnCheck.style.display = 'none';
+        
+        // Timer de 10 secondes incompressible
+        setTimeout(() => {
+            btnNext.style.display = 'block';
+        }, 10000);
+    };
+
+    btnNext.onclick = () => {
+        steps[index].classList.remove('active');
+        index++;
+
+        if (index < steps.length) {
+            steps[index].classList.add('active');
+            document.getElementById('current-idx').textContent = index + 1;
+            btnNext.style.display = 'none';
+            btnCheck.style.display = 'block';
+        } else {
+            document.getElementById('test-container').innerHTML = `<h2>Résultat final</h2><p>Score : ${currentScore} / ${steps.length}.</p>`;
+            btnNext.style.display = 'none';
+        }
+    };
+</script>
+
+</body>
+</html>

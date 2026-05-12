@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        :root {
+            --primary-blue: #D6EAF8;
+            --success-green: #D5F5E3;
+            --text-size: 14pt;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: var(--text-size);
+            padding: 20px;
+            -webkit-user-select: none;
+            background-color: #f9f9f9;
+        }
+        #exercise-container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        /* Style de la consigne */
+        #instruction-box {
+            background-color: #fcf3cf;
+            padding: 15px;
+            border-left: 5px solid #f1c40f;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-style: italic;
+        }
+        .sentence {
+            line-height: 2.5;
+            margin-bottom: 30px;
+        }
+        .word {
+            padding: 6px 8px;
+            margin: 0 2px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            display: inline-block;
+        }
+        .word.selected { background-color: var(--primary-blue); border-color: #AED6F1; }
+        .word.correct { background-color: var(--success-green); border-color: #ABEBC6; }
+        
+        #ui-overlay {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #333;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+        }
+        #btn-validate { background: #5DADE2; color: white; }
+        #btn-continue { background: #58D68D; color: white; display: none; }
+    </style>
+</head>
+<body>
+
+<div id="exercise-container">
+    <div id="instruction-box">
+        <strong>Consigne :</strong> Dans chaque phrase, clique sur les mots qui sont <strong>attributs du Sujet</strong>, puis valide ta réponse.
+    </div>
+    <div id="progress-bar">Restants : <span id="remaining-count">0</span></div>
+    <hr>
+    <div id="sentence-display" class="sentence"></div>
+</div>
+
+<div id="ui-overlay">
+    <div id="score-display">
+        1er essai : <span id="score-1">0</span> | 2ème+ : <span id="score-2">0</span>
+    </div>
+    <button id="btn-validate">Valider</button>
+    <button id="btn-continue">Continuer ▶</button>
+</div>
+
+<script>
+const corpus = [
+    { text: "Le petit prince est /un être sensible/ par rapport aux autres hommes.", targetId: 1 },
+    { text: "Les serpents restent /des animaux dangereux/ pour ceux qui les rencontrent.", targetId: 1 },
+    { text: "Le petit prince demeure /loyal envers sa fleur/ en raison de son amour.", targetId: 1 },
+    { text: "Le renard semble /mélancolique/ suite au départ du petit prince.", targetId: 1 },
+    { text: "Le renard parait /apprivoisé/ maintenant qu'ils ont fait connaissance avec le petit prince.", targetId: 1 },
+    { text: "L'aviateur est /un personnage courageux/ au vu des risques qu'il prend.", targetId: 1 },
+    { text: "Le lion parait /puissant/ si on le compare aux autres animaux.", targetId: 1 }
+];
+
+let currentIndex = 0;
+let errorsThisSentence = 0;
+let stats = { firstTry: 0, laterTry: 0 };
+
+function initSentence() {
+    const data = corpus[currentIndex];
+    const container = document.getElementById('sentence-display');
+    container.innerHTML = '';
+    errorsThisSentence = 0;
+    
+    const words = data.text.split(' ');
+    let inTarget = false;
+
+    words.forEach((w) => {
+        let cleanText = w.replace(/\//g, '');
+        if (w.includes('/')) {
+            inTarget = !inTarget;
+        }
+        
+        const span = document.createElement('span');
+        span.className = 'word';
+        span.textContent = cleanText;
+        span.dataset.id = inTarget || w.includes('/') ? data.targetId : 0;
+        span.onclick = () => { 
+            if(!document.getElementById('btn-continue').style.display || 
+                document.getElementById('btn-continue').style.display === 'none') {
+                span.classList.toggle('selected');
+            }
+        };
+        container.appendChild(span);
+        container.appendChild(document.createTextNode(' '));
+    });
+    
+    document.getElementById('remaining-count').textContent = corpus.length - currentIndex;
+}
+
+document.getElementById('btn-validate').onclick = () => {
+    const words = document.querySelectorAll('.word');
+    const selected = Array.from(words).filter(w => w.classList.contains('selected'));
+    const targetId = corpus[currentIndex].targetId;
+    const targetWords = Array.from(words).filter(w => parseInt(w.dataset.id) === targetId);
+    
+    const isCorrect = selected.length === targetWords.length && 
+                      selected.every(w => parseInt(w.dataset.id) === targetId);
+
+    if (isCorrect) {
+        targetWords.forEach(w => { w.classList.remove('selected'); w.classList.add('correct'); });
+        if (errorsThisSentence === 0) stats.firstTry++;
+        else stats.laterTry++;
+        
+        updateScore();
+        document.getElementById('btn-validate').style.display = 'none';
+        
+        // Timer incompressible de 3s
+        setTimeout(() => {
+            document.getElementById('btn-continue').style.display = 'block';
+        }, 3000);
+    } else {
+        errorsThisSentence++;
+        alert("Erreur ! Vérifiez que vous avez sélectionné tout l'attribut du sujet sans intrus.");
+    }
+};
+
+document.getElementById('btn-continue').onclick = () => {
+    currentIndex++;
+    if (currentIndex < corpus.length) {
+        document.getElementById('btn-continue').style.display = 'none';
+        document.getElementById('btn-validate').style.display = 'block';
+        initSentence();
+    } else {
+        alert("Exercice terminé !");
+    }
+};
+
+function updateScore() {
+    document.getElementById('score-1').textContent = stats.firstTry;
+    document.getElementById('score-2').textContent = stats.laterTry;
+}
+
+initSentence();
+</script>
+
+</body>
+</html>
