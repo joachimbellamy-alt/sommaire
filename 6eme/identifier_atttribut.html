@@ -24,7 +24,6 @@
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        /* Style de la consigne */
         #instruction-box {
             background-color: #fcf3cf;
             padding: 15px;
@@ -93,13 +92,13 @@
 
 <script>
 const corpus = [
-    { text: "Le petit prince est /un être sensible / par rapport aux autres hommes.", targetId: 1 },
-    { text: "Les serpents restent /des animaux dangereux / pour ceux qui les rencontrent.", targetId: 1 },
-    { text: "Le petit prince demeure /loyal envers sa fleur / en raison de son amour.", targetId: 1 },
-    { text: "Le renard semble /mélancolique / suite au départ du petit prince.", targetId: 1 },
-    { text: "Le renard parait /apprivoisé / maintenant qu'ils ont fait connaissance avec le petit prince.", targetId: 1 },
-    { text: "L'aviateur est /un personnage courageux / au vu des risques qu'il prend.", targetId: 1 },
-    { text: "Le lion parait /puissant / si on le compare aux autres animaux.", targetId: 1 }
+    { text: "Le petit prince est /un être sensible/ par rapport aux autres hommes.", targetId: 1 },
+    { text: "Les serpents restent /des animaux dangereux/ pour ceux qui les rencontrent.", targetId: 1 },
+    { text: "Le petit prince demeure /loyal envers sa fleur/ en raison de son amour.", targetId: 1 },
+    { text: "Le renard semble /mélancolique/ suite au départ du petit prince.", targetId: 1 },
+    { text: "Le renard parait /apprivoisé/ maintenant qu'ils ont fait connaissance avec le petit prince.", targetId: 1 },
+    { text: "L'aviateur est /un personnage courageux/ au vu des risques qu'il prend.", targetId: 1 },
+    { text: "Le lion parait /puissant/ si on le compare aux autres animaux.", targetId: 1 }
 ];
 
 let currentIndex = 0;
@@ -116,23 +115,33 @@ function initSentence() {
     let inTarget = false;
 
     words.forEach((w) => {
-        let cleanText = w.replace(/\//g, '');
-        if (w.includes('/')) {
-            inTarget = !inTarget;
-        }
+        // Détection plus précise de l'ouverture et de la fermeture
+        const startsWithSlash = w.startsWith('/');
+        const endsWithSlash = w.endsWith('/');
         
+        // Si le mot commence par un slash, on entre dans la cible
+        if (startsWithSlash) inTarget = true;
+
+        const cleanText = w.replace(/\//g, '');
         const span = document.createElement('span');
         span.className = 'word';
         span.textContent = cleanText;
-        span.dataset.id = inTarget || w.includes('/') ? data.targetId : 0;
+        
+        // Le mot appartient à la cible si on est dans la zone cible
+        span.dataset.id = inTarget ? data.targetId : 0;
+        
         span.onclick = () => { 
             if(!document.getElementById('btn-continue').style.display || 
                 document.getElementById('btn-continue').style.display === 'none') {
                 span.classList.toggle('selected');
             }
         };
+
         container.appendChild(span);
         container.appendChild(document.createTextNode(' '));
+
+        // Si le mot finit par un slash, on quitte la cible pour le mot suivant
+        if (endsWithSlash) inTarget = false;
     });
     
     document.getElementById('remaining-count').textContent = corpus.length - currentIndex;
@@ -155,7 +164,6 @@ document.getElementById('btn-validate').onclick = () => {
         updateScore();
         document.getElementById('btn-validate').style.display = 'none';
         
-        // Timer incompressible de 3s
         setTimeout(() => {
             document.getElementById('btn-continue').style.display = 'block';
         }, 3000);
