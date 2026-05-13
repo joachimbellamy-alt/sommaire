@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rome : entre mythe et histoire</title>
+    <style>
+        :root {
+            --primary-green: #27ae60;
+            --bg-color: #f8f9fa;
+            --border-color: #2c3e50;
+            --cell-bg: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            padding: 20px;
+            -webkit-user-select: none; /* Empêche la triche par copier-coller */
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 1.6rem;
+            margin-bottom: 25px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--cell-bg);
+            table-layout: fixed; /* Colonnes régulières */
+        }
+
+        th, td {
+            border: 2px solid var(--border-color);
+            padding: 15px;
+            text-align: center;
+            font-size: 1.25rem; /* Taille 14pt environ, adaptée iPad */
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #ecf0f1;
+            font-weight: bold;
+        }
+
+        .row-header {
+            background-color: #fdfefe;
+            font-weight: 600;
+            text-align: left;
+            width: 25%;
+        }
+
+        /* Cellule interactive */
+        .memory-cell {
+            cursor: pointer;
+            position: relative;
+            background-color: #fff;
+            transition: background-color 0.2s;
+            height: 100px; /* Hauteur fixe pour éviter les sauts de mise en page */
+        }
+
+        .memory-cell:active {
+            background-color: #f0f0f0;
+        }
+
+        /* Texte masqué par défaut */
+        .answer-text {
+            color: var(--primary-green);
+            font-weight: bold;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Classe activée au clic */
+        .is-visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .instruction {
+            font-size: 0.8rem;
+            color: #bdc3c7;
+            display: block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Rome : entre mythe et histoire</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Questions</th>
+                <th>Selon la légende</th>
+                <th>Selon l'archéologie</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Ligne 1 -->
+            <tr>
+                <td class="row-header">Quand ? (Fondation)</td>
+                <td class="memory-cell" onclick="reveal(this)">
+                    <span class="answer-text">VIIIème s. av. J.-C.<br>(753 av. J.-C.)</span>
+                    <span class="instruction">Cliquer pour voir</span>
+                </td>
+                <td class="memory-cell" onclick="reveal(this)">
+                    <span class="answer-text">VIIIème s. av. J.-C.</span>
+                    <span class="instruction">Cliquer pour voir</span>
+                </td>
+            </tr>
+            <!-- Ligne 2 -->
+            <tr>
+                <td class="row-header">Où ?</td>
+                <td class="memory-cell" onclick="reveal(this)">
+                    <span class="answer-text">Sur le mont Palatin à proximité du Tibre</span>
+                    <span class="instruction">Cliquer pour voir</span>
+                </td>
+                <td class="memory-cell" onclick="reveal(this)">
+                    <span class="answer-text">Sur le mont Palatin à proximité du Tibre</span>
+                    <span class="instruction">Cliquer pour voir</span>
+                </td>
+            </tr>
+            <!-- Ligne 3 -->
+            <tr>
+                <td class="row-header">Qui a fondé Rome ?</td>
+                <td class="memory-cell" onclick="reveal(this)">
+                    <span class="answer-text">Rémus et Romulus</span>
+                    <span class="instruction">Cliquer pour voir</span>
+                </td>
+                <td class="memory-cell" onclick="reveal(this)">
+                    <span class="answer-text">Des bergers</span>
+                    <span class="instruction">Cliquer pour voir</span>
+                </td>
+            </tr>
+            <!-- Ligne 4 -->
+            <tr>
+                <td class="row-header">Comment ?</td>
+                <td class="memory-cell" onclick="reveal(this)">
+                    <span class="answer-text">Romulus tue son frère et devient seul maître du pouvoir</span>
+                    <span class="instruction">Cliquer pour voir</span>
+                </td>
+                <td class="memory-cell" onclick="reveal(this)">
+                    <span class="answer-text">Construction de cabanes par des bergers. Développement par les rois étrusques.</span>
+                    <span class="instruction">Cliquer pour voir</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        function reveal(cell) {
+            const text = cell.querySelector('.answer-text');
+            const instruction = cell.querySelector('.instruction');
+
+            // Si déjà visible, on ne relance pas pour éviter les conflits de timer
+            if (text.classList.contains('is-visible')) return;
+
+            // Affichage
+            text.classList.add('is-visible');
+            instruction.style.visibility = 'hidden';
+
+            // Disparition automatique après 3 secondes
+            setTimeout(() => {
+                text.classList.remove('is-visible');
+                instruction.style.visibility = 'visible';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
