@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Le Destin de Rome — Mobile</title>
+    <style>
+        :root {
+            --primary-blue: #2980b9;
+            --light-blue: #ebf5fb;
+            --success-green: #2ecc71;
+            --text-dark: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --border-color: #e2e8f0;
+            --card-bg: #ffffff;
+        }
+
+        /* Configurations de base pour écrans tactiles mobiles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f1f5f9;
+            color: var(--text-dark);
+            padding: 12px;
+            margin: 0;
+            -webkit-user-select: none; /* Désactive la sélection de texte native (iOS) */
+            user-select: none;         /* Désactive la sélection de texte native (Android) */
+            -webkit-text-size-adjust: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.3rem;
+            color: var(--primary-blue);
+            margin: 15px 0 20px 0;
+            padding: 0 10px;
+            line-height: 1.3;
+        }
+
+        .cards-container {
+            max-width: 500px; /* Largeur maximale pour garder un aspect switch/carte élégant */
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px; /* Espace entre les blocs de questions */
+        }
+
+        /* Structure en carte adaptée aux smartphones */
+        .qa-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        .question-text {
+            font-size: 1.05rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        /* Bouton/Zone de réponse pleine largeur pour le pouce */
+        .answer-button {
+            background-color: var(--light-blue);
+            color: var(--primary-blue);
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.95rem;
+            position: relative;
+            min-height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s, color 0.2s;
+            cursor: pointer;
+            
+            /* Optimisations webkit pour la réactivité tactile sous iOS/Android */
+            -webkit-tap-highlight-color: transparent; 
+            touch-action: manipulation;
+        }
+
+        /* Feedback visuel immédiat lors de la pression sur Android/iPhone */
+        .answer-button:active {
+            background-color: #d4e6f1;
+        }
+
+        /* Texte de la réponse initialement masqué */
+        .answer-content {
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            width: 100%;
+            word-wrap: break-word;
+        }
+
+        /* Label d'incitation */
+        .placeholder-label {
+            position: absolute;
+            font-size: 0.9rem;
+            font-weight: normal;
+            color: var(--text-secondary);
+            transition: opacity 0.15s;
+        }
+
+        /* État révélé : Changement de couleur et affichage */
+        .answer-button.revealed {
+            background-color: var(--success-green);
+            color: #ffffff;
+        }
+
+        .answer-button.revealed .placeholder-label {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .answer-button.revealed .answer-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Le destin de Rome<br><small style="font-size: 0.9rem; font-weight: normal; color: var(--text-secondary);">Aide-mémoire mobile</small></h1>
+
+    <div class="cards-container" id="exercise-container">
+        </div>
+
+    <script>
+        const qaData = [
+            { q: "Quel est le titre de César en 44 av. J.-C. ?", a: "Dictateur à vie" },
+            { q: "Quels sont les deux sénateurs à la tête du complot contre César ?", a: "Brutus et Cassius" },
+            { q: "Les sénateurs ont-ils prévu une suite politique à l'assassinat de César ?", a: "Aucune" },
+            { q: "Qui César désigne-t-il comme son premier héritier et adopte-t-il dans son testament ?", a: "Octavien" },
+            { q: "Quel âge a Octavien à la mort de César ?", a: "17 ans" },
+            { q: "Quelle association de 5 ans forment Antoine, Octavien et Lépide ?", a: "Un nouveau triumvirat" },
+            { q: "Où les conjurés (Brutus et Cassius) décident-ils de fuir et de lever une armée ?", a: "En Orient" },
+            { q: "Dans quelle plaine va se dérouler la grande bataille entre Césariens et Républicains ?", a: "La plaine de Philippes" },
+            { q: "Pour quelles causes respectives se battent les deux camps ?", a: "Césariens : Vengeance de César / Républicains : Liberté et la République" },
+            { q: "Quel est le résultat de cette bataille de Philippes ?", a: "Victoire des Césariens" },
+            { q: "Comment Antoine et Octavien se répartissent-ils le monde romain après leur victoire ?", a: "Octavien : Occident / Antoine : Orient" },
+            { q: "Contrairement à la tradition, où Antoine célèbre-t-il son triomphe en 34 av. J.-C. ?", a: "À Alexandrie" },
+            { q: "Avec qui Antoine entreprend-il de fonder un grand empire gréco-oriental ?", a: "Cléopâtre, reine d'Egypte et ancienne maitresse de César" },
+            { q: "Qui Antoine voit-il devenir les héritiers de ce nouveau royaume ?", a: "Les enfants de Cléopâtre" },
+            { q: "Quel problème majeur pour Rome aurait posé la séparation définitive de l'Égypte ?", a: "Pénurie de blé pour Rome qui est dépendante de l'Égypte (approvisionnement)" },
+            { q: "Quelle stratégie politique habile Octavien utilise-t-il pour déclarer la guerre ?", a: "Il accuse Cléopâtre au lieu d'Antoine. On accuse plutôt l'étrangère que son compatriote" },
+            { q: "Dans quelle baie et en quelle année a lieu la bataille navale ultime ?", a: "Baie d'Actium, en -31 " },
+            { q: "Qui remporte la victoire finale à Actium ?", a: "Octavien grâce à Agrippa, son meilleur ami" },
+            { q: "Quel est le sort de Cléopâtre, d'Antoine et de Césarion 1 an après la bataille ?", a: "Suicide d'Antoine et Cléopâtre, exécution de Césarion" },
+            { q: "Que devient Octavien quelques années plus tard ?", a: "Le premier empereur romain (Auguste)en -27" }
+        ];
+
+        const container = document.getElementById('exercise-container');
+
+        qaData.forEach((item, index) => {
+            // Création de la carte
+            const card = document.createElement('div');
+            card.className = 'qa-card';
+
+            // Texte de la question
+            const qDiv = document.createElement('div');
+            qDiv.className = 'question-text';
+            qDiv.textContent = `${index + 1}. ${item.q}`;
+
+            // Bouton de réponse
+            const btnDiv = document.createElement('div');
+            btnDiv.className = 'answer-button';
+
+            const placeholder = document.createElement('span');
+            placeholder.className = 'placeholder-label';
+            placeholder.textContent = "Toucher pour voir la réponse";
+
+            const content = document.createElement('span');
+            content.className = 'answer-content';
+            content.textContent = item.a;
+
+            btnDiv.appendChild(placeholder);
+            btnDiv.appendChild(content);
+            card.appendChild(qDiv);
+            card.appendChild(btnDiv);
+            container.appendChild(card);
+
+            // Logique d'affichage temporaire (3 secondes)
+            let timer = null;
+
+            const handleEvent = function(e) {
+                e.preventDefault(); // Stoppe le zoom automatique au double-tap d'iOS
+                
+                if (btnDiv.classList.contains('revealed')) return;
+
+                btnDiv.classList.add('revealed');
+
+                timer = setTimeout(() => {
+                    btnDiv.classList.remove('revealed');
+                }, 3000);
+            };
+
+            // Événements configurés pour éviter la latence "click" des navigateurs mobiles
+            btnDiv.addEventListener('touchend', handleEvent, { passive: false });
+            btnDiv.addEventListener('click', handleEvent);
+        });
+    </script>
+</body>
+</html>
