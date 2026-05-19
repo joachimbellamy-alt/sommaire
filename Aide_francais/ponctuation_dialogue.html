@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercice Ponctuation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14pt;
+            line-height: 1.8;
+            color: #2c3e50;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-weight: bold;
+            background: #ecf0f1;
+            padding: 10px 20px;
+            border-radius: 6px;
+        }
+
+        #text-container {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        /* Les mots sont fusionnés dans le flux normal du texte, aucun indice visuel */
+        .word {
+            display: inline;
+            cursor: pointer;
+        }
+
+        /* Style du tiret inséré dynamiquement */
+        .inserted-dash {
+            font-weight: bold;
+        }
+
+        /* Bandeau persistant */
+        .banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: white;
+            display: none;
+            z-index: 1000;
+        }
+
+        .banner.error { background-color: #e74c3c; display: block; }
+        .banner.success { background-color: #2ecc71; display: block; }
+
+        .banner button {
+            margin-left: 15px;
+            padding: 8px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div style="font-style: italic; margin-bottom: 20px; color: #7f8c8d; text-align: center;">
+        Consigne : Retrouve la ponctuation du dialogue en cliquant sur le premier mot de chaque réplique pour insérer les tirets manquants.
+    </div>
+
+    <div class="status-bar">
+<div class="container">
+    <div class="status-bar">
+        <div style="color: #c0392b;">Vies : <span id="lives-display">❤️❤️❤️❤️❤️</span></div>
+        <div>Progression : <span id="progress-display">0 / 6</span></div>
+    </div>
+
+    <div id="text-container"></div>
+</div>
+
+<div id="feedback-banner" class="banner">
+    <span id="banner-message"></span>
+    <button onclick="resetExercise()">Recommencer ▶</button>
+</div>
+
+<script>
+    // Les chaînes de caractères ne contiennent plus aucun espace artificiel.
+    const wordsData = [
+        { text: "Et il revint vers le renard :<br>«Adieu, dit-il...", target: false },
+        { text: "Adieu,", target: true }, { text: "dit", target: false }, { text: "le", target: false }, { text: "renard.", target: false }, { text: "Voici", target: false }, { text: "mon", target: false }, { text: "secret.", target: false }, { text: "Il", target: false }, { text: "est", target: false }, { text: "très", target: false }, { text: "simple", target: false }, { text: ":", target: false }, { text: "on", target: false }, { text: "ne", target: false }, { text: "voit", target: false }, { text: "bien", target: false }, { text: "qu'avec", target: false }, { text: "le", target: false }, { text: "cœur.", target: false }, { text: "L'essentiel", target: false }, { text: "est", target: false }, { text: "invisible", target: false }, { text: "pour", target: false }, { text: "les", target: false }, { text: "yeux.", target: false },
+        { text: "L'essentiel", target: true }, { text: "est", target: false }, { text: "invisible", target: false }, { text: "pour", target: false }, { text: "les", target: false }, { text: "yeux,", target: false }, { text: "répéta", target: false }, { text: "le", target: false }, { text: "petit", target: false }, { text: "prince,", target: false }, { text: "afin", target: false }, { text: "de", target: false }, { text: "se", target: false }, { text: "souvenir.", target: false },
+        { text: "C'est", target: true }, { text: "le", target: false }, { text: "temps", target: false }, { text: "que", target: false }, { text: "tu", target: false }, { text: "as", target: false }, { text: "perdu", target: false }, { text: "pour", target: false }, { text: "ta", target: false }, { text: "rose", target: false }, { text: "qui", target: false }, { text: "fait", target: false }, { text: "ta", target: false }, { text: "rose", target: false }, { text: "si", target: false }, { text: "importante.", target: false },
+        { text: "C'est", target: true }, { text: "le", target: false }, { text: "temps", target: false }, { text: "que", target: false }, { text: "j'ai", target: false }, { text: "perdu", target: false }, { text: "pour", target: false }, { text: "ma", target: false }, { text: "rose...,", target: false }, { text: "fit", target: false }, { text: "le", target: false }, { text: "petit", target: false }, { text: "prince,", target: false }, { text: "afin", target: false }, { text: "de", target: false }, { text: "se", target: false }, { text: "souvenir.", target: false },
+        { text: "Les", target: true }, { text: "hommes", target: false }, { text: "ont", target: false }, { text: "oublié", target: false }, { text: "cette", target: false }, { text: "vérité,", target: false }, { text: "dit", target: false }, { text: "le", target: false }, { text: "renard.", target: false }, { text: "Mais", target: false }, { text: "tu", target: false }, { text: "ne", target: false }, { text: "dois", target: false }, { text: "pas", target: false }, { text: "l'oublier.", target: false }, { text: "Tu", target: false }, { text: "deviens", target: false }, { text: "responsable", target: false }, { text: "pour", target: false }, { text: "toujours", target: false }, { text: "de", target: false }, { text: "ce", target: false }, { text: "que", target: false }, { text: "tu", target: false }, { text: "as", target: false }, { text: "apprivoisé.", target: false }, { text: "Tu", target: false }, { text: "es", target: false }, { text: "responsable", target: false }, { text: "de", target: false }, { text: "ta", target: false }, { text: "rose...", target: false },
+        { text: "Je", target: true }, { text: "suis", target: false }, { text: "responsable", target: false }, { text: "de", target: false }, { text: "ma", target: false }, { text: "rose", target: false }, { text: "»,", target: false }, { text: "répéta", target: false }, { text: "le", target: false }, { text: "petit", target: false }, { text: "prince,", target: false }, { text: "afin", target: false }, { text: "de", target: false }, { text: "se", target: false }, { text: "souvenir.", target: false }
+    ];
+
+    let lives = 5;
+    let validatedCount = 0;
+    const totalTargets = wordsData.filter(w => w.target).length;
+    let gameOver = false;
+
+    const container = document.getElementById('text-container');
+    const livesDisplay = document.getElementById('lives-display');
+    const progressDisplay = document.getElementById('progress-display');
+    const banner = document.getElementById('feedback-banner');
+    const bannerMessage = document.getElementById('banner-message');
+
+    function initExercise() {
+        lives = 5;
+        validatedCount = 0;
+        gameOver = false;
+        banner.className = "banner";
+        updateStatus();
+        
+        container.innerHTML = '';
+        
+        wordsData.forEach((wordObj, index) => {
+            const span = document.createElement('span');
+            span.className = "word";
+            span.innerHTML = wordObj.text;
+            
+            span.dataset.target = wordObj.target;
+            span.dataset.validated = "false";
+            
+            span.addEventListener('click', function(e) {
+                e.stopPropagation();
+                handleWordClick(this);
+            });
+
+            container.appendChild(span);
+
+            // Ajout d'un nœud de texte contenant un espace normal après chaque mot, 
+            // sauf pour le tout dernier mot du texte.
+            if (index < wordsData.length - 1) {
+                container.appendChild(document.createTextNode(" "));
+            }
+        });
+
+        container.onclick = function() {
+            if (gameOver) return;
+            handleError();
+        };
+    }
+
+    function handleWordClick(element) {
+        if (gameOver || element.dataset.validated === "true") return;
+
+        if (element.dataset.target === "true") {
+            element.dataset.validated = "true";
+            
+            // Création des éléments de saut de ligne et du tiret
+            const br = document.createElement('br');
+            const dashSpan = document.createElement('span');
+            dashSpan.className = "inserted-dash";
+            dashSpan.innerText = "– ";
+
+            // Insertion chirurgicale juste avant le mot validé dans le DOM
+            container.insertBefore(br, element);
+            container.insertBefore(dashSpan, element);
+
+            // Suppression du nœud d'espace qui précédait immédiatement le mot, 
+            // pour éviter un décalage ou un espace vide indésirable en début de ligne.
+            const previousNode = br.previousSibling;
+            if (previousNode && previousNode.nodeType === Node.TEXT_NODE && previousNode.textContent === " ") {
+                container.removeChild(previousNode);
+            }
+
+            validatedCount++;
+            updateStatus();
+
+            if (validatedCount === totalTargets) {
+                endGame(true);
+            }
+        } else {
+            handleError();
+        }
+    }
+
+    function handleError() {
+        lives--;
+        updateStatus();
+        flashError();
+
+        if (lives <= 0) {
+            endGame(false);
+        }
+    }
+
+    function flashError() {
+        container.style.backgroundColor = "#FADBD8";
+        setTimeout(() => { container.style.backgroundColor = "#ffffff"; }, 250);
+    }
+
+    function updateStatus() {
+        livesDisplay.innerText = "❤️".repeat(lives) + "🖤".repeat(5 - lives);
+        progressDisplay.innerText = `${validatedCount} / ${totalTargets}`;
+    }
+
+    function endGame(success) {
+        gameOver = true;
+        if (success) {
+            banner.className = "banner success";
+            bannerMessage.innerText = "Parfait. Le texte a retrouvé sa forme originale.";
+        } else {
+            banner.className = "banner error";
+            bannerMessage.innerText = "Plus de vies disponibles. L'exercice redémarre.";
+        }
+    }
+
+    function resetExercise() {
+        initExercise();
+    }
+
+    window.onload = initExercise;
+</script>
+
+</body>
+</html>
