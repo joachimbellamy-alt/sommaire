@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Atelier de Traduction</title>
+    <style>
+        :root { --primary: #3498DB; --bg: #F4F7F6; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); padding: 15px; }
+        
+        .consigne { background: white; padding: 15px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .latin-text { font-size: 1.4rem; font-weight: bold; color: #2C3E50; margin-bottom: 10px; }
+        
+        /* Bandeau vocabulaire */
+        .vocab-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; padding: 10px; background: #FDFEFE; border: 1px dashed #BDC3C7; border-radius: 8px; }
+        .vocab-item { font-size: 0.85rem; background: #D6EAF8; padding: 4px 8px; border-radius: 5px; color: #2980B9; }
+        
+        textarea { width: 100%; border: 2px solid #E0E0E0; border-radius: 10px; padding: 10px; font-size: 1.1rem; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; margin-top: 10px; width: 100%; font-size: 1.1rem; }
+        #banner { position: fixed; bottom: 0; left: 0; right: 0; background: #27AE60; color: white; padding: 15px; display: none; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="consigne"><strong>Consigne :</strong> Traduis chaque phrase. Utilise les indices de vocabulaire sous la phrase.</div>
+<div id="app"></div>
+<div id="banner" onclick="this.style.display='none'">Correct ! ▶</div>
+
+<script>
+const corpus = [
+    { latin: "Hercules hydram necat", sol: "hercule tue l'hydre", vocab: {"Hercules": "Hercule", "hydram": "l'hydre", "necat": "tuer"} },
+    { latin: "Ulysses Cyclopem videt", sol: "ulysse voit le cyclope", vocab: {"Ulysses": "Ulysse", "Cyclopem": "le Cyclope", "videt": "voir"} },
+    { latin: "Romulus Remum necat", sol: "romulus tue remus", vocab: {"Romulus": "Romulus", "Remum": "Rémus", "necat": "tuer"} },
+    { latin: "Aeneas Italiam petit", sol: "enee cherche l'italie", vocab: {"Aeneas": "Énée", "Italiam": "l'Italie", "petit": "chercher"} },
+    { latin: "Minotaurus Theseum timet", sol: "le minotaure craint thesee", vocab: {"Minotaurus": "le Minotaure", "Theseum": "Thésée", "timet": "craindre"} },
+    { latin: "Caesar Galliam superat", sol: "cesar vainc la gaule", vocab: {"Caesar": "César", "Galliam": "la Gaule", "superat": "vaincre"} }
+];
+
+function clean(str) {
+    return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[']/g, " ").replace(/[.]/g, "").trim();
+}
+
+const app = document.getElementById('app');
+
+corpus.forEach((item) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    
+    // Ajout phrase
+    let html = `<div class="latin-text">${item.latin}</div>`;
+    
+    // Ajout bandeau vocabulaire
+    html += `<div class="vocab-bar">`;
+    for (let [lat, fr] of Object.entries(item.vocab)) {
+        html += `<span class="vocab-item">${lat} = ${fr}</span>`;
+    }
+    html += `</div>`;
+    
+    card.innerHTML = html;
+    
+    // Ajout input et bouton
+    const area = document.createElement('textarea');
+    area.placeholder = "Ta traduction...";
+    card.appendChild(area);
+    
+    const btn = document.createElement('button');
+    btn.textContent = "Vérifier";
+    btn.onclick = () => {
+        if (clean(area.value) === clean(item.sol)) {
+            document.getElementById('banner').style.display = 'block';
+            card.style.opacity = '0.5';
+        } else {
+            area.style.borderColor = "#E74C3C";
+        }
+    };
+    card.appendChild(btn);
+    app.appendChild(card);
+});
+</script>
+</body>
+</html>

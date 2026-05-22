@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Défi Grammatical : Sujet vs COD</title>
+    <style>
+        :root { --primary: #3498DB; --success: #27AE60; --error: #E74C3C; }
+        body { font-family: 'Segoe UI', sans-serif; background: #F4F7F6; padding: 20px; -webkit-user-select: none; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); max-width: 600px; margin: 0 auto 20px; }
+        h3 { color: #2C3E50; margin-top: 0; font-size: 1.2rem; }
+        .target { background: #FFF3CD; padding: 10px; border-radius: 8px; font-weight: bold; margin-bottom: 15px; display: inline-block; }
+        button { display: block; width: 100%; margin: 10px 0; padding: 15px; border: 2px solid var(--primary); background: white; border-radius: 12px; cursor: pointer; font-size: 1.1rem; transition: 0.2s; }
+        button:active { background: #EBF5FB; }
+        .feedback { display: none; padding: 15px; border-radius: 12px; margin-top: 15px; text-align: center; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="quiz-container"></div>
+
+<script>
+const exercices = [
+    { a: "Lupus agnum videt", b: "Lupum agnus videt", sol: "le loup voit l'agneau", correct: "A" },
+    { a: "Servus dominum videt", b: "Servum dominus videt", sol: "l'esclave voit le maître", correct: "A" },
+    { a: "Caesarem Hostis videt", b: "Hostem Caesar videt", sol: "César voit l'ennemi", correct: "B" },
+    { a: "Filius puerum videt", b: "Puerum filius videt", sol: "le fils voit l'enfant", correct: "A" },
+    { a: "Agricola terram videt", b: "Agricolam terra videt", sol: "le paysan voit la terre", correct: "A" }
+];
+
+const container = document.getElementById('quiz-container');
+
+exercices.forEach((ex, index) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+        <h3>Défi n°${index + 1}</h3>
+        <p>Quelle phrase signifie : <br><span class="target">"${ex.sol}"</span> ?</p>
+        <button onclick="check(this, 'A', '${ex.correct}')">A) ${ex.a}</button>
+        <button onclick="check(this, 'B', '${ex.correct}')">B) ${ex.b}</button>
+        <div class="feedback"></div>
+    `;
+    container.appendChild(card);
+});
+
+function check(btn, choice, correct) {
+    const card = btn.parentElement;
+    const feedback = card.querySelector('.feedback');
+    feedback.style.display = 'block';
+    
+    if (choice === correct) {
+        feedback.textContent = "Bravo ! Tu as bien repéré la terminaison.";
+        feedback.style.background = "#D4EDDA";
+        feedback.style.color = "#155724";
+    } else {
+        feedback.textContent = "Attention aux terminaisons (-us/-a vs -um/-am) !";
+        feedback.style.background = "#F8D7DA";
+        feedback.style.color = "#721C24";
+    }
+}
+</script>
+</body>
+</html>
