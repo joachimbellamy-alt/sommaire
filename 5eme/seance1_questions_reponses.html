@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Flashcards : Le contexte d'Yvain le Chevalier au Lion</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-front-bg: #ffffff;
+            --card-back-bg: #d6eaf8; /* Bleu clair standardisé */
+            --text-color: #2c3e50;
+            --accent-color: #3498db;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            -webkit-user-select: none; /* Désactivation de la sélection native sur iPad */
+            user-select: none;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Container de la flashcard */
+        .flashcard-container {
+            width: 90%;
+            max-width: 500px;
+            height: 300px;
+            perspective: 1000px;
+            margin-bottom: 30px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-radius: 12px;
+        }
+
+        .flashcard.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* Faces de la carte */
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            box-sizing: border-box;
+            text-align: center;
+            font-size: 1.25rem; /* Taille de police adaptée */
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .card-front {
+            background-color: var(--card-front-bg);
+            border: 2px solid #e2e8f0;
+        }
+
+        .card-front::before {
+            content: "Question";
+            position: absolute;
+            top: 15px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #a0aec0;
+        }
+
+        .card-back {
+            background-color: var(--card-back-bg);
+            transform: rotateY(180deg);
+            border: 2px solid var(--accent-color);
+        }
+
+        .card-back::before {
+            content: "Réponse";
+            position: absolute;
+            top: 15px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent-color);
+        }
+
+        /* Interface de navigation (Boutons larges pour iPad) */
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 500px;
+            gap: 20px;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 24px; /* Zone de clic large */
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+            transition: background-color 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn:active {
+            background-color: #2980b9;
+        }
+
+        .btn:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .progress-text {
+            font-size: 1rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 id="exercise-title">Yvain, le chevalier au lion : Le Contexte</h1>
+
+    <div class="flashcard-container">
+        <div class="flashcard" id="card">
+            <div class="card-face card-front" id="question-text">Chargement...</div>
+            <div class="card-face card-back" id="answer-text">Chargement...</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn" id="prev-btn" onclick="prevCard()">◀ Précédent</button>
+        <span class="progress-text" id="progress">1 / 12</span>
+        <button class="btn" id="next-btn" onclick="nextCard()">Suivant ▶</button>
+    </div>
+
+    <script>
+        // Données des cartes (incluant les corrections et complétions des questions 9 à 12)
+        const flashcardsData = [
+            { q: "Qui est l'auteur d'Yvain, le chevalier au lion ?", a: "Chrétien de Troyes." },
+            { q: "Quels personnages met-il en avant dans ces romans courtois ?", a: " Des chevaliers (Lancelot, Perceval) et des Dames." },
+            { q: "À quelle époque l'auteur a-t-il vécu ?", a: "Au XIIe siècle." },
+            { q: "Chrétien de Troyes était un clerc : que désigne cette fonction ?", a: "Un homme instruit qui sait lire, écrire le latin et qui appartient souvent au clergé." },
+            { q: "Quelle personne puissante a-t-il servi ?", a: "Marie, comtesse de Champagne et Philippe d'Alsace, comte de Flandre." },
+            { q: "Quel genre de livres Chrétien de Troyes écrit ?", a: "Des romans (courtois)." },
+            { q: "Qu'est-ce qui définit le roman courtois ?", a: "Un récit en langue romane qui raconte les aventures d'un chevalier amoureux de sa dame." },
+            { q: "Pourquoi peut-on dire que l'auteur a eu du succès ?", a: "Ce livre s'est diffusé partout en Europe et a inspiré de nombreux auteurs et artistes à travers les siècles." },
+            { q: "Qu'appelle-t-on le système féodal ?", a: "L'organisation de la société médiévale fondée sur les liens de fidélité et d'obligations entre un seigneur et son vassal." },
+            { q: "De quelle manière les textes de Chrétien de Troyes sont-ils transmis ?", a: "d'abord par oral, puis par des manuscrits recopiés à la main par des moines copistes." },
+            { q: "Comment appelle-t-on les langues venues du latin comme le français ?", a: "Les langues romanes." },
+            { q: "Comment appelle-t-on ceux qui lisent ces histoires en public ?", a: " les troubadours." }
+        ];
+
+        let currentIndex = 0;
+        const cardElement = document.getElementById('card');
+        const questionElement = document.getElementById('question-text');
+        const answerElement = document.getElementById('answer-text');
+        const progressElement = document.getElementById('progress');
+        const prevBtn = document.getElementById('prev-btn');
+        const自动NextBtn = document.getElementById('next-btn');
+
+        function updateCard() {
+            // Remettre la carte du bon côté avant de changer le texte
+            cardElement.classList.remove('is-flipped');
+            
+            // Attendre un court instant si la carte était retournée pour ne pas spoiler la réponse
+            setTimeout(() => {
+                questionElement.textContent = flashcardsData[currentIndex].q;
+                answerElement.textContent = flashcardsData[currentIndex].a;
+                progressElement.textContent = `${currentIndex + 1} / ${flashcardsData.length}`;
+                
+                // Gestion de l'état des boutons
+                prevBtn.disabled = currentIndex === 0;
+                自动NextBtn.disabled = currentIndex === flashcardsData.length - 1;
+            }, cardElement.classList.contains('is-flipped') ? 150 : 0);
+        }
+
+        // Toggle l'affichage au toucher/clic (iPad friendly)
+        cardElement.addEventListener('click', function() {
+            this.classList.toggle('is-flipped');
+        });
+
+        function nextCard() {
+            if (currentIndex < flashcardsData.length - 1) {
+                currentIndex++;
+                updateCard();
+            }
+        }
+
+        function prevCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateCard();
+            }
+        }
+
+        // Initialisation
+        updateCard();
+    </script>
+</body>
+</html>
