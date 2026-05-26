@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Initiation Latin - Étape 1</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #2980b9;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --success-color: #27ae60;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 25px;
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            font-size: 1.4rem;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .option-btn {
+            background-color: var(--bg-color);
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 18px;
+            font-size: 1.1rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .option-btn:active {
+            transform: scale(0.98);
+        }
+
+        .option-btn.selected {
+            border-color: var(--accent-color);
+            background-color: #ebf5fb;
+            font-weight: 600;
+        }
+
+        .option-btn.correct {
+            border-color: var(--success-color);
+            background-color: #e8f8f5;
+        }
+
+        .option-btn.wrong {
+            border-color: #c0392b;
+            background-color: #fdebd0;
+        }
+
+        #did-you-know {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+
+        .did-you-know-box {
+            background-color: #fcf3cf;
+            border-left: 5px solid #f1c40f;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+
+        .did-you-know-title {
+            font-weight: bold;
+            color: #b7950b;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        footer {
+            background-color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            bottom: 0;
+        }
+
+        .nav-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 35px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(41, 128, 185, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:disabled {
+            background-color: #bdc3c7;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <header id="exercise-title">Initiation au Latin</header>
+
+    <main>
+        <div class="card">
+            <h2 id="question-text">Chargement de la question...</h2>
+            <div class="options-container" id="options-box"></div>
+
+            <div id="did-you-know">
+                <div class="did-you-know-box">
+                    <div class="did-you-know-title">💡 Le saviez-tu ?</div>
+                    <div id="explanation-text"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <button id="action-btn" class="nav-btn" disabled>Valider</button>
+    </footer>
+
+    <script>
+        // Configuration de l'exercice - Facilement modifiable pour d'autres étapes
+        const EXERCICE_CONFIG = {
+            title: "Étape 1 : Le grand mystère de la langue",
+            question: "À ton avis, sur 10 mots que nous utilisons aujourd'hui en français, combien proviennent directement ou indirectement du latin ?",
+            options: [
+                { id: "A", text: "Environ 2 mots sur 10 (20%)", correct: false },
+                { id: "B", text: "Environ 5 mots sur 10 (50%)", correct: false },
+                { id: "C", text: "Environ 8 mots sur 10 (80%)", correct: true }
+            ],
+            explanation: "Près de 80% des mots du dictionnaire français viennent du latin ! Le français n'est rien d'autre que du latin qui a voyagé dans le temps et qui a changé de prononciation au fil des siècles. Tu parles donc déjà un peu latin sans le savoir !",
+            timerDuration: 10 // Temps incompressible en secondes pour la lecture
+        };
+
+        let selectedOptionId = null;
+        let isValidated = false;
+        let timerInterval = null;
+
+        const titleEl = document.getElementById('exercise-title');
+        const questionEl = document.getElementById('question-text');
+        const optionsBox = document.getElementById('options-box');
+        const actionBtn = document.getElementById('action-btn');
+        const didYouKnowBox = document.getElementById('did-you-know');
+        const explanationEl = document.getElementById('explanation-text');
+
+        // Initialisation de la page
+        function initExercise() {
+            titleEl.textContent = EXERCICE_CONFIG.title;
+            questionEl.textContent = EXERCICE_CONFIG.question;
+            explanationEl.textContent = EXERCICE_CONFIG.explanation;
+
+            optionsBox.innerHTML = '';
+            EXERCICE_CONFIG.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = opt.text;
+                btn.dataset.id = opt.id;
+                btn.addEventListener('click', () => selectOption(opt.id));
+                optionsBox.appendChild(btn);
+            });
+        }
+
+        // Gestion de la sélection tactile
+        function selectOption(id) {
+            if (isValidated) return;
+            
+            selectedOptionId = id;
+            Array.from(optionsBox.children).forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.id === id);
+            });
+            
+            actionBtn.disabled = false;
+        }
+
+        // Validation et déclenchement du compte à rebours
+        function validateAnswer() {
+            isValidated = true;
+            actionBtn.disabled = true;
+
+            // Rendre visible les résultats graphiques
+            Array.from(optionsBox.children).forEach(btn => {
+                const optId = btn.dataset.id;
+                const optConfig = EXERCICE_CONFIG.options.find(o => o.id === optId);
+                
+                btn.classList.remove('selected');
+                if (optConfig.correct) {
+                    btn.classList.add('correct');
+                } else if (optId === selectedOptionId) {
+                    btn.classList.add('wrong');
+                }
+            });
+
+            // Afficher le pavé pédagogique
+            didYouKnowBox.style.display = 'block';
+            
+            // Lancer le timer incompressible
+            startLockTimer(EXERCICE_CONFIG.timerDuration);
+        }
+
+        // Compte à rebours pour bloquer la progression rapide
+        function startLockTimer(seconds) {
+            let timeLeft = seconds;
+            actionBtn.textContent = `Continuer (${timeLeft}s)`;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    actionBtn.textContent = `Continuer (${timeLeft}s)`;
+                } else {
+                    clearInterval(timerInterval);
+                    actionBtn.textContent = "Continuer ▶";
+                    actionBtn.disabled = false;
+                    actionBtn.onclick = nextPage; // Changement de comportement du bouton
+                }
+            }, 1000);
+        }
+
+        function nextPage() {
+            // Logique pour passer au fichier ou à l'écran HTML suivant
+            alert("Bravo ! Passage à l'exercice suivant (les mots transparents).");
+        }
+
+        // Liaison du bouton principal
+        actionBtn.addEventListener('click', () => {
+            if (!isValidated) {
+                validateAnswer();
+            }
+        });
+
+        // Lancement au chargement
+        window.onload = initExercise;
+    </script>
+</body>
+</html>

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Initiation Latin - Étape 4 (Association)</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #2980b9;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --success-color: #27ae60;
+            --error-color: #c0392b;
+            --selected-color: #3498db;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .score-box {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 1rem;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .game-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            gap: 20px;
+            margin: 15px 0;
+        }
+
+        .column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .column-title {
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        /* Tuiles adaptées à l'iPad (zones de clic larges) */
+        .tile {
+            background-color: var(--card-bg);
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 1.15rem;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .tile.selected {
+            background-color: #d6eaf8;
+            border-color: var(--selected-color);
+            color: var(--accent-color);
+        }
+
+        .tile.matched {
+            background-color: #d4efdf !important;
+            border-color: var(--success-color) !important;
+            color: #196f3d !important;
+            cursor: default;
+        }
+
+        .tile.wrong {
+            background-color: #fadbd8 !important;
+            border-color: var(--error-color) !important;
+            color: #78281f !important;
+        }
+
+        #explanation-panel {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 15px;
+            text-align: left;
+        }
+
+        .explanation-box {
+            background-color: #fcf3cf;
+            border-left: 5px solid #f1c40f;
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        .explanation-title {
+            font-weight: bold;
+            color: #b7950b;
+            margin-bottom: 6px;
+        }
+
+        footer {
+            background-color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            bottom: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .nav-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 45px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .nav-btn:disabled {
+            background-color: #bdc3c7;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <span>Étape 4 : L'enquête des lettres muettes</span>
+        <div class="score-box">Erreurs : <span id="error-count">0</span></div>
+    </header>
+
+    <main>
+        <div id="intro-panel" style="width: 100%; max-width: 750px; margin-bottom: 15px;">
+            <div class="info-box" style="background-color: #e8f4f8; border-left: 5px solid var(--accent-color); color: #1f4e5b; padding: 20px;">
+                <h3 style="color: var(--accent-color); font-size: 1.2rem; margin-top: 0;">🕵️‍♂️ L'orthographe française est-elle folle ?</h3>
+                <p style="margin-bottom: 15px; font-size: 1.05rem; line-height: 1.5;">
+                    Pourquoi y a-t-il un <b>G</b> et un <b>T</b> cachés à la fin de <i>doigt</i> ? Pourquoi un <b>D</b> à la fin de <i>froid</i> ? 
+                    Ces lettres ne font aucun bruit, et pourtant, elles ne sont pas là par hasard ! 
+                    <br><br>
+                    Ce sont des <b>indices fossiles</b>. Associe chaque mot français moderne à son ancêtre latin pour découvrir le secret de son orthographe.
+                </p>
+                <div style="text-align: center;">
+                    <button class="nav-btn" onclick="startExerciseAfterIntro()" style="padding: 10px 30px; font-size: 1rem;">Commencer l'association 🚀</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-zone" style="display: none; width: 100%; max-width: 800px;">
+            <div style="text-align: center; color: #475569; margin-bottom: 15px; font-size: 1.05rem;">
+                Sélectionne un mot français, puis trouve son origine latine correspondante.
+            </div>
+
+            <div class="game-container">
+                <div class="column" id="col-french">
+                    <div class="column-title">Mot français</div>
+                </div>
+                <div class="column" id="col-latin">
+                    <div class="column-title">Ancêtre latin</div>
+                </div>
+            </div>
+
+            <div id="explanation-panel">
+                <div class="explanation-box">
+                    <div class="explanation-title" id="explanation-title-box">💡 Le secret de l'orthographe</div>
+                    <div id="explanation-text" style="color: #7e5109; line-height: 1.4; font-size: 1.05rem;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <button id="action-btn" class="nav-btn" disabled onclick="handleValidation()" style="display: none;">Associe les mots</button>
+    </footer>
+
+    <script>
+        const DATA_MUTETTES = [
+            { id: 1, french: "DOI<b>GT</b>", latin: "digitus", explanation: "En latin, le doigt se disait <b>digitus</b>. En se transformant, le français a arrêté de prononcer la fin, mais a gardé le G et le T dans l'orthographe pour se souvenir de son origine !" },
+            { id: 2, french: "COR<b>PS</b>", latin: "corpus", explanation: "Ce mot vient directement du latin <b>corpus</b>. Le -P- et le -S- muets que tu écris à la fin de « un corp-s » rappellent directement les deux consonnes de la racine latine." },
+            { id: 3, french: "LOU<b>P</b>", latin: "lupus", explanation: "En latin, le loup se disait <b>lupus</b>. Le -P- est resté dans l'écriture et se réveille dans les mots de la même famille comme <i>louve</i> ou <i>loupiot</i>." },
+            { id: 4, french: "FROI<b>D</b>", latin: "frigidus", explanation: "Le mot français vient du latin <b>frigidus</b> (qui a aussi donné <i>frigidaire</i>). On garde le -D- écrit pour pouvoir fabriquer facilement le féminin <i>froi-de</i> !" },
+            { id: 5, french: "CHAU<b>D</b>", latin: "caldus", explanation: "En latin parlé, chaud se disait <b>caldus</b>. Le -D- est conservé à l'écrit, ce qui permet de former naturellement le féminin <i>chau-de</i>." },
+            { id: 6, french: "SE<b>P</b>T", latin: "septem", explanation: "Issu directement du latin <b>septem</b>, le français a conservé le -P- dans son écriture par étymologie, même si la prononciation moderne saute directement au -T-." },
+            { id: 7, french: "VIN<b>GT</b>", latin: "viginti", explanation: "En latin, vingt s'écrivait <b>viginti</b>. Les lettres -G- et -T- du français moderne sont les témoins historiques des deux syllabes latines d'origine." },
+            { id: 8, french: "T<b>Ê</b>TE", latin: "testam", explanation: "En latin, la tête se disait <b>testa</b>. Au fil du temps, le <b>-S-</b> de l'intérieur a disparu, et les Français l'ont remplacé par un accent circonflexe (ˆ) sur le E ! c'est un souvenir.  On retrouve ce -ê-  dans  de nombreux noms et le <b>-S-</b> dans les adjectifs  comme le nom <i>forêt</i> -  et l'adjectif <i>forestier</i> ou <i>hôpital</i> - et l'adjectif <i>hospitalier</i>" }
+        ];
+
+        let selectedFrenchId = null;
+        let selectedLatinId = null;
+        let errors = 0;
+        let matchedPairsCount = 0;
+        let timerInterval = null;
+        let isLocked = false; // Empêche de cliquer pendant les 10 secondes d'explication
+
+        function startExerciseAfterIntro() {
+            document.getElementById('intro-panel').style.display = 'none';
+            document.getElementById('game-zone').style.display = 'block';
+            initGame();
+        }
+
+        function initGame() {
+            const shuffledFrench = [...DATA_MUTETTES].sort(() => Math.random() - 0.5);
+            const shuffledLatin = [...DATA_MUTETTES].sort(() => Math.random() - 0.5);
+
+            const colFrench = document.getElementById('col-french');
+            const colLatin = document.getElementById('col-latin');
+
+            shuffledFrench.forEach(item => {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.innerHTML = item.french;
+                tile.dataset.id = item.id;
+                tile.onclick = () => selectTile(tile, 'french');
+                colFrench.appendChild(tile);
+            });
+
+            shuffledLatin.forEach(item => {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.textContent = item.latin;
+                tile.dataset.id = item.id;
+                tile.onclick = () => selectTile(tile, 'latin');
+                colLatin.appendChild(tile);
+            });
+        }
+
+        function selectTile(tile, type) {
+            if (isLocked || tile.classList.contains('matched')) return;
+
+            // Nettoyer la sélection précédente dans la même colonne
+            const siblings = tile.parentNode.querySelectorAll('.tile');
+            siblings.forEach(s => { if(!s.classList.contains('matched')) s.className = 'tile'; });
+
+            tile.classList.add('selected');
+
+            if (type === 'french') selectedFrenchId = parseInt(tile.dataset.id);
+            if (type === 'latin') selectedLatinId = parseInt(tile.dataset.id);
+
+            // Si un élément de chaque colonne est sélectionné, on vérifie l'association
+            if (selectedFrenchId !== null && selectedLatinId !== null) {
+                checkAssociation();
+            }
+        }
+
+        function checkAssociation() {
+            const frenchTile = document.querySelector(`#col-french .tile.selected`);
+            const latinTile = document.querySelector(`#col-latin .tile.selected`);
+
+            if (selectedFrenchId === selectedLatinId) {
+                // Association Correcte
+                frenchTile.className = 'tile matched';
+                latinTile.className = 'tile matched';
+                matchedPairsCount++;
+
+                // Récupérer la donnée pour afficher l'explication
+                const matchedData = DATA_MUTETTES.find(item => item.id === selectedFrenchId);
+                
+                document.getElementById('explanation-title-box').innerHTML = `💡 Le secret de : ${matchedData.french.replace(/<\/?[^>]+(>|$)/g, "")}`;
+                document.getElementById('explanation-text').innerHTML = matchedData.explanation;
+                document.getElementById('explanation-panel').style.display = 'block';
+
+                // Lancer le timer incompressible de 10 secondes
+                startLockTimer(10);
+            } else {
+                // Erreur
+                errors++;
+                document.getElementById('error-count').textContent = errors;
+
+                frenchTile.classList.add('wrong');
+                latinTile.classList.add('wrong');
+
+                isLocked = true;
+                setTimeout(() => {
+                    frenchTile.className = 'tile';
+                    latinTile.className = 'tile';
+                    isLocked = false;
+                }, 1000);
+
+                selectedFrenchId = null;
+                selectedLatinId = null;
+            }
+        }
+
+        function startLockTimer(seconds) {
+            isLocked = true;
+            let timeLeft = seconds;
+            const actionBtn = document.getElementById('action-btn');
+            
+            actionBtn.style.display = 'inline-block';
+            actionBtn.disabled = true;
+            actionBtn.textContent = `Lis l'explication (${timeLeft}s)`;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    actionBtn.textContent = `Lis l'explication (${timeLeft}s)`;
+                } else {
+                    clearInterval(timerInterval);
+                    actionBtn.disabled = false;
+                    
+                    if (matchedPairsCount === DATA_MUTETTES.length) {
+                        actionBtn.textContent = "Terminer le parcours ▶";
+                        actionBtn.onclick = finishExercise;
+                    } else {
+                        actionBtn.textContent = "Continuer la recherche ▶";
+                        actionBtn.onclick = nextSearch;
+                    }
+                }
+            }, 1000);
+        }
+
+        function nextSearch() {
+            // Masquer le panneau et le bouton pour l'étape suivante
+            document.getElementById('explanation-panel').style.display = 'none';
+            document.getElementById('action-btn').style.display = 'none';
+            
+            // Réinitialiser les sélections pour la suite
+            selectedFrenchId = null;
+            selectedLatinId = null;
+            isLocked = false;
+        }
+
+        function finishExercise() {
+            alert(`Félicitations ! Enquête terminée avec ${errors} erreur(s).`);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Initiation Latin - Étape 5 (Latin et Publicité)</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #8e44ad;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --success-color: #27ae60;
+            --error-color: #c0392b;
+            --selected-color: #9b59b6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .score-box {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 1rem;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .game-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 850px;
+            gap: 20px;
+            margin: 15px 0;
+        }
+
+        .column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .column-title {
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .tile {
+            background-color: var(--card-bg);
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 1.1rem;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .tile.selected {
+            background-color: #f5eef8;
+            border-color: var(--selected-color);
+            color: var(--accent-color);
+        }
+
+        .tile.matched {
+            background-color: #d4efdf !important;
+            border-color: var(--success-color) !important;
+            color: #196f3d !important;
+            cursor: default;
+        }
+
+        .tile.wrong {
+            background-color: #fadbd8 !important;
+            border-color: var(--error-color) !important;
+            color: #78281f !important;
+        }
+        
+        .silent-letter {
+            background-color: #fef9e7;
+            border-bottom: 2px dashed #f39c12;
+            color: #d35400;
+            padding: 0 2px;
+            border-radius: 3px;
+        }
+
+        /* Panneau d'explication épuré */
+        #explanation-panel {
+            display: none;
+            width: 100%;
+            max-width: 850px;
+            margin-top: 15px;
+        }
+
+        .explanation-box {
+            background-color: #fcf3cf;
+            border-left: 5px solid #f1c40f;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .explanation-title {
+            font-weight: bold;
+            color: #b7950b;
+            margin-bottom: 8px;
+            font-size: 1.2rem;
+        }
+
+        footer {
+            background-color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .nav-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 45px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .nav-btn:disabled {
+            background-color: #bdc3c7;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <span>Étape 5 : Le latin caché dans la publicité</span>
+        <div class="score-box">Erreurs : <span id="error-count">0</span></div>
+    </header>
+
+    <main>
+        <div id="intro-panel" style="width: 100%; max-width: 750px; margin-bottom: 15px;">
+            <div class="info-box" style="background-color: #f5eef8; border-left: 5px solid var(--accent-color); color: #4a235a; padding: 20px;">
+                <h3 style="color: var(--accent-color); font-size: 1.2rem; margin-top: 0;">📺 Le latin, star des marques modernes ?</h3>
+                <p style="margin-bottom: 15px; font-size: 1.05rem; line-height: 1.5;">
+                   Les publicitaires n'ont pas inventé tous les noms de nos produits préférés. Pour mettre leur produit en valeur, ils piochent très souvent dans le dictionnaire latin !
+                    <br><br>
+                    Associe chaque marque ou produit moderne à son origine latine pour enfin déchiffrer ce qui se cache derrière ces marques.
+                </p>
+                <div style="text-align: center;">
+                    <button class="nav-btn" onclick="startExerciseAfterIntro()">Lancer l'enquête 🚀</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-zone" style="display: none; width: 100%; max-width: 850px;">
+            <div class="game-container">
+                <div class="column" id="col-french">
+                    <div class="column-title">Marque</div>
+                </div>
+                <div class="column" id="col-latin">
+                    <div class="column-title">Origine Latine</div>
+                </div>
+            </div>
+
+            <div id="explanation-panel">
+                <div class="explanation-box">
+                    <div class="explanation-title" id="explanation-title-box"></div>
+                    <div id="explanation-text" style="color: #7e5109; line-height: 1.4;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <button id="action-btn" class="nav-btn" disabled onclick="handleValidation()" style="display: none;">Décode les marques</button>
+    </footer>
+
+    <script>
+        const DATA_PUBLICITE = [
+            { id: 1, french: "💻 <span class='silent-letter'>ACER</span>", latin: "acer (vif, aiguisé, perçant)", explanation: "La marque d'ordinateurs a choisi l'adjectif <b>acer</b>. Il signifie vif, rapide ou aiguisé. Idéal pour évoquer la puissance d'une machine informatique !" },
+            { id: 2, french: "🍪 <span class='silent-letter'>OREO</span>", latin: "os, oris (la bouche)", explanation: " <b>os, oris</b>  désigne la bouche en latin. C'est le biscuit fait pour aller directement à la bouche !" },
+            { id: 3, french: "❄️ <span class='silent-letter'>NIVEA</span>", latin: "niveus (blanc comme la neige)", explanation: "En latin, <b>niveus</b> signifie « blanc comme la neige », un dérivé de <i>nix</i> (la neige). Ce nom évoque la pureté et la blancheur de la crème." },
+            { id: 4, french: "🚗 <span class='silent-letter'>VOLVO</span>", latin: "volvere (rouler)", explanation: "En latin, le verbe <b>volvere</b> signifie tourner ou rouler. À la première personne, cela donne <i>volvo</i> : « je roule ». Un nom parfait pour des voitures !" },
+            { id: 5, french: "🚗 <span class='silent-letter'>AUDI</span>", latin: "audire (écouter)", explanation: "En allemand, « horch » (le nom du fondateur) signifie « écoute ! ». Il a traduit son nom en latin : l'impératif du verbe <i>audire</i> donne <b>audi</b> (« écoute ! »)." },
+            { id: 6, french: "👟 <span class='silent-letter'>ASICS</span>", latin: "Anima Sana In Corpore Sano", explanation: "C'est un acronyme latin : <b>A</b>nima <b>S</b>ana <b>I</b>n <b>C</b>orpore <b>S</b>ano (« Un esprit sain dans un corps sain »). Une promesse de bien-être par le sport !" },
+            { id: 7, french: "🍦 <span class='silent-letter'>MAGNUM</span>", latin: "magnus (grand)", explanation: "La marque utilise l'adjectif latin <b>magnum</b> qui signifie « grand ». Cela évoque tout de suite une glace généreuse et supérieure." },
+            { id: 8, french: "📱 <span class='silent-letter'>XPERIA</span>", latin: "experientia (l'expérience)", explanation: "Sony a contracté le mot latin <b>experientia</b> pour créer le nom <i>Xperia</i>. Cela signifie que le téléphone offre l'expérience multimédia ultime." }
+        ];
+
+        let selectedFrenchId = null;
+        let selectedLatinId = null;
+        let errors = 0;
+        let matchedPairsCount = 0;
+        let isLocked = false;
+
+        function startExerciseAfterIntro() {
+            document.getElementById('intro-panel').style.display = 'none';
+            document.getElementById('game-zone').style.display = 'block';
+            initGame();
+        }
+
+        function initGame() {
+            const shuffledFrench = [...DATA_PUBLICITE].sort(() => Math.random() - 0.5);
+            const shuffledLatin = [...DATA_PUBLICITE].sort(() => Math.random() - 0.5);
+            const colFrench = document.getElementById('col-french');
+            const colLatin = document.getElementById('col-latin');
+
+            shuffledFrench.forEach(item => {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.innerHTML = item.french;
+                tile.dataset.id = item.id;
+                tile.onclick = () => selectTile(tile, 'french');
+                colFrench.appendChild(tile);
+            });
+
+            shuffledLatin.forEach(item => {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.textContent = item.latin.split(' (')[0];
+                tile.dataset.id = item.id;
+                tile.onclick = () => selectTile(tile, 'latin');
+                colLatin.appendChild(tile);
+            });
+        }
+
+        function selectTile(tile, type) {
+            if (isLocked || tile.classList.contains('matched')) return;
+            const siblings = tile.parentNode.querySelectorAll('.tile');
+            siblings.forEach(s => { if(!s.classList.contains('matched')) s.className = 'tile'; });
+            tile.classList.add('selected');
+            if (type === 'french') selectedFrenchId = parseInt(tile.dataset.id);
+            if (type === 'latin') selectedLatinId = parseInt(tile.dataset.id);
+            if (selectedFrenchId !== null && selectedLatinId !== null) checkAssociation();
+        }
+
+        function checkAssociation() {
+            const fTile = document.querySelector(`#col-french .tile.selected`);
+            const lTile = document.querySelector(`#col-latin .tile.selected`);
+
+            if (selectedFrenchId === selectedLatinId) {
+                fTile.className = 'tile matched';
+                lTile.className = 'tile matched';
+                matchedPairsCount++;
+                const data = DATA_PUBLICITE.find(i => i.id === selectedFrenchId);
+                
+                document.getElementById('explanation-title-box').innerHTML = `💡 Les coulisses de : ${data.french.replace(/<\/?[^>]+(>|$)/g, "")}`;
+                document.getElementById('explanation-text').innerHTML = data.explanation;
+                document.getElementById('explanation-panel').style.display = 'block';
+
+                startLockTimer(10);
+            } else {
+                errors++;
+                document.getElementById('error-count').textContent = errors;
+                fTile.classList.add('wrong');
+                lTile.classList.add('wrong');
+                isLocked = true;
+                setTimeout(() => {
+                    fTile.className = 'tile';
+                    lTile.className = 'tile';
+                    isLocked = false;
+                }, 1000);
+                selectedFrenchId = selectedLatinId = null;
+            }
+        }
+
+        function startLockTimer(s) {
+            isLocked = true;
+            let tl = s;
+            const btn = document.getElementById('action-btn');
+            btn.style.display = 'inline-block';
+            btn.disabled = true;
+            btn.textContent = `Analyse en cours (${tl}s)`;
+
+            const timer = setInterval(() => {
+                tl--;
+                if (tl > 0) btn.textContent = `Analyse en cours (${tl}s)`;
+                else {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    btn.textContent = (matchedPairsCount === DATA_PUBLICITE.length) ? "Terminer ▶" : "Continuer ▶";
+                    btn.onclick = (matchedPairsCount === DATA_PUBLICITE.length) ? () => alert(`Enquête terminée ! Erreurs : ${errors}`) : nextSearch;
+                }
+            }, 1000);
+        }
+
+        function nextSearch() {
+            document.getElementById('explanation-panel').style.display = 'none';
+            document.getElementById('action-btn').style.display = 'none';
+            selectedFrenchId = selectedLatinId = null;
+            isLocked = false;
+        }
+    </script>
+</body>
+</html>

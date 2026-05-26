@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Initiation Latin - Étape 2 - tu parles déjà le latin</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #2980b9;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --success-color: #27ae60;
+            --warning-color: #e67e22;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .score-box {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 1rem;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #e2e8f0;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .image-placeholder {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 15px auto;
+            background-color: #f1f5f9;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.5rem;
+            border: 4px solid var(--bg-color);
+        }
+
+        .word-display {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .letter-box {
+            width: 35px;
+            height: 40px;
+            border-bottom: 3px solid var(--primary-color);
+            font-size: 1.6rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--primary-color);
+        }
+
+        /* Case espace : invisible, pas de bordure */
+        .letter-box.space {
+            border-bottom: none;
+            width: 20px;
+        }
+
+        .letter-box.revealed {
+            color: var(--warning-color);
+        }
+
+        .letter-box.freebee {
+            color: var(--accent-color);
+        }
+
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 6px;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .key {
+            background-color: #e2e8f0;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 0;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .key:disabled {
+            opacity: 0.4;
+            background-color: #cbd5e1;
+        }
+
+        .hint-section {
+            margin: 15px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hint-btn {
+            background-color: var(--warning-color);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .points-potential {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        #did-you-know {
+            display: none;
+            margin-top: 15px;
+            text-align: left;
+        }
+
+        .did-you-know-box {
+            background-color: #fcf3cf;
+            border-left: 5px solid #f1c40f;
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        .did-you-know-title {
+            font-weight: bold;
+            color: #b7950b;
+            margin-bottom: 8px;
+        }
+
+        footer {
+            background-color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            bottom: 0;
+        }
+
+        .nav-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 35px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .nav-btn:disabled {
+            background-color: #bdc3c7;
+        }
+
+        .end-message {
+            padding: 20px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <span id="step-title">Les mots français empruntés au latin</span>
+        <div class="score-box">Score : <span id="total-score">0</span> pts</div>
+    </header>
+
+    <main>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress"></div>
+        </div>
+
+        <div class="card">
+            <div class="image-placeholder" id="item-image">🎬</div>
+            <p id="item-clue" style="font-weight: 500; color: #475569; padding: 0 10px; line-height: 1.4;"></p>
+            
+            <div class="word-display" id="word-container"></div>
+
+            <div class="hint-section" id="interactive-controls">
+                <button class="hint-btn" id="hint-btn" onclick="revealOneLetter()">Aide : Révéler une autre lettre 💡</button>
+                <span class="points-potential" id="points-status">Valeur : 10 pts</span>
+            </div>
+
+            <div class="keyboard" id="keyboard-container"></div>
+
+            <div id="did-you-know">
+                <div class="did-you-know-box">
+                    <div class="did-you-know-title">💡 Le savais-tu ?</div>
+                    <div id="explanation-text"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <button id="action-btn" class="nav-btn" disabled onclick="handleMainAction()">Valider</button>
+    </footer>
+
+    <script>
+        const DATA_CORPUS = [
+            {
+                word: "VIDEO",
+                emoji: "🎬",
+                clue: "Aujourd'hui, on en voit sur YouTube ou sur Netflix.",
+                explanation: "En latin, « video » est tout simplement le verbe voir conjugué à la 1ère personne du singulier. Les inventeurs modernes ont repris ce mot exact pour désigner l'enregistrement des images."
+            },
+            {
+                word: "AQUARIUM",
+                emoji: "🐠",
+                clue: "Un coin de nature marine enfermé entre quatre murs de verre.",
+                explanation: "Chez les Romains, l'adjectif « aquarium » désignait ce qui était lié à l'eau (aqua). Au XIXe siècle, on a repris ce mot exact pour inventer les bacs à poissons vitrés."
+            },
+            {
+                word: "AGENDA",
+                emoji: "📅",
+                clue: "Les élèves pressés y jettent un œil ou le consultent sur École Directe.",
+                explanation: "En latin, « agenda » signifie littéralement « ce qui doit être fait ». C'est une forme dérivée du verbe « agere » (faire / agir)."
+            },
+            {
+                word: "ALBUM",
+                emoji: "🎨",
+                clue: "Un recueil qui attend qu'on le remplisse de souvenirs colorés, ou l'ensemble des titres de musique d'un artiste.",
+                explanation: "En latin, « albus » signifie « blanc ». À Rome, l'album était un panneau de bois blanchi à la chaux exposé sur le Forum, où l'on écrivait les annonces publiques."
+            },
+            {
+                word: "PODIUM",
+                emoji: "🏆",
+                clue: "Une petite montagne artificielle réservée à seulement trois personnes lors des grandes victoires.",
+                explanation: "À l'origine dans les amphithéâtres romains, le « podium » était la haute muraille qui séparait l'arène des places d'honneur où s'asseyait l'Empereur pour être en sécurité."
+            },
+            {
+                word: "VILLA",
+                emoji: "🏡",
+                clue: "Un havre de paix pour riches Romains fatigués de la ville, souvent situé à la campagne ou au bord de la mer.",
+                explanation: "En latin, la « villa » était un grand domaine à la campagne comprenant la maison du maître et les bâtiments d'une exploitation agricole. D'ailleurs, autour de Tinténiac, on trouve de nombreux hameaux qui s'appellent La Ville-ès-Aubry, La Ville-Morin, La Ville-ès-Nonais."
+            },
+            {
+                word: "DETRITUS",
+                emoji: "🗑️",
+                clue: "Ce qui reste quand une chose a été trop usée ou frottée, et qui finit sa vie au fond d'un sac en plastique.",
+                explanation: "Ce mot vient du verbe latin « deterere » qui signifie user ou broyer. Un détritus est littéralement ce qui reste après qu'une chose a été usée."
+            },
+            {
+                word: "LAVABO",
+                emoji: "🚰",
+                clue: "🔥 Énigme : bien pratique quand on a les mains sales.",
+                explanation: "En latin, « lavabo » signifie « je laverai » (verbe au futur). À l'origine, c'était une prière que le prêtre prononçait en se lavant les mains avant la messe (« Lavabo inter innocentes manus meas... ») qui signifie « je laverai entre les mains innocentes »."
+            },
+            {
+                word: "TANDEM",
+                emoji: "🚲",
+                clue: "🔥 Énigme : drôle de bicyclette.",
+                explanation: "En latin, « tandem » veut dire(« enfin / à la longue »). Au XIXe siècle, des étudiants anglais ont fait un jeu de mots humoristique en utilisant ce terme pour désigner des chevaux attelés l'un derrière l'autre (en longueur), puis la fameuse bicyclette  à deux places et deux pédaliers."
+            },
+            {
+                word: "EXIT",
+                emoji: "🚪",
+                clue: "🔥 Énigme :  indication sur un fond vert que l'on trouve sur une porte de secours dans un bâtiment.",
+                explanation: "Le mot « exit » n'est pas d'origine anglaise ! C'est la troisième personne du singulier du verbe latin « exire » (sortir). « Exit » signifie mot à mot : « il/elle sort »."
+            },
+            {
+                word: "EX AEQUO",
+                emoji: "🏁",
+                clue: "🔥 Énigme : expression utilisée quand deux athlètes finissent en même temps sur la ligne d'arrivée.",
+                explanation: "En latin, « ex aequo » signifie littéralement « à partir de ce qui est égal ». On l'utilise en français pour désigner des concurrents classés à la même place."
+            }
+        ];
+
+        let currentItemIndex = 0;
+        let totalScore = 0;
+        let currentItemPoints = 10;
+        let guessedLetters = [];
+        let timerInterval = null;
+        let isStepFinished = false;
+
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        function loadItem() {
+            isStepFinished = false;
+            const item = DATA_CORPUS[currentItemIndex];
+            currentItemPoints = 10;
+            guessedLetters = [];
+
+            document.getElementById('progress').style.width = `${(currentItemIndex / DATA_CORPUS.length) * 100}%`;
+            document.getElementById('item-image').textContent = item.emoji;
+            document.getElementById('item-clue').textContent = item.clue;
+            document.getElementById('points-status').textContent = `Valeur : ${currentItemPoints} pts`;
+            document.getElementById('did-you-know').style.display = 'none';
+            document.getElementById('interactive-controls').style.opacity = '1';
+            document.getElementById('interactive-controls').style.display = 'flex';
+            document.getElementById('keyboard-container').style.display = 'grid';
+
+            const actionBtn = document.getElementById('action-btn');
+            actionBtn.disabled = true;
+            actionBtn.textContent = "Valider";
+            actionBtn.style.display = '';
+            actionBtn.onclick = handleMainAction;
+
+            // Création des cases de lettres (avec gestion de l'espace)
+            const wordContainer = document.getElementById('word-container');
+            wordContainer.innerHTML = '';
+            for (let i = 0; i < item.word.length; i++) {
+                const box = document.createElement('div');
+                box.id = `l-${i}`;
+                if (item.word[i] === ' ') {
+                    // Case espace : invisible
+                    box.className = 'letter-box space';
+                    box.textContent = '';
+                } else {
+                    box.className = 'letter-box';
+                    box.textContent = '';
+                }
+                wordContainer.appendChild(box);
+            }
+
+            buildKeyboard();
+
+            // Offrir automatiquement la première lettre (non-espace)
+            const firstLetter = item.word.replace(' ', '')[0];
+            revealLetter(firstLetter, 'freebee');
+            guessedLetters.push(firstLetter);
+            const keyEl = document.getElementById(`key-${firstLetter}`);
+            if (keyEl) keyEl.disabled = true;
+
+            checkWordCompletion();
+        }
+
+        function buildKeyboard() {
+            const kbContainer = document.getElementById('keyboard-container');
+            kbContainer.innerHTML = '';
+
+            alphabet.split('').forEach(letter => {
+                const button = document.createElement('button');
+                button.className = 'key';
+                button.textContent = letter;
+                button.id = `key-${letter}`;
+                button.onclick = () => handleKeyInput(letter);
+                kbContainer.appendChild(button);
+            });
+        }
+
+        // Affiche une lettre dans toutes ses cases avec une classe CSS optionnelle
+        function revealLetter(letter, cssClass) {
+            const item = DATA_CORPUS[currentItemIndex];
+            for (let i = 0; i < item.word.length; i++) {
+                if (item.word[i] === letter) {
+                    const box = document.getElementById(`l-${i}`);
+                    box.textContent = letter;
+                    if (cssClass) box.classList.add(cssClass);
+                }
+            }
+        }
+
+        function handleKeyInput(letter) {
+            if (isStepFinished) return;
+            const item = DATA_CORPUS[currentItemIndex];
+            const keyEl = document.getElementById(`key-${letter}`);
+            if (keyEl) keyEl.disabled = true;
+
+            if (item.word.includes(letter)) {
+                guessedLetters.push(letter);
+                revealLetter(letter, null);
+            } else {
+                decreasePoints(1);
+            }
+
+            checkWordCompletion();
+        }
+
+        function revealOneLetter() {
+            const item = DATA_CORPUS[currentItemIndex];
+            let hiddenIndexes = [];
+
+            for (let i = 0; i < item.word.length; i++) {
+                if (item.word[i] !== ' ' && document.getElementById(`l-${i}`).textContent === '') {
+                    hiddenIndexes.push(i);
+                }
+            }
+
+            if (hiddenIndexes.length > 0) {
+                const randomIndex = hiddenIndexes[Math.floor(Math.random() * hiddenIndexes.length)];
+                const letterToReveal = item.word[randomIndex];
+                revealLetter(letterToReveal, 'revealed');
+                guessedLetters.push(letterToReveal);
+                const keyEl = document.getElementById(`key-${letterToReveal}`);
+                if (keyEl) keyEl.disabled = true;
+                decreasePoints(2);
+                checkWordCompletion();
+            }
+        }
+
+        function decreasePoints(amount) {
+            currentItemPoints = Math.max(2, currentItemPoints - amount);
+            document.getElementById('points-status').textContent = `Valeur : ${currentItemPoints} pts`;
+        }
+
+        function checkWordCompletion() {
+            const item = DATA_CORPUS[currentItemIndex];
+            let allFound = true;
+
+            for (let i = 0; i < item.word.length; i++) {
+                if (item.word[i] !== ' ' && document.getElementById(`l-${i}`).textContent === '') {
+                    allFound = false;
+                    break;
+                }
+            }
+
+            if (allFound) {
+                isStepFinished = true;
+                document.getElementById('interactive-controls').style.opacity = '0.3';
+                Array.from(document.getElementsByClassName('key')).forEach(k => k.disabled = true);
+                document.getElementById('action-btn').disabled = false;
+            }
+        }
+
+        function handleMainAction() {
+            if (!isStepFinished) return;
+
+            totalScore += currentItemPoints;
+            document.getElementById('total-score').textContent = totalScore;
+
+            const item = DATA_CORPUS[currentItemIndex];
+            document.getElementById('explanation-text').textContent = item.explanation;
+            document.getElementById('did-you-know').style.display = 'block';
+
+            startLockTimer(10);
+        }
+
+        function startLockTimer(seconds) {
+            let timeLeft = seconds;
+            const actionBtn = document.getElementById('action-btn');
+            actionBtn.disabled = true;
+            actionBtn.textContent = `Continuer (${timeLeft}s)`;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    actionBtn.textContent = `Continuer (${timeLeft}s)`;
+                } else {
+                    clearInterval(timerInterval);
+                    actionBtn.textContent = "Continuer ▶";
+                    actionBtn.disabled = false;
+                    actionBtn.onclick = goToNextItem;
+                }
+            }, 1000);
+        }
+
+        function goToNextItem() {
+            clearInterval(timerInterval);
+            const actionBtn = document.getElementById('action-btn');
+            actionBtn.onclick = handleMainAction;
+
+            currentItemIndex++;
+            if (currentItemIndex < DATA_CORPUS.length) {
+                loadItem();
+            } else {
+                // Fin du parcours
+                document.getElementById('progress').style.width = '100%';
+                document.getElementById('item-image').textContent = '🎉';
+                document.getElementById('item-clue').textContent = '';
+                document.getElementById('word-container').innerHTML = '';
+                document.getElementById('interactive-controls').style.display = 'none';
+                document.getElementById('keyboard-container').style.display = 'none';
+                document.getElementById('did-you-know').style.display = 'none';
+
+                const scoreMax = DATA_CORPUS.length * 10;
+                document.getElementById('keyboard-container').innerHTML =
+                    `<div class="end-message">🎉 Félicitations ! Parcours terminé.<br>Ton score final est de <strong>${totalScore} / ${scoreMax} points</strong> !</div>`;
+                document.getElementById('keyboard-container').style.display = 'block';
+                actionBtn.style.display = 'none';
+            }
+        }
+
+        window.onload = loadItem;
+    </script>
+</body>
+</html>

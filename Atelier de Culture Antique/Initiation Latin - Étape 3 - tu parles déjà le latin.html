@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Initiation Latin - Étape 3</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #2980b9;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --success-color: #27ae60;
+            --error-color: #c0392b;
+            --selected-color: #d6eaf8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .score-box {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 1rem;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .instructions {
+            text-align: center;
+            color: #475569;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 900px;
+            margin-top: 10px;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .column-title {
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .tile {
+            background-color: var(--card-bg);
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 10px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            text-align: center;
+            min-height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* États des tuiles */
+        .tile.selected {
+            background-color: var(--selected-color);
+            border-color: var(--accent-color);
+            transform: scale(1.02);
+        }
+
+        .tile.matched {
+            background-color: #d4efdf;
+            border-color: var(--success-color);
+            color: #196f3d;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .tile.error {
+            background-color: #fadbd8;
+            border-color: var(--error-color);
+            color: #78281f;
+        }
+
+        #pedagogical-panel {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            margin-top: 20px;
+        }
+
+        .info-box {
+            background-color: #fcf3cf;
+            border-left: 5px solid #f1c40f;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            color: #b7950b;
+            font-size: 1.1rem;
+        }
+
+        .info-box p {
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #7e5109;
+        }
+
+        footer {
+            background-color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            bottom: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .nav-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 45px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .nav-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <span>Initiation Latin - Étape 3 : À chacun son jour</span>
+        <div class="score-box">Erreurs : <span id="error-count">0</span></div>
+    </header>
+
+    <main>
+        <div id="intro-panel" style="width: 100%; max-width: 750px; margin-bottom: 15px;">
+            <div class="info-box" style="background-color: #e8f4f8; border-left: 5px solid var(--accent-color); color: #1f4e5b; padding: 20px;">
+                <h3 style="color: var(--accent-color); font-size: 1.2rem; margin-top: 0;">💡 Le savais-tu ? Le mystère du "-di"</h3>
+                <p style="margin-bottom: 15px; font-size: 1.05rem; line-height: 1.5;">
+                    Regarde bien la fin du nom de nos jours : Lun<b>-di</b>, Mar<b>-di</b>, Mercre<b>-di</b>... 
+                    Ce petit <b>-di</b> vient tout simplement du latin <i>dies</i>, qui signifie <b>« le jour »</b>. 
+                    <br><br>
+                    L'anglais fonctionne exactement de la même manière avec <b>-day</b> ! 
+                    D'ailleurs, pour certains jours, l'anglais a gardé les mêmes astres latins que nous : 
+                    <b>Mon-day</b>, <b>Sun-day</b> et <b>Satur-day</b>.
+                </p>
+                <div style="text-align: center;">
+                    <button class="nav-btn" onclick="startGameAfterIntro()" style="padding: 10px 30px; font-size: 1rem;">Commençons l'activité sur les jours de la semaine! 🚀</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-zone" style="display: none; width: 100%; max-width: 900px; text-align: center;">
+            <div class="instructions">
+                Associe un <b>Jour</b>, sa <b>Planète / dieu</b> et son <b>Rôle dans la mythologie</b>.
+            </div>
+
+            <div class="game-container">
+                <div class="column" id="col-days">
+                    <div class="column-title">Jour</div>
+                </div>
+                
+                <div class="column" id="col-planets">
+                    <div class="column-title">Astre / Divinité</div>
+                </div>
+                
+                <div class="column" id="col-roles">
+                    <div class="column-title">Origine ou Rôle</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="pedagogical-panel">
+            <div class="info-box">
+                <h3>🏛️ Le mot de la fin : Et le Dimanche ?</h3>
+                <p>
+                    Tu as remarqué ? <b>Dimanche</b> est le seul jour en français qui ne finit pas par "-di". 
+                    En latin, c'était le jour du Soleil (comme <i>Sunday</i>), mais en 321 après J.-C., l'empereur Constantin a changé les règles et en a fait le <i>dies dominicus</i> (le jour du Seigneur), ce qui a donné notre mot "dimanche" !
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <button id="action-btn" class="nav-btn" disabled onclick="handleValidation()">Valider l'exercice</button>
+    </footer>
+
+    <script>
+        const DAYS_DATA = [
+            { id: 1, day: "Lundi est le jour de", planet: "La Lune (Diane) qui est", role: "L'astre de la nuit (Monday)" },
+            { id: 2, day: "Mardi est le jour de", planet: "Mars qui est", role: "Dieu de la guerre" },
+            { id: 3, day: "Mercredi est le jour de", planet: "Mercure qui est", role: "Dieu messager aux talons ailés" },
+            { id: 4, day: "Jeudi est le jour de", planet: "Jupiter qui est", role: "Roi de l'Olympe et maître du tonnerre" },
+            { id: 5, day: "Vendredi est le jour de", planet: "Vénus qui est", role: "Déesse de l'amour et de la beauté" },
+            { id: 6, day: "Samedi est le jour de", planet: "Saturne (Titan) qui est", role: "Père de Jupiter (Saturday)" },
+            { id: 7, day: "Dimanche est le jour du", planet: " Soleil (Apollon) qui est", role: "l'Ancien jour du Soleil (Sunday)" }
+        ];
+
+        let selectedDayId = null;
+        let selectedPlanetId = null;
+        let selectedRoleId = null;
+        
+        let errors = 0;
+        let matchedCount = 0;
+        let timerInterval = null;
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        // ÉTAPE 1 : Préparer le jeu en arrière-plan au chargement
+        function initGame() {
+            const shuffledDays = shuffle([...DAYS_DATA]);
+            const shuffledPlanets = shuffle([...DAYS_DATA]);
+            const shuffledRoles = shuffle([...DAYS_DATA]);
+
+            const colDays = document.getElementById('col-days');
+            const colPlanets = document.getElementById('col-planets');
+            const colRoles = document.getElementById('col-roles');
+
+            shuffledDays.forEach(item => {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.textContent = item.day;
+                tile.dataset.id = item.id;
+                tile.onclick = () => selectTile(tile, 'day');
+                colDays.appendChild(tile);
+            });
+
+            shuffledPlanets.forEach(item => {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.textContent = item.planet;
+                tile.dataset.id = item.id;
+                tile.onclick = () => selectTile(tile, 'planet');
+                colPlanets.appendChild(tile);
+            });
+
+            shuffledRoles.forEach(item => {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.textContent = item.role;
+                tile.dataset.id = item.id;
+                tile.onclick = () => selectTile(tile, 'role');
+                colRoles.appendChild(tile);
+            });
+        }
+
+        // ÉTAPE 2 : Lancer le jeu quand l'élève clique sur le bouton d'intro
+        function startGameAfterIntro() {
+            document.getElementById('intro-panel').style.display = 'none';
+            document.getElementById('game-zone').style.display = 'block';
+        }
+
+        function selectTile(tile, type) {
+            if (tile.classList.contains('matched')) return;
+
+            const siblings = tile.parentNode.querySelectorAll('.tile');
+            siblings.forEach(s => { if(!s.classList.contains('matched')) s.className = 'tile'; });
+
+            tile.classList.add('selected');
+
+            if (type === 'day') selectedDayId = parseInt(tile.dataset.id);
+            if (type === 'planet') selectedPlanetId = parseInt(tile.dataset.id);
+            if (type === 'role') selectedRoleId = parseInt(tile.dataset.id);
+
+            if (selectedDayId !== null && selectedPlanetId !== null && selectedRoleId !== null) {
+                checkTriplet();
+            }
+        }
+
+        function checkTriplet() {
+            const dayTile = document.querySelector(`#col-days .tile.selected`);
+            const planetTile = document.querySelector(`#col-planets .tile.selected`);
+            const roleTile = document.querySelector(`#col-roles .tile.selected`);
+
+            if (selectedDayId === selectedPlanetId && selectedPlanetId === selectedRoleId) {
+                dayTile.className = 'tile matched';
+                planetTile.className = 'tile matched';
+                roleTile.className = 'tile matched';
+                matchedCount++;
+
+                if (matchedCount === DAYS_DATA.length) {
+                    document.getElementById('action-btn').disabled = false;
+                }
+            } else {
+                errors++;
+                document.getElementById('error-count').textContent = errors;
+
+                dayTile.classList.add('error');
+                planetTile.classList.add('error');
+                roleTile.classList.add('error');
+
+                setTimeout(() => {
+                    if (dayTile.classList.contains('error')) dayTile.className = 'tile';
+                    if (planetTile.classList.contains('error')) planetTile.className = 'tile';
+                    if (roleTile.classList.contains('error')) roleTile.className = 'tile';
+                }, 1000);
+            }
+
+            selectedDayId = null;
+            selectedPlanetId = null;
+            selectedRoleId = null;
+        }
+
+        function handleValidation() {
+            document.getElementById('pedagogical-panel').style.display = 'block';
+            
+            // Défilement automatique vers le bas pour que l'élève voie l'explication sur l'iPad
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            
+            startLockTimer(10);
+        }
+
+        function startLockTimer(seconds) {
+            let timeLeft = seconds;
+            const actionBtn = document.getElementById('action-btn');
+            actionBtn.disabled = true;
+            actionBtn.textContent = `Continuer (${timeLeft}s)`;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    actionBtn.textContent = `Continuer (${timeLeft}s)`;
+                } else {
+                    clearInterval(timerInterval);
+                    actionBtn.textContent = "Terminer le parcours ▶";
+                    actionBtn.disabled = false;
+                    actionBtn.onclick = () => {
+                        alert(`Bravo ! Parcours validé avec ${errors} erreur(s).`);
+                    };
+                }
+            }, 1000);
+        }
+
+        window.onload = initGame;
+    </script>
+</body>
