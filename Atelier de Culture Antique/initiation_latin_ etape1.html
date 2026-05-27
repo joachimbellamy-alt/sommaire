@@ -124,6 +124,18 @@
             gap: 8px;
         }
 
+        .score-container {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .score-num {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin: 15px 0;
+        }
+
         footer {
             background-color: white;
             padding: 15px;
@@ -165,13 +177,13 @@
     <header id="exercise-title">Initiation au Latin</header>
 
     <main>
-        <div class="card">
+        <div class="card" id="quiz-card">
             <h2 id="question-text">Chargement de la question...</h2>
             <div class="options-container" id="options-box"></div>
 
             <div id="did-you-know">
                 <div class="did-you-know-box">
-                    <div class="did-you-know-title">💡 Le saviez-tu ?</div>
+                    <div class="did-you-know-title">💡 Le savais-tu ?</div>
                     <div id="explanation-text"></div>
                 </div>
             </div>
@@ -183,22 +195,70 @@
     </footer>
 
     <script>
-        // Configuration de l'exercice - Facilement modifiable pour d'autres étapes
-        const EXERCICE_CONFIG = {
-            title: "Étape 1 : Le grand mystère de la langue",
-            question: "À ton avis, sur 10 mots que nous utilisons aujourd'hui en français, combien proviennent directement ou indirectement du latin ?",
-            options: [
-                { id: "A", text: "Environ 2 mots sur 10 (20%)", correct: false },
-                { id: "B", text: "Environ 5 mots sur 10 (50%)", correct: false },
-                { id: "C", text: "Environ 8 mots sur 10 (80%)", correct: true }
-            ],
-            explanation: "Près de 80% des mots du dictionnaire français viennent du latin ! Le français n'est rien d'autre que du latin qui a voyagé dans le temps et qui a changé de prononciation au fil des siècles. Tu parles donc déjà un peu latin sans le savoir !",
-            timerDuration: 10 // Temps incompressible en secondes pour la lecture
-        };
+        // Tableau contenant la question d'origine et les 4 nouvelles questions adaptées aux 6èmes
+        const QUESTIONS_DATA = [
+            {
+                title: "Étape 1 : Le grand mystère de la langue",
+                question: "À ton avis, sur 10 mots que nous utilisons aujourd'hui en français, combien proviennent directement ou indirectement du latin ?",
+                options: [
+                    { id: "A", text: "Environ 2 mots sur 10 (20%)", correct: false },
+                    { id: "B", text: "Environ 5 mots sur 10 (50%)", correct: false },
+                    { id: "C", text: "Environ 8 mots sur 10 (80%)", correct: true }
+                ],
+                explanation: "Près de 80% des mots du dictionnaire français viennent du latin ! Le français n'est rien d'autre que du latin qui a voyagé dans le temps et qui a changé de prononciation au fil des siècles. Tu parles donc déjà un peu latin sans le savoir !",
+                timerDuration: 8
+            },
+            {
+                title: "Étape 2 : Le français, cette langue \"méditerranéenne\"",
+                question: "Si le français était un enfant, qui serait son parent principal ?",
+                options: [
+                    { id: "A", text: "Le gaulois (la langue d'Astérix)", correct: false },
+                    { id: "B", text: "Le latin (la langue des Romains)", correct: true },
+                    { id: "C", text: "L'anglais (la langue d'Harry Potter)", correct: false }
+                ],
+                explanation: "Le français est une langue 'romane' : elle est née du latin parlé par les soldats et les marchands romains installés en Gaule. Astérix a fini par parler comme Jules César ! Le gaulois, lui, a presque totalement disparu (il nous reste juste une centaine de mots comme chêne, balai ou char).",
+                timerDuration: 8
+            },
+            {
+                title: "Étape 3 : Le mystère de l'accent circonflexe 🎩",
+                question: "Pourquoi y a-t-il un mystérieux petit chapeau (^) sur les mots forêt, hôpital ou hôtel ?",
+                options: [
+                    { id: "A", text: "C'est une décoration inventée par les imprimeurs qui trouvaient ça joli.", correct: false },
+                    { id: "B", text: "C'est le fantôme d'une lettre qui a disparu avec le temps.", correct: true },
+                    { id: "C", text: "C'est pour indiquer qu'il faut crier la voyelle.", correct: false }
+                ],
+                explanation: "Au Moyen Âge, on prononçait et on écrivait forest, hospital et hostel. Avec les siècles, les Français ont arrêté de prononcer le S. Pour s'en souvenir, on l'a remplacé par un accent circonflexe. L'anglais, qui avait emprunté nos mots à l'époque, a gardé le S d'origine (forest, hospital, hotel) !",
+                timerDuration: 8
+            },
+            {
+                title: "Étape 4 : Les espions de la Renaissance 🕵️‍♀️",
+                question: "Pourquoi trouve-t-on un \"g\" totalement muet dans le mot doigt et un \"p\" qui ne sert à rien dans temps ?",
+                options: [
+                    { id: "A", text: "À cause de savants de la Renaissance qui voulaient frimer et rappeler l'origine latine.", correct: true },
+                    { id: "B", text: "Parce qu'au Moyen Âge, on prononçait \"doig-te\" et \"tem-pe\".", correct: false },
+                    { id: "C", text: "C'est une erreur d'un moine copiste qui s'est endormi sur sa page.", correct: false }
+                ],
+                explanation: "Il y a 500 ans, des savants ont trouvé que le français écrit s'était trop éloigné du latin. Ils ont décidé de rajouter des lettres muettes uniquement pour faire joli et rappeler l'histoire du mot (digitus ➔ doigt, tempus ➔ temps). Une vraie machine à remonter le temps orthographique !",
+                timerDuration: 8
+            },
+            {
+                title: "Étape 5 : L'intrus du dictionnaire ⚔️",
+                question: "Parmi ces trois mots, deux viennent du latin et un seul vient d'une langue germanique (la langue des envahisseurs Francs). Saura-t-tu repérer l'intrus ?",
+                options: [
+                    { id: "A", text: "L'école", correct: false },
+                    { id: "B", text: "La guerre", correct: true },
+                    { id: "C", text: "La table", correct: false }
+                ],
+                explanation: "Les mots liés aux combats, aux couleurs ou à la vie des chefs (guerre, bleu, galoper, choisir, danser) viennent du francique. Les Romains utilisaient le mot 'bellum' pour la guerre, mais les Francs ont imposé leur propre mot : 'werra' (qui a donné guerre en français et war en anglais).",
+                timerDuration: 8
+            }
+        ];
 
+        let currentQuestionIndex = 0;
         let selectedOptionId = null;
         let isValidated = false;
         let timerInterval = null;
+        let score = 0;
 
         const titleEl = document.getElementById('exercise-title');
         const questionEl = document.getElementById('question-text');
@@ -206,15 +266,27 @@
         const actionBtn = document.getElementById('action-btn');
         const didYouKnowBox = document.getElementById('did-you-know');
         const explanationEl = document.getElementById('explanation-text');
+        const quizCard = document.getElementById('quiz-card');
 
-        // Initialisation de la page
-        function initExercise() {
-            titleEl.textContent = EXERCICE_CONFIG.title;
-            questionEl.textContent = EXERCICE_CONFIG.question;
-            explanationEl.textContent = EXERCICE_CONFIG.explanation;
+        // Initialisation ou mise à jour de la question courante
+        function loadQuestion() {
+            isValidated = false;
+            selectedOptionId = null;
+            
+            // Réinitialisation de l'affichage du bouton principal
+            actionBtn.textContent = "Valider";
+            actionBtn.disabled = true;
+            actionBtn.onclick = null; 
+
+            didYouKnowBox.style.display = 'none';
+
+            const currentConfig = QUESTIONS_DATA[currentQuestionIndex];
+            titleEl.textContent = currentConfig.title;
+            questionEl.textContent = currentConfig.question;
+            explanationEl.textContent = currentConfig.explanation;
 
             optionsBox.innerHTML = '';
-            EXERCICE_CONFIG.options.forEach(opt => {
+            currentConfig.options.forEach(opt => {
                 const btn = document.createElement('button');
                 btn.className = 'option-btn';
                 btn.textContent = opt.text;
@@ -236,15 +308,22 @@
             actionBtn.disabled = false;
         }
 
-        // Validation et déclenchement du compte à rebours
+        // Validation de la réponse actuelle
         function validateAnswer() {
             isValidated = true;
             actionBtn.disabled = true;
 
+            const currentConfig = QUESTIONS_DATA[currentQuestionIndex];
+            const selectedOption = currentConfig.options.find(o => o.id === selectedOptionId);
+            
+            if (selectedOption && selectedOption.correct) {
+                score++;
+            }
+
             // Rendre visible les résultats graphiques
             Array.from(optionsBox.children).forEach(btn => {
                 const optId = btn.dataset.id;
-                const optConfig = EXERCICE_CONFIG.options.find(o => o.id === optId);
+                const optConfig = currentConfig.options.find(o => o.id === optId);
                 
                 btn.classList.remove('selected');
                 if (optConfig.correct) {
@@ -257,11 +336,11 @@
             // Afficher le pavé pédagogique
             didYouKnowBox.style.display = 'block';
             
-            // Lancer le timer incompressible
-            startLockTimer(EXERCICE_CONFIG.timerDuration);
+            // Lancer le timer incompressible défini dans la configuration de la question
+            startLockTimer(currentConfig.timerDuration);
         }
 
-        // Compte à rebours pour bloquer la progression rapide
+        // Compte à rebours avant autorisation de passer à la suite
         function startLockTimer(seconds) {
             let timeLeft = seconds;
             actionBtn.textContent = `Continuer (${timeLeft}s)`;
@@ -274,25 +353,47 @@
                     clearInterval(timerInterval);
                     actionBtn.textContent = "Continuer ▶";
                     actionBtn.disabled = false;
-                    actionBtn.onclick = nextPage; // Changement de comportement du bouton
+                    actionBtn.onclick = handleNavigation; 
                 }
             }, 1000);
         }
 
-        function nextPage() {
-            // Logique pour passer au fichier ou à l'écran HTML suivant
-            alert("Bravo ! Passage à l'exercice suivant (les mots transparents).");
+        // Gère le passage à la question suivante ou à l'écran de fin
+        function handleNavigation() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < QUESTIONS_DATA.length) {
+                loadQuestion();
+            } else {
+                showFinalScore();
+            }
         }
 
-        // Liaison du bouton principal
+        // Écran final une fois le parcours terminé
+        function showFinalScore() {
+            titleEl.textContent = "Quizz Terminé !";
+            actionBtn.textContent = "Fin de l'exercice";
+            actionBtn.disabled = true;
+            actionBtn.onclick = null;
+
+            quizCard.innerHTML = `
+                <div class="score-container">
+                    <h2>Félicitations !</h2>
+                    <p>Tu as terminé cette première initiation aux secrets de la langue.</p>
+                    <div class="score-num">${score} / ${QUESTIONS_DATA.length}</div>
+                    <p>${score === QUESTIONS_DATA.length ? 'Parfait ! Tu es un vrai détective des mots 🌟' : 'Beau travail ! Le latin n\'a plus de secrets pour toi 🚀'}</p>
+                </div>
+            `;
+        }
+
+        // Gestionnaire du clic initial sur "Valider"
         actionBtn.addEventListener('click', () => {
             if (!isValidated) {
                 validateAnswer();
             }
         });
 
-        // Lancement au chargement
-        window.onload = initExercise;
+        // Chargement initial
+        window.onload = loadQuestion;
     </script>
 </body>
 </html>
