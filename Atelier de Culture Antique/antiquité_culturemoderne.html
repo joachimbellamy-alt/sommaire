@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QCM : Le latin et l'Antiquité dans la culture moderne</title>
+    <style>
+        /* Configuration iPad-Friendly */
+        :root {
+            --primary-blue: #D6EAF8;
+            --selected-blue: #3498db;
+            --correct-green: #2ecc71;
+            --error-red: #e74c3c;
+            --text-dark: #2c3e50;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 14pt;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+            -webkit-user-select: none; /* Désactive la sélection native sur iPad */
+            user-select: none;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            text-align: center;
+            color: #1a252f;
+            margin-bottom: 30px;
+        }
+
+        .question-card {
+            display: none; /* Géré par JS */
+        }
+
+        .question-card.active {
+            display: block;
+        }
+
+        .question-title {
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-size: 1.25rem;
+        }
+
+        /* Options de réponse larges pour les doigts */
+        .options-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+
+        .option-item {
+            background-color: #f1f2f6;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            border: 2px solid transparent;
+        }
+
+        @media (hover: hover) {
+            .option-item:hover { background-color: #e4e7eb; }
+        }
+
+        .option-item.selected {
+            background-color: var(--primary-blue);
+            border-color: var(--selected-blue);
+            font-weight: bold;
+        }
+
+        .option-item.correct {
+            background-color: #d4edda;
+            border-color: var(--correct-green);
+            color: #155724;
+        }
+
+        .option-item.wrong {
+            background-color: #f8d7da;
+            border-color: var(--error-red);
+            color: #721c24;
+        }
+
+        .disabled {
+            pointer-events: none; /* Bloque les clics après validation */
+        }
+
+        /* Boutons d'action */
+        .btn {
+            display: inline-block;
+            background-color: #7f8c8d;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            vertical-align: middle;
+        }
+
+        .btn-validate { background-color: #2c3e50; }
+        .btn-help { background-color: #f1c40f; color: #2c3e50; }
+        .btn-next { background-color: #27ae60; }
+
+        .btn:disabled {
+            background-color: #bdc3c7;
+            color: #7f8c8d;
+            cursor: not-allowed;
+        }
+
+        /* Zones d'information */
+        .info-box {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .help-box {
+            background-color: #fff9db;
+            border-left: 5px solid #f1c40f;
+            color: #665200;
+        }
+
+        .rationale-box {
+            background-color: #e8f4fd;
+            border-left: 5px solid var(--selected-blue);
+            color: #1d4ed8;
+        }
+
+        .timer-text {
+            font-weight: bold;
+            color: var(--error-red);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🧭 Le latin et l'Antiquité cachés dans la culture moderne !</h1>
+
+    <div class="question-card active" id="q1">
+        <div class="question-title">Question 1 : Harry Potter 🪄</div>
+        <p>Dans <i>Harry Potter</i>, les sorciers lancent des sorts en criant des mots bizarres comme « Lumos » pour éclairer ou « Nox » pour éteindre. D'où viennent ces formules magiques ?</p>
+        <ul class="options-list">
+            <li class="option-item" onclick="selectOption(this, false)">A) J.K. Rowling a tapé au hasard sur son clavier pour inventer de bruits rigolos.</li>
+            <li class="option-item" onclick="selectOption(this, true)">B) Ce sont de vrais mots latins à peine modifiés (lumen = la lumière ; nox = la nuit).</li>
+            <li class="option-item" onclick="selectOption(this, false)">C) C'est de l'anglais très ancien que plus personne ne comprend aujourd'hui.</li>
+            <li class="option-item" onclick="selectOption(this, false)">D) Ce sont des cris de guerre inventés par les cascadeurs des films.</li>
+        </ul>
+        <button class="btn btn-help" onclick="toggleHelp('help1')">Aide 💡</button>
+        <button class="btn btn-validate" onclick="validateAnswer('q1', 'help1', 'rat1')">Valider ✔</button>
+        <button class="btn btn-next" id="next-q1" onclick="nextQuestion('q1', 'q2')" disabled>Continuer ▶ <span class="timer-text" id="timer-q1"></span></button>
+
+        <div class="info-box help-box" id="help1">💡 <b>Indice pour les élèves :</b> Quelle langue les Romains parlaient-ils ?</div>
+        <div class="info-box rationale-box" id="rat1">💬 <b>Explication  :</b> J.K. Rowling a fait des études de langues anciennes. Elle a utilisé le latin car c'est la langue historique des sciences, des secrets et des grimoires. Chaque sort a un sens caché (ex: <i>Expelliarmus</i> vient de <i>expellere</i>, chasser, et <i>arma</i>, les armes).</div>
+    </div>
+
+    <div class="question-card" id="q2">
+        <div class="question-title">Question 2 : Vice-Versa 🧠</div>
+        <p>Tu connais peut-être le célèbre film de Pixar qui s'appelle <i>Vice-Versa</i> avec Riley. Quelle est l'origine de ce titre ?</p>
+        <ul class="options-list">
+            <li class="option-item" onclick="selectOption(this, false)">A) C'est de l'argot américain utilisé par les adolescents de San Francisco.</li>
+            <li class="option-item" onclick="selectOption(this, false)">B) C'est un mot inventé par Pixar en mélangeant les mots « visage » et « conversation » en latin.</li>
+            <li class="option-item" onclick="selectOption(this, false)">C) C'est le nom scientifique de la machine qui fabrique les souvenirs dans le cerveau.</li>
+            <li class="option-item" onclick="selectOption(this, true)">D) C'est une expression de latin signifie « l'ordre étant inversé » ou « réciproquement ». On utilise cette expression pour dire que les émotions influencent Riley et que la vie de Riley influence ses émotions en retour.</li>
+        </ul>
+        <button class="btn btn-help" onclick="toggleHelp('help2')">Aide 💡</button>
+        <button class="btn btn-validate" onclick="validateAnswer('q2', 'help2', 'rat2')">Valider ✔</button>
+        <button class="btn btn-next" id="next-q2" onclick="nextQuestion('q2', 'q3')" disabled>Continuer ▶ <span class="timer-text" id="timer-q2"></span></button>
+
+        <div class="info-box help-box" id="help2">💡 <b>Indice pour les élèves :</b> De nombreuses expressions courantes comme « et caetera », « a priori » ou « vice-versa » n'ont jamais été traduites.</div>
+        <div class="info-box rationale-box" id="rat2">💬 <b>Explication  :</b> Le mot <i>vice</i> vient de <i>vicis</i> (le tour, le changement) et <i>versa</i> vient de <i>vertere</i> (tourner). C'est du latin que nous utilisons encore aujourd'hui au quotidien sans même le savoir.</div>
+    </div>
+
+    <div class="question-card" id="q3">
+        <div class="question-title">Question 3 : One Piece 🏴‍☠️</div>
+        <p>Dans le manga <i>One Piece</i>, la capitaine Corsaire Boa Hancock et ses deux sœurs sont appelées « les sœurs Gorgones ». Qui étaient les Gorgones à l'origine ?</p>
+        <ul class="options-list">
+            <li class="option-item" onclick="selectOption(this, true)">A) Des monstres de la mythologie antique (comme Méduse) qui avaient des serpents à la place des cheveux. Elles ont le pouvoir de pétrifier (transformer en pierre) ceux qui les regardent.</li>
+            <li class="option-item" onclick="selectOption(this, false)">B) Des créatures extraterrestres inventées pour l'univers des animés japonais.</li>
+            <li class="option-item" onclick="selectOption(this, false)">C) Le nom d'une ancienne équipe de pirates qui a réellement existé au XVIIIe siècle.</li>
+            <li class="option-item" onclick="selectOption(this, false)">D) Une marque de bonbons piquants très populaire au Japon.</li>
+        </ul>
+        <button class="btn btn-help" onclick="toggleHelp('help3')">Aide 💡</button>
+        <button class="btn btn-validate" onclick="validateAnswer('q3', 'help3', 'rat3')">Valider ✔</button>
+        <button class="btn btn-next" id="next-q3" onclick="nextQuestion('q3', 'q4')" disabled>Continuer ▶ <span class="timer-text" id="timer-q3"></span></button>
+
+        <div class="info-box help-box" id="help3">💡 <b>Indice pour les élèves :</b> Quel monstre très célèbre de l'Antiquité pouvait te changer en statue si tu croisais son regard ?</div>
+        <div class="info-box rationale-box" id="rat3">💬 <b>Explication  :</b> Le mangaka Eiichiro Oda s'est directement inspiré du mythe de Méduse. Dans <i>One Piece</i>, la queue de serpent des sœurs et leur pouvoir de pétrification viennent directement de cette légende.</div>
+    </div>
+
+    <div class="question-card" id="q4">
+        <div class="question-title">Question 4 : Fortnite 🎮</div>
+        <p>Dans le jeu <i>Fortnite</i> (notamment le Chapitre 5), les joueurs ont pu explorer le Mont Olympe et affronter des boss comme Zeus, Hadès, Cerbère ou Arès pour obtenir leurs pouvoirs. Pourquoi ces personnages se trouvent-ils dans le jeu ?</p>
+        <ul class="options-list">
+            <li class="option-item" onclick="selectOption(this, true)">A) Ce sont les grands dieux et monstres de la mythologie gréco-romaine.</li>
+            <li class="option-item" onclick="selectOption(this, false)">B) Ce sont de nouveaux super-héros créés par les studios Marvel l'année dernière.</li>
+            <li class="option-item" onclick="selectOption(this, false)">C) Ce sont les pseudonymes des meilleurs joueurs mondiaux de Fortnite.</li>
+            <li class="option-item" onclick="selectOption(this, false)">D) Ce sont des mots inventés qui sonnent bien pour nommer des robots de l'espace.</li>
+        </ul>
+        <button class="btn btn-help" onclick="toggleHelp('help4')">Aide 💡</button>
+        <button class="btn btn-validate" onclick="validateAnswer('q4', 'help4', 'rat4')">Valider ✔</button>
+        <button class="btn btn-next" id="next-q4" onclick="nextQuestion('q4', 'q5')" disabled>Continuer ▶ <span class="timer-text" id="timer-q4"></span></button>
+
+        <div class="info-box help-box" id="help4">💡 <b>Indice pour les élèves :</b> Où les anciens Grecs pensaient-ils que les dieux habitaient ?</div>
+        <div class="info-box rationale-box" id="rat4">💬 <b>Explication  :</b> Les créateurs de Fortnite utilisent ces figures légendaires car leurs attributs (la foudre de Zeus, les chaînes d'Hadès) rendent les mécaniques de jeu épiques. Chaque lieu correspond aux récits antiques.</div>
+    </div>
+
+    <div class="question-card" id="q5">
+        <div class="question-title">Question 5 : Nike 👟</div>
+        <p>La marque de baskets et de vêtements de sport « Nike » est partout dans le collège. Son logo ressemble à une virgule rapide. D'où vient ce nom que l'on prononce tous les jours ?</p>
+        <ul class="options-list">
+            <li class="option-item" onclick="selectOption(this, true)">A) Ça vient de « Niké », la déesse grecque de la Victoire, et la virgule représente l'aile de cette déesse.</li>
+            <li class="option-item" onclick="selectOption(this, false)">B) C'est un mot américain moderne qui signifie « courir sans s'arrêter ».</li>
+            <li class="option-item" onclick="selectOption(this, false)">C) Ce sont les initiales des quatre premiers athlètes à avoir porté ces chaussures.</li>
+            <li class="option-item" onclick="selectOption(this, false)">D) C'est une erreur de prononciation du mot « Nice » (gentil).</li>
+        </ul>
+        <button class="btn btn-help" onclick="toggleHelp('help5')">Aide 💡</button>
+        <button class="btn btn-validate" onclick="validateAnswer('q5', 'help5', 'rat5')">Valider ✔</button>
+        <button class="btn btn-next" id="next-q5" onclick="finishQuiz()" disabled>Terminer 🏁 <span class="timer-text" id="timer-q5"></span></button>
+
+        <div class="info-box help-box" id="help5">💡 <b>Indice pour les élèves :</b> Dans le sport, quel est l'objectif principal qui correspondrait au nom d'une divinité ?</div>
+        <div class="info-box rationale-box" id="rat5">💬 <b>Explication  :</b> Dans l'Antiquité, la Victoire était une divinité ailée. Le choix de ce nom et de ce logo permet à la marque de se placer sous le symbole de la réussite et de la rapidité.</div>
+    </div>
+</div>
+
+<script>
+    // Gestion de la sélection tactile/clic
+    function selectOption(element, isCorrect) {
+        const siblings = element.parentNode.querySelectorAll('.option-item');
+        siblings.forEach(el => el.classList.remove('selected'));
+        
+        element.classList.add('selected');
+        element.dataset.isCorrect = isCorrect;
+    }
+
+    // Affichage/Masquage de l'aide
+    function toggleHelp(helpId) {
+        const helpBox = document.getElementById(helpId);
+        helpBox.style.display = (helpBox.style.display === 'block') ? 'none' : 'block';
+    }
+
+    // Validation avec blocage incompressible de 10 secondes
+    function validateAnswer(questionId, helpId, ratId) {
+        const questionContainer = document.getElementById(questionId);
+        const selected = questionContainer.querySelector('.option-item.selected');
+
+        if (!selected) {
+            alert("S'il te plaît, choisis une réponse avant de valider !");
+            return;
+        }
+
+        // Bloquer les options et afficher les couleurs
+        const options = questionContainer.querySelectorAll('.option-item');
+        options.forEach(opt => {
+            opt.classList.add('disabled');
+            if (opt.dataset.isCorrect === "true") {
+                opt.classList.add('correct');
+            } else if (opt === selected && opt.dataset.isCorrect === "false") {
+                opt.classList.add('wrong');
+            }
+            opt.classList.remove('selected');
+        });
+
+        // Désactiver Aide et Valider
+        questionContainer.querySelector('.btn-help').disabled = true;
+        questionContainer.querySelector('.btn-validate').disabled = true;
+
+        // Afficher l'explication
+        document.getElementById(ratId).style.display = 'block';
+
+        // Lancement du compte à rebours de 10 secondes
+        const nextBtn = document.getElementById('next-' + questionId);
+        const timerSpan = document.getElementById('timer-' + questionId);
+        let timeLeft = 10;
+
+        timerSpan.textContent = `(${timeLeft}s)`;
+
+        const countdown = setInterval(() => {
+            timeLeft--;
+            if (timeLeft > 0) {
+                timerSpan.textContent = `(${timeLeft}s)`;
+            } else {
+                clearInterval(countdown);
+                timerSpan.textContent = "";
+                nextBtn.disabled = false; // Déblocage du bouton suivant
+            }
+        }, 1000);
+    }
+
+    // Passage à la question suivante
+    function nextQuestion(currentId, nextId) {
+        document.getElementById(currentId).classList.remove('active');
+        document.getElementById(nextId).classList.add('active');
+    }
+
+    // Fin du parcours
+    function finishQuiz() {
+        alert("Bravo ! Tu as terminé le parcours sur les secrets antiques de la culture moderne !");
+    }
+</script>
+
+</body>
+</html>
