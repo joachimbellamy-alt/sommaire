@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>QCM – Chapitre 10 — Le Château de Pesme Aventure</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --parch: #f5ead6;
+    --parch-dark: #e8d5b0;
+    --ink: #2a1a0e;
+    --ink-light: #5c3d1e;
+    --rouge: #9b2020;
+    --or: #c9860a;
+    --vert: #2a6a2a;
+    --gris: #7a6a5a;
+    --good: #1e6b3a;
+    --good-bg: #d4edda;
+    --bad: #9b2020;
+    --bad-bg: #f8d7da;
+    --neutral-bg: #fff9f0;
+  }
+
+  html, body {
+    height: 100%;
+    background: #3a2510;
+  }
+
+  body {
+    font-family: 'Lora', Georgia, serif;
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background:
+      radial-gradient(ellipse at top, #5c3a1a 0%, #3a2510 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M0 0h60v60H0z' fill='none'/%3E%3Ccircle cx='30' cy='30' r='1' fill='%23ffffff08'/%3E%3C/svg%3E");
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    width: 100%;
+    max-width: 780px;
+    text-align: center;
+    padding: 36px 24px 20px;
+  }
+
+  .subtitle {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: var(--or);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(20px, 5vw, 32px);
+    font-weight: 700;
+    color: #f5ead6;
+    line-height: 1.2;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    letter-spacing: 1px;
+  }
+
+  h1 em {
+    display: block;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 0.62em;
+    color: var(--or);
+    font-weight: 400;
+    margin-top: 4px;
+    letter-spacing: 0;
+  }
+
+  /* ─── SCORE BAR ─── */
+  .score-bar {
+    width: 100%;
+    max-width: 780px;
+    padding: 0 20px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .score-badge {
+    background: var(--or);
+    color: var(--ink);
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 8px 20px;
+    border-radius: 30px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    white-space: nowrap;
+    min-width: 120px;
+    text-align: center;
+    transition: transform 0.2s;
+  }
+
+  .score-badge.bump {
+    transform: scale(1.2);
+  }
+
+  .progress-wrap {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--or), #f0b030);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .question-counter {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: rgba(245, 234, 214, 0.7);
+    white-space: nowrap;
+  }
+
+  /* ─── CARD ─── */
+  .card {
+    width: 100%;
+    max-width: 780px;
+    margin: 0 20px 32px;
+    background: var(--parch);
+    border-radius: 12px;
+    box-shadow:
+      0 4px 32px rgba(0,0,0,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.6);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* parchment texture via gradient */
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 28px,
+        rgba(0,0,0,0.03) 28px,
+        rgba(0,0,0,0.03) 29px
+      );
+    border-radius: 12px;
+    pointer-events: none;
+  }
+
+  .card-inner {
+    padding: 28px 28px 24px;
+    position: relative;
+  }
+
+  /* ─── QUESTION ─── */
+  .question-num {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--rouge);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .question-text {
+    font-family: 'Lora', serif;
+    font-size: clamp(16px, 3.5vw, 20px);
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--ink);
+    margin-bottom: 22px;
+    border-left: 3px solid var(--rouge);
+    padding-left: 14px;
+  }
+
+  /* ─── OPTIONS ─── */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .option-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--neutral-bg);
+    border: 2px solid var(--parch-dark);
+    border-radius: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    width: 100%;
+    font-family: 'Lora', serif;
+    font-size: clamp(14px, 3vw, 16px);
+    color: var(--ink-light);
+    line-height: 1.45;
+    min-height: 52px;
+  }
+
+  .option-btn:active {
+    transform: scale(0.98);
+  }
+
+  .option-btn:not(.answered):hover {
+    background: #fff3e0;
+    border-color: var(--or);
+  }
+
+  .option-letter {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--or);
+    min-width: 22px;
+    margin-top: 1px;
+  }
+
+  /* States */
+  .option-btn.correct {
+    background: var(--good-bg);
+    border-color: var(--good);
+    color: var(--good);
+  }
+
+  .option-btn.correct .option-letter {
+    color: var(--good);
+  }
+
+  .option-btn.wrong {
+    background: var(--bad-bg);
+    border-color: var(--bad);
+    color: var(--bad);
+  }
+
+  .option-btn.wrong .option-letter {
+    color: var(--bad);
+  }
+
+  .option-btn.answered {
+    cursor: default;
+  }
+
+  /* ─── FEEDBACK ─── */
+  .feedback {
+    margin-top: 18px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-style: italic;
+    font-size: 14px;
+    display: none;
+    line-height: 1.5;
+  }
+
+  .feedback.show { display: block; }
+  .feedback.correct { background: var(--good-bg); color: var(--good); border-left: 4px solid var(--good); }
+  .feedback.wrong   { background: var(--bad-bg);  color: var(--bad);  border-left: 4px solid var(--bad); }
+
+  /* ─── NEXT BUTTON ─── */
+  .btn-next {
+    display: none;
+    margin: 20px auto 0;
+    background: linear-gradient(135deg, var(--rouge), #7a1515);
+    color: #f5ead6;
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 30px;
+    padding: 14px 36px;
+    cursor: pointer;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn-next.show { display: block; }
+  .btn-next:active { transform: scale(0.96); box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
+
+  /* ─── RESULTS ─── */
+  #results {
+    display: none;
+    width: 100%;
+    max-width: 780px;
+    margin: 0 20px 48px;
+  }
+
+  #results.show { display: block; }
+
+  .results-card {
+    background: var(--parch);
+    border-radius: 12px;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+    padding: 36px 28px;
+    text-align: center;
+  }
+
+  .results-title {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .results-medal {
+    font-size: 56px;
+    margin: 12px 0;
+    display: block;
+  }
+
+  .results-score {
+    font-family: 'Cinzel', serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--rouge);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .results-total {
+    font-size: 14px;
+    color: var(--gris);
+    margin-bottom: 16px;
+  }
+
+  .results-msg {
+    font-style: italic;
+    color: var(--ink-light);
+    font-size: 16px;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .results-detail {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+
+  .dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .dot.ok   { background: var(--good-bg); color: var(--good); }
+  .dot.ko   { background: var(--bad-bg);  color: var(--bad); }
+
+  .btn-restart {
+    background: linear-gradient(135deg, var(--rouge), #7a1515);
+    color: #f5ead6;
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 30px;
+    padding: 14px 36px;
+    cursor: pointer;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.3);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card { animation: fadeSlide 0.35s ease both; }
+
+  /* Confetti dots on correct */
+  @keyframes pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+
+  .option-btn.correct { animation: pop 0.3s ease; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="subtitle">Yvain, le Chevalier au Lion</div>
+  <h1>Yvain, le Chevalier au Lion <em>Chapitre 10 — Le Château de Pesme Aventure</em></h1>
+</div>
+
+<div class="score-bar">
+  <div class="score-badge" id="scoreBadge">⭐ 0 / 10</div>
+  <div class="progress-wrap">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="question-counter" id="qCounter">Question 1 / 10</div>
+</div>
+
+<div class="card" id="questionCard">
+  <div class="card-inner">
+    <div class="question-num" id="qNum">Question 1</div>
+    <div class="question-text" id="qText"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+    <div style="text-align:center;">
+      <button class="btn-next" id="btnNext" onclick="nextQuestion()">Question suivante →</button>
+    </div>
+  </div>
+</div>
+
+<div id="results">
+  <div class="results-card">
+    <div class="results-title">Résultats finaux</div>
+    <span class="results-medal" id="medal">🏆</span>
+    <div class="results-score" id="finalScore">0</div>
+    <div class="results-total">points sur 10</div>
+    <div class="results-msg" id="resultsMsg"></div>
+    <div class="results-detail" id="resultsDetail"></div>
+    <button class="btn-restart" onclick="restart()">🔁 Recommencer</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    "q": "Où arrive Monseigneur Yvain au début du chapitre 10, alors qu'il cherche un abri pour la nuit ?",
+    "opts": [
+      "Dans une grotte d'ermite",
+      "À la cour du Roi Arthur",
+      "Devant le beau mais sinistre manoir du château de Pesme Aventure",
+      "Dans un village fortifié de paysans"
+    ],
+    "ans": 2,
+    "feedback": "✓ Il arrive au château de Pesme Aventure (« Pire Aventure »), un lieu réputé terrifiant et maudit."
+  },
+  {
+    "q": "Comment les gens du manoir accueillent-ils Yvain lorsqu'il s'approche ?",
+    "opts": [
+      "Ils l'avertissent rudement de faire demi-tour et l'insultent pour son malheur",
+      "Ils lui font une grande fête d'accueil",
+      "Ils lui demandent de l'or pour entrer",
+      "Ils l'ignorent complètement"
+    ],
+    "ans": 0,
+    "feedback": "✓ Les habitants lui crient de fuir et lui annoncent qu'il va au-devant de la honte et du malheur s'il entre."
+  },
+  {
+    "q": "Que découvre Yvain derrière la palissade de piquets pointus dans la cour ?",
+    "opts": [
+      "Un trésor gardé par des serpents",
+      "Une armée de chevaliers en armure noire",
+      "Un jardin de plantes magiques",
+      "Trois cents jeunes filles prisonnières, pâles, affamées et astreintes à des travaux de couture"
+    ],
+    "ans": 3,
+    "feedback": "✓ Il assiste au triste spectacle de trois cents demoiselles réduites à la misère, tissant de la soie et de l'or dans le dénuement."
+  },
+  {
+    "q": "D'où viennent ces malheureuses jeunes filles prisonnières ?",
+    "opts": [
+      "Ce sont des fées déchues de Brocéliande",
+      "Elles viennent du royaume de l'Île aux Pucelles, livrées en tribut par leur jeune roi",
+      "Ce sont des paysannes enlevées dans les environs",
+      "Elles ont été capturées à la cour du roi Arthur"
+    ],
+    "ans": 1,
+    "feedback": "✓ Le roi de l'Île aux Pucelles s'est fait surprendre par les maîtres des lieux et a dû payer ce lourd tribut annuel pour sauver sa vie."
+  },
+  {
+    "q": "Quel salaire dérisoire ces jeunes filles reçoivent-elles pour leur dur labeur ?",
+    "opts": [
+      "Une pièce d'or par mois",
+      "Uniquement du pain et de l'eau sans aucune monnaie",
+      "La moitié des gains des tissus vendus",
+      "Quatre deniers pour chaque livre de gain, ce qui les laisse dans la misère"
+    ],
+    "ans": 3,
+    "feedback": "✓ Elles ne reçoivent qu'une infime fraction de la valeur de leur travail (« quatre deniers pour chaque livre de gain »), insuffisant pour se nourrir correctement."
+  },
+  {
+    "q": "Comment Yvain est-il reçu par le seigneur et la dame du château une fois à l'intérieur du logis ?",
+    "opts": [
+      "Avec une violence immédiate et des chaînes",
+      "Avec de grands honneurs hypocrites, un accueil chaleureux et des soins attentifs",
+      "Ils refusent de lui adresser la parole",
+      "Ils le jettent immédiatement aux lions"
+    ],
+    "ans": 1,
+    "feedback": "✓ Malgré la malédiction du lieu, le seigneur et sa famille lui offrent un accueil noble, courtois et d'un grand confort apparent."
+  },
+  {
+    "q": "Quelle proposition surprenante le seigneur fait-il à Yvain concernant sa fille ?",
+    "opts": [
+      "De l'épouser et de devenir le seigneur héritier du château s'il survit",
+      "De la prendre comme servante",
+      "De la ramener à la cour d'Arthur",
+      "De la troquer contre son lion"
+    ],
+    "ans": 0,
+    "feedback": "✓ La coutume veut que le chevalier victorieux des monstres du château reçoive la main de la fille du seigneur et toutes ses terres."
+  },
+  {
+    "q": "Quelle obligation terrible est imposée à tout chevalier qui passe la nuit dans ce château ?",
+    "opts": [
+      "Boire un poison mortel",
+      "Résoudre une énigme sous peine d'avoir la tête tranchée",
+      "Combattre le lendemain matin les deux terrifiants fils de démons engendrés par une femme et un satyre",
+      "Donner ses armes et son cheval au seigneur"
+    ],
+    "ans": 2,
+    "feedback": "✓ Tout hôte doit affronter deux affreux « demi-démons » (ou fils de satyre) armés de redoutables masses de bois pointues."
+  },
+  {
+    "q": "Pourquoi Yvain refuse-t-il initialement l'idée d'épouser la fille du seigneur ?",
+    "opts": [
+      "Parce qu'il la trouve laide et mal élevée",
+      "Parce qu'il veut rester célibataire à jamais",
+      "Parce qu'il craint qu'elle ne l'empoisonne",
+      "Parce que son cœur appartient toujours à Laudine et qu'il refuse de rompre sa fidélité"
+    ],
+    "ans": 3,
+    "feedback": "✓ Yvain est éperdument épris de Laudine et cherche avant tout à regagner son amour, refusant toute autre union."
+  },
+  {
+    "q": "Quelle condition pose le seigneur pour libérer les trois cents pucelles prisonnières ?",
+    "opts": [
+      "Yvain doit payer une rançon de mille pièces d'or",
+      "Yvain doit vaincre les deux fils de démons en duel régulier",
+      "Yvain doit ramener la fontaine magique au château",
+      "Il n'y a aucune condition, elles ne peuvent jamais être libérées"
+    ],
+    "ans": 1,
+    "feedback": "✓ La victoire finale contre les deux monstres est le seul moyen de briser le pacte et de délivrer toutes les captives."
+  }
+];
+
+let current = 0;
+let score = 0;
+let answered = false;
+let results = [];
+
+function render() {
+  const q = questions[current];
+  const letters = ['A', 'B', 'C', 'D'];
+
+  document.getElementById('qNum').textContent = `Question ${current + 1}`;
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('qCounter').textContent = `Question ${current + 1} / 10`;
+  document.getElementById('progressFill').style.width = `${(current / 10) * 100}%`;
+
+  const optDiv = document.getElementById('options');
+  optDiv.innerHTML = '';
+
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => handleAnswer(i);
+    optDiv.appendChild(btn);
+  });
+
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('btnNext').className = 'btn-next';
+
+  // Reset card animation
+  const card = document.getElementById('questionCard');
+  card.style.animation = 'none';
+  card.offsetHeight; // reflow
+  card.style.animation = '';
+
+  answered = false;
+}
+
+function handleAnswer(chosen) {
+  if (answered) return;
+  answered = true;
+
+  const q = questions[current];
+  const correct = q.ans;
+  const btns = document.querySelectorAll('.option-btn');
+  const fb = document.getElementById('feedback');
+
+  btns.forEach(b => b.classList.add('answered'));
+
+  if (chosen === correct) {
+    btns[chosen].classList.add('correct');
+    score++;
+    results.push(true);
+    fb.textContent = q.feedback;
+    fb.className = 'feedback correct show';
+    // bump score badge
+    const badge = document.getElementById('scoreBadge');
+    badge.classList.add('bump');
+    setTimeout(() => badge.classList.remove('bump'), 300);
+  } else {
+    btns[chosen].classList.add('wrong');
+    btns[correct].classList.add('correct');
+    results.push(false);
+    fb.textContent = `✗ Mauvaise réponse. ${q.feedback}`;
+    fb.className = 'feedback wrong show';
+  }
+
+  document.getElementById('scoreBadge').textContent = `⭐ ${score} / 10`;
+
+  const isLast = current === questions.length - 1;
+  const btn = document.getElementById('btnNext');
+  if (isLast) {
+    btn.textContent = 'Voir mes résultats →';
+  } else {
+    btn.textContent = 'Question suivante →';
+  }
+  btn.className = 'btn-next show';
+}
+
+function nextQuestion() {
+  current++;
+  if (current < questions.length) {
+    render();
+  } else {
+    showResults();
+  }
+}
+
+function showResults() {
+  document.getElementById('questionCard').style.display = 'none';
+  document.getElementById('results').className = 'show';
+
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('finalScore').textContent = score;
+
+  let medal = '🏆', msg = '';
+  if (score === 10) {
+    medal = '🏆';
+    msg = 'Parfait ! Tu maîtrises le chapitre comme un vrai chevalier de la Table Ronde. Bravo !';
+  } else if (score >= 8) {
+    medal = '🥇';
+    msg = "Excellent travail ! Tu as bien retenu les aventures d'Yvain. Quelques détails t'ont échappé…";
+  } else if (score >= 6) {
+    medal = '🥈';
+    msg = 'Bon résultat ! Relis les passages sur le combat et les personnages pour consolider tes connaissances.';
+  } else if (score >= 4) {
+    medal = '🥉';
+    msg = "Courage ! Le chapitre recèle encore des secrets. Une nouvelle lecture s'impose, preux chevalier.";
+  } else {
+    medal = '📖';
+    msg = "Il te faut relire le chapitre attentivement. Les aventures d'Yvain n'ont pas encore livré tous leurs mystères !";
+  }
+
+  document.getElementById('medal').textContent = medal;
+  document.getElementById('resultsMsg').textContent = msg;
+
+  const detailDiv = document.getElementById('resultsDetail');
+  detailDiv.innerHTML = '';
+  results.forEach((ok, i) => {
+    const dot = document.createElement('div');
+    dot.className = `dot ${ok ? 'ok' : 'ko'}`;
+    dot.textContent = i + 1;
+    detailDiv.appendChild(dot);
+  });
+}
+
+function restart() {
+  current = 0;
+  score = 0;
+  answered = false;
+  results = [];
+  document.getElementById('scoreBadge').textContent = '⭐ 0 / 10';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('questionCard').style.display = '';
+  document.getElementById('results').className = '';
+  render();
+}
+
+render();
+</script>
+
+</body>
+</html>
