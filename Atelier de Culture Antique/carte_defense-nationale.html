@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mémorisation : La Défense Nationale</title>
+    <style>
+        :root {
+            --color-cache: #2C3E50; 
+            --color-text: #FFFFFF;  
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            background-color: #F8F9FA;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            color: #34495E;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .carte-container {
+            position: relative;
+            display: inline-block;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 4px;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .carte-image {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Style des caches ajustés pour l'iPad */
+        .cache {
+            position: absolute;
+            background-color: var(--color-cache);
+            color: var(--color-text);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: opacity 0.2s ease;
+            touch-action: manipulation; 
+        }
+
+        .cache.devoile {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .btn-reset {
+            margin-top: 15px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            background-color: #2980B9;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>EMC - La Défense Nationale (Cliquez sur les numéros pour valider vos connaissances)</h1>
+
+    <div class="carte-container">
+        <img src="IMG_0643.jpg" alt="La Défense Nationale" class="carte-image">
+
+        <div class="cache" style="top: 7%; left: 17%; width: 17%; height: 6%;">1</div>
+        <div class="cache" style="top: 15%; left: 6%; width: 19%; height: 5%;">2</div>
+        <div class="cache" style="top: 22%; left: 9%; width: 17%; height: 7%;">3</div>
+        <div class="cache" style="top: 32%; left: 12%; width: 16%; height: 7%;">4</div>
+        <div class="cache" style="top: 42%; left: 14%; width: 16%; height: 6%;">5</div>
+
+        <div class="cache" style="top: 10%; left: 56%; width: 21%; height: 7%;">6</div>
+        <div class="cache" style="top: 19%; left: 68%; width: 22%; height: 4%;">7</div>
+        <div class="cache" style="top: 24%; left: 64%; width: 24%; height: 5%;">8</div>
+        <div class="cache" style="top: 33%; left: 74%; width: 22%; height: 16%;">9</div>
+        <div class="cache" style="top: 52%; left: 61%; width: 15%; height: 5%;">10</div>
+
+        <div class="cache" style="top: 61%; left: 38%; width: 15%; height: 5%;">11</div>
+        <div class="cache" style="top: 58%; left: 14%; width: 19%; height: 15%;">12</div>
+
+        <div class="cache" style="top: 75%; left: 5%; width: 19%; height: 21%;">13</div>
+
+        <div class="cache" style="top: 77%; left: 30%; width: 22%; height: 5%;">14</div>
+        <div class="cache" style="top: 83%; left: 30%; width: 24%; height: 11%;">15</div>
+
+        <div class="cache" style="top: 76%; left: 56%; width: 16%; height: 15%;">16</div>
+
+        <div class="cache" style="top: 75%; left: 77%; width: 21%; height: 16%;">17</div>
+    </div>
+
+    <button class="btn-reset" onclick="reinitialiser()">Tout masquer</button>
+
+    <script>
+        document.querySelectorAll('.cache').forEach(cache => {
+            cache.addEventListener('click', () => cache.classList.add('devoile'));
+        });
+
+        function reinitialiser() {
+            document.querySelectorAll('.cache').forEach(cache => cache.classList.remove('devoile'));
+        }
+    </script>
+
+</body>
+</html>
