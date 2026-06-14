@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dictée Fautive — Validation Progressive</title>
+    <style>
+        :root {
+            --primary: #1e88e5;
+            --primary-light: #D6EAF8;
+            --success: #2e7d32;
+            --success-light: #e8f5e9;
+            --error: #c62828;
+            --error-light: #ffebee;
+            --warning: #ef6c00;
+            --warning-light: #fff3e0;
+            --neutral-dark: #37474f;
+            --neutral-light: #f8f9fa;
+            --border: #cfd8dc;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f4f6f9;
+            color: var(--neutral-dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .container {
+            max-width: 950px;
+            width: 100%;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            color: #0d47a1;
+            font-size: 1.6rem;
+            text-align: center;
+            margin-top: 0;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        .instructions {
+            background-color: var(--neutral-light);
+            border-left: 5px solid var(--primary);
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 11pt;
+        }
+
+        /* Zone de texte de la dictée - Taille 14pt stricte */
+        .dictation-box {
+            font-size: 14pt;
+            line-height: 2.8;
+            background-color: #fafafa;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: justify;
+        }
+
+        /* Zones de clic larges (6px-8px) adaptées pour l'iPad */
+        .word {
+            display: inline-block;
+            padding: 6px 8px;
+            margin: 0 1px;
+            border-radius: 6px;
+            cursor: pointer;
+            border-bottom: 2px dashed #b0bec5;
+            transition: all 0.1s ease;
+        }
+
+        .word.selected {
+            background-color: var(--primary-light) !important;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        /* États colorés après validation progressive */
+        .word.correct-found { background-color: var(--success-light) !important; border-bottom: 2px solid var(--success); color: var(--success); pointer-events: none; }
+        .word.false-positive { background-color: var(--error-light) !important; border-bottom: 2px solid var(--error); color: var(--error); pointer-events: none; }
+        .word.missed-error { background-color: var(--warning-light) !important; border-bottom: 2px solid var(--warning); color: var(--warning); pointer-events: none; }
+
+        /* Zone de saisie dynamique */
+        .correction-panel {
+            background: #fff;
+            border: 2px solid var(--primary-light);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: none;
+        }
+
+        .correction-panel h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #0d47a1;
+            font-size: 1.1rem;
+        }
+
+        .correction-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .correction-row label {
+            flex: 1;
+            font-size: 11pt;
+        }
+
+        .correction-row input {
+            flex: 1.5;
+            padding: 8px 12px;
+            font-size: 11pt;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .correction-row input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-verify {
+            background-color: var(--success);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 10.5pt;
+        }
+
+        /* Tableau de bord des 3 compteurs en temps réel */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            border: 1px solid var(--border);
+        }
+
+        .stat-card.success { background-color: var(--success-light); color: var(--success); border-color: #c8e6c9; }
+        .stat-card.error { background-color: var(--error-light); color: var(--error); border-color: #ffcdd2; }
+        .stat-card.neutral { background-color: #eceff1; color: var(--neutral-dark); }
+
+        .stat-number {
+            font-size: 1.6rem;
+            display: block;
+            margin-top: 5px;
+        }
+
+        /* Actions globales */
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            font-size: 11pt;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            flex: 1;
+        }
+
+        .btn-finish { background-color: var(--neutral-dark); color: white; }
+        .btn-reset { background-color: #cfd8dc; color: var(--neutral-dark); }
+
+        /* Rapport d'analyse */
+        .report-section {
+            border-top: 2px solid var(--border);
+            padding-top: 20px;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11pt;
+        }
+
+        .report-table th, .report-table td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .report-table th { background-color: var(--neutral-light); }
+
+        .badge {
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 9pt;
+            font-weight: bold;
+        }
+        .badge.correct { background-color: var(--success-light); color: var(--success); }
+        .badge.missed { background-color: var(--warning-light); color: var(--warning); }
+        .badge.wrong { background-color: var(--error-light); color: var(--error); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 id="exercise-title">Dictée Fautive Interactive</h1>
+    
+    <div class="instructions">
+        <strong>Consigne :</strong> Cliquez sur un mot qui contient une erreur. Corrigez-le immédiatement dans la zone qui apparaît sous le texte et cliquez sur <strong>Vérifier</strong>.
+    </div>
+
+    <div id="dashboard" class="dashboard">
+        <div class="stat-card success">
+            Erreurs résolues (Trouvées)
+            <span id="score-found" class="stat-number">0 / 0</span>
+        </div>
+        <div class="stat-card error">
+            Erreurs mal détectées 
+            <span id="score-false" class="stat-number">0</span>
+        </div>
+        <div class="stat-card neutral">
+            Corrections orthographiques exactes
+            <span id="score-corrections" class="stat-number">0 / 0</span>
+        </div>
+    </div>
+
+    <div id="dictation-box" class="dictation-box"></div>
+
+    <div id="correction-panel" class="correction-panel">
+        <h3>Saisie de la correction pour le(s) mot(s) sélectionné(s) :</h3>
+        <div id="inputs-container"></div>
+    </div>
+
+    <div class="actions">
+        <button id="btn-finish" class="btn btn-finish" onclick="finishExercise()">Terminer et afficher les oublis</button>
+        <button id="btn-reset" class="btn btn-reset" onclick="initExercise()">Réinitialiser</button>
+    </div>
+
+    <div id="report-section" class="report-section">
+        <h3>Journal des vérifications pas-à-pas</h3>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Mot ciblé</th>
+                    <th>Diagnostic</th>
+                    <th>Proposition</th>
+                    <th>Attendu</th>
+                    <th>Règle d'accord</th>
+                </tr>
+            </thead>
+            <tbody id="report-tbody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const dictationTitle = "Le voyage du Petit Prince";
+    
+    // Le texte brut intègre parfaitement les virgules et les points à leur place naturelle historique.
+    const rawText = "Sur sa planète, les [journée|journées|Accord du nom avec le déterminant pluriel 'les'.] du Petit Prince [était|étaient|Accord du verbe avec son sujet au pluriel 'les journées'.] parfois bien [triste|tristes|Accord de l'attribut du sujet avec 'les journées' (féminin pluriel).] et ses fleurs [semblait|semblaient|Accord du verbe à la 3e personne du pluriel avec son sujet 'ses fleurs'.] [capricieuse|capricieuses|Accord de l'attribut avec le sujet 'ses fleurs' (féminin pluriel).]. De plus, les baobabs [était|étaient|Accord sujet / verbe.] dangereux pour son astéroïde à cause de leurs racines [destructrice|destructrices|L'adjectif épithète s'accorde avec le nom féminin pluriel 'racines'.]. C’est pourquoi ses [désir|désirs|Le déterminant possessif 'ses' commande le pluriel du nom.] de voyage [devint|devinrent|Le verbe s'accorde avec le sujet pluriel 'ses désirs'.] [important|importants|Accord de l'attribut avec le sujet masculin pluriel 'ses désirs'.]. Dans le ciel, les [grande|grandes|L'adjectif s'accorde au féminin pluriel.] [personne|personnes|Le nom s'accorde au pluriel après le déterminant 'les'.] [rencontré|rencontrées|Le participe passé employé comme adjectif s'accorde avec 'personnes'.] sur les [différente|différentes|L'adjectif épithète s'accorde avec 'planètes'.] planètes lui semblèrent [bizarre|bizarres|Accord de l'attribut avec le sujet pluriel.]. Heureusement, ses [rencontre|rencontres|Le nom prend la marque du pluriel après 'ses'.] [successive|successives|L'adjectif s'accorde avec le nom féminin pluriel 'rencontres'.] sur la Terre furent [intéressante|intéressantes|Accord de l'attribut avec le sujet 'ses rencontres'.] grâce au renard et à l'aviateur.";
+
+    let tokens = [];
+    let totalErrorsToFind = 0;
+    
+    // Variables de compteurs
+    let truePositives = 0;
+    let falsePositives = 0;
+    let exactCorrections = 0;
+    let totalProposed = 0;
+
+    function compileText() {
+        tokens = [];
+        totalErrorsToFind = 0;
+        
+        // Ce parseur isole les blocs d'erreurs, les mots simples (lettres, apostrophes, tirets) et la ponctuation/espaces sans altération.
+        const regex = /(\[([^|\]]+)\|([^|\]]+)\|([^\]]+)\])|([a-zA-ZœŒæÆçÇéÉèÈàÀùÙâÂêÊîÎôÔûÛëËïÏüÜÿŸ’'-]+)|([^a-zA-ZœŒæÆçÇéÉèÈàÀùÙâÂêÊîÎôÔûÛëËïÏüÜÿŸ’'-\[]+)/g;
+        let match;
+
+        while ((match = regex.exec(rawText)) !== null) {
+            if (match[1]) {
+                totalErrorsToFind++;
+                tokens.push({
+                    type: 'error',
+                    w: match[2],
+                    c: match[3],
+                    r: match[4],
+                    validated: false
+                });
+            } else if (match[5]) {
+                tokens.push({
+                    type: 'word',
+                    w: match[5],
+                    validated: false
+                });
+            } else if (match[6]) {
+                tokens.push({
+                    type: 'text',
+                    w: match[6]
+                });
+            }
+        }
+    }
+
+    function initExercise() {
+        document.getElementById("exercise-title").innerText = `Dictée Fautive : ${dictationTitle}`;
+        compileText();
+
+        // Reset des variables
+        truePositives = 0;
+        falsePositives = 0;
+        exactCorrections = 0;
+        totalProposed = 0;
+
+        updateDashboard();
+
+        const box = document.getElementById("dictation-box");
+        box.innerHTML = "";
+        document.getElementById("report-tbody").innerHTML = "";
+        document.getElementById("correction-panel").style.display = "none";
+        document.getElementById("inputs-container").innerHTML = "";
+        document.getElementById("btn-finish").disabled = false;
+
+        tokens.forEach((token, index) => {
+            if (token.type === 'word' || token.type === 'error') {
+                const wordSpan = document.createElement("span");
+                wordSpan.className = "word";
+                wordSpan.innerText = token.w;
+                wordSpan.setAttribute("id", `word-${index}`);
+                
+                wordSpan.onclick = function() {
+                    if (!token.validated && !document.getElementById("btn-finish").disabled) {
+                        this.classList.toggle("selected");
+                        toggleCorrectionInput(index, this.classList.contains("selected"));
+                    }
+                };
+                box.appendChild(wordSpan);
+            } else {
+                // Rendu direct et strict des ponctuations (virgules, points) et espaces
+                const textNode = document.createTextNode(token.w);
+                box.appendChild(textNode);
+            }
+        });
+    }
+
+    function toggleCorrectionInput(index, isSelected) {
+        const panel = document.getElementById("correction-panel");
+        const container = document.getElementById("inputs-container");
+
+        if (isSelected) {
+            const div = document.createElement("div");
+            div.className = "correction-row";
+            div.id = `row-${index}`;
+            div.innerHTML = `
+                <label>Correction de <strong>« ${tokens[index].w} »</strong> :</label>
+                <input type="text" id="input-${index}" placeholder="Saisissez le mot rectifié" autocomplete="off" autocorrect="off" autocapitalize="off">
+                <button class="btn-verify" onclick="verifyWord(${index})">Vérifier</button>
+            `;
+            container.appendChild(div);
+            
+            // Focus automatique sur le champ pour l'ergonomie iPad
+            setTimeout(() => document.getElementById(`input-${index}`).focus(), 50);
+        } else {
+            const row = document.getElementById(`row-${index}`);
+            if (row) row.remove();
+        }
+
+        const selectedCount = document.querySelectorAll(".word.selected").length;
+        panel.style.display = selectedCount > 0 ? "block" : "none";
+    }
+
+    // Validation progressive mot par mot
+    function verifyWord(index) {
+        const token = tokens[index];
+        const wordEl = document.getElementById(`word-${index}`);
+        const inputField = document.getElementById(`input-${index}`);
+        const proposal = inputField.value.trim();
+
+        token.validated = true;
+        totalProposed++;
+
+        // Nettoyage graphique immédiat de la ligne de saisie
+        wordEl.classList.remove("selected");
+        document.getElementById(`row-${index}`).remove();
+        
+        const selectedCount = document.querySelectorAll(".word.selected").length;
+        document.getElementById("correction-panel").style.display = selectedCount > 0 ? "block" : "none";
+
+        if (token.type === 'error') {
+            truePositives++;
+            wordEl.classList.add("correct-found");
+
+            if (proposal.toLowerCase() === token.c.toLowerCase()) {
+                exactCorrections++;
+                addReportRow(token.w, "Trouvé", proposal, token.c, token.r, "correct");
+            } else {
+                addReportRow(token.w, "Trouvé (Mal corrigé)", proposal, token.c, token.r, "wrong");
+            }
+        } else if (token.type === 'word') {
+            falsePositives++;
+            wordEl.classList.add("false-positive");
+            addReportRow(token.w, "Erreur mal détectée", proposal, token.w, "Le mot était déjà correctement accordé.", "wrong");
+        }
+
+        updateDashboard();
+    }
+
+    function updateDashboard() {
+        document.getElementById("score-found").innerText = `${truePositives} / ${totalErrorsToFind}`;
+        document.getElementById("score-false").innerText = falsePositives;
+        document.getElementById("score-corrections").innerText = `${exactCorrections} / ${totalProposed}`;
+    }
+
+    function addReportRow(word, status, proposal, expected, rule, badgeClass) {
+        const tbody = document.getElementById("report-tbody");
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td><strong>${word}</strong></td>
+            <td><span class="badge ${badgeClass}">${status}</span></td>
+            <td style="color: ${badgeClass === 'correct' ? 'var(--success)' : 'var(--error)'}">${proposal || '—'}</td>
+            <td style="color: var(--success); font-weight: bold;">${expected}</td>
+            <td>${rule}</td>
+        `;
+        tbody.appendChild(row);
+    }
+
+    // Clôture l'exercice et révèle les erreurs oubliées (manquées)
+    function finishExercise() {
+        document.getElementById("btn-finish").disabled = true;
+        
+        // Fermer la zone de saisie si elle était ouverte
+        document.getElementById("correction-panel").style.display = "none";
+
+        tokens.forEach((token, index) => {
+            if (token.type === 'error' && !token.validated) {
+                token.validated = true;
+                const wordEl = document.getElementById(`word-${index}`);
+                wordEl.classList.add("missed-error");
+                addReportRow(token.w, "Manqué", "—", token.c, token.r, "missed");
+            }
+        });
+    }
+
+    window.onload = initExercise;
+</script>
+
+</body>
+</html>
