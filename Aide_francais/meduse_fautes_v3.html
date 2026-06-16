@@ -1,0 +1,414 @@
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=OpenDyslexic:wght@400;700&display=swap">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  #app { padding: 1.5rem 0; font-family: 'OpenDyslexic', Arial, sans-serif; }
+  .mission-box {
+    background: var(--color-background-secondary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.25rem;
+    text-align: center;
+  }
+  .mission-box h2 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+    font-family: 'OpenDyslexic', Arial, sans-serif;
+  }
+  .mission-box p {
+    font-size: 16px;
+    color: var(--color-text-primary);
+    line-height: 1.9;
+    font-family: 'OpenDyslexic', Arial, sans-serif;
+  }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .stat-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.8rem 1rem; text-align: center; }
+  .stat-label { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 4px; font-family: 'OpenDyslexic', Arial, sans-serif; }
+  .stat-value { font-size: 26px; font-weight: 700; font-family: 'OpenDyslexic', Arial, sans-serif; }
+  .progress-bar-wrap { background: var(--color-background-secondary); border-radius: 99px; height: 10px; margin-bottom: 1.25rem; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: #1D9E75; border-radius: 99px; transition: width 0.4s ease; width: 0%; }
+
+  .text-zone {
+    background: #FDFBF4;
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.25rem;
+    font-size: 18px;
+    line-height: 2.8;
+    color: #1a1a2e;
+    letter-spacing: 0.04em;
+    word-spacing: 0.18em;
+    font-family: 'OpenDyslexic', Arial, sans-serif;
+  }
+
+  .w {
+    display: inline;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 3px 4px;
+  }
+  .w:hover { background: rgba(135,133,128,0.15); }
+  .w:active { background: rgba(135,133,128,0.25); }
+  .w.found-ok { color: #0F6E56; font-weight: 700; cursor: default; }
+  .w.found-ok:hover { background: transparent; }
+  .w.found-revealed { color: #854F0B; font-weight: 700; cursor: default; }
+  .w.found-revealed:hover { background: transparent; }
+
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+  .w.shake { animation: shake 0.3s ease; }
+
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: center; justify-content: center; }
+  .overlay.open { display: flex; }
+  .popup {
+    background: #FDFBF4;
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 2rem;
+    width: min(480px, 94vw);
+    font-family: 'OpenDyslexic', Arial, sans-serif;
+  }
+  .popup-header { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 0.4rem; letter-spacing: 0.04em; }
+  .popup-word { font-size: 24px; font-weight: 700; color: #1a1a2e; margin-bottom: 1rem; letter-spacing: 0.04em; }
+  .popup-q { font-size: 16px; color: var(--color-text-secondary); margin-bottom: 1rem; line-height: 1.8; }
+  .choices { display: flex; flex-direction: column; gap: 10px; }
+  .cbtn {
+    text-align: left;
+    padding: 0.85rem 1.25rem;
+    font-size: 17px;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    background: var(--color-background-secondary);
+    border: 0.5px solid var(--color-border-tertiary);
+    color: #1a1a2e;
+    transition: background 0.12s;
+    font-family: 'OpenDyslexic', Arial, sans-serif;
+    letter-spacing: 0.04em;
+  }
+  .cbtn:hover { background: var(--color-background-tertiary); }
+  .cbtn:active { background: var(--color-background-tertiary); transform: scale(0.98); }
+  .cbtn.ok { background: rgba(29,158,117,0.13); border-color: #1D9E75; color: #0F6E56; pointer-events: none; }
+  .cbtn.ko { background: rgba(226,75,74,0.10); border-color: #E24B4A; color: #A32D2D; pointer-events: none; }
+  .feedback {
+    display: none;
+    margin-top: 1rem;
+    font-size: 15px;
+    line-height: 1.75;
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius-md);
+    font-family: 'OpenDyslexic', Arial, sans-serif;
+  }
+  .feedback.ok { display: block; background: rgba(29,158,117,0.09); color: #0F6E56; }
+  .feedback.ko { display: block; background: rgba(226,75,74,0.09); color: #A32D2D; }
+  .not-fault-msg {
+    display: none;
+    margin-top: 0.75rem;
+    font-size: 15px;
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius-md);
+    background: rgba(135,133,128,0.1);
+    color: var(--color-text-secondary);
+    line-height: 1.75;
+    font-family: 'OpenDyslexic', Arial, sans-serif;
+  }
+  .not-fault-msg.show { display: block; }
+  .pop-close {
+    display: none;
+    margin-top: 1.2rem;
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 16px;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    background: var(--color-background-secondary);
+    border: 0.5px solid var(--color-border-secondary);
+    color: var(--color-text-primary);
+    font-family: 'OpenDyslexic', Arial, sans-serif;
+  }
+  .pop-close:hover { background: var(--color-background-tertiary); }
+
+  .buttons-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .buttons-row button {
+    flex: 1;
+    min-width: 140px;
+    font-size: 15px;
+    padding: 0.7rem 1rem;
+    font-family: 'OpenDyslexic', Arial, sans-serif;
+  }
+  .victory {
+    display: none;
+    text-align: center;
+    background: var(--color-background-secondary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 2rem;
+    font-family: 'OpenDyslexic', Arial, sans-serif;
+  }
+  .victory.show { display: block; }
+  .victory .emoji { font-size: 42px; margin-bottom: 0.6rem; }
+  .victory h3 { font-size: 19px; font-weight: 700; margin-bottom: 0.5rem; color: var(--color-text-primary); }
+  .victory p { font-size: 15px; color: var(--color-text-secondary); line-height: 1.8; }
+</style>
+
+<div id="app">
+  <h2 class="sr-only">Exercice d'accord — Méduse</h2>
+  <div class="mission-box">
+    <h2>Mission</h2>
+    <p>Cliquez sur les mots qui vous semblent mal accordés pour tenter de les corriger et briser le sortilège.</p>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Trouvées</div><div class="stat-value" id="stat-good" style="color:#1D9E75">0</div></div>
+    <div class="stat-card"><div class="stat-label">Erreurs</div><div class="stat-value" id="stat-wrong" style="color:#E24B4A">0</div></div>
+    <div class="stat-card"><div class="stat-label">Restantes</div><div class="stat-value" id="stat-remain" style="color:var(--color-text-primary)">24</div></div>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress"></div></div>
+  <div class="text-zone" id="text-zone"></div>
+  <div class="buttons-row">
+    <button onclick="revealAll()"><i class="ti ti-eye" aria-hidden="true"></i> Voir les réponses</button>
+    <button onclick="resetAll()"><i class="ti ti-refresh" aria-hidden="true"></i> Recommencer</button>
+  </div>
+  <div class="victory" id="victory">
+    <div class="emoji">🐍</div>
+    <h3>Sortilège brisé !</h3>
+    <p>Bravo ! Vous avez retrouvé les 24 fautes d'accord. Méduse recouvre sa véritable apparence.</p>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="popup">
+    <div class="popup-header" id="pop-header"></div>
+    <div class="popup-word" id="pop-word"></div>
+    <div class="popup-q" id="pop-q"></div>
+    <div class="choices" id="pop-choices"></div>
+    <div class="feedback" id="pop-feedback"></div>
+    <div class="not-fault-msg" id="not-fault-msg">Ce mot est correctement accordé. Cherchez encore !</div>
+    <button class="pop-close" id="pop-close" onclick="closePopup()">Continuer</button>
+  </div>
+</div>
+
+<script>
+const faults = {
+  "rêve":          { correct:"rêves",         choices:["rêve","rêves","rêvant"],              expl:"Le nom est au pluriel : « les rêves »." },
+  "sombre":        { correct:"sombres",        choices:["sombre","sombres","sombrement"],       expl:"L'adjectif s'accorde avec le nom pluriel « rêves »." },
+  "mortel":        { correct:"mortels",        choices:["mortel","mortels","mortelle"],         expl:"Le nom est au pluriel : « des mortels »." },
+  "lèvre":         { correct:"lèvres",         choices:["lèvre","lèvres","lèvreux"],           expl:"Le nom est au pluriel : « ses lèvres »." },
+  "gercé":         { correct:"gercées",        choices:["gercé","gercées","gercés"],           expl:"Féminin pluriel : « lèvres gercées »." },
+  "grognement":    { correct:"grognements",    choices:["grognement","grognements","grognant"], expl:"Le nom est au pluriel : « des grognements »." },
+  "rauque":        { correct:"rauques",        choices:["rauque","rauques","rauquement"],       expl:"L'adjectif s'accorde avec « grognements » (pluriel)." },
+  "exorbité":      { correct:"exorbités",      choices:["exorbité","exorbités","exorbitée"],   expl:"L'adjectif s'accorde avec « yeux » (masculin pluriel)." },
+  "épaule":        { correct:"épaules",        choices:["épaule","épaules","épauler"],         expl:"Le nom est au pluriel : « ses épaules »." },
+  "serpent":       { correct:"serpents",       choices:["serpent","serpents","serpentin"],      expl:"Le nom est au pluriel : « plusieurs serpents »." },
+  "écaille":       { correct:"écailles",       choices:["écaille","écailles","écaillé"],       expl:"Le nom est au pluriel : « aux écailles »." },
+  "luisante":      { correct:"luisantes",      choices:["luisante","luisantes","luisant"],      expl:"Féminin pluriel : « écailles luisantes »." },
+  "langue":        { correct:"langues",        choices:["langue","langues","languer"],          expl:"Le nom est au pluriel : « leurs langues »." },
+  "fourchue":      { correct:"fourchues",      choices:["fourchue","fourchues","fourchu"],      expl:"Féminin pluriel : « langues fourchues »." },
+  "tête":          { correct:"têtes",          choices:["tête","têtes","têtue"],               expl:"Le nom est au pluriel : « leurs têtes »." },
+  "triangulaire":  { correct:"triangulaires",  choices:["triangulaire","triangulaires","triangulant"], expl:"L'adjectif s'accorde avec « têtes » (féminin pluriel)." },
+  "membre":        { correct:"membres",        choices:["membre","membres","membré"],           expl:"Le nom est au pluriel : « ses membres »." },
+  "articulé":      { correct:"articulés",      choices:["articulé","articulés","articulée"],   expl:"L'adjectif s'accorde avec « membres » (masculin pluriel)." },
+  "pied":          { correct:"pieds",          choices:["pied","pieds","piéton"],              expl:"Le nom est au pluriel : « ses pieds »." },
+  "transformé":    { correct:"transformés",    choices:["transformé","transformés","transformée"], expl:"Le participe s'accorde avec « pieds » (masculin pluriel)." },
+  "serre":         { correct:"serres",         choices:["serre","serres","serrée"],            expl:"Le nom est au pluriel : « en serres »." },
+  "acéré":         { correct:"acérées",        choices:["acéré","acérées","acérés"],          expl:"Féminin pluriel : « serres acérées »." },
+  "statue":        { correct:"statues",        choices:["statue","statues","statuaire"],        expl:"Le nom est au pluriel : « des statues »." },
+  "figé":          { correct:"figées",         choices:["figé","figées","figés"],             expl:"Féminin pluriel : « statues figées »." },
+};
+
+const words = [
+  ["Méduse",false,", "],["créature",false," "],["monstrueuse",false," "],["aux",false," "],
+  ["yeux",false," "],["de",false," "],["braise",false," "],["et",false," "],["à",false," "],
+  ["la",false," "],["chevelure",false," "],["de",false," "],["serpent",false," "],
+  ["sifflant",false,", "],["hantait",false," "],["les",false," "],
+  ["rêve",true," "],["les",false," "],["plus",false," "],
+  ["sombre",true," "],["des",false," "],
+  ["mortel",true,". "],
+  ["Son",false," "],["visage",false,", "],["autrefois",false," "],["d'une",false," "],
+  ["beauté",false," "],["saisissante",false,", "],["était",false," "],["désormais",false," "],
+  ["défiguré",false," "],["par",false," "],["une",false," "],["malédiction",false," "],
+  ["cruelle",false,". "],["Ses",false," "],
+  ["lèvre",true," "],
+  ["gercé",true," "],
+  ["laissaient",false," "],["échapper",false," "],["des",false," "],
+  ["grognement",true," "],
+  ["rauque",true,", "],
+  ["contrastant",false," "],["avec",false," "],["les",false," "],["yeux",false," "],
+  ["exorbité",true," "],
+  ["qui",false," "],["fixaient",false," "],["leur",false," "],["proie",false," "],
+  ["avec",false," "],["une",false," "],["haine",false," "],["implacable",false,". "],
+  ["De",false," "],["ses",false," "],
+  ["épaule",true,", "],
+  ["s'élevaient",false," "],["plusieurs",false," "],
+  ["serpent",true," "],
+  ["aux",false," "],
+  ["écaille",true," "],
+  ["luisante",true,", "],
+  ["agitant",false," "],["leur",false," "],
+  ["langue",true," "],
+  ["fourchue",true," "],
+  ["et",false," "],["leur",false," "],
+  ["tête",true," "],
+  ["triangulaire",true,". "],
+  ["Son",false," "],["corps",false,", "],["serpentiforme",false," "],["et",false," "],
+  ["écailleux",false,", "],["évoquait",false," "],["à",false," "],["la",false," "],
+  ["fois",false," "],["la",false," "],["grâce",false," "],["sinueuse",false," "],
+  ["d'une",false," "],["créature",false," "],["marine",false," "],["et",false," "],
+  ["la",false," "],["férocité",false," "],["d'un",false," "],["prédateur",false,". "],
+  ["Chaque",false," "],["mouvement",false," "],["de",false," "],["ses",false," "],
+  ["membre",true," "],
+  ["articulé",true," "],
+  ["provoquait",false," "],["un",false," "],["cliquetis",false," "],["sinistre",false,". "],
+  ["Ses",false," "],
+  ["pied",true,", "],
+  ["transformé",true," "],
+  ["en",false," "],
+  ["serre",true," "],
+  ["acéré",true,", "],
+  ["lui",false," "],["permettaient",false," "],["de",false," "],["se",false," "],
+  ["déplacer",false," "],["avec",false," "],["une",false," "],["agilité",false," "],
+  ["surprenante",false,". "],
+  ["Ceux",false," "],["qui",false," "],["osaient",false," "],["croiser",false," "],
+  ["son",false," "],["regard",false," "],["pétrifiant",false," "],["étaient",false," "],
+  ["condamnés",false," "],["à",false," "],["se",false," "],["transformer",false," "],
+  ["en",false," "],["des",false," "],
+  ["statue",true," "],
+  ["de",false," "],["pierre",false,", "],
+  ["figé",true," "],
+  ["dans",false," "],["l'éternité",false,"."],
+];
+
+const TOTAL = 24;
+let found = 0, errors = 0;
+const foundSet = new Set();
+let activeWord = null;
+
+function buildText() {
+  const zone = document.getElementById("text-zone");
+  let html = "";
+  for (let i = 0; i < words.length; i++) {
+    const [w, isFault, after] = words[i];
+    html += `<span class="w" data-idx="${i}" data-word="${w}" data-fault="${isFault}" onclick="clickWord(this)">${w}</span>${after}`;
+  }
+  zone.innerHTML = html;
+}
+
+function clickWord(el) {
+  const word = el.dataset.word;
+  const isFault = el.dataset.fault === "true";
+  if (isFault && foundSet.has(word)) return;
+
+  if (!isFault) {
+    document.getElementById("pop-header").textContent = "Vérification";
+    document.getElementById("pop-word").textContent = "« " + word + " »";
+    document.getElementById("pop-q").textContent = "";
+    document.getElementById("pop-choices").innerHTML = "";
+    document.getElementById("pop-feedback").className = "feedback";
+    document.getElementById("not-fault-msg").classList.add("show");
+    document.getElementById("pop-close").style.display = "block";
+    document.getElementById("overlay").classList.add("open");
+    errors++;
+    document.getElementById("stat-wrong").textContent = errors;
+    el.classList.add("shake");
+    setTimeout(() => el.classList.remove("shake"), 350);
+    return;
+  }
+
+  activeWord = word;
+  const f = faults[word];
+  document.getElementById("pop-header").textContent = "Faute d'accord repérée";
+  document.getElementById("pop-word").textContent = "« " + word + " »";
+  document.getElementById("pop-q").textContent = "Quelle est la forme correcte ?";
+  document.getElementById("not-fault-msg").classList.remove("show");
+  document.getElementById("pop-feedback").className = "feedback";
+  document.getElementById("pop-feedback").textContent = "";
+  document.getElementById("pop-close").style.display = "none";
+
+  const shuffled = [...f.choices].sort(() => Math.random() - 0.5);
+  document.getElementById("pop-choices").innerHTML = shuffled.map(c =>
+    `<button class="cbtn" onclick="checkChoice(this,'${c}')">${c}</button>`
+  ).join("");
+
+  document.getElementById("overlay").classList.add("open");
+}
+
+function checkChoice(btn, chosen) {
+  const f = faults[activeWord];
+  document.querySelectorAll(".cbtn").forEach(b => b.onclick = null);
+  const fb = document.getElementById("pop-feedback");
+
+  if (chosen === f.correct) {
+    btn.classList.add("ok");
+    fb.textContent = "✓ Bravo ! " + f.expl;
+    fb.className = "feedback ok";
+    foundSet.add(activeWord);
+    document.querySelectorAll(`.w[data-word="${activeWord}"][data-fault="true"]`).forEach(el => {
+      el.classList.add("found-ok");
+      el.textContent = f.correct;
+      el.onclick = null;
+    });
+    found++;
+    document.getElementById("stat-good").textContent = found;
+    document.getElementById("stat-remain").textContent = TOTAL - found;
+    document.getElementById("progress").style.width = Math.round((found/TOTAL)*100) + "%";
+    if (found === TOTAL) setTimeout(showVictory, 500);
+  } else {
+    btn.classList.add("ko");
+    document.querySelectorAll(".cbtn").forEach(b => { if (b.textContent === f.correct) b.classList.add("ok"); });
+    fb.textContent = "✗ La bonne réponse est « " + f.correct + " ». " + f.expl;
+    fb.className = "feedback ko";
+    errors++;
+    document.getElementById("stat-wrong").textContent = errors;
+  }
+  document.getElementById("pop-close").style.display = "block";
+}
+
+function closePopup() {
+  document.getElementById("overlay").classList.remove("open");
+  document.getElementById("not-fault-msg").classList.remove("show");
+  activeWord = null;
+}
+
+function revealAll() {
+  for (const [word, f] of Object.entries(faults)) {
+    if (!foundSet.has(word)) {
+      foundSet.add(word);
+      document.querySelectorAll(`.w[data-word="${word}"][data-fault="true"]`).forEach(el => {
+        el.classList.add("found-revealed");
+        el.textContent = f.correct;
+        el.onclick = null;
+      });
+    }
+  }
+  found = TOTAL;
+  document.getElementById("stat-good").textContent = TOTAL;
+  document.getElementById("stat-remain").textContent = 0;
+  document.getElementById("progress").style.width = "100%";
+  closePopup();
+}
+
+function resetAll() {
+  foundSet.clear();
+  found = 0; errors = 0;
+  document.getElementById("stat-good").textContent = 0;
+  document.getElementById("stat-wrong").textContent = 0;
+  document.getElementById("stat-remain").textContent = TOTAL;
+  document.getElementById("progress").style.width = "0%";
+  document.getElementById("victory").classList.remove("show");
+  closePopup();
+  buildText();
+}
+
+function showVictory() {
+  document.getElementById("victory").classList.add("show");
+  document.getElementById("victory").scrollIntoView({behavior:"smooth"});
+}
+
+buildText();
+document.getElementById("overlay").addEventListener("click", function(e){
+  if (e.target === this) closePopup();
+});
+</script>
