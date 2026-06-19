@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>QCM - Arles, le trésor retrouvé</title>
+<style>
+  :root {
+    --parchemin: #f3ecd8;
+    --parchemin-fonce: #e8dcb8;
+    --bronze: #a86f3d;
+    --bronze-fonce: #7a4f2a;
+    --or: #c9962f;
+    --rhone: #2f5d62;
+    --rhone-fonce: #1f4347;
+    --bon: #4a7c3f;
+    --mauvais: #a8453c;
+    --texte: #2c2418;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--parchemin);
+    background-image:
+      radial-gradient(circle at 10% 15%, rgba(168,111,61,0.07) 0%, transparent 40%),
+      radial-gradient(circle at 90% 85%, rgba(47,93,98,0.07) 0%, transparent 40%);
+    color: var(--texte);
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  .app {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  /* ---------- En-tête ---------- */
+  header {
+    text-align: center;
+    margin-bottom: 18px;
+    padding: 18px 14px;
+    background: var(--rhone);
+    color: var(--parchemin);
+    border-radius: 14px;
+    box-shadow: 0 4px 0 var(--rhone-fonce);
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      100deg,
+      rgba(255,255,255,0.04) 0px,
+      rgba(255,255,255,0.04) 2px,
+      transparent 2px,
+      transparent 14px
+    );
+    pointer-events: none;
+  }
+
+  header h1 {
+    margin: 0 0 4px 0;
+    font-size: 1.4rem;
+    letter-spacing: 0.5px;
+  }
+
+  header p {
+    margin: 0;
+    font-size: 0.95rem;
+    opacity: 0.85;
+  }
+
+  .medaillon {
+    display: inline-block;
+    background: var(--or);
+    color: var(--bronze-fonce);
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-top: 8px;
+    box-shadow: 0 2px 0 var(--bronze-fonce);
+  }
+
+  /* ---------- Barre de progression (descente vers le trésor) ---------- */
+  .progression {
+    background: var(--parchemin-fonce);
+    border: 2px solid var(--bronze);
+    border-radius: 999px;
+    height: 22px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progression-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--rhone), var(--rhone-fonce));
+    width: 0%;
+    transition: width 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .progression-texte {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: bold;
+    color: var(--bronze-fonce);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+  }
+
+  /* ---------- Carte question ---------- */
+  .carte {
+    background: #fffdf6;
+    border: 2px solid var(--bronze);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 5px 0 rgba(122,79,42,0.25);
+    margin-bottom: 16px;
+  }
+
+  .numero-question {
+    display: inline-block;
+    background: var(--bronze);
+    color: #fff;
+    border-radius: 8px;
+    padding: 3px 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .question-texte {
+    font-size: 1.15rem;
+    font-weight: bold;
+    line-height: 1.4;
+    margin-bottom: 16px;
+    color: var(--bronze-fonce);
+  }
+
+  .reponses {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .reponse-bouton {
+    text-align: left;
+    background: var(--parchemin);
+    border: 2px solid var(--bronze-fonce);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 1rem;
+    font-family: Arial, Helvetica, sans-serif;
+    color: var(--texte);
+    cursor: pointer;
+    min-height: 50px;
+    transition: transform 0.1s ease, background 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .reponse-bouton:active {
+    transform: scale(0.98);
+  }
+
+  .reponse-bouton.correcte {
+    background: var(--bon);
+    color: #fff;
+    border-color: #355c2c;
+  }
+
+  .reponse-bouton.incorrecte {
+    background: var(--mauvais);
+    color: #fff;
+    border-color: #7a2e27;
+  }
+
+  .reponse-bouton:disabled {
+    cursor: default;
+    opacity: 0.55;
+  }
+
+  .reponse-bouton.correcte:disabled,
+  .reponse-bouton.incorrecte:disabled {
+    opacity: 1;
+  }
+
+  .explication {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--parchemin-fonce);
+    border-left: 4px solid var(--or);
+    font-size: 0.92rem;
+    line-height: 1.45;
+    display: none;
+  }
+
+  .explication.visible { display: block; }
+
+  .bouton-suivant {
+    margin-top: 16px;
+    width: 100%;
+    background: var(--rhone);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 1.05rem;
+    font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+    box-shadow: 0 3px 0 var(--rhone-fonce);
+    display: none;
+  }
+
+  .bouton-suivant.visible { display: block; }
+
+  .bouton-suivant:active { transform: translateY(2px); box-shadow: none; }
+
+  /* ---------- Écran final ---------- */
+  .ecran-final {
+    text-align: center;
+    background: #fffdf6;
+    border: 2px solid var(--or);
+    border-radius: 16px;
+    padding: 28px 20px;
+    box-shadow: 0 5px 0 rgba(122,79,42,0.25);
+  }
+
+  .ecran-final .trophee {
+    font-size: 3.4rem;
+    margin-bottom: 6px;
+  }
+
+  .ecran-final h2 {
+    color: var(--bronze-fonce);
+    margin: 4px 0 10px 0;
+  }
+
+  .score-grand {
+    font-size: 2.6rem;
+    font-weight: bold;
+    color: var(--rhone);
+    margin: 6px 0;
+  }
+
+  .ecran-final p.message {
+    font-size: 1rem;
+    max-width: 480px;
+    margin: 10px auto 18px auto;
+    line-height: 1.5;
+  }
+
+  .bouton-rejouer {
+    background: var(--bronze);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-size: 1rem;
+    font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+    box-shadow: 0 3px 0 var(--bronze-fonce);
+  }
+
+  .cache { display: none !important; }
+
+  footer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--bronze-fonce);
+    opacity: 0.7;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header>
+    <h1>🏺 Arles, le trésor retrouvé</h1>
+    <p>Une enquête au fond du Rhône</p>
+    <div class="medaillon" id="medaillon-classe">6ème</div>
+  </header>
+
+  <div class="progression">
+    <div class="progression-fill" id="progression-fill"></div>
+    <div class="progression-texte" id="progression-texte">Question 1 / 10</div>
+  </div>
+
+  <div id="zone-question"></div>
+
+  <div class="ecran-final cache" id="ecran-final">
+    <div class="trophee" id="trophee-emoji">🏆</div>
+    <h2>Fouille terminée !</h2>
+    <div class="score-grand" id="score-final">0 / 10</div>
+    <p class="message" id="message-final"></p>
+    <button class="bouton-rejouer" id="bouton-rejouer">Replonger dans le Rhône 🤿</button>
+  </div>
+
+  <footer>QCM réalisé à partir du documentaire « Des racines et des ailes »</footer>
+
+</div>
+
+<script>
+const questions = [
+  {
+    question: "Dans quel fleuve les archéologues font-ils leurs fouilles ?",
+    reponses: ["La Seine", "Le Rhône", "La Loire", "Le Rhin"],
+    correcte: 1,
+    explication: "Les fouilles ont lieu dans le lit du Rhône, près de la ville d'Arles, en Provence."
+  },
+  {
+    question: "Comment s'appelle l'archéologue qui dirige les fouilles sous l'eau ?",
+    reponses: ["Jean Long", "Marc Petit", "Luc Long", "Paul Rhône"],
+    correcte: 2,
+    explication: "Luc Long est le chef des fouilles. Il plonge dans le Rhône depuis vingt ans pour trouver des vestiges antiques."
+  },
+  {
+    question: "Quelle est la découverte la plus célèbre faite en septembre 2007 ?",
+    reponses: [
+      "Une pièce d'or géante",
+      "Un buste en marbre de Jules César",
+      "Un temple entier",
+      "Une épée romaine"
+    ],
+    correcte: 1,
+    explication: "Les plongeurs découvrent un buste en marbre représentant Jules César, sans doute réalisé alors qu'il était encore vivant."
+  },
+  {
+    question: "Le buste de Jules César retrouvé dans le Rhône a été réalisé vers quelle date ?",
+    reponses: ["46 av. J.-C.", "100 apr. J.-C.", "1789", "300 av. J.-C."],
+    correcte: 0,
+    explication: "Le buste d'Arles est daté d'environ 46 av. J.-C. Il serait l'une des deux seules sculptures connues représentant Jules César réalisées alors qu'il était encore vivant."
+  },
+  {
+    question: "Pourquoi ce buste est-il si exceptionnel pour les historiens ?",
+    reponses: [
+      "Il est en or massif",
+      "C'est l'un des seuls portraits de César fait de son vivant",
+      "Il pèse plus d'une tonne",
+      "Il a été retrouvé intact dans une boîte"
+    ],
+    correcte: 1,
+    explication: "Les portraits de Jules César réalisés pendant qu'il était encore en vie sont extrêmement rares : c'est ce qui rend cette découverte si importante."
+  },
+  {
+    question: "En plus du buste de César, quel type d'objets retrouve-t-on dans le Rhône ?",
+    reponses: [
+      "Des ossements de dinosaures",
+      "Des statues de divinités comme Neptune ou Vénus",
+      "Des pièces de monnaie modernes",
+      "Des armures médiévales"
+    ],
+    correcte: 1,
+    explication: "Les archéologues remontent aussi des chapiteaux, des stèles et plusieurs statues représentant des divinités romaines, dont Neptune et Vénus."
+  },
+  {
+    question: "Quelle surprise révèle la restauration d'une statue en bronze appelée « la Victoire » ?",
+    reponses: [
+      "Elle contenait un message caché",
+      "Elle était en fait fabriquée en plastique",
+      "Sous la rouille, elle est recouverte d'or",
+      "Elle datait du Moyen Âge"
+    ],
+    correcte: 2,
+    explication: "Une fois nettoyée, la statue de bronze de la Victoire révèle qu'elle était à l'origine recouverte d'une fine couche d'or."
+  },
+  {
+    question: "Pourquoi tous ces objets précieux se sont-ils retrouvés au fond du fleuve ?",
+    reponses: [
+      "Ils ont été jetés volontairement par les Romains",
+      "Ils sont liés à des bateaux et des bateliers de l'Antiquité",
+      "Un volcan les a fait tomber dans l'eau",
+      "Ils viennent d'un autre pays et ont été perdus en mer"
+    ],
+    correcte: 1,
+    explication: "À l'époque romaine, des bateliers transportaient des marchandises entre le Rhône et la Méditerranée. Ces objets sont liés à cette activité fluviale."
+  },
+  {
+    question: "Quelles sont les conditions difficiles pour les plongeurs dans le Rhône ?",
+    reponses: [
+      "L'eau est glacée toute l'année",
+      "Il y a des requins",
+      "La visibilité est très faible et le courant est puissant",
+      "Il faut plonger à plus de 200 mètres de profondeur"
+    ],
+    correcte: 2,
+    explication: "Le Rhône est un fleuve difficile à explorer : on y voit très mal et le courant peut emporter un plongeur en quelques secondes."
+  },
+  {
+    question: "Comment appelle-t-on ce type d'archéologie, pratiqué sous l'eau ?",
+    reponses: [
+      "L'archéologie sous-marine",
+      "L'archéologie aérienne",
+      "La paléontologie",
+      "L'astroarchéologie"
+    ],
+    correcte: 0,
+    explication: "On parle d'archéologie sous-marine (ou subaquatique) lorsque les fouilles se déroulent dans l'eau, en mer ou en fleuve."
+  },
+  {
+    question: "À quelle ville antique tous ces trésors sont-ils liés ?",
+    reponses: ["Lyon", "Marseille", "Arles", "Nîmes"],
+    correcte: 2,
+    explication: "Tous ces objets sont liés à la riche cité romaine d'Arles, un port fluvial actif durant l'Antiquité."
+  }
+];
+
+let indexActuel = 0;
+let score = 0;
+let reponduCetteQuestion = false;
+
+const zoneQuestion = document.getElementById('zone-question');
+const progressionFill = document.getElementById('progression-fill');
+const progressionTexte = document.getElementById('progression-texte');
+const ecranFinal = document.getElementById('ecran-final');
+const boutonRejouer = document.getElementById('bouton-rejouer');
+
+function majProgression() {
+  const pct = (indexActuel / questions.length) * 100;
+  progressionFill.style.width = pct + '%';
+  progressionTexte.textContent = `Question ${Math.min(indexActuel + 1, questions.length)} / ${questions.length}`;
+}
+
+function afficherQuestion() {
+  reponduCetteQuestion = false;
+  const q = questions[indexActuel];
+  majProgression();
+
+  let html = `
+    <div class="carte">
+      <div class="numero-question">Question ${indexActuel + 1}</div>
+      <div class="question-texte">${q.question}</div>
+      <div class="reponses" id="liste-reponses">
+        ${q.reponses.map((r, i) => `<button class="reponse-bouton" data-index="${i}">${r}</button>`).join('')}
+      </div>
+      <div class="explication" id="explication">${q.explication}</div>
+      <button class="bouton-suivant" id="bouton-suivant">Continuer →</button>
+    </div>
+  `;
+  zoneQuestion.innerHTML = html;
+
+  document.querySelectorAll('.reponse-bouton').forEach(btn => {
+    btn.addEventListener('click', () => traiterReponse(parseInt(btn.dataset.index)));
+  });
+
+  document.getElementById('bouton-suivant').addEventListener('click', questionSuivante);
+}
+
+function traiterReponse(indexChoisi) {
+  if (reponduCetteQuestion) return;
+  reponduCetteQuestion = true;
+
+  const q = questions[indexActuel];
+  const boutons = document.querySelectorAll('.reponse-bouton');
+
+  boutons.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.correcte) btn.classList.add('correcte');
+    else if (i === indexChoisi) btn.classList.add('incorrecte');
+  });
+
+  if (indexChoisi === q.correcte) score++;
+
+  document.getElementById('explication').classList.add('visible');
+  document.getElementById('bouton-suivant').classList.add('visible');
+}
+
+function questionSuivante() {
+  indexActuel++;
+  if (indexActuel < questions.length) {
+    afficherQuestion();
+  } else {
+    afficherEcranFinal();
+  }
+}
+
+function afficherEcranFinal() {
+  majProgressionFinale();
+  zoneQuestion.innerHTML = '';
+  ecranFinal.classList.remove('cache');
+
+  document.getElementById('score-final').textContent = `${score} / ${questions.length}`;
+
+  let trophee = '🏆';
+  let message = '';
+  const pct = score / questions.length;
+
+  if (pct === 1) {
+    trophee = '👑';
+    message = "Score parfait ! Tu mérites le titre d'archéologue en chef du Rhône. César aurait été impressionné.";
+  } else if (pct >= 0.7) {
+    trophee = '🥇';
+    message = "Très bon travail ! Tu as bien retenu les informations sur les fouilles d'Arles.";
+  } else if (pct >= 0.4) {
+    trophee = '🥈';
+    message = "Pas mal ! Revois le documentaire pour retrouver quelques détails qui t'ont échappé.";
+  } else {
+    trophee = '🤿';
+    message = "Il faut replonger ! Regarde à nouveau le documentaire pour mieux répondre.";
+  }
+
+  document.getElementById('trophee-emoji').textContent = trophee;
+  document.getElementById('message-final').textContent = message;
+}
+
+function majProgressionFinale() {
+  progressionFill.style.width = '100%';
+  progressionTexte.textContent = `Question ${questions.length} / ${questions.length}`;
+}
+
+boutonRejouer.addEventListener('click', () => {
+  indexActuel = 0;
+  score = 0;
+  ecranFinal.classList.add('cache');
+  afficherQuestion();
+});
+
+afficherQuestion();
+</script>
+
+</body>
+</html>
