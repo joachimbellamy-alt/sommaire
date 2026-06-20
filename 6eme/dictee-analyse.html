@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>La phrase du jour — analyse grammaticale</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF6EC;
+    --paper-line:#E3DCC8;
+    --marge:#E2574C;
+    --ink:#2B2E4A;
+    --ink-soft:#5A5E78;
+    --nature:#8B6FB3;
+    --fonction:#2A8C82;
+    --accord:#D9A441;
+    --panel:#FFFFFF;
+    --shadow:0 2px 8px rgba(43,46,74,0.12);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:repeating-linear-gradient(to bottom, transparent 0 38px, var(--paper-line) 38px 39px);
+    background-position-y:140px;
+    color:var(--ink);
+    font-family:'Quicksand',sans-serif;
+    min-height:100vh;
+    padding-bottom:40px;
+  }
+  header{
+    padding:22px 18px 14px 26px;
+    position:relative;
+  }
+  header::before{
+    content:"";
+    position:absolute;
+    left:48px; top:0; bottom:0;
+    width:2px;
+    background:var(--marge);
+    opacity:0.55;
+  }
+  h1{
+    font-family:'Patrick Hand',cursive;
+    font-size:2rem;
+    margin:0 0 2px 0;
+    color:var(--ink);
+  }
+  .sub{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:0.95rem;
+    font-weight:600;
+  }
+  main{
+    max-width:780px;
+    margin:0 auto;
+    padding:0 16px;
+  }
+  .ecriture-card{
+    background:var(--panel);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    padding:18px 20px;
+    margin-top:8px;
+    position:relative;
+  }
+  .ecriture-card::before{
+    content:"";
+    position:absolute;
+    left:34px; top:0; bottom:0; width:2px;
+    background:var(--marge);
+    opacity:0.35;
+  }
+  #ecriture{
+    min-height:90px;
+    font-family:'Patrick Hand',cursive;
+    font-size:1.5rem;
+    line-height:38px;
+    padding-left:22px;
+    outline:none;
+    color:var(--ink);
+  }
+  #ecriture:empty:before{
+    content:attr(data-placeholder);
+    color:#B9B0A0;
+  }
+  .analyse-zone{
+    position:relative;
+    padding:36px 22px 96px 22px;
+    display:none;
+    font-size:1.45rem;
+  }
+  .analyse-zone.visible{ display:block; }
+  .overlay-layer{
+    position:absolute;
+    top:0; left:0; right:0; bottom:0;
+  }
+  .overlay-layer.back{ z-index:0; pointer-events:none; }
+  .overlay-layer.front{ z-index:2; pointer-events:none; }
+  .word-flow{
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex-wrap:wrap;
+    row-gap:98px;
+    column-gap:3px;
+    align-items:flex-end;
+  }
+  .word-token{
+    cursor:pointer;
+    padding:1px 5px;
+    border-radius:6px;
+    transition:background .15s ease;
+  }
+  .word-token.selected{
+    outline:3px dashed #E2574C;
+    outline-offset:1px;
+    background:#FFF4E0;
+  }
+  .punct-token{ color:var(--ink-soft); padding:0 1px; }
+  .word-token.correct-active, .punct-token.correct-active{
+    outline:2px dashed #3B82A0;
+    outline-offset:2px;
+    cursor:text;
+    animation:correct-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes correct-pulse{
+    0%,100%{ background:rgba(59,130,160,0.08); }
+    50%{ background:rgba(59,130,160,0.22); }
+  }
+  .word-token.editing, .punct-token.editing{
+    outline:3px solid #3B82A0;
+    outline-offset:1px;
+    background:#fff;
+    animation:none;
+    min-width:0.6em;
+  }
+  #btn-correct-mode.active{
+    background:#3B82A0;
+    color:#fff;
+    border-color:#3B82A0;
+  }
+  .accord-mark{
+    font-weight:800;
+    text-decoration:underline;
+    text-decoration-thickness:2px;
+    text-underline-offset:2px;
+  }
+  .letter{
+    display:inline-block;
+  }
+  .letter.letters-active{
+    cursor:pointer;
+  }
+  .letter.letter-marked{
+    border-radius:50%;
+    font-weight:800;
+    padding:0 2px;
+  }
+  .word-token.elided{ margin-right:-3px; }
+  .ov-chip{
+    position:absolute;
+    pointer-events:auto;
+    font-family:'Quicksand',sans-serif;
+    font-size:0.62rem;
+    font-weight:700;
+    color:#fff;
+    padding:2px 8px;
+    border-radius:8px;
+    white-space:nowrap;
+    cursor:pointer;
+    transform:translateX(-50%);
+    box-shadow:0 1px 2px rgba(0,0,0,0.2);
+  }
+  .ov-bar{
+    position:absolute;
+    pointer-events:auto;
+    height:4px;
+    border-radius:3px;
+    cursor:pointer;
+  }
+  .ov-bg{
+    position:absolute;
+    pointer-events:none;
+    border-radius:50%;
+  }
+  .actions-row{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:12px;
+  }
+  button.btn{
+    font-family:'Quicksand',sans-serif;
+    font-weight:700;
+    font-size:0.95rem;
+    border:none;
+    border-radius:999px;
+    padding:11px 20px;
+    cursor:pointer;
+    color:white;
+    background:var(--ink);
+    box-shadow:var(--shadow);
+    transition:transform .12s ease;
+  }
+  button.btn:active{ transform:scale(0.95); }
+  button.btn.secondary{
+    background:#fff;
+    color:var(--ink);
+    border:2px solid var(--ink);
+  }
+  /* TABLEAU DE BORD */
+  .dashboard{
+    position:fixed;
+    left:50%;
+    bottom:0;
+    transform:translateX(-50%);
+    width:100%;
+    max-width:780px;
+    margin:0;
+    background:#fff;
+    border-radius:20px 20px 0 0;
+    box-shadow:0 -6px 18px rgba(43,46,74,0.18);
+    padding:12px 16px calc(14px + env(safe-area-inset-bottom));
+    max-height:46vh;
+    overflow-y:auto;
+    z-index:100;
+  }
+  .dashboard-handle{
+    width:40px; height:4px;
+    background:var(--paper-line);
+    border-radius:3px;
+    margin:0 auto 10px;
+  }
+  body.dashboard-open main{ padding-bottom:48vh; }
+  .dash-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:4px;
+    gap:8px;
+  }
+  .dash-header-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .help-toggle{
+    font-family:'Quicksand',sans-serif;
+    font-weight:700;
+    font-size:0.85rem;
+    border:2px solid var(--marge);
+    background:#fff;
+    color:var(--marge);
+    border-radius:999px;
+    padding:6px 12px;
+    cursor:pointer;
+  }
+  .help-toggle.active{
+    background:var(--marge);
+    color:#fff;
+  }
+  .help-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(43,46,74,0.45);
+    z-index:300;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .help-overlay.visible{ display:flex; }
+  .help-card{
+    background:#fff;
+    border-radius:18px;
+    padding:24px;
+    max-width:380px;
+    box-shadow:var(--shadow);
+  }
+  .help-eyebrow{
+    margin:0 0 2px;
+    font-size:0.78rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    color:var(--ink-soft);
+  }
+  .help-card h3{
+    font-family:'Patrick Hand',cursive;
+    font-size:1.6rem;
+    margin:0 0 10px;
+    color:var(--ink);
+  }
+  .help-card p#help-body{
+    font-size:1rem;
+    line-height:1.55;
+    color:var(--ink);
+    margin:0 0 18px;
+  }
+  .dash-title{
+    font-family:'Patrick Hand',cursive;
+    font-size:1.3rem;
+    margin:0 0 10px 4px;
+    color:var(--ink-soft);
+  }
+  .tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .tab{
+    flex:1;
+    min-width:110px;
+    text-align:center;
+    padding:10px 8px;
+    border-radius:12px;
+    font-weight:700;
+    cursor:pointer;
+    border:2px solid transparent;
+    color:#fff;
+    opacity:0.55;
+    font-size:0.95rem;
+  }
+  .tab.active{ opacity:1; box-shadow:var(--shadow); }
+  .tab[data-tool="nature"]{ background:var(--nature); }
+  .tab[data-tool="fonction"]{ background:var(--fonction); }
+  .tab[data-tool="accord"]{ background:var(--accord); }
+  .chip-group-title{
+    flex-basis:100%;
+    font-size:0.78rem;
+    font-weight:700;
+    color:var(--ink-soft);
+    margin:4px 0 -2px 2px;
+    text-transform:uppercase;
+    letter-spacing:0.02em;
+  }
+  .chip-group-title:first-child{ margin-top:0; }
+  .chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    min-height:46px;
+  }
+  .chip{
+    font-weight:700;
+    font-size:0.95rem;
+    padding:10px 16px;
+    border-radius:10px;
+    color:#fff;
+    cursor:pointer;
+    box-shadow:0 1px 3px rgba(0,0,0,0.15);
+    border:2px dashed rgba(255,255,255,0.55);
+    user-select:none;
+  }
+  .chip:active{ transform:scale(0.94); }
+  .chip.help-active{
+    outline:3px dashed rgba(255,255,255,0.85);
+    outline-offset:-6px;
+    cursor:help;
+    animation:help-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes help-pulse{
+    0%,100%{ opacity:1; }
+    50%{ opacity:0.72; }
+  }
+  .chip.clear{
+    background:#fff !important;
+    color:var(--ink);
+    border:2px dashed #cfc7b3;
+  }
+  .accord-chip{
+    width:42px; height:42px; border-radius:50%;
+    border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.2);
+    cursor:pointer;
+  }
+  .accord-row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+  .bracket-btn.active{ background:var(--marge); color:#fff; border-color:var(--marge); }
+  .draw-swatches{ display:flex; gap:10px; align-items:center; }
+  .letter-swatch.selected{
+    outline:3px solid var(--ink);
+    outline-offset:2px;
+  }
+  .bracket-token{
+    font-weight:800;
+    font-size:1.3em;
+    color:var(--marge);
+    padding:0 2px;
+    display:inline-block;
+  }
+  .bracket-token.bracket-active{
+    cursor:pointer;
+    outline:2px dashed var(--marge);
+    outline-offset:1px;
+    border-radius:6px;
+  }
+  .hint{
+    font-size:0.85rem;
+    color:var(--ink-soft);
+    margin:10px 4px 0;
+  }
+  .bottom-actions{
+    display:flex;
+    justify-content:space-between;
+    margin-top:18px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .legend{
+    margin-top:16px;
+    font-size:0.85rem;
+    color:var(--ink-soft);
+  }
+  .legend summary{ cursor:pointer; font-weight:700; }
+  .legend-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+    gap:6px;
+    margin-top:8px;
+  }
+  .legend-grid .chip-group-title{ grid-column:1 / -1; }
+  .legend-item{ display:flex; align-items:center; gap:6px; }
+  .legend-dot{ width:12px; height:12px; border-radius:50%; flex:none; }
+  @media (max-width:480px){
+    h1{ font-size:1.6rem; }
+    #ecriture, .analyse-zone{ font-size:1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>La phrase du jour</h1>
+  <p class="sub">Écris la phrase dictée, puis analyse-la avec le tableau de bord</p>
+</header>
+
+<main>
+
+  <div class="ecriture-card">
+    <div id="ecriture" contenteditable="true" data-placeholder="Écris ici la phrase dictée…"></div>
+    <div id="analyse-zone" class="analyse-zone">
+      <div id="overlay-back" class="overlay-layer back"></div>
+      <div id="word-flow" class="word-flow"></div>
+      <div id="overlay-front" class="overlay-layer front"></div>
+    </div>
+    <div class="actions-row">
+      <button class="btn secondary" id="btn-correct-mode" style="display:none;">✏️ Corriger un mot</button>
+      <button class="btn secondary" id="btn-modifier" style="display:none;">↺ Tout réécrire</button>
+      <button class="btn" id="btn-analyser">✓ Analyser la phrase</button>
+    </div>
+  </div>
+
+  <div class="dashboard" id="dashboard" style="display:none;">
+    <div class="dashboard-handle"></div>
+    <div class="dash-header">
+      <p class="dash-title">Tableau de bord</p>
+      <button id="btn-help-mode" class="help-toggle" title="Activer l'aide">❓ Aide</button>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-tool="nature">Nature</div>
+      <div class="tab" data-tool="fonction">Fonction</div>
+      <div class="tab" data-tool="accord">Accords</div>
+      <div class="tab" data-tool="propositions">Propositions</div>
+    </div>
+
+    <div class="chips" id="chips-nature"></div>
+    <div class="chips" id="chips-fonction" style="display:none;"></div>
+    <div class="accord-row" id="chips-accord" style="display:none;">
+      <div class="draw-swatches" id="letter-swatches"></div>
+      <button class="btn secondary" id="btn-letters-clear">🧹 Effacer les groupes</button>
+    </div>
+    <div class="accord-row" id="chips-propositions" style="display:none;">
+      <button class="btn secondary bracket-btn active" id="btn-bracket-open" data-side="before">[ Avant ce mot</button>
+      <button class="btn secondary bracket-btn" id="btn-bracket-close" data-side="after">] Après ce mot</button>
+      <button class="btn secondary" id="btn-brackets-clear">🧹 Effacer les crochets</button>
+    </div>
+
+    <p class="hint" id="hint">Touche un ou plusieurs mots dans la phrase, puis touche une étiquette ci-dessus.</p>
+
+    <div class="bottom-actions">
+      <button class="btn secondary" id="btn-deselect">Annuler la sélection</button>
+      <button class="btn secondary" id="btn-reset">🧹 Tout effacer</button>
+    </div>
+
+    <details class="legend">
+      <summary>Voir la légende des couleurs</summary>
+      <div class="legend-grid" id="legend-grid"></div>
+    </details>
+  </div>
+
+</main>
+
+<div class="help-overlay" id="help-overlay">
+  <div class="help-card">
+    <p class="help-eyebrow" id="help-eyebrow">Comment repérer…</p>
+    <h3 id="help-title">—</h3>
+    <p id="help-body">—</p>
+    <button class="btn" id="btn-help-close">Compris !</button>
+  </div>
+</div>
+
+<script>
+const NATURE_GROUPS = [
+  { title:'Mots variables', items:[
+    {value:'Déterminant', short:'Dét.', color:'#8B6FB3',
+      help:"Il se place juste avant un nom et indique son genre et son nombre (le, la, les, un, une, des, mon, cette...). Sans lui, le nom est souvent incomplet."},
+    {value:'Nom', short:'Nom', color:'#4A4E69',
+      help:"Il désigne une personne, un animal, une chose ou une idée. Astuce : on peut presque toujours mettre un déterminant juste devant (le ___, un ___)."},
+    {value:'Adjectif', short:'Adj.', color:'#5B8C5A',
+      help:"Il apporte une précision sur le nom (couleur, taille, qualité...) et change de forme selon le genre et le nombre du nom : petit → petite → petits."},
+    {value:'Pronom', short:'Pron.', color:'#3B82A0',
+      help:"Il remplace un nom déjà connu, pour ne pas le répéter (il, elle, le, leur, qui, cela...)."},
+    {value:'Verbe', short:'V.', color:'#C0533E',
+      help:"Il indique ce que fait le sujet ou dans quel état il se trouve. Astuce : on peut le conjuguer et l'encadrer par « ne... pas »."},
+  ]},
+  { title:'Mots invariables', items:[
+    {value:'Adverbe', short:'Adv.', color:'#C98A3B',
+      help:"Il précise un verbe, un adjectif ou un autre adverbe (vite, très, hier, beaucoup...). Il ne change jamais de forme."},
+    {value:'Préposition', short:'Prép.', color:'#7A6452',
+      help:"Petit mot invariable placé devant un nom ou un verbe à l'infinitif pour le relier au reste de la phrase (à, de, dans, pour, sans, avec...)."},
+    {value:'Conjonction', short:'Conj.', color:'#8A8A8A',
+      help:"Mot invariable qui relie deux mots, deux groupes ou deux phrases (et, ou, mais, donc, car, que, quand...)."},
+  ]},
+];
+const FONCTION_GROUPS = [
+  { title:'Sujet', items:[
+    {value:'Sujet', short:'Suj.', color:'#C0533E',
+      help:"Il fait l'action ou se trouve dans l'état décrit par le verbe. Astuce : pose la question « Qui est-ce qui... ? » ou « Qu'est-ce qui... ? » juste avant le verbe."},
+  ]},
+  { title:'Compléments du verbe', items:[
+    {value:'COD', short:'COD', color:'#2A8C82',
+      help:"Astuce : pose la question « quoi ? » ou « qui ? » juste après le verbe, sans mot de liaison. On ne peut pas le faire précéder de « à » ou « de »."},
+    {value:'COI', short:'COI', color:'#3B82A0',
+      help:"Astuce : pose la question « à qui ? », « à quoi ? », « de qui ? » ou « de quoi ? » après le verbe. Il y a toujours une préposition (à, de) juste avant lui."},
+    {value:'Attribut du sujet', short:'Attr. suj.', color:'#C98A3B',
+      help:"Il vient après un verbe d'état (être, sembler, paraître, devenir, rester...) et donne une qualité au sujet, comme si on disait « sujet = attribut »."},
+  ]},
+  { title:'Compléments du nom', items:[
+    {value:'Épithète', short:'Épith.', color:'#5B8C5A',
+      help:"C'est un adjectif placé directement à côté du nom (avant ou après), sans verbe entre eux : « la petite maison »."},
+    {value:'Complément du nom', short:'CdN', color:'#7A6452',
+      help:"C'est un groupe (souvent introduit par « de », « à », « en »...) qui précise un autre nom : « le vélo DE Paul », « une tasse À café »."},
+  ]},
+  { title:'Compléments de phrase', items:[
+    {value:'CC', short:'CC', color:'#8B6FB3',
+      help:"Il répond à où ?, quand ?, comment ? ou pourquoi ?. Astuce : on peut souvent le déplacer dans la phrase ou le supprimer sans la détruire."},
+  ]},
+];
+const NATURE = NATURE_GROUPS.flatMap(g=>g.items);
+const FONCTION = FONCTION_GROUPS.flatMap(g=>g.items);
+// Ces fonctions sont internes au groupe nominal (relatives au nom, pas au verbe) :
+// elles se superposent à la fonction principale du mot au lieu de la remplacer.
+const FONCTION_LEVEL2 = ['Épithète', 'Complément du nom'];
+const ACCORD = [
+  {key:'a', color:'#E8A33D'},
+  {key:'b', color:'#5FA8A0'},
+  {key:'c', color:'#D8729A'},
+  {key:'d', color:'#6E8FC9'},
+  {key:'e', color:'#9B7FCB'},
+];
+
+let tokens = [];
+let activeTool = 'nature';
+let helpMode = false;
+let correctionMode = false;
+let marks = []; // {tokenId, charStart, charEnd, chainId, color}
+let currentChainId = null;
+let currentChainColor = ACCORD[0].color;
+let chainCounter = 0;
+let bracketSide = 'before'; // 'before' | 'after'
+
+function isLetterMode(){ return activeTool==='accord' && !correctionMode && !helpMode; }
+function isPropositionsMode(){ return activeTool==='propositions' && !correctionMode && !helpMode; }
+
+// Terminaisons à entourer en un seul bloc, du plus spécifique au plus court (l'ordre est recalculé par longueur).
+const SPECIAL_ENDINGS = [
+  'eaux','iaux','aux','oux',                 // pluriels irréguliers : chevAUX, châtEAUX, chOUX
+  'aient','ions','iez','ent','ons','nt',     // terminaisons verbales (accord sujet-verbe) : chantENT, ils fONT/vONT/sONT
+  'trice','euse','ette','enne','onne','ive', // féminin des adjectifs
+].sort((a,b)=>b.length-a.length);
+// Mots où la terminaison ressemble à une marque d'accord mais n'en est pas une (ex. "doux", "roux", "faux" : adjectifs masculins singuliers invariables).
+const ENDING_EXCEPTIONS = ['doux','roux','faux'];
+
+function specialEndingLen(text){
+  const lower = text.toLowerCase();
+  if(ENDING_EXCEPTIONS.includes(lower)) return 0;
+  for(const end of SPECIAL_ENDINGS){
+    if(lower.length>end.length && lower.endsWith(end)) return end.length;
+  }
+  return 0;
+}
+
+function getEndingRange(text, ci){
+  const special = specialEndingLen(text);
+  if(special>0){
+    const start = text.length - special;
+    if(ci>=start) return {start, end:text.length-1};
+  }
+  return {start:ci, end:ci};
+}
+
+function findMarkAt(tid, ci){
+  return marks.find(m=>m.tokenId===tid && ci>=m.charStart && ci<=m.charEnd);
+}
+function toggleLetterMark(tok, ci){
+  const existing = findMarkAt(tok.id, ci);
+  if(existing){
+    marks = marks.filter(m=>m!==existing);
+  } else {
+    const range = getEndingRange(tok.text, ci);
+    if(currentChainId===null) currentChainId = 'c'+(++chainCounter);
+    marks.push({tokenId:tok.id, charStart:range.start, charEnd:range.end, chainId:currentChainId, color:currentChainColor});
+  }
+  render();
+}
+function toggleSubjectAnchor(tok){
+  const existing = marks.find(m=>m.tokenId===tok.id && m.isSubjectAnchor);
+  if(existing){
+    marks = marks.filter(m=>m!==existing);
+  } else {
+    if(currentChainId===null) currentChainId = 'c'+(++chainCounter);
+    marks.push({tokenId:tok.id, charStart:0, charEnd:tok.text.length-1, chainId:currentChainId, color:currentChainColor, isSubjectAnchor:true});
+  }
+  render();
+}
+
+const ecriture = document.getElementById('ecriture');
+const analyseZone = document.getElementById('analyse-zone');
+const dashboard = document.getElementById('dashboard');
+const btnAnalyser = document.getElementById('btn-analyser');
+const btnModifier = document.getElementById('btn-modifier');
+const btnCorrectMode = document.getElementById('btn-correct-mode');
+const btnDeselect = document.getElementById('btn-deselect');
+const btnReset = document.getElementById('btn-reset');
+const hint = document.getElementById('hint');
+const btnHelpMode = document.getElementById('btn-help-mode');
+const helpOverlay = document.getElementById('help-overlay');
+const helpTitle = document.getElementById('help-title');
+const helpBody = document.getElementById('help-body');
+const btnHelpClose = document.getElementById('btn-help-close');
+
+function showHelp(item){
+  helpTitle.textContent = item.value;
+  helpBody.textContent = item.help || "Pas d'astuce disponible pour le moment.";
+  helpOverlay.classList.add('visible');
+}
+btnHelpClose.onclick = ()=> helpOverlay.classList.remove('visible');
+helpOverlay.onclick = (e)=>{ if(e.target===helpOverlay) helpOverlay.classList.remove('visible'); };
+
+function deactivateAllModes(){
+  helpMode = false; btnHelpMode.classList.remove('active');
+  document.querySelectorAll('#chips-nature .chip:not(.clear), #chips-fonction .chip:not(.clear)').forEach(c=>c.classList.remove('help-active'));
+  correctionMode = false; btnCorrectMode.classList.remove('active');
+}
+function updateHint(){
+  if(helpMode) hint.textContent = "Mode aide activé 🔍 : touche une étiquette ci-dessus pour voir comment la repérer (elle ne s'appliquera pas).";
+  else if(correctionMode) hint.textContent = "Mode correction activé ✏️ : touche un mot fautif pour le corriger directement, sans perdre tes étiquettes.";
+  else if(isLetterMode()) hint.textContent = "Choisis une couleur, puis touche 2 ou 3 lettres qui portent la marque d'accord — elles seront reliées par une flèche.";
+  else if(isPropositionsMode()) hint.textContent = "Choisis [ ou ], puis touche le mot juste avant lequel (ou après lequel) le crochet doit s'insérer.";
+  else hint.textContent = "Touche un ou plusieurs mots dans la phrase, puis touche une étiquette ci-dessus.";
+}
+
+btnHelpMode.onclick = ()=>{
+  const turningOn = !helpMode;
+  deactivateAllModes();
+  if(turningOn){
+    helpMode = true;
+    btnHelpMode.classList.add('active');
+    document.querySelectorAll('#chips-nature .chip:not(.clear), #chips-fonction .chip:not(.clear)').forEach(c=>c.classList.add('help-active'));
+  }
+  tokens.forEach(t=>t.selected=false);
+  updateHint();
+  render();
+};
+
+const NO_SPLIT = [
+  "aujourd'hui","presqu'île","presqu'ile","quelqu'un","quelqu'une","quelqu'uns","quelqu'unes",
+  "grand'mère","grand'messe","prud'homme","prud'hommes","entr'aide","entr'apercevoir"
+];
+
+function splitElisions(word){
+  const norm = word.replace(/’/g, "'");
+  if(!norm.includes("'")) return [word];
+  if(NO_SPLIT.some(w => w.toLowerCase() === norm.toLowerCase())) return [word];
+  // coupe juste après chaque apostrophe, qui reste collée au fragment qui la précède (ex: "qu'" + "il")
+  return word.split(/(?<=['’])/).filter(Boolean);
+}
+
+function tokenize(text){
+  const raw = text.trim().split(/\s+/).filter(Boolean);
+  const out = [];
+  raw.forEach(chunk => {
+    const m = chunk.match(/^([«"'\(]*)([0-9A-Za-zÀ-ÖØ-öø-ÿ'’-]+)([»"'.,!?;:\)]*)$/);
+    if(m){
+      const [, lead, word, trail] = m;
+      if(lead) out.push(mk(lead,false));
+      splitElisions(word).forEach(w => out.push(mk(w,true)));
+      if(trail){ trail.split('').forEach(p=>out.push(mk(p,false))); }
+    } else {
+      out.push(mk(chunk,false));
+    }
+  });
+  return out;
+}
+let tokenIdCounter = 0;
+function mk(text,isWord){
+  return {id:'tok'+(++tokenIdCounter), text, isWord, selected:false, nature:null, natureGroup:null, fonction:null, fonction2:null, accord:null, accordGroup:null};
+}
+function mkBracket(ch){
+  return {id:'tok'+(++tokenIdCounter), text:ch, isWord:false, isBracket:true, selected:false, nature:null, natureGroup:null, fonction:null, fonction2:null, accord:null, accordGroup:null};
+}
+function insertBracket(tok, side){
+  const idx = tokens.indexOf(tok);
+  if(idx===-1) return;
+  tokens.splice(side==='before' ? idx : idx+1, 0, mkBracket(side==='before' ? '[' : ']'));
+  render();
+}
+
+function groupPos(i, field){
+  const val = tokens[i][field];
+  if(val===null || val===undefined) return null;
+  const prevSame = i>0 && tokens[i-1][field]===val;
+  const nextSame = i<tokens.length-1 && tokens[i+1][field]===val;
+  if(prevSame && nextSame) return 'middle';
+  if(!prevSame && nextSame) return 'start';
+  if(prevSame && !nextSame) return 'end';
+  return 'single';
+}
+
+function getRuns(field){
+  const runs = [];
+  let i = 0;
+  while(i < tokens.length){
+    if(!tokens[i].isWord || tokens[i][field]==null){ i++; continue; }
+    const val = tokens[i][field];
+    let j = i;
+    while(j+1 < tokens.length && tokens[j+1].isWord && tokens[j+1][field]===val) j++;
+    runs.push({start:i, end:j, value:val});
+    i = j+1;
+  }
+  return runs;
+}
+
+function colorFor(list, value){
+  const f = list.find(x=>x.value===value);
+  return f ? f.color : '#999';
+}
+function shortFor(list, value){
+  const f = list.find(x=>x.value===value);
+  return f ? f.short : value;
+}
+function accordColor(key){
+  const f = ACCORD.find(x=>x.key===key);
+  return f ? f.color : '#ccc';
+}
+
+const wordFlow = document.getElementById('word-flow');
+const overlayBack = document.getElementById('overlay-back');
+const overlayFront = document.getElementById('overlay-front');
+
+function render(){
+  wordFlow.innerHTML = '';
+  tokens.forEach((tok,i)=>{
+    const span = document.createElement('span');
+    if(!tok.isWord){
+      if(tok.isBracket){
+        span.className = 'bracket-token' + (isPropositionsMode() ? ' bracket-active':'');
+        span.textContent = tok.text;
+        if(isPropositionsMode()){
+          span.onclick = ()=>{ tokens = tokens.filter(t=>t!==tok); render(); };
+        }
+      } else {
+        span.className = 'punct-token' + (correctionMode ? ' correct-active':'');
+        span.textContent = tok.text;
+        span.dataset.index = i;
+        if(correctionMode){ span.onclick = ()=> startEditing(span, i); }
+      }
+    } else {
+      span.className = 'word-token' + (tok.selected ? ' selected':'') + (/['’]$/.test(tok.text) ? ' elided':'') + (correctionMode ? ' correct-active':'');
+      span.dataset.index = i;
+      if(isPropositionsMode()){
+        span.onclick = ()=> insertBracket(tok, bracketSide);
+      } else if(!isLetterMode()){
+        span.onclick = ()=>{ if(correctionMode){ startEditing(span, i); } else { toggleSelect(i); } };
+      }
+      const endLen = (tok.accord && tok.text.length>1) ? (specialEndingLen(tok.text) || (tok.text.length>=4 ? 2 : 1)) : 0;
+      [...tok.text].forEach((ch, ci)=>{
+        const letter = document.createElement('span');
+        letter.className = 'letter' + (isLetterMode() ? ' letters-active':'') + (ci>=tok.text.length-endLen ? ' accord-mark':'');
+        if(endLen>0 && ci>=tok.text.length-endLen){ letter.style.color = accordColor(tok.accord); }
+        letter.textContent = ch;
+        letter.dataset.tid = tok.id;
+        letter.dataset.ci = ci;
+        if(isLetterMode()){
+          letter.onclick = (e)=>{ e.stopPropagation(); toggleLetterMark(tok, ci); };
+        }
+        span.appendChild(letter);
+      });
+    }
+    wordFlow.appendChild(span);
+  });
+  requestAnimationFrame(renderOverlays);
+}
+
+// Édition inline d'un mot ou d'un signe de ponctuation, sans toucher aux étiquettes des autres mots.
+function startEditing(span, i){
+  span.textContent = tokens[i].text;
+  span.contentEditable = 'true';
+  span.classList.add('editing');
+  span.classList.remove('correct-active');
+  span.focus();
+  const range = document.createRange();
+  range.selectNodeContents(span);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  const commit = ()=>{
+    span.removeEventListener('blur', commit);
+    span.removeEventListener('keydown', onKey);
+    const newText = span.textContent.trim();
+    if(newText===''){
+      tokens.splice(i,1);
+    } else {
+      tokens[i].text = newText;
+    }
+    render();
+  };
+  const onKey = (e)=>{
+    if(e.key==='Enter'){ e.preventDefault(); span.blur(); }
+    if(e.key==='Escape'){ e.preventDefault(); span.textContent = tokens[i].text; span.blur(); }
+  };
+  span.addEventListener('blur', commit);
+  span.addEventListener('keydown', onKey);
+}
+
+// Splits a run's word elements into sub-groups when the run wraps onto a new line,
+// so a tag/underline never spans two visual lines.
+function splitByLine(elements){
+  const groups = [[elements[0]]];
+  for(let k=1;k<elements.length;k++){
+    const prevTop = groups[groups.length-1][groups[groups.length-1].length-1].getBoundingClientRect().top;
+    const top = elements[k].getBoundingClientRect().top;
+    if(Math.abs(top-prevTop) < 6){ groups[groups.length-1].push(elements[k]); }
+    else { groups.push([elements[k]]); }
+  }
+  return groups;
+}
+
+function renderOverlays(){
+  overlayBack.innerHTML = '';
+  overlayFront.innerHTML = '';
+  const containerRect = analyseZone.getBoundingClientRect();
+  const wordEls = {};
+  wordFlow.querySelectorAll('.word-token').forEach(el=>{ wordEls[el.dataset.index] = el; });
+  const letterEls = {};
+  wordFlow.querySelectorAll('.letter').forEach(el=>{ letterEls[el.dataset.tid+'_'+el.dataset.ci] = el; });
+
+  function rectFor(elements){
+    let left=Infinity, right=-Infinity, top=Infinity, bottom=-Infinity;
+    elements.forEach(el=>{
+      const r = el.getBoundingClientRect();
+      left=Math.min(left,r.left); right=Math.max(right,r.right);
+      top=Math.min(top,r.top); bottom=Math.max(bottom,r.bottom);
+    });
+    return {
+      left: left - containerRect.left,
+      top: top - containerRect.top,
+      bottom: bottom - containerRect.top,
+      width: right-left,
+      centerX: (left+right)/2 - containerRect.left
+    };
+  }
+
+  // Position de l'étiquette "Suj." (si le sujet est ancré, la flèche partira de là, pas d'un point flottant séparé).
+  const subjectAnchorPoints = {};
+  getRuns('fonction').forEach(run=>{
+    if(run.value!=='Sujet') return;
+    splitByLine(elementsFor(run)).forEach(group=>{
+      const r = rectFor(group);
+      subjectAnchorPoints[tokens[run.end].id] = { x: r.centerX, y: r.bottom + 27 };
+    });
+  });
+
+  // Une bulle par marque, même si elle couvre plusieurs lettres (ex. "-aux", "-euse"...).
+  // Pour le sujet (déjà souligné par la fonction), la flèche part directement de l'étiquette "Suj.".
+  const markRects = [];
+  marks.forEach(m=>{
+    if(m.isSubjectAnchor){
+      const p = subjectAnchorPoints[m.tokenId];
+      if(p) markRects.push({mark:m, rect:{left:p.x, top:p.y, bottom:p.y, width:0, centerX:p.x}});
+      return;
+    }
+    const els = [];
+    for(let c=m.charStart;c<=m.charEnd;c++){ const el=letterEls[m.tokenId+'_'+c]; if(el) els.push(el); }
+    if(els.length===0) return;
+    const r = rectFor(els);
+    const bubble = document.createElement('div');
+    bubble.className = 'ov-bg';
+    bubble.style.background = m.color+'22';
+    bubble.style.border = '2.5px solid '+m.color;
+    bubble.style.left = (r.left-1)+'px';
+    bubble.style.top = (r.top-1)+'px';
+    bubble.style.width = (r.width+2)+'px';
+    bubble.style.height = (r.bottom-r.top+2)+'px';
+    bubble.style.pointerEvents = activeTool==='accord' ? 'auto' : 'none';
+    bubble.style.cursor = 'pointer';
+    bubble.title = 'Touche pour retirer cette marque';
+    bubble.onclick = ()=>{ marks = marks.filter(x=>x!==m); render(); };
+    overlayFront.appendChild(bubble);
+    markRects.push({mark:m, rect:r});
+  });
+
+  const chainGroups = {};
+  markRects.forEach(mr=>{ (chainGroups[mr.mark.chainId] = chainGroups[mr.mark.chainId]||[]).push(mr); });
+  Object.values(chainGroups).forEach(group=>{
+    for(let k=0;k<group.length-1;k++){
+      const ra = group[k].rect, rb = group[k+1].rect;
+      const pa = { x: ra.left+ra.width/2, y: ra.bottom+2 };
+      const pb = { x: rb.left+rb.width/2, y: rb.bottom+2 };
+      drawArrow(pa, pb, group[k].mark.color);
+    }
+  });
+
+  function elementsFor(run){
+    const els = [];
+    for(let i=run.start;i<=run.end;i++){ if(tokens[i].isWord) els.push(wordEls[i]); }
+    return els;
+  }
+
+  function elementsForIndices(indices){
+    return indices.filter(i=>tokens[i].isWord).map(i=>wordEls[i]);
+  }
+
+  function getNatureRuns(){
+    const runs = [];
+    const seen = new Set();
+    for(let i=0;i<tokens.length;i++){
+      if(!tokens[i].isWord || tokens[i].nature==null || seen.has(i)) continue;
+      const gid = tokens[i].natureGroup;
+      if(gid){
+        const idxs = [];
+        for(let k=0;k<tokens.length;k++){ if(tokens[k].natureGroup===gid){ idxs.push(k); seen.add(k); } }
+        runs.push({indices: idxs, value: tokens[i].nature});
+      } else {
+        let j = i;
+        while(j+1<tokens.length && tokens[j+1].isWord && tokens[j+1].nature===tokens[i].nature && !tokens[j+1].natureGroup) j++;
+        const idxs = [];
+        for(let x=i;x<=j;x++){ idxs.push(x); seen.add(x); }
+        runs.push({indices: idxs, value: tokens[i].nature});
+        i = j;
+      }
+    }
+    return runs;
+  }
+
+  getNatureRuns().forEach(run=>{
+    splitByLine(elementsForIndices(run.indices)).forEach(group=>{
+      const r = rectFor(group);
+      const chip = document.createElement('div');
+      chip.className = 'ov-chip';
+      chip.style.background = colorFor(NATURE, run.value);
+      chip.style.left = r.centerX+'px';
+      chip.style.top = (r.top-26)+'px';
+      chip.textContent = shortFor(NATURE, run.value);
+      chip.title = run.value;
+      chip.style.pointerEvents = activeTool==='nature' ? 'auto' : 'none';
+      chip.onclick = ()=> clearNature(run.indices[0]);
+      overlayFront.appendChild(chip);
+    });
+  });
+
+  getRuns('fonction').forEach(run=>{
+    splitByLine(elementsFor(run)).forEach(group=>{
+      const r = rectFor(group);
+      const anchorTok = run.value==='Sujet' ? tokens[run.end] : null;
+      const isAnchored = anchorTok && marks.some(m=>m.tokenId===anchorTok.id && m.isSubjectAnchor);
+
+      const bar = document.createElement('div');
+      bar.className = 'ov-bar';
+      bar.style.background = colorFor(FONCTION, run.value);
+      bar.style.left = r.left+'px';
+      bar.style.width = r.width+'px';
+      bar.style.top = (r.bottom+3)+'px';
+      if(activeTool==='fonction'){
+        bar.style.pointerEvents = 'auto';
+        bar.onclick = ()=> clearRun('fonction', run.start);
+      } else if(activeTool==='accord' && anchorTok){
+        bar.style.pointerEvents = 'auto';
+        bar.style.cursor = 'pointer';
+        bar.title = isAnchored ? "Touche pour désancrer le sujet" : "Touche pour faire partir une flèche de ce sujet";
+        if(isAnchored){ bar.style.boxShadow = '0 0 0 2px '+currentChainColor+', 0 0 0 4px #fff'; }
+        bar.onclick = ()=> toggleSubjectAnchor(anchorTok);
+      } else {
+        bar.style.pointerEvents = 'none';
+      }
+      overlayFront.appendChild(bar);
+
+      const lbl = document.createElement('div');
+      lbl.className = 'ov-chip';
+      lbl.style.background = colorFor(FONCTION, run.value);
+      lbl.style.left = r.centerX+'px';
+      lbl.style.top = (r.bottom+11)+'px';
+      lbl.textContent = shortFor(FONCTION, run.value);
+      lbl.title = run.value;
+      if(activeTool==='fonction'){
+        lbl.style.pointerEvents = 'auto';
+        lbl.onclick = ()=> clearRun('fonction', run.start);
+      } else if(activeTool==='accord' && anchorTok){
+        lbl.style.pointerEvents = 'auto';
+        lbl.style.cursor = 'pointer';
+        lbl.onclick = ()=> toggleSubjectAnchor(anchorTok);
+      } else {
+        lbl.style.pointerEvents = 'none';
+      }
+      overlayFront.appendChild(lbl);
+    });
+  });
+
+  // Second niveau : fonction interne au groupe nominal (épithète, complément du nom),
+  // empilée sous la fonction principale au lieu de la remplacer.
+  getRuns('fonction2').forEach(run=>{
+    splitByLine(elementsFor(run)).forEach(group=>{
+      const r = rectFor(group);
+      const bar2 = document.createElement('div');
+      bar2.className = 'ov-bar';
+      bar2.style.background = colorFor(FONCTION, run.value);
+      bar2.style.left = r.left+'px';
+      bar2.style.width = r.width+'px';
+      bar2.style.top = (r.bottom+30)+'px';
+      bar2.style.pointerEvents = activeTool==='fonction' ? 'auto' : 'none';
+      bar2.onclick = ()=> clearRun('fonction2', run.start);
+      overlayFront.appendChild(bar2);
+
+      const lbl2 = document.createElement('div');
+      lbl2.className = 'ov-chip';
+      lbl2.style.background = colorFor(FONCTION, run.value);
+      lbl2.style.left = r.centerX+'px';
+      lbl2.style.top = (r.bottom+38)+'px';
+      lbl2.textContent = shortFor(FONCTION, run.value);
+      lbl2.title = run.value;
+      lbl2.style.pointerEvents = activeTool==='fonction' ? 'auto' : 'none';
+      lbl2.onclick = ()=> clearRun('fonction2', run.start);
+      overlayFront.appendChild(lbl2);
+    });
+  });
+
+  function drawArrow(a, b, color){
+    const pad = 14;
+    const left = Math.min(a.x, b.x) - pad, top = Math.min(a.y, b.y) - pad;
+    const width = Math.abs(a.x-b.x) + pad*2, height = Math.abs(a.y-b.y) + pad*2 + 18;
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS,'svg');
+    svg.setAttribute('width', width); svg.setAttribute('height', height);
+    svg.style.position='absolute'; svg.style.left=left+'px'; svg.style.top=top+'px'; svg.style.overflow='visible';
+    const ax=a.x-left, ay=a.y-top, bx=b.x-left, by=b.y-top;
+    const cx=(ax+bx)/2, cy=Math.max(ay,by)+18;
+    const path = document.createElementNS(svgNS,'path');
+    path.setAttribute('d', `M ${ax} ${ay} Q ${cx} ${cy} ${bx} ${by}`);
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke', color); path.setAttribute('stroke-width','2.5');
+    path.setAttribute('stroke-linecap','round'); path.setAttribute('opacity','0.9');
+    svg.appendChild(path);
+    const angle = Math.atan2(by-cy, bx-cx);
+    const size = 6;
+    const p1 = {x:bx, y:by};
+    const p2 = {x:bx-size*Math.cos(angle-Math.PI/7), y:by-size*Math.sin(angle-Math.PI/7)};
+    const p3 = {x:bx-size*Math.cos(angle+Math.PI/7), y:by-size*Math.sin(angle+Math.PI/7)};
+    const tri = document.createElementNS(svgNS,'polygon');
+    tri.setAttribute('points', `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`);
+    tri.setAttribute('fill', color);
+    svg.appendChild(tri);
+    overlayFront.appendChild(svg);
+  }
+
+  function drawConnector(a, b, color){
+    const left = Math.min(a.x, b.x), top = Math.min(a.y, b.y);
+    const width = Math.max(Math.abs(a.x-b.x), 1), height = Math.max(Math.abs(a.y-b.y), 1) + 20;
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS,'svg');
+    svg.setAttribute('width', width); svg.setAttribute('height', height);
+    svg.style.position='absolute'; svg.style.left=left+'px'; svg.style.top=top+'px'; svg.style.overflow='visible';
+    const ax=a.x-left, ay=a.y-top, bx=b.x-left, by=b.y-top;
+    const cx=(ax+bx)/2, cy=Math.max(ay,by)+16;
+    const path = document.createElementNS(svgNS,'path');
+    path.setAttribute('d', `M ${ax} ${ay} Q ${cx} ${cy} ${bx} ${by}`);
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke', color); path.setAttribute('stroke-width','3');
+    path.setAttribute('stroke-linecap','round'); path.setAttribute('opacity','0.85');
+    svg.appendChild(path);
+    overlayBack.appendChild(svg);
+  }
+}
+
+window.addEventListener('resize', ()=>{ if(tokens.length) renderOverlays(); });
+
+function toggleSelect(i){
+  tokens[i].selected = !tokens[i].selected;
+  render();
+}
+
+function clearRun(field, i){
+  const val = tokens[i][field];
+  let j = i;
+  while(j>0 && tokens[j-1].isWord && tokens[j-1][field]===val) j--;
+  let k = i;
+  while(k<tokens.length-1 && tokens[k+1].isWord && tokens[k+1][field]===val) k++;
+  for(let x=j;x<=k;x++) tokens[x][field] = null;
+  render();
+}
+
+function clearNature(i){
+  const gid = tokens[i].natureGroup;
+  if(gid){
+    tokens.forEach(t=>{ if(t.natureGroup===gid){ t.nature=null; t.natureGroup=null; } });
+  } else {
+    const val = tokens[i].nature;
+    let j = i;
+    while(j>0 && tokens[j-1].isWord && tokens[j-1].nature===val && !tokens[j-1].natureGroup) j--;
+    let k = i;
+    while(k<tokens.length-1 && tokens[k+1].isWord && tokens[k+1].nature===val && !tokens[k+1].natureGroup) k++;
+    for(let x=j;x<=k;x++) tokens[x].nature = null;
+  }
+  render();
+}
+
+let groupCounter = 0;
+
+function applyTag(field, value){
+  const selectedIdx = tokens.map((t,i)=>t.selected?i:-1).filter(i=>i>=0);
+  if(selectedIdx.length===0){
+    hint.textContent = "Touche d'abord un ou plusieurs mots dans la phrase 👆";
+    hint.style.color = '#C0533E';
+    setTimeout(()=>{ hint.style.color=''; hint.textContent = "Touche un ou plusieurs mots dans la phrase, puis touche une étiquette ci-dessus."; },1800);
+    return;
+  }
+  const fonctionField = (field==='fonction' && value!==null && FONCTION_LEVEL2.includes(value)) ? 'fonction2' : field;
+  if(field==='nature' && value!==null && selectedIdx.length>1){
+    const gid = 'g'+(++groupCounter);
+    selectedIdx.forEach(i=>{ tokens[i].nature = value; tokens[i].natureGroup = gid; tokens[i].selected=false; });
+  } else if(field==='fonction' && value===null){
+    // "Aucune" efface les deux niveaux de fonction sur les mots sélectionnés.
+    selectedIdx.forEach(i=>{ tokens[i].fonction = null; tokens[i].fonction2 = null; tokens[i].selected = false; });
+  } else {
+    selectedIdx.forEach(i=>{
+      tokens[i][fonctionField] = value;
+      if(field==='nature') tokens[i].natureGroup = null;
+      tokens[i].selected = false;
+    });
+  }
+  render();
+  if(field==='fonction' && value==='Sujet'){
+    showHelp({
+      value: 'Sujet souligné !',
+      help: "Pense à remplacer le sujet par un pronom (il, elle, ils, elles, on...), puis fais l'accord du verbe avec ce pronom."
+    });
+  }
+}
+
+btnAnalyser.onclick = ()=>{
+  const text = ecriture.innerText;
+  if(!text.trim()) return;
+  tokens = tokenize(text);
+  ecriture.style.display='none';
+  analyseZone.classList.add('visible');
+  btnAnalyser.style.display='none';
+  btnModifier.style.display='inline-block';
+  btnCorrectMode.style.display='inline-block';
+  dashboard.style.display='block';
+  document.body.classList.add('dashboard-open');
+  marks = [];
+  currentChainId = null;
+  render();
+};
+
+btnModifier.onclick = ()=>{
+  if(tokens.some(t=>t.nature||t.fonction||t.fonction2)){
+    if(!confirm("Tout réécrire effacera les étiquettes déjà posées. Continuer ?")) return;
+  }
+  ecriture.style.display='block';
+  analyseZone.classList.remove('visible');
+  btnAnalyser.style.display='inline-block';
+  btnModifier.style.display='none';
+  btnCorrectMode.style.display='none';
+  dashboard.style.display='none';
+  document.body.classList.remove('dashboard-open');
+  correctionMode = false;
+  btnCorrectMode.classList.remove('active');
+  marks = [];
+  currentChainId = null;
+  tokens = [];
+};
+
+btnCorrectMode.onclick = ()=>{
+  const turningOn = !correctionMode;
+  deactivateAllModes();
+  if(turningOn){ correctionMode = true; btnCorrectMode.classList.add('active'); }
+  tokens.forEach(t=>t.selected=false);
+  updateHint();
+  render();
+};
+
+btnDeselect.onclick = ()=>{ tokens.forEach(t=>t.selected=false); render(); };
+btnReset.onclick = ()=>{
+  if(confirm("Effacer toutes les étiquettes posées sur cette phrase ?")){
+    tokens.forEach(t=>{ t.nature=null; t.natureGroup=null; t.fonction=null; t.fonction2=null; t.selected=false; });
+    render();
+  }
+};
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.onclick = ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    activeTool = tab.dataset.tool;
+    document.getElementById('chips-nature').style.display = activeTool==='nature' ? 'flex':'none';
+    document.getElementById('chips-fonction').style.display = activeTool==='fonction' ? 'flex':'none';
+    document.getElementById('chips-accord').style.display = activeTool==='accord' ? 'flex':'none';
+    document.getElementById('chips-propositions').style.display = activeTool==='propositions' ? 'flex':'none';
+    tokens.forEach(t=>t.selected=false);
+    updateHint();
+    render();
+  };
+});
+
+// --- Découpage en propositions ([ ouvrant / ] fermant) ---
+const btnBracketOpen = document.getElementById('btn-bracket-open');
+const btnBracketClose = document.getElementById('btn-bracket-close');
+btnBracketOpen.onclick = ()=>{
+  bracketSide = 'before';
+  btnBracketOpen.classList.add('active');
+  btnBracketClose.classList.remove('active');
+};
+btnBracketClose.onclick = ()=>{
+  bracketSide = 'after';
+  btnBracketClose.classList.add('active');
+  btnBracketOpen.classList.remove('active');
+};
+document.getElementById('btn-brackets-clear').onclick = ()=>{
+  if(!tokens.some(t=>t.isBracket)) return;
+  if(confirm('Effacer tous les crochets de cette phrase ?')){
+    tokens = tokens.filter(t=>!t.isBracket);
+    render();
+  }
+};
+
+function buildChips(){
+  const natureBox = document.getElementById('chips-nature');
+  NATURE_GROUPS.forEach(group=>{
+    const t = document.createElement('span');
+    t.className='chip-group-title'; t.textContent = group.title;
+    natureBox.appendChild(t);
+    group.items.forEach(n=>{
+      const c = document.createElement('span');
+      c.className='chip'; c.style.background=n.color; c.textContent=n.value;
+      c.onclick = ()=>{ if(helpMode){ showHelp(n); } else { applyTag('nature', n.value); } };
+      natureBox.appendChild(c);
+    });
+  });
+  const clearN = document.createElement('span');
+  clearN.className='chip clear'; clearN.textContent='✖ Aucune';
+  clearN.onclick = ()=>applyTag('nature', null);
+  natureBox.appendChild(clearN);
+
+  const fonctionBox = document.getElementById('chips-fonction');
+  FONCTION_GROUPS.forEach(group=>{
+    const t = document.createElement('span');
+    t.className='chip-group-title'; t.textContent = group.title;
+    fonctionBox.appendChild(t);
+    group.items.forEach(n=>{
+      const c = document.createElement('span');
+      c.className='chip'; c.style.background=n.color; c.textContent=n.value;
+      c.onclick = ()=>{ if(helpMode){ showHelp(n); } else { applyTag('fonction', n.value); } };
+      fonctionBox.appendChild(c);
+    });
+  });
+  const clearF = document.createElement('span');
+  clearF.className='chip clear'; clearF.textContent='✖ Aucune';
+  clearF.onclick = ()=>applyTag('fonction', null);
+  fonctionBox.appendChild(clearF);
+
+  const letterSwatches = document.getElementById('letter-swatches');
+  ACCORD.forEach((a,idx)=>{
+    const c = document.createElement('span');
+    c.className='accord-chip letter-swatch' + (idx===0 ? ' selected':'');
+    c.style.background=a.color;
+    c.title='Couleur du groupe de lettres';
+    c.onclick = ()=>{
+      currentChainColor = a.color;
+      currentChainId = null;
+      document.querySelectorAll('.letter-swatch').forEach(s=>s.classList.remove('selected'));
+      c.classList.add('selected');
+    };
+    letterSwatches.appendChild(c);
+  });
+  document.getElementById('btn-letters-clear').onclick = ()=>{
+    if(marks.length===0) return;
+    if(confirm('Effacer tous les groupes de lettres reliées sur cette phrase ?')){
+      marks = [];
+      currentChainId = null;
+      render();
+    }
+  };
+
+  const legend = document.getElementById('legend-grid');
+  [...NATURE_GROUPS, ...FONCTION_GROUPS].forEach(group=>{
+    const h = document.createElement('div');
+    h.className='chip-group-title';
+    h.style.margin = '8px 0 2px 2px';
+    h.textContent = group.title;
+    legend.appendChild(h);
+    group.items.forEach(item=>{
+      const d = document.createElement('div');
+      d.className='legend-item';
+      d.innerHTML = `<span class="legend-dot" style="background:${item.color}"></span>${item.value}`;
+      legend.appendChild(d);
+    });
+  });
+}
+buildChips();
+</script>
+
+</body>
+</html>
