@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>La phrase du jour — analyse grammaticale</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF6EC;
+    --paper-line:#E3DCC8;
+    --marge:#E2574C;
+    --ink:#2B2E4A;
+    --ink-soft:#5A5E78;
+    --nature:#8B6FB3;
+    --fonction:#2A8C82;
+    --accord:#D9A441;
+    --panel:#FFFFFF;
+    --shadow:0 2px 8px rgba(43,46,74,0.12);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:repeating-linear-gradient(to bottom, transparent 0 38px, var(--paper-line) 38px 39px);
+    background-position-y:140px;
+    color:var(--ink);
+    font-family:'Quicksand',sans-serif;
+    min-height:100vh;
+    padding-bottom:40px;
+  }
+  header{
+    padding:22px 18px 14px 26px;
+    position:relative;
+  }
+  header::before{
+    content:"";
+    position:absolute;
+    left:48px; top:0; bottom:0;
+    width:2px;
+    background:var(--marge);
+    opacity:0.55;
+  }
+  h1{
+    font-family:'Patrick Hand',cursive;
+    font-size:2rem;
+    margin:0 0 2px 0;
+    color:var(--ink);
+  }
+  .sub{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:0.95rem;
+    font-weight:600;
+  }
+  main{
+    max-width:780px;
+    margin:0 auto;
+    padding:0 16px;
+  }
+  .ecriture-card{
+    background:var(--panel);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    padding:18px 20px;
+    margin-top:8px;
+    position:relative;
+  }
+  .ecriture-card::before{
+    content:"";
+    position:absolute;
+    left:34px; top:0; bottom:0; width:2px;
+    background:var(--marge);
+    opacity:0.35;
+  }
+  #ecriture{
+    min-height:90px;
+    font-family:'Patrick Hand',cursive;
+    font-size:1.5rem;
+    line-height:38px;
+    padding-left:22px;
+    outline:none;
+    color:var(--ink);
+  }
+  #ecriture:empty:before{
+    content:attr(data-placeholder);
+    color:#B9B0A0;
+  }
+  .analyse-zone{
+    position:relative;
+    padding:36px 22px 64px 22px;
+    display:none;
+    font-size:1.45rem;
+  }
+  .analyse-zone.visible{ display:block; }
+  .overlay-layer{
+    position:absolute;
+    top:0; left:0; right:0; bottom:0;
+  }
+  .overlay-layer.back{ z-index:0; pointer-events:none; }
+  .overlay-layer.front{ z-index:2; pointer-events:none; }
+  .draw-layer{
+    position:absolute;
+    top:0; left:0; right:0; bottom:0;
+    z-index:3;
+    pointer-events:none;
+    touch-action:none;
+  }
+  .draw-layer.active{ pointer-events:auto; }
+  .word-flow{
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex-wrap:wrap;
+    row-gap:66px;
+    column-gap:3px;
+    align-items:flex-end;
+  }
+  .word-token{
+    cursor:pointer;
+    padding:1px 5px;
+    border-radius:6px;
+    transition:background .15s ease;
+  }
+  .word-token.selected{
+    outline:3px dashed #E2574C;
+    outline-offset:1px;
+    background:#FFF4E0;
+  }
+  .punct-token{ color:var(--ink-soft); padding:0 1px; }
+  .word-token.correct-active, .punct-token.correct-active{
+    outline:2px dashed #3B82A0;
+    outline-offset:2px;
+    cursor:text;
+    animation:correct-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes correct-pulse{
+    0%,100%{ background:rgba(59,130,160,0.08); }
+    50%{ background:rgba(59,130,160,0.22); }
+  }
+  .word-token.editing, .punct-token.editing{
+    outline:3px solid #3B82A0;
+    outline-offset:1px;
+    background:#fff;
+    animation:none;
+    min-width:0.6em;
+  }
+  #btn-correct-mode.active{
+    background:#3B82A0;
+    color:#fff;
+    border-color:#3B82A0;
+  }
+  .accord-mark{
+    font-weight:800;
+    text-decoration:underline;
+    text-decoration-thickness:2px;
+    text-underline-offset:2px;
+  }
+  .word-token.elided{ margin-right:-3px; }
+  .ov-chip{
+    position:absolute;
+    pointer-events:auto;
+    font-family:'Quicksand',sans-serif;
+    font-size:0.62rem;
+    font-weight:700;
+    color:#fff;
+    padding:2px 8px;
+    border-radius:8px;
+    white-space:nowrap;
+    cursor:pointer;
+    transform:translateX(-50%);
+    box-shadow:0 1px 2px rgba(0,0,0,0.2);
+  }
+  .ov-bar{
+    position:absolute;
+    pointer-events:auto;
+    height:4px;
+    border-radius:3px;
+    cursor:pointer;
+  }
+  .ov-bg{
+    position:absolute;
+    pointer-events:none;
+    border-radius:50%;
+  }
+  .actions-row{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:12px;
+  }
+  button.btn{
+    font-family:'Quicksand',sans-serif;
+    font-weight:700;
+    font-size:0.95rem;
+    border:none;
+    border-radius:999px;
+    padding:11px 20px;
+    cursor:pointer;
+    color:white;
+    background:var(--ink);
+    box-shadow:var(--shadow);
+    transition:transform .12s ease;
+  }
+  button.btn:active{ transform:scale(0.95); }
+  button.btn.secondary{
+    background:#fff;
+    color:var(--ink);
+    border:2px solid var(--ink);
+  }
+  /* TABLEAU DE BORD */
+  .dashboard{
+    position:fixed;
+    left:50%;
+    bottom:0;
+    transform:translateX(-50%);
+    width:100%;
+    max-width:780px;
+    margin:0;
+    background:#fff;
+    border-radius:20px 20px 0 0;
+    box-shadow:0 -6px 18px rgba(43,46,74,0.18);
+    padding:12px 16px calc(14px + env(safe-area-inset-bottom));
+    max-height:46vh;
+    overflow-y:auto;
+    z-index:100;
+  }
+  .dashboard-handle{
+    width:40px; height:4px;
+    background:var(--paper-line);
+    border-radius:3px;
+    margin:0 auto 10px;
+  }
+  body.dashboard-open main{ padding-bottom:48vh; }
+  .dash-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:4px;
+  }
+  .help-toggle{
+    font-family:'Quicksand',sans-serif;
+    font-weight:700;
+    font-size:0.85rem;
+    border:2px solid var(--marge);
+    background:#fff;
+    color:var(--marge);
+    border-radius:999px;
+    padding:6px 12px;
+    cursor:pointer;
+  }
+  .help-toggle.active{
+    background:var(--marge);
+    color:#fff;
+  }
+  .help-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(43,46,74,0.45);
+    z-index:300;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .help-overlay.visible{ display:flex; }
+  .help-card{
+    background:#fff;
+    border-radius:18px;
+    padding:24px;
+    max-width:380px;
+    box-shadow:var(--shadow);
+  }
+  .help-eyebrow{
+    margin:0 0 2px;
+    font-size:0.78rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    color:var(--ink-soft);
+  }
+  .help-card h3{
+    font-family:'Patrick Hand',cursive;
+    font-size:1.6rem;
+    margin:0 0 10px;
+    color:var(--ink);
+  }
+  .help-card p#help-body{
+    font-size:1rem;
+    line-height:1.55;
+    color:var(--ink);
+    margin:0 0 18px;
+  }
+  .dash-title{
+    font-family:'Patrick Hand',cursive;
+    font-size:1.3rem;
+    margin:0 0 10px 4px;
+    color:var(--ink-soft);
+  }
+  .tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .tab{
+    flex:1;
+    min-width:110px;
+    text-align:center;
+    padding:10px 8px;
+    border-radius:12px;
+    font-weight:700;
+    cursor:pointer;
+    border:2px solid transparent;
+    color:#fff;
+    opacity:0.55;
+    font-size:0.95rem;
+  }
+  .tab.active{ opacity:1; box-shadow:var(--shadow); }
+  .tab[data-tool="nature"]{ background:var(--nature); }
+  .tab[data-tool="fonction"]{ background:var(--fonction); }
+  .tab[data-tool="accord"]{ background:var(--accord); }
+  .chip-group-title{
+    flex-basis:100%;
+    font-size:0.78rem;
+    font-weight:700;
+    color:var(--ink-soft);
+    margin:4px 0 -2px 2px;
+    text-transform:uppercase;
+    letter-spacing:0.02em;
+  }
+  .chip-group-title:first-child{ margin-top:0; }
+  .chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    min-height:46px;
+  }
+  .chip{
+    font-weight:700;
+    font-size:0.95rem;
+    padding:10px 16px;
+    border-radius:10px;
+    color:#fff;
+    cursor:pointer;
+    box-shadow:0 1px 3px rgba(0,0,0,0.15);
+    border:2px dashed rgba(255,255,255,0.55);
+    user-select:none;
+  }
+  .chip:active{ transform:scale(0.94); }
+  .chip.help-active{
+    outline:3px dashed rgba(255,255,255,0.85);
+    outline-offset:-6px;
+    cursor:help;
+    animation:help-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes help-pulse{
+    0%,100%{ opacity:1; }
+    50%{ opacity:0.72; }
+  }
+  .chip.clear{
+    background:#fff !important;
+    color:var(--ink);
+    border:2px dashed #cfc7b3;
+  }
+  .accord-chip{
+    width:42px; height:42px; border-radius:50%;
+    border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.2);
+    cursor:pointer;
+  }
+  .accord-row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+  .accord-mode-switch{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .mode-btn{
+    font-family:'Quicksand',sans-serif;
+    font-weight:700;
+    font-size:0.85rem;
+    padding:8px 14px;
+    border-radius:999px;
+    border:2px solid var(--accord);
+    background:#fff;
+    color:var(--accord);
+    cursor:pointer;
+  }
+  .mode-btn.active{ background:var(--accord); color:#fff; }
+  .draw-swatches{ display:flex; gap:10px; align-items:center; }
+  .draw-swatch.selected{
+    outline:3px solid var(--ink);
+    outline-offset:2px;
+  }
+  .hint{
+    font-size:0.85rem;
+    color:var(--ink-soft);
+    margin:10px 4px 0;
+  }
+  .bottom-actions{
+    display:flex;
+    justify-content:space-between;
+    margin-top:18px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .legend{
+    margin-top:16px;
+    font-size:0.85rem;
+    color:var(--ink-soft);
+  }
+  .legend summary{ cursor:pointer; font-weight:700; }
+  .legend-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+    gap:6px;
+    margin-top:8px;
+  }
+  .legend-grid .chip-group-title{ grid-column:1 / -1; }
+  .legend-item{ display:flex; align-items:center; gap:6px; }
+  .legend-dot{ width:12px; height:12px; border-radius:50%; flex:none; }
+  @media (max-width:480px){
+    h1{ font-size:1.6rem; }
+    #ecriture, .analyse-zone{ font-size:1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>La phrase du jour</h1>
+  <p class="sub">Écris la phrase dictée, puis analyse-la avec le tableau de bord</p>
+</header>
+
+<main>
+
+  <div class="ecriture-card">
+    <div id="ecriture" contenteditable="true" data-placeholder="Écris ici la phrase dictée…"></div>
+    <div id="analyse-zone" class="analyse-zone">
+      <div id="overlay-back" class="overlay-layer back"></div>
+      <div id="word-flow" class="word-flow"></div>
+      <div id="overlay-front" class="overlay-layer front"></div>
+      <svg id="draw-layer" class="draw-layer"></svg>
+    </div>
+    <div class="actions-row">
+      <button class="btn secondary" id="btn-correct-mode" style="display:none;">✏️ Corriger un mot</button>
+      <button class="btn secondary" id="btn-modifier" style="display:none;">↺ Tout réécrire</button>
+      <button class="btn" id="btn-analyser">✓ Analyser la phrase</button>
+    </div>
+  </div>
+
+  <div class="dashboard" id="dashboard" style="display:none;">
+    <div class="dashboard-handle"></div>
+    <div class="dash-header">
+      <p class="dash-title">Tableau de bord</p>
+      <button id="btn-help-mode" class="help-toggle" title="Activer l'aide">❓ Aide</button>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-tool="nature">Nature</div>
+      <div class="tab" data-tool="fonction">Fonction</div>
+      <div class="tab" data-tool="accord">Accords</div>
+    </div>
+
+    <div class="chips" id="chips-nature"></div>
+    <div class="chips" id="chips-fonction" style="display:none;"></div>
+    <div id="chips-accord" style="display:none;">
+      <div class="accord-mode-switch">
+        <button class="mode-btn active" data-amode="auto">🔵 Bulles automatiques</button>
+        <button class="mode-btn" data-amode="draw">✏️ Dessin libre</button>
+      </div>
+      <div class="accord-row" id="accord-auto-tools"></div>
+      <div class="accord-row" id="accord-draw-tools" style="display:none;">
+        <div class="draw-swatches" id="draw-swatches"></div>
+        <button class="btn secondary" id="btn-draw-undo">↩︎ Annuler le dernier trait</button>
+        <button class="btn secondary" id="btn-draw-clear">🧹 Effacer le dessin</button>
+      </div>
+    </div>
+
+    <p class="hint" id="hint">Touche un ou plusieurs mots dans la phrase, puis touche une étiquette ci-dessus.</p>
+
+    <div class="bottom-actions">
+      <button class="btn secondary" id="btn-deselect">Annuler la sélection</button>
+      <button class="btn secondary" id="btn-reset">🧹 Tout effacer</button>
+    </div>
+
+    <details class="legend">
+      <summary>Voir la légende des couleurs</summary>
+      <div class="legend-grid" id="legend-grid"></div>
+    </details>
+  </div>
+
+</main>
+
+<div class="help-overlay" id="help-overlay">
+  <div class="help-card">
+    <p class="help-eyebrow" id="help-eyebrow">Comment repérer…</p>
+    <h3 id="help-title">—</h3>
+    <p id="help-body">—</p>
+    <button class="btn" id="btn-help-close">Compris !</button>
+  </div>
+</div>
+
+<script>
+const NATURE_GROUPS = [
+  { title:'Mots variables', items:[
+    {value:'Déterminant', short:'Dét.', color:'#8B6FB3',
+      help:"Il se place juste avant un nom et indique son genre et son nombre (le, la, les, un, une, des, mon, cette...). Sans lui, le nom est souvent incomplet."},
+    {value:'Nom', short:'Nom', color:'#4A4E69',
+      help:"Il désigne une personne, un animal, une chose ou une idée. Astuce : on peut presque toujours mettre un déterminant juste devant (le ___, un ___)."},
+    {value:'Pronom', short:'Pron.', color:'#3B82A0',
+      help:"Il remplace un nom déjà connu, pour ne pas le répéter (il, elle, le, leur, qui, cela...)."},
+    {value:'Adjectif', short:'Adj.', color:'#5B8C5A',
+      help:"Il apporte une précision sur le nom (couleur, taille, qualité...) et change de forme selon le genre et le nombre du nom : petit → petite → petits."},
+    {value:'Verbe', short:'V.', color:'#C0533E',
+      help:"Il indique ce que fait le sujet ou dans quel état il se trouve. Astuce : on peut le conjuguer et l'encadrer par « ne... pas »."},
+  ]},
+  { title:'Mots invariables', items:[
+    {value:'Adverbe', short:'Adv.', color:'#C98A3B',
+      help:"Il précise un verbe, un adjectif ou un autre adverbe (vite, très, hier, beaucoup...). Il ne change jamais de forme."},
+    {value:'Préposition', short:'Prép.', color:'#7A6452',
+      help:"Petit mot invariable placé devant un nom ou un verbe à l'infinitif pour le relier au reste de la phrase (à, de, dans, pour, sans, avec...)."},
+    {value:'Conjonction', short:'Conj.', color:'#8A8A8A',
+      help:"Mot invariable qui relie deux mots, deux groupes ou deux phrases (et, ou, mais, donc, car, que, quand...)."},
+  ]},
+];
+const FONCTION_GROUPS = [
+  { title:'Sujet', items:[
+    {value:'Sujet', short:'Suj.', color:'#C0533E',
+      help:"Il fait l'action ou se trouve dans l'état décrit par le verbe. Astuce : pose la question « Qui est-ce qui... ? » ou « Qu'est-ce qui... ? » juste avant le verbe."},
+  ]},
+  { title:'Compléments du verbe', items:[
+    {value:'COD', short:'COD', color:'#2A8C82',
+      help:"Astuce : pose la question « quoi ? » ou « qui ? » juste après le verbe, sans mot de liaison. On ne peut pas le faire précéder de « à » ou « de »."},
+    {value:'COI', short:'COI', color:'#3B82A0',
+      help:"Astuce : pose la question « à qui ? », « à quoi ? », « de qui ? » ou « de quoi ? » après le verbe. Il y a toujours une préposition (à, de) juste avant lui."},
+    {value:'Attribut du sujet', short:'Attr. suj.', color:'#C98A3B',
+      help:"Il vient après un verbe d'état (être, sembler, paraître, devenir, rester...) et donne une qualité au sujet, comme si on disait « sujet = attribut »."},
+  ]},
+  { title:'Compléments du nom', items:[
+    {value:'Épithète', short:'Épith.', color:'#5B8C5A',
+      help:"C'est un adjectif placé directement à côté du nom (avant ou après), sans verbe entre eux : « la petite maison »."},
+    {value:'Complément du nom', short:'CdN', color:'#7A6452',
+      help:"C'est un groupe (souvent introduit par « de », « à », « en »...) qui précise un autre nom : « le vélo DE Paul », « une tasse À café »."},
+  ]},
+  { title:'Compléments de phrase', items:[
+    {value:'CC', short:'CC', color:'#8B6FB3',
+      help:"Il répond à où ?, quand ?, comment ? ou pourquoi ?. Astuce : on peut souvent le déplacer dans la phrase ou le supprimer sans la détruire."},
+  ]},
+];
+const NATURE = NATURE_GROUPS.flatMap(g=>g.items);
+const FONCTION = FONCTION_GROUPS.flatMap(g=>g.items);
+const ACCORD = [
+  {key:'a', color:'#E8A33D'},
+  {key:'b', color:'#5FA8A0'},
+  {key:'c', color:'#D8729A'},
+  {key:'d', color:'#6E8FC9'},
+  {key:'e', color:'#9B7FCB'},
+];
+
+let tokens = [];
+let activeTool = 'nature';
+let helpMode = false;
+let correctionMode = false;
+
+const ecriture = document.getElementById('ecriture');
+const analyseZone = document.getElementById('analyse-zone');
+const dashboard = document.getElementById('dashboard');
+const btnAnalyser = document.getElementById('btn-analyser');
+const btnModifier = document.getElementById('btn-modifier');
+const btnCorrectMode = document.getElementById('btn-correct-mode');
+const btnDeselect = document.getElementById('btn-deselect');
+const btnReset = document.getElementById('btn-reset');
+const hint = document.getElementById('hint');
+const btnHelpMode = document.getElementById('btn-help-mode');
+const helpOverlay = document.getElementById('help-overlay');
+const helpTitle = document.getElementById('help-title');
+const helpBody = document.getElementById('help-body');
+const btnHelpClose = document.getElementById('btn-help-close');
+
+function showHelp(item){
+  helpTitle.textContent = item.value;
+  helpBody.textContent = item.help || "Pas d'astuce disponible pour le moment.";
+  helpOverlay.classList.add('visible');
+}
+btnHelpClose.onclick = ()=> helpOverlay.classList.remove('visible');
+helpOverlay.onclick = (e)=>{ if(e.target===helpOverlay) helpOverlay.classList.remove('visible'); };
+
+btnHelpMode.onclick = ()=>{
+  helpMode = !helpMode;
+  btnHelpMode.classList.toggle('active', helpMode);
+  document.querySelectorAll('#chips-nature .chip:not(.clear), #chips-fonction .chip:not(.clear)').forEach(c=>{
+    c.classList.toggle('help-active', helpMode);
+  });
+  if(helpMode && correctionMode){
+    correctionMode = false;
+    btnCorrectMode.classList.remove('active');
+    render();
+  }
+  if(helpMode){
+    hint.textContent = "Mode aide activé 🔍 : touche une étiquette ci-dessus pour voir comment la repérer (elle ne s'appliquera pas).";
+  } else {
+    hint.textContent = "Touche un ou plusieurs mots dans la phrase, puis touche une étiquette ci-dessus.";
+  }
+};
+
+const NO_SPLIT = [
+  "aujourd'hui","presqu'île","presqu'ile","quelqu'un","quelqu'une","quelqu'uns","quelqu'unes",
+  "grand'mère","grand'messe","prud'homme","prud'hommes","entr'aide","entr'apercevoir"
+];
+
+function splitElisions(word){
+  const norm = word.replace(/’/g, "'");
+  if(!norm.includes("'")) return [word];
+  if(NO_SPLIT.some(w => w.toLowerCase() === norm.toLowerCase())) return [word];
+  // coupe juste après chaque apostrophe, qui reste collée au fragment qui la précède (ex: "qu'" + "il")
+  return word.split(/(?<=['’])/).filter(Boolean);
+}
+
+function tokenize(text){
+  const raw = text.trim().split(/\s+/).filter(Boolean);
+  const out = [];
+  raw.forEach(chunk => {
+    const m = chunk.match(/^([«"'\(]*)([0-9A-Za-zÀ-ÖØ-öø-ÿ'’-]+)([»"'.,!?;:\)]*)$/);
+    if(m){
+      const [, lead, word, trail] = m;
+      if(lead) out.push(mk(lead,false));
+      splitElisions(word).forEach(w => out.push(mk(w,true)));
+      if(trail){ trail.split('').forEach(p=>out.push(mk(p,false))); }
+    } else {
+      out.push(mk(chunk,false));
+    }
+  });
+  return out;
+}
+function mk(text,isWord){
+  return {text, isWord, selected:false, nature:null, natureGroup:null, fonction:null, accord:null, accordGroup:null};
+}
+
+function groupPos(i, field){
+  const val = tokens[i][field];
+  if(val===null || val===undefined) return null;
+  const prevSame = i>0 && tokens[i-1][field]===val;
+  const nextSame = i<tokens.length-1 && tokens[i+1][field]===val;
+  if(prevSame && nextSame) return 'middle';
+  if(!prevSame && nextSame) return 'start';
+  if(prevSame && !nextSame) return 'end';
+  return 'single';
+}
+
+function getRuns(field){
+  const runs = [];
+  let i = 0;
+  while(i < tokens.length){
+    if(!tokens[i].isWord || tokens[i][field]==null){ i++; continue; }
+    const val = tokens[i][field];
+    let j = i;
+    while(j+1 < tokens.length && tokens[j+1].isWord && tokens[j+1][field]===val) j++;
+    runs.push({start:i, end:j, value:val});
+    i = j+1;
+  }
+  return runs;
+}
+
+function colorFor(list, value){
+  const f = list.find(x=>x.value===value);
+  return f ? f.color : '#999';
+}
+function shortFor(list, value){
+  const f = list.find(x=>x.value===value);
+  return f ? f.short : value;
+}
+function accordColor(key){
+  const f = ACCORD.find(x=>x.key===key);
+  return f ? f.color : '#ccc';
+}
+
+const wordFlow = document.getElementById('word-flow');
+const overlayBack = document.getElementById('overlay-back');
+const overlayFront = document.getElementById('overlay-front');
+
+function render(){
+  wordFlow.innerHTML = '';
+  tokens.forEach((tok,i)=>{
+    const span = document.createElement('span');
+    if(!tok.isWord){
+      span.className = 'punct-token' + (correctionMode ? ' correct-active':'');
+      span.textContent = tok.text;
+      span.dataset.index = i;
+      if(correctionMode){ span.onclick = ()=> startEditing(span, i); }
+    } else {
+      span.className = 'word-token' + (tok.selected ? ' selected':'') + (/['’]$/.test(tok.text) ? ' elided':'') + (correctionMode ? ' correct-active':'');
+      span.dataset.index = i;
+      span.onclick = ()=>{ if(correctionMode){ startEditing(span, i); } else { toggleSelect(i); } };
+      if(tok.accord && tok.text.length>1){
+        const endLen = tok.text.length>=4 ? 2 : 1;
+        const head = tok.text.slice(0, -endLen);
+        const tail = tok.text.slice(-endLen);
+        const headSpan = document.createElement('span');
+        headSpan.textContent = head;
+        const tailSpan = document.createElement('span');
+        tailSpan.textContent = tail;
+        tailSpan.className = 'accord-mark';
+        tailSpan.style.color = accordColor(tok.accord);
+        span.appendChild(headSpan);
+        span.appendChild(tailSpan);
+      } else {
+        span.textContent = tok.text;
+      }
+    }
+    wordFlow.appendChild(span);
+  });
+  requestAnimationFrame(renderOverlays);
+}
+
+// Édition inline d'un mot ou d'un signe de ponctuation, sans toucher aux étiquettes des autres mots.
+function startEditing(span, i){
+  span.textContent = tokens[i].text;
+  span.contentEditable = 'true';
+  span.classList.add('editing');
+  span.classList.remove('correct-active');
+  span.focus();
+  const range = document.createRange();
+  range.selectNodeContents(span);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  const commit = ()=>{
+    span.removeEventListener('blur', commit);
+    span.removeEventListener('keydown', onKey);
+    const newText = span.textContent.trim();
+    if(newText===''){
+      tokens.splice(i,1);
+    } else {
+      tokens[i].text = newText;
+    }
+    render();
+  };
+  const onKey = (e)=>{
+    if(e.key==='Enter'){ e.preventDefault(); span.blur(); }
+    if(e.key==='Escape'){ e.preventDefault(); span.textContent = tokens[i].text; span.blur(); }
+  };
+  span.addEventListener('blur', commit);
+  span.addEventListener('keydown', onKey);
+}
+
+// Splits a run's word elements into sub-groups when the run wraps onto a new line,
+// so a tag/underline never spans two visual lines.
+function splitByLine(elements){
+  const groups = [[elements[0]]];
+  for(let k=1;k<elements.length;k++){
+    const prevTop = groups[groups.length-1][groups[groups.length-1].length-1].getBoundingClientRect().top;
+    const top = elements[k].getBoundingClientRect().top;
+    if(Math.abs(top-prevTop) < 6){ groups[groups.length-1].push(elements[k]); }
+    else { groups.push([elements[k]]); }
+  }
+  return groups;
+}
+
+function renderOverlays(){
+  overlayBack.innerHTML = '';
+  overlayFront.innerHTML = '';
+  const containerRect = analyseZone.getBoundingClientRect();
+  const wordEls = {};
+  wordFlow.querySelectorAll('.word-token').forEach(el=>{ wordEls[el.dataset.index] = el; });
+
+  function rectFor(elements){
+    let left=Infinity, right=-Infinity, top=Infinity, bottom=-Infinity;
+    elements.forEach(el=>{
+      const r = el.getBoundingClientRect();
+      left=Math.min(left,r.left); right=Math.max(right,r.right);
+      top=Math.min(top,r.top); bottom=Math.max(bottom,r.bottom);
+    });
+    return {
+      left: left - containerRect.left,
+      top: top - containerRect.top,
+      bottom: bottom - containerRect.top,
+      width: right-left,
+      centerX: (left+right)/2 - containerRect.left
+    };
+  }
+
+  function elementsFor(run){
+    const els = [];
+    for(let i=run.start;i<=run.end;i++){ if(tokens[i].isWord) els.push(wordEls[i]); }
+    return els;
+  }
+
+  function elementsForIndices(indices){
+    return indices.filter(i=>tokens[i].isWord).map(i=>wordEls[i]);
+  }
+
+  function getNatureRuns(){
+    const runs = [];
+    const seen = new Set();
+    for(let i=0;i<tokens.length;i++){
+      if(!tokens[i].isWord || tokens[i].nature==null || seen.has(i)) continue;
+      const gid = tokens[i].natureGroup;
+      if(gid){
+        const idxs = [];
+        for(let k=0;k<tokens.length;k++){ if(tokens[k].natureGroup===gid){ idxs.push(k); seen.add(k); } }
+        runs.push({indices: idxs, value: tokens[i].nature});
+      } else {
+        let j = i;
+        while(j+1<tokens.length && tokens[j+1].isWord && tokens[j+1].nature===tokens[i].nature && !tokens[j+1].natureGroup) j++;
+        const idxs = [];
+        for(let x=i;x<=j;x++){ idxs.push(x); seen.add(x); }
+        runs.push({indices: idxs, value: tokens[i].nature});
+        i = j;
+      }
+    }
+    return runs;
+  }
+
+  getNatureRuns().forEach(run=>{
+    splitByLine(elementsForIndices(run.indices)).forEach(group=>{
+      const r = rectFor(group);
+      const chip = document.createElement('div');
+      chip.className = 'ov-chip';
+      chip.style.background = colorFor(NATURE, run.value);
+      chip.style.left = r.centerX+'px';
+      chip.style.top = (r.top-26)+'px';
+      chip.textContent = shortFor(NATURE, run.value);
+      chip.title = run.value;
+      chip.onclick = ()=> clearNature(run.indices[0]);
+      overlayFront.appendChild(chip);
+    });
+  });
+
+  getRuns('fonction').forEach(run=>{
+    splitByLine(elementsFor(run)).forEach(group=>{
+      const r = rectFor(group);
+      const bar = document.createElement('div');
+      bar.className = 'ov-bar';
+      bar.style.background = colorFor(FONCTION, run.value);
+      bar.style.left = r.left+'px';
+      bar.style.width = r.width+'px';
+      bar.style.top = (r.bottom+3)+'px';
+      bar.onclick = ()=> clearRun('fonction', run.start);
+      overlayFront.appendChild(bar);
+
+      const lbl = document.createElement('div');
+      lbl.className = 'ov-chip';
+      lbl.style.background = colorFor(FONCTION, run.value);
+      lbl.style.left = r.centerX+'px';
+      lbl.style.top = (r.bottom+11)+'px';
+      lbl.textContent = shortFor(FONCTION, run.value);
+      lbl.title = run.value;
+      lbl.onclick = ()=> clearRun('fonction', run.start);
+      overlayFront.appendChild(lbl);
+    });
+  });
+
+  function drawConnector(a, b, color){
+    const left = Math.min(a.x, b.x), top = Math.min(a.y, b.y);
+    const width = Math.max(Math.abs(a.x-b.x), 1), height = Math.max(Math.abs(a.y-b.y), 1) + 20;
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS,'svg');
+    svg.setAttribute('width', width); svg.setAttribute('height', height);
+    svg.style.position='absolute'; svg.style.left=left+'px'; svg.style.top=top+'px'; svg.style.overflow='visible';
+    const ax=a.x-left, ay=a.y-top, bx=b.x-left, by=b.y-top;
+    const cx=(ax+bx)/2, cy=Math.max(ay,by)+16;
+    const path = document.createElementNS(svgNS,'path');
+    path.setAttribute('d', `M ${ax} ${ay} Q ${cx} ${cy} ${bx} ${by}`);
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke', color); path.setAttribute('stroke-width','3');
+    path.setAttribute('stroke-linecap','round'); path.setAttribute('opacity','0.85');
+    svg.appendChild(path);
+    overlayBack.appendChild(svg);
+  }
+
+  function getAccordRuns(){
+    const runs = [];
+    const seen = new Set();
+    for(let i=0;i<tokens.length;i++){
+      if(!tokens[i].isWord || tokens[i].accord==null || seen.has(i)) continue;
+      const gid = tokens[i].accordGroup;
+      if(gid){
+        const idxs = [];
+        for(let k=0;k<tokens.length;k++){ if(tokens[k].accordGroup===gid){ idxs.push(k); seen.add(k); } }
+        runs.push({indices: idxs, value: tokens[i].accord});
+      } else {
+        let j = i;
+        while(j+1<tokens.length && tokens[j+1].isWord && tokens[j+1].accord===tokens[i].accord && !tokens[j+1].accordGroup) j++;
+        const idxs = [];
+        for(let x=i;x<=j;x++){ idxs.push(x); seen.add(x); }
+        runs.push({indices: idxs, value: tokens[i].accord});
+        i = j;
+      }
+    }
+    return runs;
+  }
+
+  getAccordRuns().forEach(run=>{
+    const clusters = splitByLine(elementsForIndices(run.indices)).map(rectFor);
+    clusters.forEach(r=>{
+      const bg = document.createElement('div');
+      bg.className = 'ov-bg';
+      bg.style.background = accordColor(run.value)+'1a';
+      bg.style.border = '3px solid ' + accordColor(run.value);
+      bg.style.left = (r.left-8)+'px';
+      bg.style.top = (r.top-6)+'px';
+      bg.style.width = (r.width+16)+'px';
+      bg.style.height = (r.bottom-r.top+12)+'px';
+      bg.style.pointerEvents = 'auto';
+      bg.style.cursor = 'pointer';
+      bg.title = 'Touche pour retirer ce groupe d\'accord';
+      bg.onclick = ()=> clearAccord(run.indices[0]);
+      overlayBack.appendChild(bg);
+    });
+    for(let c=0;c<clusters.length-1;c++){
+      const a = clusters[c], b = clusters[c+1];
+      drawConnector(
+        {x:a.left+a.width, y:(a.top+a.bottom)/2},
+        {x:b.left, y:(b.top+b.bottom)/2},
+        accordColor(run.value)
+      );
+    }
+  });
+}
+
+window.addEventListener('resize', ()=>{ if(tokens.length) renderOverlays(); });
+
+function toggleSelect(i){
+  tokens[i].selected = !tokens[i].selected;
+  render();
+}
+
+function clearRun(field, i){
+  const val = tokens[i][field];
+  let j = i;
+  while(j>0 && tokens[j-1].isWord && tokens[j-1][field]===val) j--;
+  let k = i;
+  while(k<tokens.length-1 && tokens[k+1].isWord && tokens[k+1][field]===val) k++;
+  for(let x=j;x<=k;x++) tokens[x][field] = null;
+  render();
+}
+
+function clearNature(i){
+  const gid = tokens[i].natureGroup;
+  if(gid){
+    tokens.forEach(t=>{ if(t.natureGroup===gid){ t.nature=null; t.natureGroup=null; } });
+  } else {
+    const val = tokens[i].nature;
+    let j = i;
+    while(j>0 && tokens[j-1].isWord && tokens[j-1].nature===val && !tokens[j-1].natureGroup) j--;
+    let k = i;
+    while(k<tokens.length-1 && tokens[k+1].isWord && tokens[k+1].nature===val && !tokens[k+1].natureGroup) k++;
+    for(let x=j;x<=k;x++) tokens[x].nature = null;
+  }
+  render();
+}
+
+function clearAccord(i){
+  const gid = tokens[i].accordGroup;
+  if(gid){
+    tokens.forEach(t=>{ if(t.accordGroup===gid){ t.accord=null; t.accordGroup=null; } });
+  } else {
+    const val = tokens[i].accord;
+    let j = i;
+    while(j>0 && tokens[j-1].isWord && tokens[j-1].accord===val && !tokens[j-1].accordGroup) j--;
+    let k = i;
+    while(k<tokens.length-1 && tokens[k+1].isWord && tokens[k+1].accord===val && !tokens[k+1].accordGroup) k++;
+    for(let x=j;x<=k;x++) tokens[x].accord = null;
+  }
+  render();
+}
+
+let groupCounter = 0;
+
+function applyTag(field, value){
+  const selectedIdx = tokens.map((t,i)=>t.selected?i:-1).filter(i=>i>=0);
+  if(selectedIdx.length===0){
+    hint.textContent = "Touche d'abord un ou plusieurs mots dans la phrase 👆";
+    hint.style.color = '#C0533E';
+    setTimeout(()=>{ hint.style.color=''; hint.textContent = "Touche un ou plusieurs mots dans la phrase, puis touche une étiquette ci-dessus."; },1800);
+    return;
+  }
+  if(field==='nature' && value!==null && selectedIdx.length>1){
+    const gid = 'g'+(++groupCounter);
+    selectedIdx.forEach(i=>{ tokens[i].nature = value; tokens[i].natureGroup = gid; tokens[i].selected=false; });
+  } else if(field==='accord' && value!==null && selectedIdx.length>1){
+    const gid = 'ag'+(++groupCounter);
+    selectedIdx.forEach(i=>{ tokens[i].accord = value; tokens[i].accordGroup = gid; tokens[i].selected=false; });
+  } else {
+    selectedIdx.forEach(i=>{
+      tokens[i][field] = value;
+      if(field==='nature') tokens[i].natureGroup = null;
+      if(field==='accord') tokens[i].accordGroup = null;
+      tokens[i].selected = false;
+    });
+  }
+  render();
+}
+
+btnAnalyser.onclick = ()=>{
+  const text = ecriture.innerText;
+  if(!text.trim()) return;
+  tokens = tokenize(text);
+  ecriture.style.display='none';
+  analyseZone.classList.add('visible');
+  btnAnalyser.style.display='none';
+  btnModifier.style.display='inline-block';
+  btnCorrectMode.style.display='inline-block';
+  dashboard.style.display='block';
+  document.body.classList.add('dashboard-open');
+  drawLayer.innerHTML = '';
+  strokes = [];
+  render();
+};
+
+btnModifier.onclick = ()=>{
+  if(tokens.some(t=>t.nature||t.fonction||t.accord)){
+    if(!confirm("Tout réécrire effacera les étiquettes déjà posées. Continuer ?")) return;
+  }
+  ecriture.style.display='block';
+  analyseZone.classList.remove('visible');
+  btnAnalyser.style.display='inline-block';
+  btnModifier.style.display='none';
+  btnCorrectMode.style.display='none';
+  dashboard.style.display='none';
+  document.body.classList.remove('dashboard-open');
+  correctionMode = false;
+  btnCorrectMode.classList.remove('active');
+  setDrawMode(false);
+  drawLayer.innerHTML = '';
+  strokes = [];
+  tokens = [];
+};
+
+btnCorrectMode.onclick = ()=>{
+  correctionMode = !correctionMode;
+  btnCorrectMode.classList.toggle('active', correctionMode);
+  if(correctionMode && helpMode){
+    helpMode = false;
+    btnHelpMode.classList.remove('active');
+    document.querySelectorAll('#chips-nature .chip:not(.clear), #chips-fonction .chip:not(.clear)').forEach(c=>c.classList.remove('help-active'));
+  }
+  tokens.forEach(t=>t.selected=false);
+  hint.textContent = correctionMode
+    ? "Mode correction activé ✏️ : touche un mot fautif pour le corriger directement, sans perdre tes étiquettes."
+    : "Touche un ou plusieurs mots dans la phrase, puis touche une étiquette ci-dessus.";
+  render();
+};
+
+btnDeselect.onclick = ()=>{ tokens.forEach(t=>t.selected=false); render(); };
+btnReset.onclick = ()=>{
+  if(confirm("Effacer toutes les étiquettes posées sur cette phrase ?")){
+    tokens.forEach(t=>{ t.nature=null; t.natureGroup=null; t.fonction=null; t.accord=null; t.accordGroup=null; t.selected=false; });
+    render();
+  }
+};
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.onclick = ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    activeTool = tab.dataset.tool;
+    document.getElementById('chips-nature').style.display = activeTool==='nature' ? 'flex':'none';
+    document.getElementById('chips-fonction').style.display = activeTool==='fonction' ? 'flex':'none';
+    document.getElementById('chips-accord').style.display = activeTool==='accord' ? 'block':'none';
+    if(activeTool!=='accord') setDrawMode(false);
+  };
+});
+
+// --- Dessin libre (bulles + traits tracés au doigt) ---
+const drawLayer = document.getElementById('draw-layer');
+let drawColor = ACCORD[0].color;
+let drawMode = false;
+let isDrawing = false;
+let currentPath = null;
+let currentD = '';
+let strokes = [];
+
+function setDrawMode(on){
+  drawMode = on;
+  drawLayer.classList.toggle('active', on);
+  document.querySelectorAll('.mode-btn').forEach(b=> b.classList.toggle('active', b.dataset.amode===(on?'draw':'auto')));
+  document.getElementById('accord-auto-tools').style.display = on ? 'none' : 'flex';
+  document.getElementById('accord-draw-tools').style.display = on ? 'flex' : 'none';
+}
+
+document.querySelectorAll('.mode-btn').forEach(btn=>{
+  btn.onclick = ()=> setDrawMode(btn.dataset.amode==='draw');
+});
+
+function svgPoint(e){
+  const rect = analyseZone.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+drawLayer.addEventListener('pointerdown', e=>{
+  if(!drawMode) return;
+  e.preventDefault();
+  isDrawing = true;
+  const p = svgPoint(e);
+  currentD = `M ${p.x} ${p.y}`;
+  currentPath = document.createElementNS('http://www.w3.org/2000/svg','path');
+  currentPath.setAttribute('fill','none');
+  currentPath.setAttribute('stroke', drawColor);
+  currentPath.setAttribute('stroke-width','4');
+  currentPath.setAttribute('stroke-linecap','round');
+  currentPath.setAttribute('stroke-linejoin','round');
+  currentPath.setAttribute('d', currentD);
+  drawLayer.appendChild(currentPath);
+});
+drawLayer.addEventListener('pointermove', e=>{
+  if(!drawMode || !isDrawing) return;
+  e.preventDefault();
+  const p = svgPoint(e);
+  currentD += ` L ${p.x} ${p.y}`;
+  currentPath.setAttribute('d', currentD);
+});
+function endStroke(){
+  if(!isDrawing) return;
+  isDrawing = false;
+  if(currentPath){ strokes.push(currentPath); }
+  currentPath = null;
+}
+drawLayer.addEventListener('pointerup', endStroke);
+drawLayer.addEventListener('pointerleave', endStroke);
+drawLayer.addEventListener('pointercancel', endStroke);
+
+document.getElementById('btn-draw-undo').onclick = ()=>{
+  const last = strokes.pop();
+  if(last) last.remove();
+};
+document.getElementById('btn-draw-clear').onclick = ()=>{
+  if(strokes.length===0) return;
+  if(confirm('Effacer tous les traits dessinés sur cette phrase ?')){
+    strokes.forEach(s=>s.remove());
+    strokes = [];
+  }
+};
+
+function buildChips(){
+  const natureBox = document.getElementById('chips-nature');
+  NATURE_GROUPS.forEach(group=>{
+    const t = document.createElement('span');
+    t.className='chip-group-title'; t.textContent = group.title;
+    natureBox.appendChild(t);
+    group.items.forEach(n=>{
+      const c = document.createElement('span');
+      c.className='chip'; c.style.background=n.color; c.textContent=n.value;
+      c.onclick = ()=>{ if(helpMode){ showHelp(n); } else { applyTag('nature', n.value); } };
+      natureBox.appendChild(c);
+    });
+  });
+  const clearN = document.createElement('span');
+  clearN.className='chip clear'; clearN.textContent='✖ Aucune';
+  clearN.onclick = ()=>applyTag('nature', null);
+  natureBox.appendChild(clearN);
+
+  const fonctionBox = document.getElementById('chips-fonction');
+  FONCTION_GROUPS.forEach(group=>{
+    const t = document.createElement('span');
+    t.className='chip-group-title'; t.textContent = group.title;
+    fonctionBox.appendChild(t);
+    group.items.forEach(n=>{
+      const c = document.createElement('span');
+      c.className='chip'; c.style.background=n.color; c.textContent=n.value;
+      c.onclick = ()=>{ if(helpMode){ showHelp(n); } else { applyTag('fonction', n.value); } };
+      fonctionBox.appendChild(c);
+    });
+  });
+  const clearF = document.createElement('span');
+  clearF.className='chip clear'; clearF.textContent='✖ Aucune';
+  clearF.onclick = ()=>applyTag('fonction', null);
+  fonctionBox.appendChild(clearF);
+
+  const accordBox = document.getElementById('accord-auto-tools');
+  ACCORD.forEach(a=>{
+    const c = document.createElement('span');
+    c.className='accord-chip'; c.style.background=a.color;
+    c.title='Groupe d\'accord';
+    c.onclick = ()=>applyTag('accord', a.key);
+    accordBox.appendChild(c);
+  });
+  const clearA = document.createElement('span');
+  clearA.className='chip clear'; clearA.textContent='✖ Aucun';
+  clearA.onclick = ()=>applyTag('accord', null);
+  accordBox.appendChild(clearA);
+
+  const drawSwatches = document.getElementById('draw-swatches');
+  ACCORD.forEach((a,idx)=>{
+    const c = document.createElement('span');
+    c.className='accord-chip draw-swatch' + (idx===0 ? ' selected':'');
+    c.style.background=a.color;
+    c.title='Couleur du trait';
+    c.onclick = ()=>{
+      drawColor = a.color;
+      document.querySelectorAll('.draw-swatch').forEach(s=>s.classList.remove('selected'));
+      c.classList.add('selected');
+    };
+    drawSwatches.appendChild(c);
+  });
+
+  const legend = document.getElementById('legend-grid');
+  [...NATURE_GROUPS, ...FONCTION_GROUPS].forEach(group=>{
+    const h = document.createElement('div');
+    h.className='chip-group-title';
+    h.style.margin = '8px 0 2px 2px';
+    h.textContent = group.title;
+    legend.appendChild(h);
+    group.items.forEach(item=>{
+      const d = document.createElement('div');
+      d.className='legend-item';
+      d.innerHTML = `<span class="legend-dot" style="background:${item.color}"></span>${item.value}`;
+      legend.appendChild(d);
+    });
+  });
+}
+buildChips();
+</script>
+
+</body>
+</html>
