@@ -56,6 +56,20 @@
     .icon-btn.accent { color:#8a6d00; background:#fff8e1; }
     .icon-btn.primary { color:#fff; background:var(--bleu); font-weight:600; border-radius:9px; padding:8px 16px; }
     .zoom-val { font-size:12px; color:var(--gris-texte); padding:0 2px; min-width:38px; text-align:center; }
+    .zoom-slider {
+        -webkit-appearance:none; appearance:none;
+        width:110px; height:4px; border-radius:2px; background:#d1d1d6;
+        margin:0 4px; outline:none;
+    }
+    .zoom-slider::-webkit-slider-thumb {
+        -webkit-appearance:none; appearance:none;
+        width:22px; height:22px; border-radius:50%; background:#fff;
+        border:1px solid #d1d1d6; box-shadow:0 1px 3px rgba(0,0,0,0.25); cursor:pointer;
+    }
+    .zoom-slider::-moz-range-thumb {
+        width:22px; height:22px; border-radius:50%; background:#fff;
+        border:1px solid #d1d1d6; box-shadow:0 1px 3px rgba(0,0,0,0.25); cursor:pointer;
+    }
 
     #zoneCanvas {
         position:relative; display:inline-block; cursor:crosshair; border:1px solid #ccc;
@@ -194,6 +208,7 @@
             </div>
             <div class="segment-group">
                 <button class="icon-btn" onclick="zoomOut()">➖</button>
+                <input type="range" id="zoomSlider" min="15" max="300" value="100" class="zoom-slider" oninput="zoomDepuisCurseur(this.value)">
                 <span class="zoom-val" id="zoomLabel">100%</span>
                 <button class="icon-btn" onclick="zoomIn()">➕</button>
                 <button class="icon-btn" onclick="zoomReset()">⤢ Ajuster</button>
