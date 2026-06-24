@@ -202,10 +202,12 @@ function appliquerZoom() {
     img.style.width = (imgNaturalW * zoomLevel) + 'px';
     img.style.height = 'auto';
     document.getElementById('zoomLabel').textContent = Math.round(zoomLevel * 100) + '%';
+    document.getElementById('zoomSlider').value = Math.round(zoomLevel * 100);
     redessinerZonesEdition();
 }
-function zoomIn() { if (!imgNaturalW) return; zoomLevel = Math.min(3, zoomLevel + 0.15); appliquerZoom(); }
-function zoomOut() { if (!imgNaturalW) return; zoomLevel = Math.max(0.15, zoomLevel - 0.15); appliquerZoom(); }
+function zoomIn() { if (!imgNaturalW) return; zoomLevel = Math.min(3, zoomLevel + 0.03); appliquerZoom(); }
+function zoomOut() { if (!imgNaturalW) return; zoomLevel = Math.max(0.15, zoomLevel - 0.03); appliquerZoom(); }
+function zoomDepuisCurseur(valeurPourcent) { if (!imgNaturalW) return; zoomLevel = Math.max(0.15, Math.min(3, valeurPourcent / 100)); appliquerZoom(); }
 function zoomReset() {
     if (!imgNaturalW) return;
     const maxL = Math.min(window.innerWidth * 0.9, 700);
