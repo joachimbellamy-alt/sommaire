@@ -96,6 +96,8 @@ function genererId() {
 /* ---------------- Rappel calendrier (.ics) ---------------- */
 
 function ouvrirModalRappel() {
+    if (!supportActif) return;
+    document.getElementById('titreModalRappel').textContent = '📅 Rappel — ' + supportActif.nom;
     document.getElementById('modalRappel').classList.add('ouverte');
 }
 function fermerModalRappel() {
@@ -107,6 +109,7 @@ function formaterDateICS(d) {
 }
 
 function validerRappel() {
+    if (!supportActif) return;
     const heureVal = document.getElementById('champHeureRappel').value || '18:00';
     const [heure, minute] = heureVal.split(':').map(Number);
     const frequence = document.getElementById('champFrequenceRappel').value;
@@ -121,7 +124,8 @@ function validerRappel() {
     if (frequence === '2j') rrule = 'FREQ=DAILY;INTERVAL=2';
     if (frequence === 'semaine') rrule = 'FREQ=WEEKLY';
 
-    const uid = 'memo-revisions-' + Date.now() + '@joachimbellamy-alt.github.io';
+    const nomSupport = supportActif.nom;
+    const uid = 'memo-revisions-' + supportActif.id + '-' + Date.now() + '@joachimbellamy-alt.github.io';
     const ics = [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
@@ -132,8 +136,8 @@ function validerRappel() {
         'DTSTART:' + formaterDateICS(debut),
         'DTEND:' + formaterDateICS(fin),
         'RRULE:' + rrule,
-        'SUMMARY:🧠 Réviser mes leçons',
-        'DESCRIPTION:Ouvre l\'app Mes révisions pour réviser tes supports du jour.',
+        'SUMMARY:🧠 Réviser : ' + nomSupport,
+        'DESCRIPTION:Ouvre l\'app Mes révisions et reprends le support « ' + nomSupport + ' ».',
         'END:VEVENT',
         'END:VCALENDAR'
     ].join('\r\n');
@@ -141,7 +145,7 @@ function validerRappel() {
     const blob = new Blob([ics], { type: 'text/calendar' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'rappel-revisions.ics';
+    a.download = 'rappel-' + nomSupport.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.ics';
     a.click();
     fermerModalRappel();
 }
@@ -238,10 +242,14 @@ function retourAccueil() {
     afficherAccueil();
 }
 
-const ORDRE_MATIERES = ['Français', 'Mathématiques', 'Histoire-Géographie', 'SVT', 'Anglais', 'Latin', 'Autre'];
+const ORDRE_MATIERES = [
+    'Français', 'Maths', 'Histoire-Géo-EMC', 'Anglais', 'Espagnol', 'EMI',
+    'Sciences', 'SVT', 'Sciences physiques', 'Latin', 'Éducation musicale', 'Arts plastiques', 'Autre'
+];
 const ICONES_MATIERES = {
-    'Français': '📖', 'Mathématiques': '📐', 'Histoire-Géographie': '🌍',
-    'SVT': '🔬', 'Anglais': '🇬🇧', 'Latin': '🏛️', 'Autre': '📦'
+    'Français': '📖', 'Maths': '📐', 'Histoire-Géo-EMC': '🌍', 'Anglais': '🇬🇧', 'Espagnol': '🇪🇸',
+    'EMI': '📰', 'Sciences': '🧪', 'SVT': '🔬', 'Sciences physiques': '⚛️', 'Latin': '🏛️',
+    'Éducation musicale': '🎵', 'Arts plastiques': '🎨', 'Autre': '📦'
 };
 
 function afficherAccueil() {
