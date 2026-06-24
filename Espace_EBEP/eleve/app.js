@@ -93,6 +93,59 @@ function genererId() {
     return 'sup_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
+/* ---------------- Rappel calendrier (.ics) ---------------- */
+
+function ouvrirModalRappel() {
+    document.getElementById('modalRappel').classList.add('ouverte');
+}
+function fermerModalRappel() {
+    document.getElementById('modalRappel').classList.remove('ouverte');
+}
+
+function formaterDateICS(d) {
+    return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+}
+
+function validerRappel() {
+    const heureVal = document.getElementById('champHeureRappel').value || '18:00';
+    const [heure, minute] = heureVal.split(':').map(Number);
+    const frequence = document.getElementById('champFrequenceRappel').value;
+
+    const maintenant = new Date();
+    const debut = new Date();
+    debut.setHours(heure, minute, 0, 0);
+    if (debut < maintenant) debut.setDate(debut.getDate() + 1);
+    const fin = new Date(debut.getTime() + 15 * 60000);
+
+    let rrule = 'FREQ=DAILY';
+    if (frequence === '2j') rrule = 'FREQ=DAILY;INTERVAL=2';
+    if (frequence === 'semaine') rrule = 'FREQ=WEEKLY';
+
+    const uid = 'memo-revisions-' + Date.now() + '@joachimbellamy-alt.github.io';
+    const ics = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Mes Revisions//FR',
+        'BEGIN:VEVENT',
+        'UID:' + uid,
+        'DTSTAMP:' + formaterDateICS(new Date()),
+        'DTSTART:' + formaterDateICS(debut),
+        'DTEND:' + formaterDateICS(fin),
+        'RRULE:' + rrule,
+        'SUMMARY:🧠 Réviser mes leçons',
+        'DESCRIPTION:Ouvre l\'app Mes révisions pour réviser tes supports du jour.',
+        'END:VEVENT',
+        'END:VCALENDAR'
+    ].join('\r\n');
+
+    const blob = new Blob([ics], { type: 'text/calendar' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'rappel-revisions.ics';
+    a.click();
+    fermerModalRappel();
+}
+
 /* ---------------- Sauvegarde / restauration manuelle (fichier .json) ---------------- */
 
 function exporterDonnees() {
@@ -185,6 +238,12 @@ function retourAccueil() {
     afficherAccueil();
 }
 
+const ORDRE_MATIERES = ['Français', 'Mathématiques', 'Histoire-Géographie', 'SVT', 'Anglais', 'Latin', 'Autre'];
+const ICONES_MATIERES = {
+    'Français': '📖', 'Mathématiques': '📐', 'Histoire-Géographie': '🌍',
+    'SVT': '🔬', 'Anglais': '🇬🇧', 'Latin': '🏛️', 'Autre': '📦'
+};
+
 function afficherAccueil() {
     afficherVue('accueil');
     const liste = document.getElementById('listeSupports');
@@ -192,17 +251,30 @@ function afficherAccueil() {
         liste.innerHTML = '<div class="vide">Tu n\u2019as pas encore de support. Crée-en un pour commencer à réviser !</div>';
         return;
     }
-    liste.innerHTML = supports.slice().reverse().map(s => `
-        <div class="carte-support" data-id="${s.id}">
-            <img src="${s.image || ''}" alt="">
-            <div class="infos">
-                <div class="nom"></div>
-                <div class="meta"></div>
+    const parMatiere = {};
+    supports.forEach(s => {
+        const m = s.matiere || 'Autre';
+        if (!parMatiere[m]) parMatiere[m] = [];
+        parMatiere[m].push(s);
+    });
+    const matieresPresentes = ORDRE_MATIERES.filter(m => parMatiere[m]);
+    Object.keys(parMatiere).forEach(m => { if (!matieresPresentes.includes(m)) matieresPresentes.push(m); });
+
+    liste.innerHTML = matieresPresentes.map(m => `
+        <div class="titre-matiere">${ICONES_MATIERES[m] || '📦'} ${m}</div>
+        ${parMatiere[m].slice().reverse().map(s => `
+            <div class="carte-support" data-id="${s.id}">
+                <img src="${s.image || ''}" alt="">
+                <div class="infos">
+                    <div class="nom"></div>
+                    <div class="meta"></div>
+                </div>
+                <button class="icon-btn danger" data-suppr="${s.id}" style="flex-shrink:0;">🗑</button>
+                <div class="chevron">›</div>
             </div>
-            <button class="icon-btn danger" data-suppr="${s.id}" style="flex-shrink:0;">🗑</button>
-            <div class="chevron">›</div>
-        </div>
+        `).join('')}
     `).join('');
+
     liste.querySelectorAll('.carte-support').forEach(carte => {
         const id = carte.getAttribute('data-id');
         const s = supports.find(x => x.id === id);
@@ -228,11 +300,23 @@ function afficherAccueil() {
 }
 
 function creerNouveauSupport() {
-    const nom = prompt('Nom de ce support (ex : Leçon sur les fractions) :', '');
-    if (nom === null) return;
+    document.getElementById('champNomSupport').value = '';
+    document.getElementById('champMatiereSupport').value = 'Français';
+    document.getElementById('modalNouveauSupport').classList.add('ouverte');
+    setTimeout(() => document.getElementById('champNomSupport').focus(), 50);
+}
+
+function fermerModalNouveauSupport() {
+    document.getElementById('modalNouveauSupport').classList.remove('ouverte');
+}
+
+function validerNouveauSupport() {
+    const nom = document.getElementById('champNomSupport').value.trim() || 'Sans titre';
+    const matiere = document.getElementById('champMatiereSupport').value;
     const support = {
         id: genererId(),
-        nom: nom.trim() || 'Sans titre',
+        nom: nom,
+        matiere: matiere,
         image: '',
         zones: [],
         etat: {},
@@ -241,6 +325,7 @@ function creerNouveauSupport() {
     };
     supports.push(support);
     sauvegarderSupports();
+    fermerModalNouveauSupport();
     ouvrirEdition(support.id);
 }
 
@@ -338,16 +423,46 @@ function posRelative(e) {
     return { x: c.clientX - rect.left, y: c.clientY - rect.top, canvasW: rect.width, canvasH: rect.height };
 }
 
+let formeActuelle = 'rect';
+let cheminLibre = [];
+let svgApercu = null;
+
+function choisirForme(forme) {
+    formeActuelle = forme;
+    document.querySelectorAll('.forme-btn').forEach(b => b.classList.toggle('actif', b.dataset.forme === forme));
+}
+
 function handleStart(e) {
     if (!canvasEl.querySelector('img')) return;
+    if (e.target && e.target.closest && e.target.closest('.rect-label')) return;
     if (e.type === 'touchstart') {
         e.preventDefault();
         if (e.touches.length >= 2) return; // on ignore le multi-doigts : zoom uniquement via les boutons
     }
     const p = posRelative(e);
     startX = p.x; startY = p.y; drawing = true;
+
+    if (formeActuelle === 'libre') {
+        cheminLibre = [{ x: p.x, y: p.y }];
+        svgApercu = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svgApercu.classList.add('rect');
+        svgApercu.style.position = 'absolute';
+        svgApercu.style.left = '0'; svgApercu.style.top = '0';
+        svgApercu.style.width = '100%'; svgApercu.style.height = '100%';
+        svgApercu.style.pointerEvents = 'none';
+        svgApercu.style.border = 'none'; svgApercu.style.background = 'transparent';
+        const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        poly.setAttribute('fill', 'rgba(52,152,219,0.2)');
+        poly.setAttribute('stroke', '#3498db');
+        poly.setAttribute('stroke-width', '2');
+        svgApercu.appendChild(poly);
+        canvasEl.appendChild(svgApercu);
+        return;
+    }
+
     currentRect = document.createElement('div');
     currentRect.className = 'rect';
+    if (formeActuelle === 'ellipse') currentRect.style.borderRadius = '50%';
     currentRect.style.left = startX + 'px';
     currentRect.style.top = startY + 'px';
     canvasEl.appendChild(currentRect);
@@ -355,9 +470,20 @@ function handleStart(e) {
 
 function handleMove(e) {
     if (e.type === 'touchmove' && e.touches.length >= 2) { e.preventDefault(); return; }
-    if (!drawing || !currentRect) return;
+    if (!drawing) return;
     if (e.type === 'touchmove') e.preventDefault();
     const p = posRelative(e);
+
+    if (formeActuelle === 'libre') {
+        if (!svgApercu) return;
+        const dernier = cheminLibre[cheminLibre.length - 1];
+        const dist = Math.hypot(p.x - dernier.x, p.y - dernier.y);
+        if (dist >= 4) cheminLibre.push({ x: p.x, y: p.y });
+        svgApercu.querySelector('polygon').setAttribute('points', cheminLibre.map(pt => pt.x + ',' + pt.y).join(' '));
+        return;
+    }
+
+    if (!currentRect) return;
     const w = p.x - startX, h = p.y - startY;
     currentRect.style.left = (w < 0 ? p.x : startX) + 'px';
     currentRect.style.top = (h < 0 ? p.y : startY) + 'px';
@@ -366,12 +492,48 @@ function handleMove(e) {
 }
 
 function handleEnd(e) {
-    if (!drawing || !currentRect) { drawing = false; return; }
+    if (!drawing) { return; }
+    drawing = false;
     const p = posRelative(e);
+
+    if (formeActuelle === 'libre') {
+        if (svgApercu) { svgApercu.remove(); svgApercu = null; }
+        const xs = cheminLibre.map(pt => pt.x), ys = cheminLibre.map(pt => pt.y);
+        const minX = Math.min(...xs), maxX = Math.max(...xs);
+        const minY = Math.min(...ys), maxY = Math.max(...ys);
+        const largeur = maxX - minX, hauteur = maxY - minY;
+
+        if (largeur <= CLICK_THRESHOLD && hauteur <= CLICK_THRESHOLD) {
+            supprimerZoneAuPoint((p.x / p.canvasW) * 100, (p.y / p.canvasH) * 100);
+            cheminLibre = [];
+            return;
+        }
+
+        const pointsRelatifs = cheminLibre.map(pt => ({
+            x: ((pt.x - minX) / largeur) * 100,
+            y: ((pt.y - minY) / hauteur) * 100
+        }));
+
+        supportActif.zones.push({
+            forme: 'libre',
+            xPct: (minX / p.canvasW) * 100,
+            yPct: (minY / p.canvasH) * 100,
+            wPct: (largeur / p.canvasW) * 100,
+            hPct: (hauteur / p.canvasH) * 100,
+            points: pointsRelatifs,
+            indice: ''
+        });
+        cheminLibre = [];
+        redessinerZonesEdition();
+        majCompteurZonesEdition();
+        sauvegarderSupports();
+        return;
+    }
+
+    if (!currentRect) return;
     const w = p.x - startX, h = p.y - startY;
     const x = w < 0 ? p.x : startX, y = h < 0 ? p.y : startY;
     const width = Math.abs(w), height = Math.abs(h);
-    drawing = false;
 
     if (width <= CLICK_THRESHOLD && height <= CLICK_THRESHOLD) {
         currentRect.remove(); currentRect = null;
@@ -380,6 +542,7 @@ function handleEnd(e) {
     }
 
     supportActif.zones.push({
+        forme: formeActuelle,
         xPct: (x / p.canvasW) * 100,
         yPct: (y / p.canvasH) * 100,
         wPct: (width / p.canvasW) * 100,
@@ -448,17 +611,48 @@ function redessinerZonesEdition() {
     const decalX = rect.left - rectCanvas.left;
     const decalY = rect.top - rectCanvas.top;
     supportActif.zones.forEach((z, i) => {
-        const div = document.createElement('div');
-        div.className = 'rect';
-        div.style.left = (decalX + z.xPct / 100 * rect.width) + 'px';
-        div.style.top = (decalY + z.yPct / 100 * rect.height) + 'px';
-        div.style.width = (z.wPct / 100 * rect.width) + 'px';
-        div.style.height = (z.hPct / 100 * rect.height) + 'px';
+        const left = decalX + z.xPct / 100 * rect.width;
+        const top = decalY + z.yPct / 100 * rect.height;
+        const largeur = z.wPct / 100 * rect.width;
+        const hauteur = z.hPct / 100 * rect.height;
+
+        const conteneur = document.createElement('div');
+        conteneur.className = 'rect';
+        conteneur.style.left = left + 'px';
+        conteneur.style.top = top + 'px';
+        conteneur.style.width = largeur + 'px';
+        conteneur.style.height = hauteur + 'px';
+
+        if (z.forme === 'libre' && z.points) {
+            conteneur.style.border = 'none';
+            conteneur.style.background = 'transparent';
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', '0 0 100 100');
+            svg.setAttribute('preserveAspectRatio', 'none');
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+            svg.style.display = 'block';
+            const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            poly.setAttribute('points', z.points.map(p => p.x + ',' + p.y).join(' '));
+            poly.setAttribute('fill', 'rgba(52,152,219,0.2)');
+            poly.setAttribute('stroke', '#3498db');
+            poly.setAttribute('stroke-width', '2');
+            poly.setAttribute('vector-effect', 'non-scaling-stroke');
+            svg.appendChild(poly);
+            conteneur.appendChild(svg);
+        } else if (z.forme === 'ellipse') {
+            conteneur.style.borderRadius = '50%';
+        }
+
         const label = document.createElement('span');
-        label.className = 'rect-label';
+        label.className = 'rect-label' + (z.indice ? ' a-un-indice' : '');
         label.textContent = i + 1;
-        div.appendChild(label);
-        canvasEl.appendChild(div);
+        label.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            ouvrirBulleIndice(label, i);
+        });
+        conteneur.appendChild(label);
+        canvasEl.appendChild(conteneur);
     });
 }
 
@@ -472,25 +666,64 @@ function echapperHtml(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function ouvrirModalIndices() {
-    if (!supportActif || supportActif.zones.length === 0) { alert("Trace d'abord au moins une zone."); return; }
-    const liste = document.getElementById('listeIndices');
-    liste.innerHTML = supportActif.zones.map((z, i) => `
-        <div style="margin-bottom:10px;">
-            <label style="font-size:13px; font-weight:bold;">Zone ${i + 1}</label>
-            <input type="text" class="indice-input-texte" data-idx="${i}" value="${echapperHtml(z.indice || '')}" placeholder="Ex : verbe, commence par É...">
-        </div>
-    `).join('');
-    document.getElementById('modalIndices').classList.add('ouverte');
+/* Bulle d'édition d'indice, ancrée près de la zone tapée plutôt qu'une grosse modale */
+let bulleIndiceEl = null;
+
+function fermerBulleIndice() {
+    if (bulleIndiceEl) { bulleIndiceEl.remove(); bulleIndiceEl = null; }
+    document.removeEventListener('click', fermerBulleIndiceSiExterieur, true);
 }
-function fermerModalIndices() { document.getElementById('modalIndices').classList.remove('ouverte'); }
-function enregistrerIndices() {
-    document.querySelectorAll('.indice-input-texte').forEach(inp => {
-        const i = parseInt(inp.getAttribute('data-idx'), 10);
-        supportActif.zones[i].indice = inp.value.trim();
+
+function fermerBulleIndiceSiExterieur(ev) {
+    if (bulleIndiceEl && !bulleIndiceEl.contains(ev.target)) fermerBulleIndice();
+}
+
+function ouvrirBulleIndice(labelEl, idxZone) {
+    fermerBulleIndice();
+    const z = supportActif.zones[idxZone];
+    const rectLabel = labelEl.getBoundingClientRect();
+
+    bulleIndiceEl = document.createElement('div');
+    bulleIndiceEl.className = 'bulle-indice-edition';
+    bulleIndiceEl.innerHTML = `
+        <div class="titre">💡 Indice — zone ${idxZone + 1}</div>
+        <input type="text" id="champBulleIndice" placeholder="Ex : verbe, commence par É...">
+        <div class="actions">
+            <button class="btn-modal annuler" id="btnSupprBulleIndice">Effacer</button>
+            <button class="btn-modal enregistrer" id="btnOkBulleIndice">OK</button>
+        </div>`;
+    document.body.appendChild(bulleIndiceEl);
+
+    // Positionnement : sous le badge par défaut, au-dessus si pas assez de place en bas
+    const largeurBulle = 240, hauteurBulle = bulleIndiceEl.offsetHeight || 120;
+    let left = rectLabel.left;
+    let top = rectLabel.bottom + 8;
+    if (left + largeurBulle > window.innerWidth - 10) left = window.innerWidth - largeurBulle - 10;
+    if (left < 10) left = 10;
+    if (top + hauteurBulle > window.innerHeight - 10) top = rectLabel.top - hauteurBulle - 8;
+    bulleIndiceEl.style.left = left + 'px';
+    bulleIndiceEl.style.top = top + 'px';
+
+    const champ = document.getElementById('champBulleIndice');
+    champ.value = z.indice || '';
+    champ.focus();
+
+    function valider() {
+        supportActif.zones[idxZone].indice = champ.value.trim();
+        sauvegarderSupports();
+        redessinerZonesEdition();
+        fermerBulleIndice();
+    }
+    document.getElementById('btnOkBulleIndice').addEventListener('click', (ev) => { ev.stopPropagation(); valider(); });
+    document.getElementById('btnSupprBulleIndice').addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        champ.value = '';
+        valider();
     });
-    sauvegarderSupports();
-    fermerModalIndices();
+    champ.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') valider(); });
+    bulleIndiceEl.addEventListener('click', (ev) => ev.stopPropagation());
+
+    setTimeout(() => document.addEventListener('click', fermerBulleIndiceSiExterieur, true), 0);
 }
 
 /* ---------------- Révision (Leitner) ---------------- */
@@ -533,6 +766,12 @@ function construireVueRevision() {
 
         const fond = document.createElement('div');
         fond.className = 'fond';
+        if (z.forme === 'ellipse') {
+            fond.style.borderRadius = '50%';
+        } else if (z.forme === 'libre' && z.points) {
+            fond.style.clipPath = 'polygon(' + z.points.map(p => p.x + '% ' + p.y + '%').join(',') + ')';
+            fond.style.borderRadius = '0';
+        }
         masque.appendChild(fond);
 
         const niveau = document.createElement('div');
