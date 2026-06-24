@@ -1,0 +1,15 @@
+{
+    "name": "Mes révisions",
+    "short_name": "Révisions",
+    "description": "Crée tes propres supports de mémorisation et révise-les avec la méthode Leitner.",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#f2f2f7",
+    "theme_color": "#007AFF",
+    "orientation": "any",
+    "icons": [
+        { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+        { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    ]
+}
