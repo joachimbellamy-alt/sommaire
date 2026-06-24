@@ -16,27 +16,142 @@ const CLICK_THRESHOLD = 6;
 const INTERVALLES = [0, 1, 3, 7, 16]; // jours avant prochaine révision, indexé sur (boîte - 1)
 const canvasEl = document.getElementById('zoneCanvas');
 
-/* ---------------- Stockage ---------------- */
+/* ---------------- Stockage (IndexedDB, avec repli et migration depuis localStorage) ---------------- */
 
-function chargerSupports() {
+const DB_NOM = 'memo_revisions_db';
+const DB_VERSION = 1;
+const MAGASIN = 'donnees';
+const CLE_SUPPORTS = 'supports';
+const ANCIENNE_CLE_LOCALSTORAGE = 'memo_supports_v2';
+
+function ouvrirDB() {
+    return new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) { reject(new Error('IndexedDB indisponible')); return; }
+        const req = indexedDB.open(DB_NOM, DB_VERSION);
+        req.onupgradeneeded = () => {
+            if (!req.result.objectStoreNames.contains(MAGASIN)) {
+                req.result.createObjectStore(MAGASIN);
+            }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+async function chargerSupports() {
     try {
-        const raw = localStorage.getItem('memo_supports_v2');
+        const db = await ouvrirDB();
+        const donnees = await new Promise((resolve, reject) => {
+            const tx = db.transaction(MAGASIN, 'readonly');
+            const req = tx.objectStore(MAGASIN).get(CLE_SUPPORTS);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+        if (donnees) return donnees;
+        // Rien en IndexedDB : on tente une migration depuis l'ancien localStorage
+        const migres = migrerDepuisLocalStorage();
+        if (migres.length > 0) {
+            supports = migres;
+            await sauvegarderSupports();
+        }
+        return migres;
+    } catch (e) {
+        // IndexedDB indisponible sur cet appareil : repli sur localStorage (capacité réduite)
+        return migrerDepuisLocalStorage();
+    }
+}
+
+function migrerDepuisLocalStorage() {
+    try {
+        const raw = localStorage.getItem(ANCIENNE_CLE_LOCALSTORAGE);
         return raw ? JSON.parse(raw) : [];
     } catch (e) {
         return [];
     }
 }
 
-function sauvegarderSupports() {
+async function sauvegarderSupports() {
     try {
-        localStorage.setItem('memo_supports_v2', JSON.stringify(supports));
+        const db = await ouvrirDB();
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction(MAGASIN, 'readwrite');
+            tx.objectStore(MAGASIN).put(supports, CLE_SUPPORTS);
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
     } catch (e) {
-        alert("Espace de stockage insuffisant sur cet appareil. Essaie de supprimer un ancien support ou de réduire le nombre de photos.");
+        // Repli sur localStorage si IndexedDB échoue (capacité plus faible)
+        try {
+            localStorage.setItem(ANCIENNE_CLE_LOCALSTORAGE, JSON.stringify(supports));
+        } catch (e2) {
+            alert("Espace de stockage insuffisant ou indisponible sur cet appareil. Essaie de supprimer un ancien support, ou exporte tes données en sauvegarde avant qu'il ne soit trop tard.");
+        }
     }
 }
 
 function genererId() {
     return 'sup_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+/* ---------------- Sauvegarde / restauration manuelle (fichier .json) ---------------- */
+
+function exporterDonnees() {
+    if (supports.length === 0) { alert("Tu n'as encore aucun support à exporter."); return; }
+    const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: supports };
+    const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.download = 'sauvegarde-revisions-' + dateStr + '.json';
+    a.click();
+}
+
+document.getElementById('inputImport').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+        let paquet;
+        try {
+            paquet = JSON.parse(ev.target.result);
+        } catch (err) {
+            alert("Ce fichier n'est pas une sauvegarde valide.");
+            return;
+        }
+        const importes = Array.isArray(paquet) ? paquet : paquet.supports;
+        if (!Array.isArray(importes)) {
+            alert("Ce fichier n'est pas une sauvegarde valide.");
+            return;
+        }
+        // On ajoute les supports importés sans jamais toucher à ceux déjà présents,
+        // et avec de nouveaux identifiants pour éviter tout conflit.
+        importes.forEach((s) => {
+            supports.push(Object.assign({}, s, { id: genererId() }));
+        });
+        await sauvegarderSupports();
+        afficherAccueil();
+        alert(importes.length + ' support(s) importé(s) avec succès.');
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+};
+
+/* ---------------- Bannière "Ajouter à l'écran d'accueil" ---------------- */
+
+function estStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function afficherBanniereEcranAccueilSiBesoin() {
+    if (estStandalone()) return;
+    if (sessionStorage.getItem('banniere_masquee')) return;
+    const banniere = document.getElementById('banniereAjoutEcran');
+    if (banniere) banniere.style.display = 'flex';
+}
+
+function fermerBanniereEcranAccueil() {
+    document.getElementById('banniereAjoutEcran').style.display = 'none';
+    try { sessionStorage.setItem('banniere_masquee', '1'); } catch (e) { /* tant pis */ }
 }
 
 /* ---------------- Navigation entre vues ---------------- */
@@ -586,11 +701,14 @@ function changerMode(mode) {
 
 /* ---------------- Démarrage ---------------- */
 
-supports = chargerSupports();
-afficherAccueil();
+(async function demarrer() {
+    supports = await chargerSupports();
+    afficherAccueil();
+    afficherBanniereEcranAccueilSiBesoin();
 
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js').catch(() => { /* mode hors-ligne indisponible, l'app reste utilisable en ligne */ });
-    });
-}
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('service-worker.js').catch(() => { /* mode hors-ligne indisponible, l'app reste utilisable en ligne */ });
+        });
+    }
+})();
