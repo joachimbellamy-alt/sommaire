@@ -222,7 +222,8 @@ function zoomReset() {
 function posRelative(e) {
     const c = (e.touches && e.touches.length > 0) ? e.touches[0]
         : (e.changedTouches && e.changedTouches.length > 0) ? e.changedTouches[0] : e;
-    const rect = canvasEl.getBoundingClientRect();
+    const imgEl = canvasEl.querySelector('img');
+    const rect = (imgEl || canvasEl).getBoundingClientRect();
     return { x: c.clientX - rect.left, y: c.clientY - rect.top, canvasW: rect.width, canvasH: rect.height };
 }
 
@@ -311,6 +312,10 @@ canvasEl.addEventListener('touchstart', handleStart, { passive: false });
 canvasEl.addEventListener('touchmove', handleMove, { passive: false });
 window.addEventListener('touchend', handleEnd);
 
+window.addEventListener('resize', () => {
+    if (vueActuelle === 'edition' && supportActif) redessinerZonesEdition();
+});
+
 window.addEventListener('keydown', (e) => {
     if (vueActuelle !== 'edition') return;
     const touche = e.key ? e.key.toLowerCase() : '';
@@ -349,12 +354,17 @@ function effacerToutesZones() {
 
 function redessinerZonesEdition() {
     canvasEl.querySelectorAll('.rect').forEach(el => el.remove());
-    const rect = canvasEl.getBoundingClientRect();
+    const imgEl = canvasEl.querySelector('img');
+    if (!imgEl) return;
+    const rect = imgEl.getBoundingClientRect();
+    const rectCanvas = canvasEl.getBoundingClientRect();
+    const decalX = rect.left - rectCanvas.left;
+    const decalY = rect.top - rectCanvas.top;
     supportActif.zones.forEach((z, i) => {
         const div = document.createElement('div');
         div.className = 'rect';
-        div.style.left = (z.xPct / 100 * rect.width) + 'px';
-        div.style.top = (z.yPct / 100 * rect.height) + 'px';
+        div.style.left = (decalX + z.xPct / 100 * rect.width) + 'px';
+        div.style.top = (decalY + z.yPct / 100 * rect.height) + 'px';
         div.style.width = (z.wPct / 100 * rect.width) + 'px';
         div.style.height = (z.hPct / 100 * rect.height) + 'px';
         const label = document.createElement('span');
