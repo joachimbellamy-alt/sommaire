@@ -234,7 +234,6 @@
             <label class="icon-btn secondaire-large" for="inputImport" style="flex:1; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:10px; cursor:pointer;">📂 Importer une sauvegarde</label>
             <input type="file" id="inputImport" accept=".json" style="display:none;">
         </div>
-        <button class="icon-btn secondaire-large" onclick="ouvrirModalRappel()" style="width:100%; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:10px; margin-top:8px;">📅 Créer un rappel de révision (Calendrier)</button>
     </div>
 
     <!-- ===================== VUE ÉDITION ===================== -->
@@ -275,6 +274,7 @@
         <div class="controles-revision">
             <button class="icon-btn primary" onclick="remasquerToutRevision()">🔄 Recommencer</button>
             <button id="btnFiltre" class="icon-btn" onclick="basculerFiltre()">📅 Zones à réviser</button>
+            <button class="icon-btn" onclick="ouvrirModalRappel()">⏰ Programmer un rappel</button>
             <button class="icon-btn danger" onclick="reinitialiserProgression()">🗑 Réinitialiser</button>
         </div>
         <div id="resumeBoites"></div>
@@ -295,11 +295,17 @@
         <span class="label-modale">Matière</span>
         <select id="champMatiereSupport" class="champ-modale">
             <option value="Français">📖 Français</option>
-            <option value="Mathématiques">📐 Mathématiques</option>
-            <option value="Histoire-Géographie">🌍 Histoire-Géo</option>
-            <option value="SVT">🔬 SVT</option>
+            <option value="Maths">📐 Maths</option>
+            <option value="Histoire-Géo-EMC">🌍 Histoire-Géo-EMC</option>
             <option value="Anglais">🇬🇧 Anglais</option>
+            <option value="Espagnol">🇪🇸 Espagnol</option>
+            <option value="EMI">📰 EMI</option>
+            <option value="Sciences">🧪 Sciences</option>
+            <option value="SVT">🔬 SVT</option>
+            <option value="Sciences physiques">⚛️ Sciences physiques</option>
             <option value="Latin">🏛️ Latin</option>
+            <option value="Éducation musicale">🎵 Éducation musicale</option>
+            <option value="Arts plastiques">🎨 Arts plastiques</option>
             <option value="Autre">📦 Autre</option>
         </select>
         <div style="margin-top:6px; text-align:right;">
@@ -311,7 +317,7 @@
 
 <div class="modale-fond" id="modalRappel">
     <div class="modale-boite">
-        <h3>📅 Rappel de révision</h3>
+        <h3 id="titreModalRappel">📅 Rappel de révision</h3>
         <span class="label-modale">Heure</span>
         <input type="time" id="champHeureRappel" class="champ-modale" value="18:00">
         <span class="label-modale">Fréquence</span>
