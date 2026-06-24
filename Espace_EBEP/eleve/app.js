@@ -8,7 +8,6 @@ let supportActif = null;
 let vueActuelle = 'accueil';
 
 let zoomLevel = 1, imgNaturalW = 0, imgNaturalH = 0;
-let pinching = false, pinchStartDist = 0, pinchStartZoom = 1;
 let startX, startY, currentRect, drawing = false;
 let etatRevision = null;
 let toastTimer = null;
@@ -197,11 +196,6 @@ function redimensionnerEtStocker(dataUrlOriginal, callback) {
     img.src = dataUrlOriginal;
 }
 
-function touchDistance(t1, t2) {
-    const dx = t2.clientX - t1.clientX, dy = t2.clientY - t1.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-}
-
 function appliquerZoom() {
     const img = canvasEl.querySelector('img');
     if (!img || !imgNaturalW) return;
@@ -231,15 +225,8 @@ function handleStart(e) {
     if (!canvasEl.querySelector('img')) return;
     if (e.type === 'touchstart') {
         e.preventDefault();
-        if (e.touches.length >= 2) {
-            pinching = true; drawing = false;
-            if (currentRect) { currentRect.remove(); currentRect = null; }
-            pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
-            pinchStartZoom = zoomLevel;
-            return;
-        }
+        if (e.touches.length >= 2) return; // on ignore le multi-doigts : zoom uniquement via les boutons
     }
-    if (pinching) return;
     const p = posRelative(e);
     startX = p.x; startY = p.y; drawing = true;
     currentRect = document.createElement('div');
@@ -250,15 +237,7 @@ function handleStart(e) {
 }
 
 function handleMove(e) {
-    if (e.type === 'touchmove' && e.touches.length >= 2) {
-        e.preventDefault();
-        if (!pinching) return;
-        const dist = touchDistance(e.touches[0], e.touches[1]);
-        zoomLevel = Math.min(3, Math.max(0.15, pinchStartZoom * (dist / pinchStartDist)));
-        appliquerZoom();
-        return;
-    }
-    if (pinching) return;
+    if (e.type === 'touchmove' && e.touches.length >= 2) { e.preventDefault(); return; }
     if (!drawing || !currentRect) return;
     if (e.type === 'touchmove') e.preventDefault();
     const p = posRelative(e);
@@ -270,15 +249,6 @@ function handleMove(e) {
 }
 
 function handleEnd(e) {
-    if (e.type === 'touchend') {
-        const remaining = e.touches ? e.touches.length : 0;
-        if (pinching) {
-            if (remaining === 0) pinching = false;
-            drawing = false;
-            if (currentRect) { currentRect.remove(); currentRect = null; }
-            return;
-        }
-    }
     if (!drawing || !currentRect) { drawing = false; return; }
     const p = posRelative(e);
     const w = p.x - startX, h = p.y - startY;
