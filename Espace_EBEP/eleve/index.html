@@ -1,1 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#007AFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mes révisions">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Mes révisions</title>
+<style>
+    :root {
+        --bleu:#007AFF; --gris-fond:#f2f2f7; --gris-texte:#8e8e93; --rouge:#FF3B30;
+        --vert:#34C759; --jaune:#f1c40f; --texte:#1c1c1e;
+    }
+    * { box-sizing:border-box; }
+    body {
+        font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        margin:0; background:var(--gris-fond); color:var(--texte);
+        padding-bottom:40px;
+    }
+    header {
+        background:#fff; padding:14px 16px; display:flex; align-items:center; gap:10px;
+        border-bottom:1px solid #e3e3e8; position:sticky; top:0; z-index:50;
+    }
+    header h1 { font-size:18px; margin:0; flex:1; }
+    header button { background:none; border:none; color:var(--bleu); font-size:15px; cursor:pointer; padding:6px 8px; }
+    main { padding:16px; max-width:700px; margin:0 auto; }
 
+    /* ---------- Accueil ---------- */
+    .carte-support {
+        background:#fff; border-radius:14px; padding:16px; margin-bottom:12px;
+        box-shadow:0 1px 3px rgba(0,0,0,0.08); display:flex; align-items:center; gap:12px;
+        cursor:pointer;
+    }
+    .carte-support img { width:56px; height:56px; object-fit:cover; border-radius:10px; flex-shrink:0; background:#eee; }
+    .carte-support .infos { flex:1; min-width:0; }
+    .carte-support .infos .nom { font-weight:600; font-size:15px; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .carte-support .infos .meta { font-size:12px; color:var(--gris-texte); }
+    .carte-support .chevron { color:#c7c7cc; font-size:20px; }
+    .bouton-principal {
+        display:block; width:100%; background:var(--bleu); color:#fff; border:none;
+        padding:14px; border-radius:12px; font-size:16px; font-weight:600; cursor:pointer; margin-top:8px;
+    }
+    .bouton-principal:hover { background:#0066d6; }
+    .vide { text-align:center; color:var(--gris-texte); padding:40px 20px; font-size:14px; }
+
+    /* ---------- Barre d'outils édition ---------- */
+    .toolbar-ios { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; align-items:center; }
+    .segment-group { display:flex; align-items:center; background:#fff; border-radius:10px; box-shadow:0 1px 2px rgba(0,0,0,0.06); border:1px solid #e3e3e8; overflow:hidden; }
+    .icon-btn { display:inline-flex; align-items:center; gap:5px; background:transparent; border:none; padding:7px 11px; font-size:13px; color:var(--bleu); cursor:pointer; white-space:nowrap; font-family:inherit; }
+    .icon-btn:hover { background:var(--gris-fond); }
+    .icon-btn.danger { color:var(--rouge); }
+    .icon-btn.accent { color:#8a6d00; background:#fff8e1; }
+    .icon-btn.primary { color:#fff; background:var(--bleu); font-weight:600; border-radius:9px; padding:8px 16px; }
+    .zoom-val { font-size:12px; color:var(--gris-texte); padding:0 2px; min-width:38px; text-align:center; }
+
+    #zoneCanvas {
+        position:relative; display:inline-block; cursor:crosshair; border:1px solid #ccc;
+        background:#fff; user-select:none; touch-action:none; overflow:visible; max-width:100%;
+    }
+    #zoneCanvas img { display:block; max-width:90vw; pointer-events:none; user-select:none; -webkit-user-drag:none; }
+    .rect { position:absolute; border:2px solid #3498db; background:rgba(52,152,219,0.2); pointer-events:none; }
+    .rect-label {
+        position:absolute; top:-9px; left:-9px; background:#3498db; color:#fff; font-size:11px; font-weight:bold;
+        width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+        pointer-events:none; z-index:5; box-shadow:0 1px 3px rgba(0,0,0,0.4);
+    }
+    #infoEdition { color:var(--gris-texte); font-size:12px; margin-bottom:10px; }
+    #infoEdition strong { color:var(--texte); }
+
+    /* ---------- Modale indices ---------- */
+    .modale-fond { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center; }
+    .modale-fond.ouverte { display:flex; }
+    .modale-boite { background:#fff; border-radius:14px; padding:20px; max-width:90vw; max-height:80vh; overflow:auto; width:420px; }
+    .modale-boite h3 { margin-top:0; }
+    .modale-boite input[type=text] { width:100%; padding:8px; box-sizing:border-box; margin-top:4px; border:1px solid #ccc; border-radius:8px; font-size:14px; }
+    .btn-modal { font-family:inherit; font-size:14px; padding:8px 16px; border:none; border-radius:8px; cursor:pointer; margin-left:6px; }
+    .btn-modal.annuler { background:var(--gris-fond); color:var(--texte); }
+    .btn-modal.enregistrer { background:var(--bleu); color:#fff; font-weight:600; }
+
+    /* ---------- Segmented mode simple/complet ---------- */
+    .segmented { position:relative; display:inline-flex; background:#e5e5ea; border-radius:9px; padding:2px; margin-bottom:16px; width:220px; }
+    .segmented button { position:relative; z-index:2; flex:1; padding:7px 10px; border:none; background:transparent; color:#555; font-size:14px; font-weight:600; border-radius:7px; cursor:pointer; transition:color .2s; margin:0; }
+    .segmented button.actif { color:#000; }
+    .segmented .thumb { position:absolute; top:2px; left:2px; height:calc(100% - 4px); width:calc(50% - 2px); background:#fff; border-radius:7px; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:transform .25s cubic-bezier(.4,0,.2,1); z-index:1; }
+    .segmented .thumb.pos-1 { transform:translateX(100%); }
+
+    /* ---------- Vue révision ---------- */
+    .controles-revision { margin-bottom:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+    body.mode-simple #resumeBoites, body.mode-simple #btnFiltre { display:none; }
+    #resumeBoites { margin-bottom:14px; }
+    .boites-titre { font-size:14px; color:#555; margin-bottom:8px; font-weight:bold; text-align:center; }
+    .boites-rangee { display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:wrap; }
+    .boite-card { width:64px; padding:8px 4px; border-radius:10px; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); position:relative; border-top:4px solid #ccc; }
+    .boite-card-1 { border-top-color:#e74c3c; } .boite-card-2 { border-top-color:#e67e22; }
+    .boite-card-3 { border-top-color:#f39c12; } .boite-card-4 { border-top-color:#2ecc71; } .boite-card-5 { border-top-color:#16a085; }
+    .boite-num { font-size:11px; color:#999; font-weight:bold; }
+    .boite-count { font-size:22px; font-weight:bold; color:#333; line-height:1.1; }
+    .boite-label { font-size:10px; color:#777; margin-top:2px; }
+    .boite-flag { position:absolute; top:-10px; right:-6px; background:#e74c3c; color:#fff; font-size:9px; padding:2px 5px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.3); white-space:nowrap; }
+    .due-card { box-shadow:0 0 0 3px rgba(231,76,60,.45), 0 1px 4px rgba(0,0,0,.15); }
+    .boite-fleche { font-size:16px; color:#bbb; }
+    .boites-legende { margin-top:6px; font-size:11px; color:#999; text-align:center; }
+    .boites-resume-txt { margin-top:8px; font-size:13px; color:#555; text-align:center; }
+    #compteurRevision { margin-bottom:6px; font-size:17px; color:#444; font-weight:bold; text-align:center; }
+    #instructionsRevision { margin-bottom:16px; font-size:13px; color:#777; text-align:center; }
+
+    #conteneurImage { position:relative; display:inline-block; max-width:100%; text-align:center; }
+    #conteneurImage img { display:block; max-width:100%; }
+    .masque { position:absolute; cursor:pointer; transition:opacity .25s ease; -webkit-tap-highlight-color:transparent; }
+    .masque .fond {
+        position:absolute; inset:0; background:rgba(255,255,255,0.55);
+        -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
+        border:1px solid rgba(255,255,255,0.5); pointer-events:none;
+        transition:backdrop-filter .25s, -webkit-backdrop-filter .25s, background .25s, border-color .25s;
+    }
+    .masque:hover .fond { background:rgba(255,255,255,0.15); }
+    .masque:not(.due):not(.revele) { opacity:.45; }
+    body.mode-simple .masque:not(.due):not(.revele) { opacity:1; }
+    .masque.revele .fond { -webkit-backdrop-filter:blur(0); backdrop-filter:blur(0); background:transparent; border-color:transparent; }
+    .masque.revele { opacity:1; }
+    body.filtre-actif .masque:not(.due) { display:none; }
+    .masque .boite-niveau {
+        position:absolute; top:-9px; left:-9px; width:20px; height:20px; border-radius:50%;
+        display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold;
+        color:#fff; z-index:6; box-shadow:0 1px 3px rgba(0,0,0,.4); pointer-events:none;
+    }
+    body.mode-simple .masque .boite-niveau { display:none; }
+    .niveau-1 { background:#e74c3c; } .niveau-2 { background:#e67e22; } .niveau-3 { background:#f39c12; }
+    .niveau-4 { background:#2ecc71; } .niveau-5 { background:#16a085; }
+    .masque .declare {
+        position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); display:none;
+        gap:6px; background:#fff; padding:5px 7px; border-radius:20px; box-shadow:0 2px 8px rgba(0,0,0,.3);
+        z-index:10; white-space:nowrap;
+    }
+    .masque .declare.dessous { bottom:auto; top:calc(100% + 8px); }
+    .masque.revele:not(.correcte):not(.incorrecte) .declare { display:flex; }
+    .masque .declare button { width:32px; height:32px; border-radius:50%; border:none; font-size:16px; cursor:pointer; padding:0; line-height:32px; }
+    .btn-ok { background:#2ecc71; color:#fff; } .btn-non { background:#e74c3c; color:#fff; }
+    .masque.correcte .fond { border-color:#2ecc71; box-shadow:0 0 0 2px rgba(46,204,113,.6) inset; }
+    .masque.incorrecte .fond { border-color:#e74c3c; box-shadow:0 0 0 2px rgba(231,76,60,.6) inset; }
+    .masque .indice-btn {
+        position:absolute; top:-9px; right:-9px; width:22px; height:22px; border-radius:50%; background:var(--jaune);
+        display:flex; align-items:center; justify-content:center; font-size:12px; cursor:pointer; z-index:7;
+        box-shadow:0 1px 3px rgba(0,0,0,.4);
+    }
+    .masque.revele .indice-btn, .masque.revele .indice-panel { display:none; }
+    .masque .indice-panel {
+        display:none; position:absolute; bottom:calc(100% + 8px); left:0; min-width:170px; max-width:240px;
+        background:#fff8e1; border:1px solid var(--jaune); border-radius:8px; padding:8px 10px;
+        box-shadow:0 2px 8px rgba(0,0,0,.25); z-index:9; text-align:left;
+    }
+    .masque .indice-panel.dessous { bottom:auto; top:calc(100% + 8px); }
+    .masque.indice-actif .indice-panel { display:block; }
+    .indice-prof { font-size:12px; color:#7a5c00; margin-bottom:6px; line-height:1.3; }
+    .indice-perso-input { width:100%; box-sizing:border-box; padding:6px 7px; font-size:12px; border:1px solid #ddd; border-radius:5px; }
+    .indice-perso-label { font-size:10px; color:#999; margin-bottom:2px; display:block; }
+
+    #toast {
+        position:fixed; top:24px; left:50%; transform:translateX(-50%) translateY(-30px); opacity:0;
+        background:#2c3e50; color:#fff; padding:12px 22px; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,.3);
+        z-index:1000; pointer-events:none; transition:opacity .3s, transform .3s; text-align:center;
+    }
+    #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    #toast.bonne { background:#27ae60; } #toast.mauvaise { background:#c0392b; }
+    #toastMsg { font-size:16px; font-weight:bold; } #toastScore { font-size:13px; opacity:.9; margin-top:2px; }
+</style>
+</head>
+<body>
+
+<header>
+    <button id="btnRetour" style="display:none;" onclick="retourAccueil()">← Mes supports</button>
+    <h1 id="titreHeader">Mes révisions</h1>
+    <button id="btnBascule" style="display:none;"></button>
+</header>
+
+<main>
+
+    <!-- ===================== VUE ACCUEIL ===================== -->
+    <div id="vueAccueil">
+        <div id="listeSupports"></div>
+        <button class="bouton-principal" onclick="creerNouveauSupport()">+ Nouveau support de révision</button>
+    </div>
+
+    <!-- ===================== VUE ÉDITION ===================== -->
+    <div id="vueEdition" style="display:none;">
+        <div class="toolbar-ios">
+            <div class="segment-group">
+                <label class="icon-btn" for="inputPhoto">📷 Photo</label>
+                <input type="file" id="inputPhoto" accept="image/*" style="display:none;">
+            </div>
+            <div class="segment-group">
+                <button class="icon-btn" onclick="zoomOut()">➖</button>
+                <span class="zoom-val" id="zoomLabel">100%</span>
+                <button class="icon-btn" onclick="zoomIn()">➕</button>
+                <button class="icon-btn" onclick="zoomReset()">⤢ Ajuster</button>
+            </div>
+            <div class="segment-group">
+                <button class="icon-btn" onclick="effacerDerniereZone()">↩ Annuler</button>
+                <button class="icon-btn danger" onclick="effacerToutesZones()">🗑 Tout effacer</button>
+                <button class="icon-btn accent" onclick="ouvrirModalIndices()">💡 Indices</button>
+            </div>
+        </div>
+        <div id="infoEdition">Prends une photo ou importe une image, puis trace des rectangles (doigt ou souris) sur ce que tu veux mémoriser. Un tap court sur une zone existante la supprime. <strong id="compteurZonesEdition">0 zone(s)</strong></div>
+        <div id="zoneCanvas"></div>
+    </div>
+
+    <!-- ===================== VUE RÉVISION ===================== -->
+    <div id="vueRevision" style="display:none; text-align:center;">
+        <div class="segmented" id="segmente" style="margin:0 auto 16px;">
+            <button class="mode-btn actif" data-mode="simple" onclick="changerMode('simple')">Simple</button>
+            <button class="mode-btn" data-mode="complet" onclick="changerMode('complet')">Complet</button>
+            <div class="thumb"></div>
+        </div>
+        <div class="controles-revision">
+            <button class="icon-btn primary" onclick="remasquerToutRevision()">🔄 Recommencer</button>
+            <button id="btnFiltre" class="icon-btn" onclick="basculerFiltre()">📅 Zones à réviser</button>
+            <button class="icon-btn danger" onclick="reinitialiserProgression()">🗑 Réinitialiser</button>
+        </div>
+        <div id="resumeBoites"></div>
+        <div id="compteurRevision"></div>
+        <div id="instructionsRevision">Tape sur une zone pour la révéler, puis déclare honnêtement si tu savais la réponse.</div>
+        <div id="conteneurImage"></div>
+    </div>
+
+</main>
+
+<div id="toast"><div id="toastMsg"></div><div id="toastScore"></div></div>
+
+<div class="modale-fond" id="modalIndices">
+    <div class="modale-boite">
+        <h3>💡 Indices</h3>
+        <p style="font-size:13px; color:#666; margin-top:-6px;">Facultatif. S'affiche pendant la révision, avant de révéler la réponse complète.</p>
+        <div id="listeIndices"></div>
+        <div style="margin-top:14px; text-align:right;">
+            <button class="btn-modal annuler" onclick="fermerModalIndices()">Annuler</button>
+            <button class="btn-modal enregistrer" onclick="enregistrerIndices()">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
