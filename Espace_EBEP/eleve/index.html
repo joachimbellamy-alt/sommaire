@@ -27,7 +27,7 @@
     }
     header h1 { font-size:18px; margin:0; flex:1; }
     header button { background:none; border:none; color:var(--bleu); font-size:15px; cursor:pointer; padding:6px 8px; }
-    main { padding:16px; max-width:700px; margin:0 auto; }
+    main { padding:16px; max-width:1100px; margin:0 auto; }
 
     /* ---------- Accueil ---------- */
     .carte-support {
@@ -58,7 +58,7 @@
     .zoom-val { font-size:12px; color:var(--gris-texte); padding:0 2px; min-width:38px; text-align:center; }
     .zoom-slider {
         -webkit-appearance:none; appearance:none;
-        width:110px; height:4px; border-radius:2px; background:#d1d1d6;
+        width:180px; height:4px; border-radius:2px; background:#d1d1d6;
         margin:0 4px; outline:none;
     }
     .zoom-slider::-webkit-slider-thumb {
@@ -200,7 +200,7 @@
     </div>
 
     <!-- ===================== VUE ÉDITION ===================== -->
-    <div id="vueEdition" style="display:none;">
+    <div id="vueEdition" style="display:none; text-align:center;">
         <div class="toolbar-ios">
             <div class="segment-group">
                 <label class="icon-btn" for="inputPhoto">📷 Photo</label>
@@ -208,7 +208,7 @@
             </div>
             <div class="segment-group">
                 <button class="icon-btn" onclick="zoomOut()">➖</button>
-                <input type="range" id="zoomSlider" min="15" max="300" value="100" class="zoom-slider" oninput="zoomDepuisCurseur(this.value)">
+                <input type="range" id="zoomSlider" min="15" max="300" step="0.5" value="100" class="zoom-slider" oninput="zoomDepuisCurseur(this.value)">
                 <span class="zoom-val" id="zoomLabel">100%</span>
                 <button class="icon-btn" onclick="zoomIn()">➕</button>
                 <button class="icon-btn" onclick="zoomReset()">⤢ Ajuster</button>
