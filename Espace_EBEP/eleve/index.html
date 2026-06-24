@@ -27,6 +27,13 @@
     }
     header h1 { font-size:18px; margin:0; flex:1; }
     header button { background:none; border:none; color:var(--bleu); font-size:15px; cursor:pointer; padding:6px 8px; }
+    #banniereAjoutEcran {
+        display:flex; align-items:center; gap:10px; background:#fff3cd; color:#664d03;
+        padding:10px 14px; font-size:13px; line-height:1.4; border-bottom:1px solid #ffe69c;
+    }
+    .banniere-icone { font-size:18px; flex-shrink:0; }
+    .banniere-texte { flex:1; }
+    .banniere-fermer { background:none; border:none; color:#664d03; font-size:16px; cursor:pointer; padding:4px; flex-shrink:0; }
     main { padding:16px; max-width:1100px; margin:0 auto; }
 
     /* ---------- Accueil ---------- */
@@ -185,6 +192,12 @@
 </head>
 <body>
 
+<div id="banniereAjoutEcran" style="display:none;">
+    <span class="banniere-icone">📌</span>
+    <span class="banniere-texte">Pour ne jamais perdre ta progression (même après les vacances), ouvre ce lien dans <strong>Safari</strong>, puis <strong>Partager → Sur l'écran d'accueil</strong>.</span>
+    <button class="banniere-fermer" onclick="fermerBanniereEcranAccueil()">✕</button>
+</div>
+
 <header>
     <button id="btnRetour" style="display:none;" onclick="retourAccueil()">← Mes supports</button>
     <h1 id="titreHeader">Mes révisions</h1>
@@ -197,6 +210,11 @@
     <div id="vueAccueil">
         <div id="listeSupports"></div>
         <button class="bouton-principal" onclick="creerNouveauSupport()">+ Nouveau support de révision</button>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+            <button class="icon-btn secondaire-large" onclick="exporterDonnees()" style="flex:1; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:10px;">💾 Exporter une sauvegarde</button>
+            <label class="icon-btn secondaire-large" for="inputImport" style="flex:1; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:10px; cursor:pointer;">📂 Importer une sauvegarde</label>
+            <input type="file" id="inputImport" accept=".json" style="display:none;">
+        </div>
     </div>
 
     <!-- ===================== VUE ÉDITION ===================== -->
