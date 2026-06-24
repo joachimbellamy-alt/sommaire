@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Générateur d'exercices à zones floutées</title>
+<style>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+        padding: 20px;
+        background:#f2f2f7;
+        color:#1c1c1e;
+    }
+    .toolbar-ios { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; align-items:center; }
+    .segment-group {
+        display:flex;
+        align-items:center;
+        background:#fff;
+        border-radius:10px;
+        box-shadow:0 1px 2px rgba(0,0,0,0.06);
+        border:1px solid #e3e3e8;
+        overflow:hidden;
+    }
+    .icon-btn {
+        display:inline-flex;
+        align-items:center;
+        gap:5px;
+        background:transparent;
+        border:none;
+        padding:7px 11px;
+        font-size:13px;
+        color:#007AFF;
+        cursor:pointer;
+        white-space:nowrap;
+        font-family:inherit;
+    }
+    .icon-btn:hover { background:#f2f2f7; }
+    .icon-btn.danger { color:#FF3B30; }
+    .icon-btn.accent { color:#8a6d00; background:#fff8e1; }
+    .icon-btn.accent:hover { background:#fff0bf; }
+    .icon-btn.primary { color:#fff; background:#007AFF; font-weight:600; border-radius:9px; padding:8px 16px; }
+    .icon-btn.primary:hover { background:#0066d6; }
+    .zoom-val { font-size:12px; color:#8e8e93; padding:0 2px; min-width:38px; text-align:center; }
+    .btn-modal {
+        font-family:inherit;
+        font-size:14px;
+        padding:8px 16px;
+        border:none;
+        border-radius:8px;
+        cursor:pointer;
+        margin-left:6px;
+    }
+    .btn-modal.annuler { background:#f2f2f7; color:#1c1c1e; }
+    .btn-modal.annuler:hover { background:#e5e5ea; }
+    .btn-modal.enregistrer { background:#007AFF; color:#fff; font-weight:600; }
+    .btn-modal.enregistrer:hover { background:#0066d6; }
+    #canvas {
+        position: relative;
+        display: inline-block;
+        cursor: crosshair;
+        border: 1px solid #ccc;
+        background:#fff;
+        user-select:none;
+        touch-action: none;
+        overflow: visible;
+    }
+    #canvas img { display: block; max-width: 95vw; pointer-events: none; user-select:none; -webkit-user-drag: none; }
+    .rect { position: absolute; border: 2px solid #3498db; background: rgba(52, 152, 219, 0.2); pointer-events: none; }
+    .rect-label {
+        position:absolute;
+        top:-9px;
+        left:-9px;
+        background:#3498db;
+        color:#fff;
+        font-size:11px;
+        font-weight:bold;
+        width:18px;
+        height:18px;
+        border-radius:50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        pointer-events:none;
+        z-index:5;
+        box-shadow:0 1px 3px rgba(0,0,0,0.4);
+    }
+    #info { color:#8e8e93; font-size:12px; margin-bottom:10px; }
+    #info strong { color:#1c1c1e; }
+</style>
+</head>
+<body>
+
+<div class="toolbar-ios">
+    <div class="segment-group">
+        <label class="icon-btn" for="upload">📂 Image</label>
+        <input type="file" id="upload" accept="image/*" style="display:none;">
+        <label class="icon-btn" for="importer">📥 Réimporter</label>
+        <input type="file" id="importer" accept=".html" style="display:none;">
+    </div>
+
+    <div class="segment-group">
+        <button class="icon-btn" onclick="zoomOut()">➖</button>
+        <span class="zoom-val" id="zoomLabel">100%</span>
+        <button class="icon-btn" onclick="zoomIn()">➕</button>
+        <button class="icon-btn" onclick="zoomReset()">⤢ Ajuster</button>
+    </div>
+
+    <div class="segment-group">
+        <button class="icon-btn" onclick="effacerDerniereZone()" title="Ctrl+Z">↩ Annuler</button>
+        <button class="icon-btn danger" onclick="effacerToutesZones()">🗑 Tout effacer</button>
+        <button class="icon-btn accent" onclick="ouvrirModalIndices()">💡 Indices</button>
+    </div>
+
+    <div class="segment-group">
+        <button class="icon-btn" onclick="previewExercice()">👁 Aperçu</button>
+    </div>
+    <button class="icon-btn primary" onclick="genererFichier()">⬇ Générer</button>
+</div>
+<div id="info">Téléverse une image, trace des rectangles (souris ou doigt) sur les zones à masquer. Un simple tap/clic sur une zone existante la supprime. <strong id="compteurZones">0 zone(s) tracée(s)</strong></div>
+<div id="canvas"></div>
+
+<div id="modalIndices" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:10px; padding:20px; max-width:90vw; max-height:80vh; overflow:auto; width:420px;">
+        <h3 style="margin-top:0;">💬 Indices de récupération</h3>
+        <p style="font-size:13px; color:#666; margin-top:-6px;">Facultatif. Cet indice s'affiche côté élève quand il tape sur 💡, avant la révélation complète (ex : "verbe, 3e pers. sing.", "commence par É...").</p>
+        <div id="listeIndices"></div>
+        <div style="margin-top:14px; text-align:right;">
+            <button class="btn-modal annuler" onclick="fermerModalIndices()">Annuler</button>
+            <button class="btn-modal enregistrer" onclick="enregistrerIndices()">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// zones stockées en POURCENTAGE de la taille affichée de l'image
+// (pour rester alignées quelle que soit la taille d'écran à l'arrivée)
+let zones = [], startX, startY, currentRect, drawing = false;
+let zoomLevel = 1, imgNaturalW = 0, imgNaturalH = 0;
+let pinching = false, pinchStartDist = 0, pinchStartZoom = 1;
+const canvas = document.getElementById('canvas');
+const CLICK_THRESHOLD = 6; // px : sous ce seuil, on considère que c'est un tap/clic, pas un tracé
+
+function touchDistance(t1, t2) {
+    const dx = t2.clientX - t1.clientX;
+    const dy = t2.clientY - t1.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+function majCompteurZones() {
+    const n = zones.length;
+    document.getElementById('compteurZones').textContent = n + ' zone' + (n === 1 ? '' : 's') + ' tracée' + (n === 1 ? '' : 's');
+}
+
+function echapperHtml(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function ouvrirModalIndices() {
+    if (zones.length === 0) { alert("Trace d'abord au moins une zone."); return; }
+    const liste = document.getElementById('listeIndices');
+    liste.innerHTML = zones.map((z, i) => `
+        <div style="margin-bottom:10px;">
+            <label style="font-size:13px; font-weight:bold;">Zone ${i + 1}</label>
+            <input type="text" class="indice-input-texte" data-idx="${i}" value="${echapperHtml(z.indice || '')}" placeholder="Ex : verbe, commence par É..." style="width:100%; padding:6px; box-sizing:border-box; margin-top:4px; border:1px solid #ccc; border-radius:6px;">
+        </div>
+    `).join('');
+    document.getElementById('modalIndices').style.display = 'flex';
+}
+
+function fermerModalIndices() {
+    document.getElementById('modalIndices').style.display = 'none';
+}
+
+function enregistrerIndices() {
+    document.querySelectorAll('.indice-input-texte').forEach(inp => {
+        const i = parseInt(inp.getAttribute('data-idx'), 10);
+        zones[i].indice = inp.value.trim();
+    });
+    fermerModalIndices();
+}
+
+function appliquerZoom() {
+    const img = canvas.querySelector('img');
+    if (!img || !imgNaturalW) return;
+    img.style.width = (imgNaturalW * zoomLevel) + 'px';
+    img.style.height = 'auto';
+    document.getElementById('zoomLabel').textContent = Math.round(zoomLevel * 100) + '%';
+    redessinerZones();
+}
+
+function zoomIn() {
+    if (!imgNaturalW) return;
+    zoomLevel = Math.min(3, zoomLevel + 0.15);
+    appliquerZoom();
+}
+
+function zoomOut() {
+    if (!imgNaturalW) return;
+    zoomLevel = Math.max(0.15, zoomLevel - 0.15);
+    appliquerZoom();
+}
+
+function zoomReset() {
+    if (!imgNaturalW) return;
+    const maxLargeur = Math.min(window.innerWidth * 0.9, 900);
+    zoomLevel = Math.min(1, maxLargeur / imgNaturalW);
+    appliquerZoom();
+}
+
+function clientCoords(e) {
+    if (e.touches && e.touches.length > 0) return e.touches[0];
+    if (e.changedTouches && e.changedTouches.length > 0) return e.changedTouches[0];
+    return e;
+}
+
+function posRelative(e) {
+    const c = clientCoords(e);
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: c.clientX - rect.left,
+        y: c.clientY - rect.top,
+        canvasW: rect.width,
+        canvasH: rect.height
+    };
+}
+
+document.getElementById('upload').onchange = (e) => {
+    if (!e.target.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        canvas.innerHTML = '';
+        zones = [];
+        majCompteurZones();
+        const img = document.createElement('img');
+        img.onload = () => {
+            imgNaturalW = img.naturalWidth;
+            imgNaturalH = img.naturalHeight;
+            zoomReset();
+        };
+        img.src = ev.target.result;
+        canvas.appendChild(img);
+    };
+    reader.readAsDataURL(e.target.files[0]);
+};
+
+document.getElementById('importer').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        let doc;
+        try {
+            doc = new DOMParser().parseFromString(ev.target.result, 'text/html');
+        } catch (err) {
+            alert("Impossible de lire ce fichier.");
+            return;
+        }
+        const imgEl = doc.querySelector('#container img');
+        if (!imgEl) {
+            alert("Ce fichier ne semble pas être un exercice généré par cet outil.");
+            return;
+        }
+        const src = imgEl.getAttribute('src');
+        const masques = doc.querySelectorAll('.masque');
+
+        let indicesImportes = [];
+        const matchIndices = ev.target.result.match(/const INDICES = (\[[\s\S]*?\]);/);
+        if (matchIndices) {
+            try { indicesImportes = JSON.parse(matchIndices[1]); } catch (err) { indicesImportes = []; }
+        }
+
+        const zonesImportees = [];
+        masques.forEach((m, i) => {
+            const style = m.getAttribute('style') || '';
+            const xM = style.match(/left:\s*([\d.]+)%/);
+            const yM = style.match(/top:\s*([\d.]+)%/);
+            const wM = style.match(/width:\s*([\d.]+)%/);
+            const hM = style.match(/height:\s*([\d.]+)%/);
+            if (xM && yM && wM && hM) {
+                zonesImportees.push({
+                    xPct: parseFloat(xM[1]),
+                    yPct: parseFloat(yM[1]),
+                    wPct: parseFloat(wM[1]),
+                    hPct: parseFloat(hM[1]),
+                    indice: indicesImportes[i] || ''
+                });
+            }
+        });
+
+        canvas.innerHTML = '';
+        zones = zonesImportees;
+        majCompteurZones();
+        const img = document.createElement('img');
+        img.onload = () => {
+            imgNaturalW = img.naturalWidth;
+            imgNaturalH = img.naturalHeight;
+            zoomReset();
+            redessinerZones();
+        };
+        img.src = src;
+        canvas.appendChild(img);
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // permet de réimporter le même fichier plusieurs fois si besoin
+};
+
+function handleStart(e) {
+    if (!canvas.querySelector('img')) return;
+    if (e.type === 'touchstart') {
+        e.preventDefault();
+        if (e.touches.length >= 2) {
+            pinching = true;
+            drawing = false;
+            if (currentRect) { currentRect.remove(); currentRect = null; }
+            pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
+            pinchStartZoom = zoomLevel;
+            return;
+        }
+    }
+    if (pinching) return; // un doigt encore posé après un pincement : on ignore
+    const p = posRelative(e);
+    startX = p.x; startY = p.y;
+    drawing = true;
+    currentRect = document.createElement('div');
+    currentRect.className = 'rect';
+    currentRect.style.left = startX + 'px';
+    currentRect.style.top = startY + 'px';
+    canvas.appendChild(currentRect);
+}
+
+function handleMove(e) {
+    if (e.type === 'touchmove' && e.touches.length >= 2) {
+        e.preventDefault();
+        if (!pinching) return;
+        const dist = touchDistance(e.touches[0], e.touches[1]);
+        const scale = dist / pinchStartDist;
+        zoomLevel = Math.min(3, Math.max(0.15, pinchStartZoom * scale));
+        appliquerZoom();
+        return;
+    }
+    if (pinching) return;
+    if (!drawing || !currentRect) return;
+    if (e.type === 'touchmove') e.preventDefault();
+    const p = posRelative(e);
+    const w = p.x - startX;
+    const h = p.y - startY;
+    currentRect.style.left = (w < 0 ? p.x : startX) + 'px';
+    currentRect.style.top = (h < 0 ? p.y : startY) + 'px';
+    currentRect.style.width = Math.abs(w) + 'px';
+    currentRect.style.height = Math.abs(h) + 'px';
+}
+
+function handleEnd(e) {
+    if (e.type === 'touchend') {
+        const remaining = e.touches ? e.touches.length : 0;
+        if (pinching) {
+            if (remaining === 0) pinching = false;
+            drawing = false;
+            if (currentRect) { currentRect.remove(); currentRect = null; }
+            return;
+        }
+    }
+    if (!drawing || !currentRect) { drawing = false; return; }
+    drawing = false;
+    const p = posRelative(e);
+    const w = p.x - startX;
+    const h = p.y - startY;
+    const x = w < 0 ? p.x : startX;
+    const y = h < 0 ? p.y : startY;
+    const width = Math.abs(w);
+    const height = Math.abs(h);
+
+    if (width <= CLICK_THRESHOLD && height <= CLICK_THRESHOLD) {
+        // C'est un tap/clic simple : on tente de supprimer la zone tapée
+        currentRect.remove();
+        currentRect = null;
+        const xPct = (x / p.canvasW) * 100;
+        const yPct = (y / p.canvasH) * 100;
+        supprimerZoneAuPoint(xPct, yPct);
+        return;
+    }
+
+    zones.push({
+        xPct: (x / p.canvasW) * 100,
+        yPct: (y / p.canvasH) * 100,
+        wPct: (width / p.canvasW) * 100,
+        hPct: (height / p.canvasH) * 100,
+        indice: ''
+    });
+    currentRect.remove();
+    currentRect = null;
+    redessinerZones();
+    majCompteurZones();
+}
+
+canvas.addEventListener('mousedown', handleStart);
+canvas.addEventListener('mousemove', handleMove);
+window.addEventListener('mouseup', handleEnd);
+
+canvas.addEventListener('touchstart', handleStart, { passive: false });
+canvas.addEventListener('touchmove', handleMove, { passive: false });
+window.addEventListener('touchend', handleEnd);
+
+function supprimerZoneAuPoint(xPct, yPct) {
+    for (let i = zones.length - 1; i >= 0; i--) {
+        const z = zones[i];
+        if (xPct >= z.xPct && xPct <= z.xPct + z.wPct && yPct >= z.yPct && yPct <= z.yPct + z.hPct) {
+            zones.splice(i, 1);
+            redessinerZones();
+            majCompteurZones();
+            return;
+        }
+    }
+}
+
+function effacerDerniereZone() {
+    if (zones.length === 0) return;
+    zones.pop();
+    redessinerZones();
+    majCompteurZones();
+}
+
+function effacerToutesZones() {
+    zones = [];
+    redessinerZones();
+    majCompteurZones();
+}
+
+window.addEventListener('keydown', (e) => {
+    const touche = e.key ? e.key.toLowerCase() : '';
+    if ((e.ctrlKey || e.metaKey) && touche === 'z') {
+        e.preventDefault();
+        effacerDerniereZone();
+    }
+});
+
+function redessinerZones() {
+    canvas.querySelectorAll('.rect').forEach(el => el.remove());
+    const rect = canvas.getBoundingClientRect();
+    zones.forEach((z, i) => {
+        const div = document.createElement('div');
+        div.className = 'rect';
+        div.style.left = (z.xPct / 100 * rect.width) + 'px';
+        div.style.top = (z.yPct / 100 * rect.height) + 'px';
+        div.style.width = (z.wPct / 100 * rect.width) + 'px';
+        div.style.height = (z.hPct / 100 * rect.height) + 'px';
+        const label = document.createElement('span');
+        label.className = 'rect-label';
+        label.textContent = i + 1;
+        div.appendChild(label);
+        canvas.appendChild(div);
+    });
+}
+
+function construireHtmlExercice() {
+    const imgEl = canvas.querySelector('img');
+    const imgSrc = imgEl.src;
+    const exerciceId = 'ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exercice de mémorisation</title>
+<style>
+    body { padding:20px; background:#f4f4f4; font-family: sans-serif; text-align:center; }
+    #container { position:relative; display:inline-block; max-width:100%; }
+    img { display:block; max-width:100%; }
+    .masque {
+        position:absolute;
+        cursor:pointer;
+        transition: opacity 0.25s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .masque .fond {
+        position:absolute;
+        inset:0;
+        background: rgba(255,255,255,0.55);
+        -webkit-backdrop-filter: blur(20px);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255,255,255,0.5);
+        pointer-events:none;
+        transition: backdrop-filter 0.25s ease, -webkit-backdrop-filter 0.25s ease, background 0.25s ease, border-color 0.25s ease, clip-path 0.25s ease;
+    }
+    .masque:hover .fond { background: rgba(255,255,255,0.15); }
+    .masque:not(.due):not(.revele) { opacity:0.45; }
+    .masque.revele .fond {
+        -webkit-backdrop-filter: blur(0px);
+        backdrop-filter: blur(0px);
+        background: transparent;
+        border-color: transparent;
+    }
+    .masque.revele { opacity:1; }
+    body.filtre-actif .masque:not(.due) { display:none; }
+    .masque .boite {
+        position:absolute;
+        top:-9px;
+        left:-9px;
+        width:20px;
+        height:20px;
+        border-radius:50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:11px;
+        font-weight:bold;
+        color:#fff;
+        z-index:6;
+        box-shadow:0 1px 3px rgba(0,0,0,0.4);
+        pointer-events:none;
+    }
+    .boite-1 { background:#e74c3c; }
+    .boite-2 { background:#e67e22; }
+    .boite-3 { background:#f39c12; }
+    .boite-4 { background:#2ecc71; }
+    .boite-5 { background:#16a085; }
+    .masque .declare {
+        position:absolute;
+        bottom: calc(100% + 8px);
+        left:50%;
+        transform:translateX(-50%);
+        display:none;
+        gap:6px;
+        background:#fff;
+        padding:5px 7px;
+        border-radius:20px;
+        box-shadow:0 2px 8px rgba(0,0,0,0.3);
+        z-index:10;
+        white-space:nowrap;
+    }
+    .masque .declare.dessous {
+        bottom:auto;
+        top: calc(100% + 8px);
+    }
+    .masque.revele:not(.correcte):not(.incorrecte) .declare { display:flex; }
+    .masque .indice-btn {
+        position:absolute;
+        top:-9px;
+        right:-9px;
+        width:22px;
+        height:22px;
+        border-radius:50%;
+        background:#f1c40f;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:12px;
+        cursor:pointer;
+        z-index:7;
+        box-shadow:0 1px 3px rgba(0,0,0,0.4);
+    }
+    .masque.revele .indice-btn, .masque.revele .indice-panel { display:none; }
+    .masque .indice-panel {
+        display:none;
+        position:absolute;
+        bottom: calc(100% + 8px);
+        left:0;
+        min-width:170px;
+        max-width:240px;
+        background:#fff8e1;
+        border:1px solid #f1c40f;
+        border-radius:8px;
+        padding:8px 10px;
+        box-shadow:0 2px 8px rgba(0,0,0,0.25);
+        z-index:9;
+        text-align:left;
+    }
+    .masque .indice-panel.dessous { bottom:auto; top: calc(100% + 8px); }
+    .masque.indice-actif .indice-panel { display:block; }
+    .indice-prof { font-size:12px; color:#7a5c00; margin-bottom:6px; line-height:1.3; }
+    .indice-perso-input {
+        width:100%;
+        box-sizing:border-box;
+        padding:6px 7px;
+        font-size:12px;
+        border:1px solid #ddd;
+        border-radius:5px;
+    }
+    .indice-perso-label { font-size:10px; color:#999; margin-bottom:2px; display:block; }
+    .masque .declare button {
+        width:32px;
+        height:32px;
+        border-radius:50%;
+        border:none;
+        font-size:16px;
+        cursor:pointer;
+        padding:0;
+        line-height:32px;
+    }
+    .btn-ok { background:#2ecc71; color:#fff; }
+    .btn-non { background:#e74c3c; color:#fff; }
+    .masque.correcte .fond { border-color:#2ecc71; box-shadow:0 0 0 2px rgba(46,204,113,0.6) inset; }
+    .masque.incorrecte .fond { border-color:#e74c3c; box-shadow:0 0 0 2px rgba(231,76,60,0.6) inset; }
+    .segmented {
+        position:relative;
+        display:inline-flex;
+        background:#e5e5ea;
+        border-radius:9px;
+        padding:2px;
+        margin-bottom:16px;
+        width:220px;
+    }
+    .segmented button {
+        position:relative;
+        z-index:2;
+        flex:1;
+        padding:7px 10px;
+        border:none;
+        background:transparent;
+        color:#555;
+        font-size:14px;
+        font-weight:600;
+        border-radius:7px;
+        cursor:pointer;
+        transition: color 0.2s ease;
+        margin:0;
+    }
+    .segmented button.actif { color:#000; }
+    .segmented button:hover { background:transparent; }
+    .segmented .thumb {
+        position:absolute;
+        top:2px;
+        left:2px;
+        height:calc(100% - 4px);
+        width:calc(50% - 2px);
+        background:#fff;
+        border-radius:7px;
+        box-shadow:0 1px 3px rgba(0,0,0,0.25);
+        transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+        z-index:1;
+    }
+    .segmented .thumb.pos-1 { transform: translateX(100%); }
+    body.mode-simple #resume,
+    body.mode-simple #btnFiltre,
+    body.mode-simple .masque .boite { display:none; }
+    body.mode-simple .masque:not(.due):not(.revele) { opacity:1; }
+    #controles { margin-bottom:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+    #resume { margin-bottom:14px; }
+    .boites-titre { font-size:14px; color:#555; margin-bottom:8px; font-weight:bold; }
+    .boites-rangee { display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:wrap; }
+    .boite-card {
+        width:64px;
+        padding:8px 4px;
+        border-radius:10px;
+        background:#fff;
+        box-shadow:0 1px 4px rgba(0,0,0,0.15);
+        position:relative;
+        border-top:4px solid #ccc;
+    }
+    .boite-card-1 { border-top-color:#e74c3c; }
+    .boite-card-2 { border-top-color:#e67e22; }
+    .boite-card-3 { border-top-color:#f39c12; }
+    .boite-card-4 { border-top-color:#2ecc71; }
+    .boite-card-5 { border-top-color:#16a085; }
+    .boite-num { font-size:11px; color:#999; font-weight:bold; }
+    .boite-count { font-size:22px; font-weight:bold; color:#333; line-height:1.1; }
+    .boite-label { font-size:10px; color:#777; margin-top:2px; }
+    .boite-flag {
+        position:absolute;
+        top:-10px;
+        right:-6px;
+        background:#e74c3c;
+        color:#fff;
+        font-size:9px;
+        padding:2px 5px;
+        border-radius:8px;
+        box-shadow:0 1px 3px rgba(0,0,0,0.3);
+        white-space:nowrap;
+    }
+    .due-card { box-shadow:0 0 0 3px rgba(231,76,60,0.45), 0 1px 4px rgba(0,0,0,0.15); }
+    .boite-fleche { font-size:16px; color:#bbb; }
+    .boites-legende { margin-top:6px; font-size:11px; color:#999; }
+    .boites-resume-txt { margin-top:8px; font-size:13px; color:#555; }
+    #compteur { margin-bottom:6px; font-size:17px; color:#444; font-weight:bold; }
+    #instructions { margin-bottom:16px; font-size:13px; color:#777; }
+    #toast {
+        position:fixed;
+        top:24px;
+        left:50%;
+        transform:translateX(-50%) translateY(-30px);
+        opacity:0;
+        background:#2c3e50;
+        color:#fff;
+        padding:12px 22px;
+        border-radius:12px;
+        box-shadow:0 4px 16px rgba(0,0,0,0.3);
+        z-index:1000;
+        pointer-events:none;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        text-align:center;
+    }
+    #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    #toast.bonne { background:#27ae60; }
+    #toast.mauvaise { background:#c0392b; }
+    #toastMsg { font-size:16px; font-weight:bold; }
+    #toastScore { font-size:13px; opacity:0.9; margin-top:2px; }
+    button {
+        padding:8px 16px;
+        font-size:14px;
+        cursor:pointer;
+        border:none;
+        border-radius:6px;
+        background:#3498db;
+        color:#fff;
+        margin:0;
+    }
+    button:hover { background:#2980b9; }
+    button.secondaire { background:#7f8c8d; }
+    button.secondaire:hover { background:#636e72; }
+    button.danger { background:#c0392b; }
+    button.danger:hover { background:#922b21; }
+</style>
+</head>
+<body>
+<div class="segmented" id="segmente">
+    <button class="mode-btn actif" data-mode="simple" onclick="changerMode('simple')">Simple</button>
+    <button class="mode-btn" data-mode="complet" onclick="changerMode('complet')">Complet</button>
+    <div class="thumb"></div>
+</div>
+<div id="controles">
+    <button onclick="remasquerTout()">🔄 Recommencer cette session</button>
+    <button id="btnFiltre" class="secondaire" onclick="basculerFiltre()">📅 Voir seulement les zones à réviser aujourd'hui</button>
+    <button class="danger" onclick="reinitialiserProgression()">🗑 Réinitialiser ma progression</button>
+</div>
+<div id="resume"></div>
+<div id="compteur">✅ 0   ❌ 0   (sur ${zones.length} zones, cette session)</div>
+<div id="instructions">Tape sur une zone pour la révéler, puis déclare honnêtement si tu savais la réponse. Le petit numéro coloré indique ton niveau de maîtrise (1 = à revoir souvent, 5 = bien maîtrisé).</div>
+<div id="toast"><div id="toastMsg"></div><div id="toastScore"></div></div>
+<div id="container">
+    <img src="${imgSrc}">
+    ${zones.map((z, i) => `<div class="masque" data-idx="${i}" style="left:${z.xPct}%;top:${z.yPct}%;width:${z.wPct}%;height:${z.hPct}%" onclick="toggleRevele(this)">
+        <div class="fond"></div>
+        <div class="boite boite-1"></div>
+        <div class="indice-btn" onclick="event.stopPropagation(); this.closest('.masque').classList.toggle('indice-actif')">💡</div>
+        <div class="indice-panel${z.yPct < 12 ? ' dessous' : ''}" onclick="event.stopPropagation()">
+            ${z.indice ? `<div class="indice-prof">👩‍🏫 ${echapperHtml(z.indice)}</div>` : ''}
+            <span class="indice-perso-label">✏️ Mon indice personnel</span>
+            <input type="text" class="indice-perso-input" placeholder="Ex : ça me fait penser à..." oninput="sauvegarderIndicePerso(this)">
+        </div>
+        <div class="declare${z.yPct < 12 ? ' dessous' : ''}" onclick="event.stopPropagation()">
+            <button class="btn-ok" onclick="event.stopPropagation(); declarer(this.closest('.masque'), true)">✓</button>
+            <button class="btn-non" onclick="event.stopPropagation(); declarer(this.closest('.masque'), false)">✗</button>
+        </div>
+    </div>`).join('')}
+</div>
+<script>
+    const TOTAL = ${zones.length};
+    const INDICES = ${JSON.stringify(zones.map(z => z.indice || ''))};
+    const EXERCICE_ID = '${exerciceId}';
+    const STORAGE_KEY = 'memo_leitner_' + EXERCICE_ID;
+    const INTERVALLES = [0, 1, 3, 7, 16]; // jours avant la prochaine révision, indexé sur (boîte - 1)
+
+    function todayStr() {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d.toISOString().slice(0, 10);
+    }
+    function addDays(dateStr, n) {
+        const d = new Date(dateStr + 'T00:00:00');
+        d.setDate(d.getDate() + n);
+        return d.toISOString().slice(0, 10);
+    }
+    function chargerEtat() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            return raw ? JSON.parse(raw) : {};
+        } catch (e) {
+            return {};
+        }
+    }
+    function sauvegarderEtat() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(etat)); }
+        catch (e) { /* stockage indisponible sur cet appareil : la progression ne sera pas conservée */ }
+    }
+
+    let etat = chargerEtat();
+    for (let i = 0; i < TOTAL; i++) {
+        if (!etat[i]) etat[i] = { box: 1, nextDue: todayStr(), indicePerso: '' };
+        if (etat[i].indicePerso === undefined) etat[i].indicePerso = '';
+    }
+    sauvegarderEtat();
+
+    function sauvegarderIndicePerso(input) {
+        const i = input.closest('.masque').getAttribute('data-idx');
+        etat[i].indicePerso = input.value;
+        sauvegarderEtat();
+    }
+
+    function initialiserChampsIndicePerso() {
+        document.querySelectorAll('.indice-perso-input').forEach(inp => {
+            const i = inp.closest('.masque').getAttribute('data-idx');
+            if (etat[i] && etat[i].indicePerso) inp.value = etat[i].indicePerso;
+        });
+    }
+
+    function estDue(i) {
+        return etat[i].nextDue <= todayStr();
+    }
+
+    function actualiserAffichage() {
+        document.querySelectorAll('.masque').forEach(m => {
+            const i = m.getAttribute('data-idx');
+            const e = etat[i];
+            const badge = m.querySelector('.boite');
+            badge.textContent = e.box;
+            badge.className = 'boite boite-' + e.box;
+            m.classList.toggle('due', estDue(i));
+        });
+        actualiserResume();
+    }
+
+    function actualiserResume() {
+        const counts = [0, 0, 0, 0, 0];
+        const duesParBoite = [0, 0, 0, 0, 0];
+        let duesTotal = 0;
+        for (let i = 0; i < TOTAL; i++) {
+            const b = etat[i].box;
+            counts[b - 1]++;
+            if (estDue(i)) { duesParBoite[b - 1]++; duesTotal++; }
+        }
+        const labels = ["Tous les jours", "Dans 1 jour", "Dans 3 jours", "Dans 7 jours", "Dans 16 jours"];
+        let html = '<div class="boites-titre">📦 Mes boîtes de révision</div><div class="boites-rangee">';
+        for (let b = 1; b <= 5; b++) {
+            const due = duesParBoite[b - 1] > 0;
+            html += '<div class="boite-card boite-card-' + b + (due ? ' due-card' : '') + '">'
+                  + '<div class="boite-num">Boîte ' + b + '</div>'
+                  + '<div class="boite-count">' + counts[b - 1] + '</div>'
+                  + '<div class="boite-label">' + labels[b - 1] + '</div>'
+                  + (due ? '<div class="boite-flag">📅 à revoir</div>' : '')
+                  + '</div>';
+            if (b < 5) html += '<div class="boite-fleche">→</div>';
+        }
+        html += '</div><div class="boites-legende">← zones fragiles, revues souvent&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;zones maîtrisées, espacées dans le temps →</div>';
+        html += '<div class="boites-resume-txt">📅 ' + duesTotal + " zone(s) à réviser aujourd'hui sur " + TOTAL + '</div>';
+        document.getElementById('resume').innerHTML = html;
+    }
+
+    function toggleRevele(el) {
+        el.classList.toggle('revele');
+    }
+
+    let toastTimer = null;
+    function afficherToast(bon) {
+        const bonnes = document.querySelectorAll('.masque.correcte').length;
+        const mauvaises = document.querySelectorAll('.masque.incorrecte').length;
+        const toast = document.getElementById('toast');
+        document.getElementById('toastMsg').textContent = bon ? '✅ Bonne réponse !' : '❌ À revoir !';
+        document.getElementById('toastScore').textContent = bonnes + ' ✅  /  ' + mauvaises + ' ❌  (sur ' + TOTAL + ')';
+        toast.classList.remove('bonne', 'mauvaise');
+        toast.classList.add(bon ? 'bonne' : 'mauvaise');
+        toast.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 1500);
+    }
+
+    function declarer(el, bon) {
+        el.classList.remove('correcte', 'incorrecte');
+        el.classList.add(bon ? 'correcte' : 'incorrecte');
+        const i = el.getAttribute('data-idx');
+        etat[i].box = bon ? Math.min(5, etat[i].box + 1) : 1;
+        etat[i].nextDue = addDays(todayStr(), INTERVALLES[etat[i].box - 1]);
+        sauvegarderEtat();
+        majCompteur();
+        afficherToast(bon);
+        actualiserAffichage();
+    }
+
+    function majCompteur() {
+        const bonnes = document.querySelectorAll('.masque.correcte').length;
+        const mauvaises = document.querySelectorAll('.masque.incorrecte').length;
+        document.getElementById('compteur').textContent = '✅ ' + bonnes + '   ❌ ' + mauvaises + '   (sur ' + TOTAL + ' zones, cette session)';
+    }
+
+    function remasquerTout() {
+        document.querySelectorAll('.masque').forEach(m => m.classList.remove('revele', 'correcte', 'incorrecte'));
+        majCompteur();
+    }
+
+    function basculerFiltre() {
+        document.body.classList.toggle('filtre-actif');
+        const actif = document.body.classList.contains('filtre-actif');
+        document.getElementById('btnFiltre').textContent = actif ? '👀 Voir toutes les zones' : "📅 Voir seulement les zones à réviser aujourd'hui";
+    }
+
+    function reinitialiserProgression() {
+        if (!confirm('Effacer toute ta progression enregistrée sur cet exercice (y compris tes indices personnels) ? Cette action est irréversible.')) return;
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* rien à faire */ }
+        etat = {};
+        for (let i = 0; i < TOTAL; i++) etat[i] = { box: 1, nextDue: todayStr(), indicePerso: '' };
+        sauvegarderEtat();
+        document.querySelectorAll('.masque').forEach(m => m.classList.remove('revele', 'correcte', 'incorrecte', 'indice-actif'));
+        document.querySelectorAll('.indice-perso-input').forEach(inp => inp.value = '');
+        majCompteur();
+        actualiserAffichage();
+    }
+
+    function changerMode(mode) {
+        document.body.classList.toggle('mode-simple', mode === 'simple');
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('actif', b.dataset.mode === mode));
+        document.getElementById('segmente').querySelector('.thumb').classList.toggle('pos-1', mode === 'complet');
+        if (mode === 'simple') {
+            document.body.classList.remove('filtre-actif');
+            document.getElementById('btnFiltre').textContent = "📅 Voir seulement les zones à réviser aujourd'hui";
+        }
+        try { localStorage.setItem(STORAGE_KEY + '_mode', mode); } catch (e) { /* préférence non sauvegardée */ }
+    }
+
+    let modeInitial = 'simple';
+    try {
+        const m = localStorage.getItem(STORAGE_KEY + '_mode');
+        if (m === 'simple' || m === 'complet') modeInitial = m;
+    } catch (e) { /* préférence indisponible, on garde le mode simple par défaut */ }
+    changerMode(modeInitial);
+
+    actualiserAffichage();
+    initialiserChampsIndicePerso();
+<\/script>
+</body>
+</html>`;
+}
+
+function previewExercice() {
+    if (!canvas.querySelector('img')) { alert("Téléverse d'abord une image."); return; }
+    if (zones.length === 0) { alert("Trace au moins une zone à masquer."); return; }
+    const html = construireHtmlExercice();
+    const url = URL.createObjectURL(new Blob([html], {type: 'text/html'}));
+    window.open(url, '_blank');
+}
+
+function genererFichier() {
+    if (!canvas.querySelector('img')) { alert("Téléverse d'abord une image."); return; }
+    if (zones.length === 0) { alert("Trace au moins une zone à masquer."); return; }
+
+    let nom = prompt("Nom du fichier (sans extension) :", "mon_exercice");
+    if (nom === null) return; // annulé
+    nom = nom.trim();
+    if (nom === '') nom = 'mon_exercice';
+    nom = nom.replace(/[^a-zA-Z0-9_\-éèàùâêîôûçëïü ]/g, '').trim() || 'mon_exercice';
+
+    const html = construireHtmlExercice();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([html], {type: 'text/html'}));
+    a.download = nom + '.html';
+    a.click();
+}
+</script>
+</body>
+</html>
