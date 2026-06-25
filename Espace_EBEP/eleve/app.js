@@ -217,7 +217,8 @@ function afficherVue(nom) {
     document.getElementById('vueAccueil').style.display = nom === 'accueil' ? '' : 'none';
     document.getElementById('vueEdition').style.display = nom === 'edition' ? '' : 'none';
     document.getElementById('vueRevision').style.display = nom === 'revision' ? '' : 'none';
-    document.getElementById('btnRetour').style.display = nom === 'accueil' ? 'none' : '';
+    document.getElementById('vueRecadrage').style.display = nom === 'recadrage' ? '' : 'none';
+    document.getElementById('btnRetour').style.display = (nom === 'accueil' || nom === 'recadrage') ? 'none' : '';
     const btnBascule = document.getElementById('btnBascule');
     if (nom === 'edition') {
         document.getElementById('titreHeader').textContent = supportActif.nom;
@@ -229,6 +230,9 @@ function afficherVue(nom) {
         btnBascule.style.display = '';
         btnBascule.textContent = '✏️ Modifier';
         btnBascule.onclick = () => ouvrirEdition(supportActif.id);
+    } else if (nom === 'recadrage') {
+        document.getElementById('titreHeader').textContent = 'Cadrage';
+        btnBascule.style.display = 'none';
     } else {
         document.getElementById('titreHeader').textContent = 'Mes révisions';
         btnBascule.style.display = 'none';
@@ -379,29 +383,131 @@ document.getElementById('inputPhoto').onchange = (e) => {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-        redimensionnerEtStocker(ev.target.result, (dataUrlFinal) => {
-            supportActif.image = dataUrlFinal;
-            supportActif.zones = [];
-            sauvegarderSupports();
-            chargerCanvasEdition();
-        });
+        ouvrirRecadrage(ev.target.result);
     };
     reader.readAsDataURL(file);
     e.target.value = '';
 };
 
-function redimensionnerEtStocker(dataUrlOriginal, callback) {
-    const img = new Image();
+/* ---------------- Recadrage avant utilisation ---------------- */
+
+let imgRecadrageNaturalW = 0, imgRecadrageNaturalH = 0;
+let cropRect = null;
+let startXCrop, startYCrop, currentRectCrop, drawingCrop = false;
+const canvasRecadrageEl = document.getElementById('canvasRecadrage');
+
+function ouvrirRecadrage(dataUrlOriginal) {
+    cropRect = null;
+    canvasRecadrageEl.querySelectorAll('.rect-crop').forEach(el => el.remove());
+    const img = document.getElementById('imgRecadrage');
     img.onload = () => {
-        const maxW = 1280;
-        let w = img.naturalWidth, h = img.naturalHeight;
-        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
-        const c = document.createElement('canvas');
-        c.width = w; c.height = h;
-        c.getContext('2d').drawImage(img, 0, 0, w, h);
-        callback(c.toDataURL('image/jpeg', 0.82));
+        imgRecadrageNaturalW = img.naturalWidth;
+        imgRecadrageNaturalH = img.naturalHeight;
     };
     img.src = dataUrlOriginal;
+    afficherVue('recadrage');
+}
+
+function posRelativeCrop(e) {
+    const c = (e.touches && e.touches.length > 0) ? e.touches[0]
+        : (e.changedTouches && e.changedTouches.length > 0) ? e.changedTouches[0] : e;
+    const img = document.getElementById('imgRecadrage');
+    const rect = img.getBoundingClientRect();
+    return { x: c.clientX - rect.left, y: c.clientY - rect.top, canvasW: rect.width, canvasH: rect.height };
+}
+
+function handleStartCrop(e) {
+    if (e.type === 'touchstart') e.preventDefault();
+    canvasRecadrageEl.querySelectorAll('.rect-crop').forEach(el => el.remove());
+    const p = posRelativeCrop(e);
+    startXCrop = p.x; startYCrop = p.y; drawingCrop = true;
+    currentRectCrop = document.createElement('div');
+    currentRectCrop.className = 'rect-crop';
+    currentRectCrop.style.left = startXCrop + 'px';
+    currentRectCrop.style.top = startYCrop + 'px';
+    canvasRecadrageEl.appendChild(currentRectCrop);
+}
+
+function handleMoveCrop(e) {
+    if (!drawingCrop || !currentRectCrop) return;
+    if (e.type === 'touchmove') e.preventDefault();
+    const p = posRelativeCrop(e);
+    const w = p.x - startXCrop, h = p.y - startYCrop;
+    currentRectCrop.style.left = (w < 0 ? p.x : startXCrop) + 'px';
+    currentRectCrop.style.top = (h < 0 ? p.y : startYCrop) + 'px';
+    currentRectCrop.style.width = Math.abs(w) + 'px';
+    currentRectCrop.style.height = Math.abs(h) + 'px';
+}
+
+function handleEndCrop(e) {
+    if (!drawingCrop || !currentRectCrop) { drawingCrop = false; return; }
+    drawingCrop = false;
+    const p = posRelativeCrop(e);
+    const w = p.x - startXCrop, h = p.y - startYCrop;
+    const x = w < 0 ? p.x : startXCrop, y = h < 0 ? p.y : startYCrop;
+    const width = Math.abs(w), height = Math.abs(h);
+    if (width < 12 || height < 12) {
+        currentRectCrop.remove();
+        currentRectCrop = null;
+        cropRect = null;
+        return;
+    }
+    cropRect = {
+        xPct: (x / p.canvasW) * 100,
+        yPct: (y / p.canvasH) * 100,
+        wPct: (width / p.canvasW) * 100,
+        hPct: (height / p.canvasH) * 100
+    };
+}
+
+canvasRecadrageEl.addEventListener('mousedown', handleStartCrop);
+canvasRecadrageEl.addEventListener('mousemove', handleMoveCrop);
+window.addEventListener('mouseup', handleEndCrop);
+canvasRecadrageEl.addEventListener('touchstart', handleStartCrop, { passive: false });
+canvasRecadrageEl.addEventListener('touchmove', handleMoveCrop, { passive: false });
+window.addEventListener('touchend', handleEndCrop);
+
+function reinitialiserCadrage() {
+    cropRect = null;
+    canvasRecadrageEl.querySelectorAll('.rect-crop').forEach(el => el.remove());
+}
+
+function appliquerCadrageEtStocker(callback) {
+    const img = document.getElementById('imgRecadrage');
+    let sx = 0, sy = 0, sw = imgRecadrageNaturalW, sh = imgRecadrageNaturalH;
+    if (cropRect) {
+        sx = cropRect.xPct / 100 * imgRecadrageNaturalW;
+        sy = cropRect.yPct / 100 * imgRecadrageNaturalH;
+        sw = cropRect.wPct / 100 * imgRecadrageNaturalW;
+        sh = cropRect.hPct / 100 * imgRecadrageNaturalH;
+    }
+    const maxW = 1280;
+    let w = sw, h = sh;
+    if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+    const c = document.createElement('canvas');
+    c.width = Math.round(w); c.height = Math.round(h);
+    c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+    callback(c.toDataURL('image/jpeg', 0.82));
+}
+
+function validerCadrage() {
+    appliquerCadrageEtStocker((dataUrlFinal) => {
+        supportActif.image = dataUrlFinal;
+        supportActif.zones = [];
+        sauvegarderSupports();
+        afficherVue('edition');
+        chargerCanvasEdition();
+    });
+}
+
+function passerCadrage() {
+    cropRect = null;
+    validerCadrage();
+}
+
+function annulerCadrage() {
+    afficherVue('edition');
+    chargerCanvasEdition();
 }
 
 function appliquerZoom() {
