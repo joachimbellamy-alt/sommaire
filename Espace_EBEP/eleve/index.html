@@ -58,6 +58,16 @@
     .badge-matiere { font-size:11px; color:var(--bleu); background:#e8f1ff; padding:2px 8px; border-radius:8px; display:inline-block; margin-top:2px; }
     .champ-modale { display:block; width:100%; padding:10px; margin:4px 0 14px; border:1px solid #ccc; border-radius:8px; font-size:15px; font-family:inherit; background:#fff; }
     .label-modale { font-size:13px; font-weight:600; color:#555; }
+    .case-jour {
+        display:flex; align-items:center; gap:4px; font-size:13px; background:var(--gris-fond);
+        padding:6px 10px; border-radius:8px; cursor:pointer;
+    }
+    .case-jour input { margin:0; }
+    .ligne-rappel-attente {
+        display:flex; align-items:center; justify-content:space-between; gap:8px;
+        background:var(--gris-fond); border-radius:8px; padding:8px 10px; margin-bottom:6px; font-size:13px;
+    }
+    .ligne-rappel-attente button { background:none; border:none; color:var(--rouge); font-size:15px; cursor:pointer; padding:0 4px; }
 
     /* ---------- Barre d'outils édition ---------- */
     .toolbar-ios { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; align-items:center; }
@@ -345,18 +355,41 @@
 <div class="modale-fond" id="modalRappel">
     <div class="modale-boite">
         <h3 id="titreModalRappel">📅 Rappel de révision</h3>
+        <div id="listeRappelsEnAttente"></div>
+
+        <span class="label-modale">Fréquence</span>
+        <select id="champFrequenceRappel" class="champ-modale" onchange="majAffichageChampsRappel()">
+            <option value="jour">Tous les jours</option>
+            <option value="semaine">Jours spécifiques de la semaine</option>
+            <option value="unique">Une seule fois (date précise)</option>
+        </select>
+
+        <div id="joursSemaineRappel" style="display:none; margin-bottom:14px;">
+            <span class="label-modale">Jours</span>
+            <div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:4px;">
+                <label class="case-jour"><input type="checkbox" value="MO">Lun</label>
+                <label class="case-jour"><input type="checkbox" value="TU">Mar</label>
+                <label class="case-jour"><input type="checkbox" value="WE">Mer</label>
+                <label class="case-jour"><input type="checkbox" value="TH">Jeu</label>
+                <label class="case-jour"><input type="checkbox" value="FR">Ven</label>
+                <label class="case-jour"><input type="checkbox" value="SA">Sam</label>
+                <label class="case-jour"><input type="checkbox" value="SU">Dim</label>
+            </div>
+        </div>
+
+        <div id="dateUniqueRappelWrap" style="display:none;">
+            <span class="label-modale">Date</span>
+            <input type="date" id="champDateRappel" class="champ-modale">
+        </div>
+
         <span class="label-modale">Heure</span>
         <input type="time" id="champHeureRappel" class="champ-modale" value="18:00">
-        <span class="label-modale">Fréquence</span>
-        <select id="champFrequenceRappel" class="champ-modale">
-            <option value="jour">Tous les jours</option>
-            <option value="2j">Tous les 2 jours</option>
-            <option value="semaine">Une fois par semaine</option>
-        </select>
-        <p style="font-size:12px; color:#777; margin-top:-6px;">Un fichier sera téléchargé : ouvre-le pour l'ajouter à l'app Calendrier (pas Rappels — voir l'explication de Claude).</p>
+
+        <button class="btn-modal enregistrer" onclick="ajouterRappelListe()" style="width:100%; box-sizing:border-box; margin:4px 0 14px;">+ Ajouter ce rappel à la liste</button>
+
         <div style="text-align:right;">
-            <button class="btn-modal annuler" onclick="fermerModalRappel()">Annuler</button>
-            <button class="btn-modal enregistrer" onclick="validerRappel()">Créer le rappel</button>
+            <button class="btn-modal annuler" onclick="fermerModalRappel()">Fermer</button>
+            <button class="btn-modal enregistrer" onclick="telechargerRappels()">⬇ Télécharger (.ics)</button>
         </div>
     </div>
 </div>
