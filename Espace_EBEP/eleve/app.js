@@ -93,59 +93,141 @@ function genererId() {
     return 'sup_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
-/* ---------------- Rappel calendrier (.ics) ---------------- */
+/* ---------------- Rappel calendrier (.ics) — plusieurs rappels possibles ---------------- */
+
+let rappelsEnAttente = [];
+const NOMS_JOURS = { MO: 'Lun', TU: 'Mar', WE: 'Mer', TH: 'Jeu', FR: 'Ven', SA: 'Sam', SU: 'Dim' };
 
 function ouvrirModalRappel() {
     if (!supportActif) return;
-    document.getElementById('titreModalRappel').textContent = '📅 Rappel — ' + supportActif.nom;
+    rappelsEnAttente = [];
+    afficherListeRappelsEnAttente();
+    document.getElementById('titreModalRappel').textContent = '📅 Rappels — ' + supportActif.nom;
+    document.getElementById('champFrequenceRappel').value = 'jour';
+    majAffichageChampsRappel();
     document.getElementById('modalRappel').classList.add('ouverte');
 }
+
 function fermerModalRappel() {
     document.getElementById('modalRappel').classList.remove('ouverte');
+}
+
+function majAffichageChampsRappel() {
+    const f = document.getElementById('champFrequenceRappel').value;
+    document.getElementById('joursSemaineRappel').style.display = f === 'semaine' ? '' : 'none';
+    document.getElementById('dateUniqueRappelWrap').style.display = f === 'unique' ? '' : 'none';
 }
 
 function formaterDateICS(d) {
     return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 }
 
-function validerRappel() {
-    if (!supportActif) return;
+function ajouterRappelListe() {
     const heureVal = document.getElementById('champHeureRappel').value || '18:00';
-    const [heure, minute] = heureVal.split(':').map(Number);
     const frequence = document.getElementById('champFrequenceRappel').value;
+    const entree = { heure: heureVal, frequence: frequence };
 
+    if (frequence === 'semaine') {
+        const jours = Array.from(document.querySelectorAll('#joursSemaineRappel input:checked')).map(c => c.value);
+        if (jours.length === 0) { alert('Coche au moins un jour de la semaine.'); return; }
+        entree.jours = jours;
+    } else if (frequence === 'unique') {
+        const date = document.getElementById('champDateRappel').value;
+        if (!date) { alert('Choisis une date.'); return; }
+        entree.date = date;
+    }
+
+    rappelsEnAttente.push(entree);
+    afficherListeRappelsEnAttente();
+}
+
+function supprimerRappelListe(i) {
+    rappelsEnAttente.splice(i, 1);
+    afficherListeRappelsEnAttente();
+}
+
+function resumeRappel(entree) {
+    if (entree.frequence === 'jour') return 'Tous les jours à ' + entree.heure;
+    if (entree.frequence === 'semaine') return entree.jours.map(j => NOMS_JOURS[j]).join(', ') + ' à ' + entree.heure;
+    return 'Le ' + entree.date.split('-').reverse().join('/') + ' à ' + entree.heure;
+}
+
+function afficherListeRappelsEnAttente() {
+    const conteneur = document.getElementById('listeRappelsEnAttente');
+    if (rappelsEnAttente.length === 0) { conteneur.innerHTML = ''; return; }
+    conteneur.innerHTML = rappelsEnAttente.map((r, i) => `
+        <div class="ligne-rappel-attente">
+            <span>⏰ ${resumeRappel(r)}</span>
+            <button onclick="supprimerRappelListe(${i})">✕</button>
+        </div>
+    `).join('');
+}
+
+function prochaineOccurrenceJour(heure, minute, joursCodes) {
+    const codesParJourSemaine = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
     const maintenant = new Date();
-    const debut = new Date();
-    debut.setHours(heure, minute, 0, 0);
-    if (debut < maintenant) debut.setDate(debut.getDate() + 1);
+    for (let i = 0; i < 8; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() + i);
+        d.setHours(heure, minute, 0, 0);
+        if (joursCodes.includes(codesParJourSemaine[d.getDay()]) && d > maintenant) return d;
+    }
+    const repli = new Date();
+    repli.setDate(repli.getDate() + 7);
+    repli.setHours(heure, minute, 0, 0);
+    return repli;
+}
+
+function construireVEVENT(entree, nomSupport, supportId, index) {
+    const [heure, minute] = entree.heure.split(':').map(Number);
+    let debut, rrule = '';
+
+    if (entree.frequence === 'jour') {
+        debut = new Date();
+        debut.setHours(heure, minute, 0, 0);
+        if (debut < new Date()) debut.setDate(debut.getDate() + 1);
+        rrule = 'RRULE:FREQ=DAILY';
+    } else if (entree.frequence === 'semaine') {
+        debut = prochaineOccurrenceJour(heure, minute, entree.jours);
+        rrule = 'RRULE:FREQ=WEEKLY;BYDAY=' + entree.jours.join(',');
+    } else {
+        const [an, mois, jour] = entree.date.split('-').map(Number);
+        debut = new Date(an, mois - 1, jour, heure, minute, 0, 0);
+    }
     const fin = new Date(debut.getTime() + 15 * 60000);
+    const uid = 'memo-revisions-' + supportId + '-' + index + '-' + Date.now() + '@joachimbellamy-alt.github.io';
 
-    let rrule = 'FREQ=DAILY';
-    if (frequence === '2j') rrule = 'FREQ=DAILY;INTERVAL=2';
-    if (frequence === 'semaine') rrule = 'FREQ=WEEKLY';
-
-    const nomSupport = supportActif.nom;
-    const uid = 'memo-revisions-' + supportActif.id + '-' + Date.now() + '@joachimbellamy-alt.github.io';
-    const ics = [
-        'BEGIN:VCALENDAR',
-        'VERSION:2.0',
-        'PRODID:-//Mes Revisions//FR',
+    const lignes = [
         'BEGIN:VEVENT',
         'UID:' + uid,
         'DTSTAMP:' + formaterDateICS(new Date()),
         'DTSTART:' + formaterDateICS(debut),
-        'DTEND:' + formaterDateICS(fin),
-        'RRULE:' + rrule,
+        'DTEND:' + formaterDateICS(fin)
+    ];
+    if (rrule) lignes.push(rrule);
+    lignes.push(
         'SUMMARY:🧠 Réviser : ' + nomSupport,
         'DESCRIPTION:Ouvre l\'app Mes révisions et reprends le support « ' + nomSupport + ' ».',
-        'END:VEVENT',
-        'END:VCALENDAR'
-    ].join('\r\n');
+        'END:VEVENT'
+    );
+    return lignes;
+}
+
+function telechargerRappels() {
+    if (!supportActif) return;
+    if (rappelsEnAttente.length === 0) { alert("Ajoute au moins un rappel à la liste avant de télécharger."); return; }
+
+    let lignes = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Mes Revisions//FR'];
+    rappelsEnAttente.forEach((entree, i) => {
+        lignes = lignes.concat(construireVEVENT(entree, supportActif.nom, supportActif.id, i));
+    });
+    lignes.push('END:VCALENDAR');
+    const ics = lignes.join('\r\n');
 
     const blob = new Blob([ics], { type: 'text/calendar' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'rappel-' + nomSupport.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.ics';
+    a.download = 'rappels-' + supportActif.nom.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.ics';
     a.click();
     fermerModalRappel();
 }
@@ -784,7 +866,14 @@ function echapperHtml(s) {
 let bulleIndiceEl = null;
 
 function fermerBulleIndice() {
-    if (bulleIndiceEl) { bulleIndiceEl.remove(); bulleIndiceEl = null; }
+    if (bulleIndiceEl) {
+        if (bulleIndiceEl._repositionner && window.visualViewport) {
+            window.visualViewport.removeEventListener('resize', bulleIndiceEl._repositionner);
+            window.visualViewport.removeEventListener('scroll', bulleIndiceEl._repositionner);
+        }
+        bulleIndiceEl.remove();
+        bulleIndiceEl = null;
+    }
     document.removeEventListener('click', fermerBulleIndiceSiExterieur, true);
 }
 
@@ -808,19 +897,36 @@ function ouvrirBulleIndice(labelEl, idxZone) {
         </div>`;
     document.body.appendChild(bulleIndiceEl);
 
-    // Positionnement : sous le badge par défaut, au-dessus si pas assez de place en bas
-    const largeurBulle = 240, hauteurBulle = bulleIndiceEl.offsetHeight || 120;
-    let left = rectLabel.left;
-    let top = rectLabel.bottom + 8;
-    if (left + largeurBulle > window.innerWidth - 10) left = window.innerWidth - largeurBulle - 10;
-    if (left < 10) left = 10;
-    if (top + hauteurBulle > window.innerHeight - 10) top = rectLabel.top - hauteurBulle - 8;
-    bulleIndiceEl.style.left = left + 'px';
-    bulleIndiceEl.style.top = top + 'px';
+    // Positionnement : sous le badge par défaut, au-dessus si pas assez de place,
+    // recalculé en continu selon la zone réellement visible (le clavier réduit cette zone sur iPad).
+    const largeurBulle = 240;
+    function repositionnerBulleIndice() {
+        if (!bulleIndiceEl) return;
+        const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+        const vw = (window.visualViewport ? window.visualViewport.width : window.innerWidth);
+        const hauteurBulle = bulleIndiceEl.offsetHeight || 130;
+        let left = rectLabel.left;
+        let top = rectLabel.bottom + 8;
+        if (left + largeurBulle > vw - 10) left = vw - largeurBulle - 10;
+        if (left < 10) left = 10;
+        if (top + hauteurBulle > vh - 10) top = rectLabel.top - hauteurBulle - 8;
+        if (top < 10) top = 10; // si même au-dessus ça ne rentre pas, on colle en haut de la zone visible
+        if (top + hauteurBulle > vh - 10) top = Math.max(10, vh - hauteurBulle - 10);
+        bulleIndiceEl.style.left = left + 'px';
+        bulleIndiceEl.style.top = top + 'px';
+    }
+    repositionnerBulleIndice();
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', repositionnerBulleIndice);
+        window.visualViewport.addEventListener('scroll', repositionnerBulleIndice);
+    }
+    bulleIndiceEl._repositionner = repositionnerBulleIndice;
 
     const champ = document.getElementById('champBulleIndice');
     champ.value = z.indice || '';
     champ.focus();
+    // Après l'ouverture du clavier (animation ~300ms sur iOS), on recale une dernière fois.
+    setTimeout(repositionnerBulleIndice, 350);
 
     function valider() {
         supportActif.zones[idxZone].indice = champ.value.trim();
