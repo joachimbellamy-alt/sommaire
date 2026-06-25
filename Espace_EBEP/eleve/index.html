@@ -121,6 +121,19 @@
     .btn-modal.annuler { background:var(--gris-fond); color:var(--texte); }
     .btn-modal.enregistrer { background:var(--bleu); color:#fff; font-weight:600; }
 
+    /* ---------- Recadrage ---------- */
+    #canvasRecadrage {
+        position:relative; display:inline-block; border:1px solid #ccc; background:#000;
+        user-select:none; touch-action:none; max-width:95vw; line-height:0; overflow:hidden;
+    }
+    #canvasRecadrage img { display:block; max-width:90vw; max-height:65vh; pointer-events:none; user-select:none; -webkit-user-drag:none; }
+    .rect-crop {
+        position:absolute; border:2px dashed #fff; background:rgba(0,122,255,0.25); pointer-events:none;
+        box-shadow:0 0 0 2000px rgba(0,0,0,0.45);
+    }
+    .controles-recadrage { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+    #infoRecadrage { color:var(--gris-texte); font-size:13px; margin-bottom:10px; }
+
     /* ---------- Segmented mode simple/complet ---------- */
     .segmented { position:relative; display:inline-flex; background:#e5e5ea; border-radius:9px; padding:2px; margin-bottom:16px; width:220px; }
     .segmented button { position:relative; z-index:2; flex:1; padding:7px 10px; border:none; background:transparent; color:#555; font-size:14px; font-weight:600; border-radius:7px; cursor:pointer; transition:color .2s; margin:0; }
@@ -262,6 +275,20 @@
         </div>
         <div id="infoEdition">Trace une zone (doigt ou souris) sur ce que tu veux mémoriser. Tape sur le numéro d'une zone pour lui ajouter un indice. Un tap court sur une zone existante la supprime. <strong id="compteurZonesEdition">0 zone(s)</strong></div>
         <div id="zoneCanvas"></div>
+    </div>
+
+    <!-- ===================== VUE RECADRAGE ===================== -->
+    <div id="vueRecadrage" style="display:none; text-align:center;">
+        <div id="infoRecadrage">Trace un cadre sur la partie à garder, ou laisse tel quel pour utiliser la photo entière.</div>
+        <div id="canvasRecadrage">
+            <img id="imgRecadrage">
+        </div>
+        <div class="controles-recadrage">
+            <button class="icon-btn secondaire-large" onclick="annulerCadrage()" style="background:#fff; border:1px solid #e3e3e8; border-radius:10px;">✕ Annuler</button>
+            <button class="icon-btn secondaire-large" onclick="reinitialiserCadrage()" style="background:#fff; border:1px solid #e3e3e8; border-radius:10px;">↺ Recommencer</button>
+            <button class="icon-btn secondaire-large" onclick="passerCadrage()" style="background:#fff; border:1px solid #e3e3e8; border-radius:10px;">Image entière</button>
+            <button class="icon-btn primary" onclick="validerCadrage()">✓ Valider le cadrage</button>
+        </div>
     </div>
 
     <!-- ===================== VUE RÉVISION ===================== -->
