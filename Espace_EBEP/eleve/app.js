@@ -267,6 +267,7 @@ document.getElementById('inputImport').onchange = (e) => {
         importes.forEach((s) => {
             supports.push(Object.assign({}, s, { id: genererId() }));
         });
+        migrerVersPagesEtType(supports);
         await sauvegarderSupports();
         afficherAccueil();
         alert(importes.length + ' support(s) importé(s) avec succès.');
@@ -300,6 +301,8 @@ function afficherVue(nom) {
     document.getElementById('vueEdition').style.display = nom === 'edition' ? '' : 'none';
     document.getElementById('vueRevision').style.display = nom === 'revision' ? '' : 'none';
     document.getElementById('vueRecadrage').style.display = nom === 'recadrage' ? '' : 'none';
+    document.getElementById('vueEditionTexte').style.display = nom === 'editionTexte' ? '' : 'none';
+    document.getElementById('vueRevisionTexte').style.display = nom === 'revisionTexte' ? '' : 'none';
     document.getElementById('btnRetour').style.display = (nom === 'accueil' || nom === 'recadrage') ? 'none' : '';
     const btnBascule = document.getElementById('btnBascule');
     if (nom === 'edition') {
@@ -308,6 +311,16 @@ function afficherVue(nom) {
         btnBascule.textContent = '🧠 Réviser';
         btnBascule.onclick = () => ouvrirRevision(supportActif.id);
     } else if (nom === 'revision') {
+        document.getElementById('titreHeader').textContent = supportActif.nom;
+        btnBascule.style.display = '';
+        btnBascule.textContent = '✏️ Modifier';
+        btnBascule.onclick = () => ouvrirEdition(supportActif.id);
+    } else if (nom === 'editionTexte') {
+        document.getElementById('titreHeader').textContent = supportActif.nom;
+        btnBascule.style.display = '';
+        btnBascule.textContent = '🧠 Réviser';
+        btnBascule.onclick = () => ouvrirRevision(supportActif.id);
+    } else if (nom === 'revisionTexte') {
         document.getElementById('titreHeader').textContent = supportActif.nom;
         btnBascule.style.display = '';
         btnBascule.textContent = '✏️ Modifier';
@@ -339,13 +352,28 @@ const ICONES_MATIERES = {
 };
 
 function calculerProgression(s) {
-    const total = s.zones.length;
-    let maitrisees = 0;
-    for (let i = 0; i < total; i++) {
-        const e = s.etat && s.etat[i];
-        if (e && e.box >= 4) maitrisees++;
+    let total = 0, maitrisees = 0;
+    if (s.type === 'texte') {
+        total = (s.cartes || []).length;
+        for (let i = 0; i < total; i++) {
+            const e = s.etat && s.etat[i];
+            if (e && e.box >= 4) maitrisees++;
+        }
+    } else {
+        (s.pages || []).forEach((page, pi) => {
+            page.zones.forEach((z, zi) => {
+                total++;
+                const e = s.etat && s.etat[pi + '_' + zi];
+                if (e && e.box >= 4) maitrisees++;
+            });
+        });
     }
     return { maitrisees, total };
+}
+
+function vignetteSupport(s) {
+    if (s.type === 'texte') return '';
+    return (s.pages && s.pages[0] && s.pages[0].image) || '';
 }
 
 function afficherAccueil() {
@@ -367,7 +395,7 @@ function afficherAccueil() {
             <div class="titre-matiere">${ICONES_MATIERES[m] || '📦'} ${m}</div>
             ${parMatiere[m].slice().reverse().map(s => `
                 <div class="carte-support" data-id="${s.id}">
-                    <img src="${s.image || ''}" alt="">
+                    ${vignetteSupport(s) ? `<img src="${vignetteSupport(s)}" alt="">` : `<div style="width:56px;height:56px;border-radius:10px;background:var(--gris-fond);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>`}
                     <div class="infos">
                         <div class="nom"></div>
                         <div class="barre-progression"><div class="barre-remplie" data-id-barre="${s.id}"></div></div>
@@ -383,11 +411,11 @@ function afficherAccueil() {
         liste.querySelectorAll('.carte-support').forEach(carte => {
             const id = carte.getAttribute('data-id');
             const s = supports.find(x => x.id === id);
-            carte.querySelector('.nom').textContent = s.nom;
+            carte.querySelector('.nom').textContent = s.nom + (s.type === 'image' && s.pages && s.pages.length > 1 ? ' (' + s.pages.length + ' pages)' : '');
             const { maitrisees, total } = calculerProgression(s);
             const pct = total > 0 ? Math.round((maitrisees / total) * 100) : 0;
             carte.querySelector('[data-id-barre="' + id + '"]').style.width = pct + '%';
-            carte.querySelector('[data-id-meta="' + id + '"]').textContent = total === 0 ? 'Pas encore de zone' : maitrisees + '/' + total + ' zones maîtrisées';
+            carte.querySelector('[data-id-meta="' + id + '"]').textContent = total === 0 ? 'Pas encore de contenu' : maitrisees + '/' + total + (s.type === 'texte' ? ' cartes maîtrisées' : ' zones maîtrisées');
             carte.addEventListener('click', (ev) => {
                 if (ev.target.closest('[data-suppr]') || ev.target.closest('[data-modifier]')) return;
                 ouvrirRevision(id);
@@ -449,6 +477,8 @@ function creerNouveauSupport() {
     definirTexte('btnValiderSupport', 'Créer');
     document.getElementById('champNomSupport').value = '';
     document.getElementById('champMatiereSupport').value = 'Français';
+    document.getElementById('champTypeSupport').value = 'image';
+    document.getElementById('ligneTypeSupport').style.display = '';
     document.getElementById('modalNouveauSupport').classList.add('ouverte');
     setTimeout(() => document.getElementById('champNomSupport').focus(), 50);
 }
@@ -461,6 +491,7 @@ function ouvrirModifierSupport(id) {
     definirTexte('btnValiderSupport', 'Enregistrer');
     document.getElementById('champNomSupport').value = s.nom;
     document.getElementById('champMatiereSupport').value = s.matiere || 'Autre';
+    document.getElementById('ligneTypeSupport').style.display = 'none';
     document.getElementById('modalNouveauSupport').classList.add('ouverte');
     setTimeout(() => document.getElementById('champNomSupport').focus(), 50);
 }
@@ -490,25 +521,38 @@ function validerNouveauSupport() {
         return;
     }
 
+    const type = document.getElementById('champTypeSupport').value;
     const support = {
         id: genererId(),
         nom: nom,
         matiere: matiere,
-        image: '',
-        zones: [],
+        type: type,
         etat: {},
         mode: 'simple',
         creeLe: Date.now()
     };
+    if (type === 'texte') {
+        support.cartes = [];
+    } else {
+        support.pages = [{ image: '', zones: [] }];
+    }
     supports.push(support);
     sauvegarderSupports();
     fermerModalNouveauSupport();
     ouvrirEdition(support.id);
 }
 
+let pageActuelle = 0;
+
 function ouvrirEdition(id) {
     supportActif = supports.find(s => s.id === id);
     if (!supportActif) return;
+    pageActuelle = 0;
+    if (supportActif.type === 'texte') {
+        afficherVue('editionTexte');
+        chargerEditionTexte();
+        return;
+    }
     afficherVue('edition');
     chargerCanvasEdition();
 }
@@ -516,7 +560,19 @@ function ouvrirEdition(id) {
 function ouvrirRevision(id) {
     supportActif = supports.find(s => s.id === id);
     if (!supportActif) return;
-    if (!supportActif.image || supportActif.zones.length === 0) {
+    pageActuelle = 0;
+    if (supportActif.type === 'texte') {
+        if (!supportActif.cartes || supportActif.cartes.length === 0) {
+            alert("Ce support n'a pas encore de carte. Ajoute-en d'abord.");
+            ouvrirEdition(id);
+            return;
+        }
+        afficherVue('revisionTexte');
+        construireVueRevisionTexte();
+        return;
+    }
+    const totalZones = (supportActif.pages || []).reduce((acc, p) => acc + p.zones.length, 0);
+    if (!supportActif.pages || supportActif.pages.length === 0 || totalZones === 0) {
         alert("Ce support n'a pas encore d'image ou de zones. Ajoute-les d'abord.");
         ouvrirEdition(id);
         return;
@@ -525,11 +581,51 @@ function ouvrirRevision(id) {
     construireVueRevision();
 }
 
-/* ---------------- Édition : image, zoom, zones ---------------- */
+/* ---------------- Édition : pages, zoom, zones ---------------- */
+
+function pageEnCours() {
+    return supportActif.pages[pageActuelle];
+}
+
+function majNavigateurPages(prefixeId) {
+    const total = supportActif.pages.length;
+    const el = document.getElementById(prefixeId + 'IndicateurPage');
+    if (el) el.textContent = 'Page ' + (pageActuelle + 1) + '/' + total;
+    const btnPrec = document.getElementById(prefixeId + 'PagePrecedente');
+    const btnSuiv = document.getElementById(prefixeId + 'PageSuivante');
+    if (btnPrec) btnPrec.disabled = (pageActuelle === 0);
+    if (btnSuiv) btnSuiv.disabled = (pageActuelle === total - 1);
+}
+
+function pagePrecedenteEdition() {
+    if (pageActuelle > 0) { pageActuelle--; chargerCanvasEdition(); }
+}
+function pageSuivanteEdition() {
+    if (pageActuelle < supportActif.pages.length - 1) { pageActuelle++; chargerCanvasEdition(); }
+}
+
+function supprimerPageActuelle() {
+    if (supportActif.pages.length <= 1) { alert("Impossible de supprimer la dernière page d'un support — supprime plutôt le support entier depuis l'accueil."); return; }
+    if (!confirm('Supprimer cette page et ses zones ?')) return;
+    supportActif.pages.splice(pageActuelle, 1);
+    // Recalage des clés d'état Leitner : celles des pages après la page supprimée décalent d'un index.
+    const nouvelEtat = {};
+    Object.keys(supportActif.etat || {}).forEach(cle => {
+        const [p, z] = cle.split('_').map(Number);
+        if (p < pageActuelle) nouvelEtat[cle] = supportActif.etat[cle];
+        else if (p > pageActuelle) nouvelEtat[(p - 1) + '_' + z] = supportActif.etat[cle];
+        // les entrées de la page supprimée (p === pageActuelle) sont simplement abandonnées
+    });
+    supportActif.etat = nouvelEtat;
+    if (pageActuelle >= supportActif.pages.length) pageActuelle = supportActif.pages.length - 1;
+    sauvegarderSupports();
+    chargerCanvasEdition();
+}
 
 function chargerCanvasEdition() {
     canvasEl.innerHTML = '';
-    if (supportActif.image) {
+    const page = pageEnCours();
+    if (page && page.image) {
         const img = document.createElement('img');
         img.onload = () => {
             imgNaturalW = img.naturalWidth;
@@ -537,10 +633,24 @@ function chargerCanvasEdition() {
             zoomReset();
             redessinerZonesEdition();
         };
-        img.src = supportActif.image;
+        img.src = page.image;
         canvasEl.appendChild(img);
     }
     majCompteurZonesEdition();
+    majNavigateurPages('edition');
+}
+
+function ajouterPageDepuisImage(dataUrlFinal) {
+    const derniere = supportActif.pages[supportActif.pages.length - 1];
+    if (supportActif.pages.length === 1 && derniere && derniere.image === '' && derniere.zones.length === 0) {
+        derniere.image = dataUrlFinal;
+        pageActuelle = 0;
+    } else {
+        supportActif.pages.push({ image: dataUrlFinal, zones: [] });
+        pageActuelle = supportActif.pages.length - 1;
+    }
+    sauvegarderSupports();
+    chargerCanvasEdition();
 }
 
 document.getElementById('inputPhoto').onchange = (e) => {
@@ -552,6 +662,64 @@ document.getElementById('inputPhoto').onchange = (e) => {
     };
     reader.readAsDataURL(file);
     e.target.value = '';
+};
+
+let pdfJsCharge = false;
+function chargerPdfJs() {
+    return new Promise((resolve, reject) => {
+        if (window.pdfjsLib) { pdfJsCharge = true; resolve(); return; }
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js';
+        script.onload = () => {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js';
+            pdfJsCharge = true;
+            resolve();
+        };
+        script.onerror = () => reject(new Error('chargement impossible'));
+        document.head.appendChild(script);
+    });
+}
+
+function redimensionnerCanvas(source, maxW) {
+    let w = source.width, h = source.height;
+    if (w <= maxW) return source;
+    h = Math.round(h * maxW / w); w = maxW;
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').drawImage(source, 0, 0, w, h);
+    return c;
+}
+
+document.getElementById('inputPdf').onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = '';
+    if (!pdfJsCharge) {
+        try { await chargerPdfJs(); }
+        catch (err) {
+            alert("Impossible de charger le lecteur PDF — vérifie ta connexion internet (cette fonction a besoin du réseau, contrairement au reste de l'app).");
+            return;
+        }
+    }
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+        try {
+            const pdf = await window.pdfjsLib.getDocument({ data: ev.target.result }).promise;
+            for (let n = 1; n <= pdf.numPages; n++) {
+                const page = await pdf.getPage(n);
+                const viewport = page.getViewport({ scale: 2 });
+                const canvasPage = document.createElement('canvas');
+                canvasPage.width = viewport.width;
+                canvasPage.height = viewport.height;
+                await page.render({ canvasContext: canvasPage.getContext('2d'), viewport: viewport }).promise;
+                const finalCanvas = redimensionnerCanvas(canvasPage, 1280);
+                ajouterPageDepuisImage(finalCanvas.toDataURL('image/jpeg', 0.85));
+            }
+        } catch (err) {
+            alert('Erreur lors de la lecture du PDF : ' + err.message);
+        }
+    };
+    reader.readAsArrayBuffer(file);
 };
 
 /* ---------------- Recadrage avant utilisation ---------------- */
@@ -657,11 +825,8 @@ function appliquerCadrageEtStocker(callback) {
 
 function validerCadrage() {
     appliquerCadrageEtStocker((dataUrlFinal) => {
-        supportActif.image = dataUrlFinal;
-        supportActif.zones = [];
-        sauvegarderSupports();
         afficherVue('edition');
-        chargerCanvasEdition();
+        ajouterPageDepuisImage(dataUrlFinal);
     });
 }
 
@@ -793,7 +958,7 @@ function handleEnd(e) {
             y: ((pt.y - minY) / hauteur) * 100
         }));
 
-        supportActif.zones.push({
+        pageEnCours().zones.push({
             forme: 'libre',
             xPct: (minX / p.canvasW) * 100,
             yPct: (minY / p.canvasH) * 100,
@@ -820,7 +985,7 @@ function handleEnd(e) {
         return;
     }
 
-    supportActif.zones.push({
+    pageEnCours().zones.push({
         forme: formeActuelle,
         xPct: (x / p.canvasW) * 100,
         yPct: (y / p.canvasH) * 100,
@@ -852,7 +1017,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 function supprimerZoneAuPoint(xPct, yPct) {
-    const zones = supportActif.zones;
+    const zones = pageEnCours().zones;
     for (let i = zones.length - 1; i >= 0; i--) {
         const z = zones[i];
         if (xPct >= z.xPct && xPct <= z.xPct + z.wPct && yPct >= z.yPct && yPct <= z.yPct + z.hPct) {
@@ -866,8 +1031,8 @@ function supprimerZoneAuPoint(xPct, yPct) {
 }
 
 function effacerDerniereZone() {
-    if (!supportActif || supportActif.zones.length === 0) return;
-    supportActif.zones.pop();
+    if (!supportActif || pageEnCours().zones.length === 0) return;
+    pageEnCours().zones.pop();
     redessinerZonesEdition();
     majCompteurZonesEdition();
     sauvegarderSupports();
@@ -875,7 +1040,7 @@ function effacerDerniereZone() {
 
 function effacerToutesZones() {
     if (!supportActif) return;
-    supportActif.zones = [];
+    pageEnCours().zones = [];
     redessinerZonesEdition();
     majCompteurZonesEdition();
     sauvegarderSupports();
@@ -889,7 +1054,7 @@ function redessinerZonesEdition() {
     const rectCanvas = canvasEl.getBoundingClientRect();
     const decalX = rect.left - rectCanvas.left;
     const decalY = rect.top - rectCanvas.top;
-    supportActif.zones.forEach((z, i) => {
+    pageEnCours().zones.forEach((z, i) => {
         const left = decalX + z.xPct / 100 * rect.width;
         const top = decalY + z.yPct / 100 * rect.height;
         const largeur = z.wPct / 100 * rect.width;
@@ -937,7 +1102,7 @@ function redessinerZonesEdition() {
 
 function majCompteurZonesEdition() {
     if (!supportActif) return;
-    const n = supportActif.zones.length;
+    const n = pageEnCours().zones.length;
     document.getElementById('compteurZonesEdition').textContent = n + ' zone' + (n === 1 ? '' : 's');
 }
 
@@ -966,7 +1131,7 @@ function fermerBulleIndiceSiExterieur(ev) {
 
 function ouvrirBulleIndice(labelEl, idxZone) {
     fermerBulleIndice();
-    const z = supportActif.zones[idxZone];
+    const z = pageEnCours().zones[idxZone];
     const rectLabel = labelEl.getBoundingClientRect();
 
     bulleIndiceEl = document.createElement('div');
@@ -1012,7 +1177,7 @@ function ouvrirBulleIndice(labelEl, idxZone) {
     setTimeout(repositionnerBulleIndice, 350);
 
     function valider() {
-        supportActif.zones[idxZone].indice = champ.value.trim();
+        pageEnCours().zones[idxZone].indice = champ.value.trim();
         sauvegarderSupports();
         redessinerZonesEdition();
         fermerBulleIndice();
@@ -1029,20 +1194,26 @@ function ouvrirBulleIndice(labelEl, idxZone) {
     setTimeout(() => document.addEventListener('click', fermerBulleIndiceSiExterieur, true), 0);
 }
 
-/* ---------------- Révision (Leitner) ---------------- */
+/* ---------------- Révision (Leitner) — agrégée sur toutes les pages d'un support image ---------------- */
 
 function todayStr() { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString().slice(0, 10); }
 function addDays(dateStr, n) { const d = new Date(dateStr + 'T00:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
-function estDue(i) { return etatRevision[i].nextDue <= todayStr(); }
+function estDue(cle) { return etatRevision[cle].nextDue <= todayStr(); }
+
+function initEtatRevisionImage() {
+    etatRevision = supportActif.etat || (supportActif.etat = {});
+    supportActif.pages.forEach((page, pi) => {
+        page.zones.forEach((z, zi) => {
+            const cle = pi + '_' + zi;
+            if (!etatRevision[cle]) etatRevision[cle] = { box: 1, nextDue: todayStr(), indicePerso: '' };
+            if (etatRevision[cle].indicePerso === undefined) etatRevision[cle].indicePerso = '';
+        });
+    });
+    sauvegarderSupports();
+}
 
 function construireVueRevision() {
-    etatRevision = supportActif.etat || (supportActif.etat = {});
-    const total = supportActif.zones.length;
-    for (let i = 0; i < total; i++) {
-        if (!etatRevision[i]) etatRevision[i] = { box: 1, nextDue: todayStr(), indicePerso: '' };
-        if (etatRevision[i].indicePerso === undefined) etatRevision[i].indicePerso = '';
-    }
-    sauvegarderSupports();
+    initEtatRevisionImage();
 
     const mode = supportActif.mode || 'simple';
     document.body.classList.toggle('mode-simple', mode === 'simple');
@@ -1051,16 +1222,29 @@ function construireVueRevision() {
     document.body.classList.remove('filtre-actif');
     document.getElementById('btnFiltre').textContent = '📅 Zones à réviser';
 
+    chargerPageRevision();
+}
+
+function pagePrecedenteRevision() {
+    if (pageActuelle > 0) { pageActuelle--; chargerPageRevision(); }
+}
+function pageSuivanteRevision() {
+    if (pageActuelle < supportActif.pages.length - 1) { pageActuelle++; chargerPageRevision(); }
+}
+
+function chargerPageRevision() {
+    const page = supportActif.pages[pageActuelle];
     const conteneur = document.getElementById('conteneurImage');
     conteneur.innerHTML = '';
     const img = document.createElement('img');
-    img.src = supportActif.image;
+    img.src = page.image;
     conteneur.appendChild(img);
 
-    supportActif.zones.forEach((z, i) => {
+    page.zones.forEach((z, i) => {
+        const cle = pageActuelle + '_' + i;
         const masque = document.createElement('div');
         masque.className = 'masque';
-        masque.dataset.idx = i;
+        masque.dataset.cle = cle;
         masque.style.left = z.xPct + '%';
         masque.style.top = z.yPct + '%';
         masque.style.width = z.wPct + '%';
@@ -1104,8 +1288,8 @@ function construireVueRevision() {
         inputPerso.type = 'text';
         inputPerso.className = 'indice-perso-input';
         inputPerso.placeholder = 'Ex : ça me fait penser à...';
-        inputPerso.value = etatRevision[i].indicePerso || '';
-        inputPerso.addEventListener('input', () => { etatRevision[i].indicePerso = inputPerso.value; sauvegarderSupports(); });
+        inputPerso.value = etatRevision[cle].indicePerso || '';
+        inputPerso.addEventListener('input', () => { etatRevision[cle].indicePerso = inputPerso.value; sauvegarderSupports(); });
         panel.appendChild(inputPerso);
         masque.appendChild(panel);
 
@@ -1127,6 +1311,7 @@ function construireVueRevision() {
         conteneur.appendChild(masque);
     });
 
+    majNavigateurPages('revision');
     actualiserAffichageRevision();
 }
 
@@ -1148,44 +1333,48 @@ function afficherToast(bon, total) {
 function declarer(masque, bon) {
     masque.classList.remove('correcte', 'incorrecte');
     masque.classList.add(bon ? 'correcte' : 'incorrecte');
-    const i = masque.dataset.idx;
-    etatRevision[i].box = bon ? Math.min(5, etatRevision[i].box + 1) : 1;
-    etatRevision[i].nextDue = addDays(todayStr(), INTERVALLES[etatRevision[i].box - 1]);
+    const cle = masque.dataset.cle;
+    etatRevision[cle].box = bon ? Math.min(5, etatRevision[cle].box + 1) : 1;
+    etatRevision[cle].nextDue = addDays(todayStr(), INTERVALLES[etatRevision[cle].box - 1]);
     sauvegarderSupports();
     majCompteurRevision();
-    afficherToast(bon, supportActif.zones.length);
+    afficherToast(bon, document.querySelectorAll('#conteneurImage .masque').length);
     actualiserAffichageRevision();
 }
 
 function actualiserAffichageRevision() {
     document.querySelectorAll('#conteneurImage .masque').forEach(m => {
-        const i = m.dataset.idx;
-        const e = etatRevision[i];
+        const cle = m.dataset.cle;
+        const e = etatRevision[cle];
         const niveau = m.querySelector('.boite-niveau');
         niveau.textContent = e.box;
         niveau.className = 'boite-niveau niveau-' + e.box;
-        m.classList.toggle('due', estDue(i));
+        m.classList.toggle('due', estDue(cle));
     });
     majCompteurRevision();
     actualiserResumeBoites();
 }
 
 function majCompteurRevision() {
-    const total = supportActif.zones.length;
+    const total = document.querySelectorAll('#conteneurImage .masque').length;
     const bonnes = document.querySelectorAll('#conteneurImage .masque.correcte').length;
     const mauvaises = document.querySelectorAll('#conteneurImage .masque.incorrecte').length;
-    document.getElementById('compteurRevision').textContent = '✅ ' + bonnes + '   ❌ ' + mauvaises + '   (sur ' + total + ' zones, cette session)';
+    const suffixe = supportActif.pages.length > 1 ? ' zones, cette page)' : ' zones, cette session)';
+    document.getElementById('compteurRevision').textContent = '✅ ' + bonnes + '   ❌ ' + mauvaises + '   (sur ' + total + suffixe;
 }
 
 function actualiserResumeBoites() {
-    const total = supportActif.zones.length;
     const counts = [0, 0, 0, 0, 0], duesParBoite = [0, 0, 0, 0, 0];
-    let duesTotal = 0;
-    for (let i = 0; i < total; i++) {
-        const b = etatRevision[i].box;
-        counts[b - 1]++;
-        if (estDue(i)) { duesParBoite[b - 1]++; duesTotal++; }
-    }
+    let total = 0, duesTotal = 0;
+    supportActif.pages.forEach((page, pi) => {
+        page.zones.forEach((z, zi) => {
+            const cle = pi + '_' + zi;
+            const b = etatRevision[cle].box;
+            counts[b - 1]++;
+            total++;
+            if (estDue(cle)) { duesParBoite[b - 1]++; duesTotal++; }
+        });
+    });
     const labels = ['Tous les jours', 'Dans 1 jour', 'Dans 3 jours', 'Dans 7 jours', 'Dans 16 jours'];
     let html = '<div class="boites-titre">📦 Mes boîtes de révision</div><div class="boites-rangee">';
     for (let b = 1; b <= 5; b++) {
@@ -1199,7 +1388,7 @@ function actualiserResumeBoites() {
         if (b < 5) html += '<div class="boite-fleche">→</div>';
     }
     html += '</div><div class="boites-legende">← zones fragiles, revues souvent &nbsp;|&nbsp; zones maîtrisées, espacées →</div>';
-    html += '<div class="boites-resume-txt">📅 ' + duesTotal + " zone(s) à réviser aujourd'hui sur " + total + '</div>';
+    html += '<div class="boites-resume-txt">📅 ' + duesTotal + " zone(s) à réviser aujourd'hui sur " + total + ' (toutes pages confondues)</div>';
     document.getElementById('resumeBoites').innerHTML = html;
 }
 
@@ -1216,9 +1405,12 @@ function basculerFiltre() {
 
 function reinitialiserProgression() {
     if (!confirm('Effacer toute ta progression sur ce support (y compris tes indices personnels) ? Cette action est irréversible.')) return;
-    const total = supportActif.zones.length;
     supportActif.etat = {};
-    for (let i = 0; i < total; i++) supportActif.etat[i] = { box: 1, nextDue: todayStr(), indicePerso: '' };
+    supportActif.pages.forEach((page, pi) => {
+        page.zones.forEach((z, zi) => {
+            supportActif.etat[pi + '_' + zi] = { box: 1, nextDue: todayStr(), indicePerso: '' };
+        });
+    });
     etatRevision = supportActif.etat;
     sauvegarderSupports();
     document.querySelectorAll('#conteneurImage .masque').forEach(m => {
@@ -1241,10 +1433,283 @@ function changerMode(mode) {
     sauvegarderSupports();
 }
 
+/* ---------------- Mode Texte : édition des cartes question/réponse ---------------- */
+
+function chargerEditionTexte() {
+    document.getElementById('titreHeader').textContent = supportActif.nom;
+    const conteneur = document.getElementById('listeCartesTexte');
+    if (supportActif.cartes.length === 0) {
+        conteneur.innerHTML = '<div class="vide" style="padding:20px 10px;">Aucune carte pour l\'instant. Ajoute ta première question/réponse.</div>';
+    } else {
+        conteneur.innerHTML = supportActif.cartes.map((c, i) => `
+            <div class="ligne-carte-texte">
+                <div class="champ-carte">
+                    <span class="label-modale">Question</span>
+                    <input type="text" class="champ-modale input-question" data-idx="${i}" value="${echapperHtml(c.question || '')}" placeholder="Ex : Capitale de l'Espagne">
+                </div>
+                <div class="champ-carte">
+                    <span class="label-modale">Réponse</span>
+                    <input type="text" class="champ-modale input-reponse" data-idx="${i}" value="${echapperHtml(c.reponse || '')}" placeholder="Ex : Madrid">
+                </div>
+                <button class="icon-btn danger" data-suppr-carte="${i}">🗑</button>
+            </div>
+        `).join('');
+        conteneur.querySelectorAll('.input-question').forEach(inp => inp.addEventListener('input', () => {
+            supportActif.cartes[parseInt(inp.dataset.idx, 10)].question = inp.value;
+            sauvegarderSupports();
+        }));
+        conteneur.querySelectorAll('.input-reponse').forEach(inp => inp.addEventListener('input', () => {
+            supportActif.cartes[parseInt(inp.dataset.idx, 10)].reponse = inp.value;
+            sauvegarderSupports();
+        }));
+        conteneur.querySelectorAll('[data-suppr-carte]').forEach(btn => btn.addEventListener('click', () => {
+            supportActif.cartes.splice(parseInt(btn.dataset.supprCarte, 10), 1);
+            sauvegarderSupports();
+            chargerEditionTexte();
+        }));
+    }
+    definirTexte('compteurCartesTexte', supportActif.cartes.length + ' carte' + (supportActif.cartes.length === 1 ? '' : 's'));
+}
+
+function ajouterCarteTexte() {
+    supportActif.cartes.push({ question: '', reponse: '' });
+    sauvegarderSupports();
+    chargerEditionTexte();
+    setTimeout(() => {
+        const inputs = document.querySelectorAll('.input-question');
+        if (inputs.length) inputs[inputs.length - 1].focus();
+    }, 50);
+}
+
+/* ---------------- Mode Texte : révision (Leitner) ---------------- */
+
+let etatRevisionTexte = null;
+
+function initEtatRevisionTexte() {
+    etatRevisionTexte = supportActif.etat || (supportActif.etat = {});
+    supportActif.cartes.forEach((c, i) => {
+        if (!etatRevisionTexte[i]) etatRevisionTexte[i] = { box: 1, nextDue: todayStr(), indicePerso: '' };
+        if (etatRevisionTexte[i].indicePerso === undefined) etatRevisionTexte[i].indicePerso = '';
+    });
+    sauvegarderSupports();
+}
+
+function estDueTexte(i) { return etatRevisionTexte[i].nextDue <= todayStr(); }
+
+function construireVueRevisionTexte() {
+    document.getElementById('titreHeader').textContent = supportActif.nom;
+    initEtatRevisionTexte();
+
+    const mode = supportActif.mode || 'simple';
+    document.body.classList.toggle('mode-simple', mode === 'simple');
+    document.querySelectorAll('#segmenteTexte .mode-btn').forEach(b => b.classList.toggle('actif', b.dataset.mode === mode));
+    document.querySelector('#segmenteTexte .thumb').classList.toggle('pos-1', mode === 'complet');
+    document.body.classList.remove('filtre-actif');
+    document.getElementById('btnFiltreTexte').textContent = '📅 Cartes à réviser';
+
+    const conteneur = document.getElementById('listeRevisionTexte');
+    conteneur.innerHTML = '';
+    supportActif.cartes.forEach((c, i) => {
+        const carte = document.createElement('div');
+        carte.className = 'carte-revision-texte';
+        carte.dataset.idx = i;
+
+        const question = document.createElement('div');
+        question.className = 'question-texte';
+        question.textContent = c.question;
+        carte.appendChild(question);
+
+        const reponseWrap = document.createElement('div');
+        reponseWrap.className = 'reponse-wrap';
+        reponseWrap.addEventListener('click', () => toggleReveleTexte(carte));
+
+        const niveau = document.createElement('div');
+        niveau.className = 'boite-niveau';
+        reponseWrap.appendChild(niveau);
+
+        const reponse = document.createElement('div');
+        reponse.className = 'reponse-texte';
+        reponse.textContent = c.reponse;
+        reponseWrap.appendChild(reponse);
+
+        const indiceBtn = document.createElement('div');
+        indiceBtn.className = 'indice-btn';
+        indiceBtn.textContent = '💡';
+        indiceBtn.addEventListener('click', (ev) => { ev.stopPropagation(); carte.classList.toggle('indice-actif'); });
+        reponseWrap.appendChild(indiceBtn);
+
+        const panel = document.createElement('div');
+        panel.className = 'indice-panel';
+        panel.addEventListener('click', (ev) => ev.stopPropagation());
+        const labelPerso = document.createElement('span');
+        labelPerso.className = 'indice-perso-label';
+        labelPerso.textContent = '✏️ Mon indice personnel';
+        panel.appendChild(labelPerso);
+        const inputPerso = document.createElement('input');
+        inputPerso.type = 'text';
+        inputPerso.className = 'indice-perso-input';
+        inputPerso.placeholder = 'Ex : ça me fait penser à...';
+        inputPerso.value = etatRevisionTexte[i].indicePerso || '';
+        inputPerso.addEventListener('input', () => { etatRevisionTexte[i].indicePerso = inputPerso.value; sauvegarderSupports(); });
+        panel.appendChild(inputPerso);
+        reponseWrap.appendChild(panel);
+
+        carte.appendChild(reponseWrap);
+
+        const declare = document.createElement('div');
+        declare.className = 'declare-texte';
+        const btnOk = document.createElement('button');
+        btnOk.className = 'btn-ok';
+        btnOk.textContent = '✓ Je savais';
+        btnOk.addEventListener('click', (ev) => { ev.stopPropagation(); declarerTexte(carte, true); });
+        const btnNon = document.createElement('button');
+        btnNon.className = 'btn-non';
+        btnNon.textContent = '✗ Je ne savais pas';
+        btnNon.addEventListener('click', (ev) => { ev.stopPropagation(); declarerTexte(carte, false); });
+        declare.appendChild(btnOk);
+        declare.appendChild(btnNon);
+        carte.appendChild(declare);
+
+        conteneur.appendChild(carte);
+    });
+
+    actualiserAffichageRevisionTexte();
+}
+
+function toggleReveleTexte(carte) { carte.classList.toggle('revele'); }
+
+function declarerTexte(carte, bon) {
+    carte.classList.remove('correcte', 'incorrecte');
+    carte.classList.add(bon ? 'correcte' : 'incorrecte');
+    const i = carte.dataset.idx;
+    etatRevisionTexte[i].box = bon ? Math.min(5, etatRevisionTexte[i].box + 1) : 1;
+    etatRevisionTexte[i].nextDue = addDays(todayStr(), INTERVALLES[etatRevisionTexte[i].box - 1]);
+    sauvegarderSupports();
+    afficherToastTexte(bon);
+    actualiserAffichageRevisionTexte();
+}
+
+function afficherToastTexte(bon) {
+    const bonnes = document.querySelectorAll('#listeRevisionTexte .carte-revision-texte.correcte').length;
+    const mauvaises = document.querySelectorAll('#listeRevisionTexte .carte-revision-texte.incorrecte').length;
+    const total = supportActif.cartes.length;
+    const toast = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = bon ? '✅ Bonne réponse !' : '❌ À revoir !';
+    document.getElementById('toastScore').textContent = bonnes + ' ✅  /  ' + mauvaises + ' ❌  (sur ' + total + ')';
+    toast.classList.remove('bonne', 'mauvaise');
+    toast.classList.add(bon ? 'bonne' : 'mauvaise');
+    toast.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 1500);
+}
+
+function actualiserAffichageRevisionTexte() {
+    document.querySelectorAll('#listeRevisionTexte .carte-revision-texte').forEach(c => {
+        const i = c.dataset.idx;
+        const e = etatRevisionTexte[i];
+        const niveau = c.querySelector('.boite-niveau');
+        niveau.textContent = e.box;
+        niveau.className = 'boite-niveau niveau-' + e.box;
+        c.classList.toggle('due', estDueTexte(i));
+    });
+    majCompteurRevisionTexte();
+    actualiserResumeBoitesTexte();
+}
+
+function majCompteurRevisionTexte() {
+    const total = supportActif.cartes.length;
+    const bonnes = document.querySelectorAll('#listeRevisionTexte .carte-revision-texte.correcte').length;
+    const mauvaises = document.querySelectorAll('#listeRevisionTexte .carte-revision-texte.incorrecte').length;
+    document.getElementById('compteurRevisionTexte').textContent = '✅ ' + bonnes + '   ❌ ' + mauvaises + '   (sur ' + total + ' cartes, cette session)';
+}
+
+function actualiserResumeBoitesTexte() {
+    const total = supportActif.cartes.length;
+    const counts = [0, 0, 0, 0, 0], duesParBoite = [0, 0, 0, 0, 0];
+    let duesTotal = 0;
+    for (let i = 0; i < total; i++) {
+        const b = etatRevisionTexte[i].box;
+        counts[b - 1]++;
+        if (estDueTexte(i)) { duesParBoite[b - 1]++; duesTotal++; }
+    }
+    const labels = ['Tous les jours', 'Dans 1 jour', 'Dans 3 jours', 'Dans 7 jours', 'Dans 16 jours'];
+    let html = '<div class="boites-titre">📦 Mes boîtes de révision</div><div class="boites-rangee">';
+    for (let b = 1; b <= 5; b++) {
+        const due = duesParBoite[b - 1] > 0;
+        html += '<div class="boite-card boite-card-' + b + (due ? ' due-card' : '') + '">'
+            + '<div class="boite-num">Boîte ' + b + '</div>'
+            + '<div class="boite-count">' + counts[b - 1] + '</div>'
+            + '<div class="boite-label">' + labels[b - 1] + '</div>'
+            + (due ? '<div class="boite-flag">📅 à revoir</div>' : '')
+            + '</div>';
+        if (b < 5) html += '<div class="boite-fleche">→</div>';
+    }
+    html += '</div><div class="boites-legende">← cartes fragiles, revues souvent &nbsp;|&nbsp; cartes maîtrisées, espacées →</div>';
+    html += '<div class="boites-resume-txt">📅 ' + duesTotal + " carte(s) à réviser aujourd'hui sur " + total + '</div>';
+    document.getElementById('resumeBoitesTexte').innerHTML = html;
+}
+
+function remasquerToutRevisionTexte() {
+    document.querySelectorAll('#listeRevisionTexte .carte-revision-texte').forEach(c => c.classList.remove('revele', 'correcte', 'incorrecte'));
+    majCompteurRevisionTexte();
+}
+
+function basculerFiltreTexte() {
+    document.body.classList.toggle('filtre-actif');
+    const actif = document.body.classList.contains('filtre-actif');
+    document.getElementById('btnFiltreTexte').textContent = actif ? '👀 Tout afficher' : '📅 Cartes à réviser';
+}
+
+function reinitialiserProgressionTexte() {
+    if (!confirm('Effacer toute ta progression sur ce support (y compris tes indices personnels) ? Cette action est irréversible.')) return;
+    supportActif.etat = {};
+    supportActif.cartes.forEach((c, i) => { supportActif.etat[i] = { box: 1, nextDue: todayStr(), indicePerso: '' }; });
+    etatRevisionTexte = supportActif.etat;
+    sauvegarderSupports();
+    document.querySelectorAll('#listeRevisionTexte .carte-revision-texte').forEach(c => {
+        c.classList.remove('revele', 'correcte', 'incorrecte', 'indice-actif');
+        const inp = c.querySelector('.indice-perso-input');
+        if (inp) inp.value = '';
+    });
+    actualiserAffichageRevisionTexte();
+}
+
+function changerModeTexte(mode) {
+    supportActif.mode = mode;
+    document.body.classList.toggle('mode-simple', mode === 'simple');
+    document.querySelectorAll('#segmenteTexte .mode-btn').forEach(b => b.classList.toggle('actif', b.dataset.mode === mode));
+    document.querySelector('#segmenteTexte .thumb').classList.toggle('pos-1', mode === 'complet');
+    if (mode === 'simple') {
+        document.body.classList.remove('filtre-actif');
+        document.getElementById('btnFiltreTexte').textContent = '📅 Cartes à réviser';
+    }
+    sauvegarderSupports();
+}
+
+function migrerVersPagesEtType(liste) {
+    let modifie = false;
+    liste.forEach(s => {
+        if (!s.type) { s.type = 'image'; modifie = true; }
+        if (s.type === 'image' && !s.pages) {
+            s.pages = [{ image: s.image || '', zones: s.zones || [] }];
+            delete s.image;
+            delete s.zones;
+            // Les anciennes clés d'état (juste l'index de zone) deviennent "0_index" (page 0)
+            const nouvelEtat = {};
+            Object.keys(s.etat || {}).forEach(k => { nouvelEtat['0_' + k] = s.etat[k]; });
+            s.etat = nouvelEtat;
+            modifie = true;
+        }
+        if (s.type === 'texte' && !s.cartes) { s.cartes = []; modifie = true; }
+    });
+    return modifie;
+}
+
 /* ---------------- Démarrage ---------------- */
 
 (async function demarrer() {
     supports = await chargerSupports();
+    if (migrerVersPagesEtType(supports)) await sauvegarderSupports();
     afficherAccueil();
     afficherBanniereEcranAccueilSiBesoin();
 
