@@ -80,6 +80,7 @@
     .icon-btn.accent { color:#8a6d00; background:#fff8e1; }
     .forme-btn.actif { background:var(--bleu); color:#fff; }
     .icon-btn.primary { color:#fff; background:var(--bleu); font-weight:600; border-radius:9px; padding:8px 16px; }
+    .icon-btn:disabled { opacity:.3; cursor:default; }
     .zoom-val { font-size:12px; color:var(--gris-texte); padding:0 2px; min-width:38px; text-align:center; }
     .zoom-slider {
         -webkit-appearance:none; appearance:none;
@@ -224,6 +225,44 @@
     .indice-perso-input { width:100%; box-sizing:border-box; padding:6px 7px; font-size:12px; border:1px solid #ddd; border-radius:5px; }
     .indice-perso-label { font-size:10px; color:#999; margin-bottom:2px; display:block; }
 
+    /* ---------- Mode Texte : édition ---------- */
+    .ligne-carte-texte {
+        background:#fff; border-radius:12px; padding:14px; margin-bottom:10px;
+        box-shadow:0 1px 3px rgba(0,0,0,0.08); display:flex; gap:10px; align-items:flex-end;
+    }
+    .ligne-carte-texte .champ-carte { flex:1; text-align:left; }
+    .ligne-carte-texte .champ-carte .champ-modale { margin-bottom:0; }
+    .ligne-carte-texte > button { flex-shrink:0; margin-bottom:2px; }
+
+    /* ---------- Mode Texte : révision ---------- */
+    .carte-revision-texte {
+        background:#fff; border-radius:14px; padding:16px; margin-bottom:12px;
+        box-shadow:0 1px 3px rgba(0,0,0,0.08); text-align:left; position:relative;
+    }
+    .carte-revision-texte:not(.due):not(.revele) { opacity:.45; }
+    body.mode-simple .carte-revision-texte:not(.due):not(.revele) { opacity:1; }
+    body.filtre-actif .carte-revision-texte:not(.due) { display:none; }
+    .question-texte { font-weight:600; font-size:15px; margin-bottom:10px; }
+    .reponse-wrap { position:relative; cursor:pointer; padding:10px 12px; border-radius:8px; background:var(--gris-fond); min-height:22px; }
+    .reponse-texte { font-size:15px; filter:blur(7px); user-select:none; transition:filter .2s ease; }
+    .carte-revision-texte.revele .reponse-texte { filter:blur(0); user-select:auto; }
+    .carte-revision-texte.correcte .reponse-wrap { box-shadow:0 0 0 2px rgba(46,204,113,.6) inset; }
+    .carte-revision-texte.incorrecte .reponse-wrap { box-shadow:0 0 0 2px rgba(231,76,60,.6) inset; }
+    .carte-revision-texte .boite-niveau {
+        position:absolute; top:-9px; left:-9px; width:20px; height:20px; border-radius:50%;
+        display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold;
+        color:#fff; z-index:6; box-shadow:0 1px 3px rgba(0,0,0,.4);
+    }
+    body.mode-simple .carte-revision-texte .boite-niveau { display:none; }
+    .carte-revision-texte .indice-btn { position:absolute; top:-9px; right:-9px; }
+    .carte-revision-texte.revele .indice-btn, .carte-revision-texte.revele .indice-panel { display:none; }
+    .carte-revision-texte .indice-panel { left:0; bottom:auto; top:calc(100% + 8px); }
+    .declare-texte { display:none; gap:8px; margin-top:10px; }
+    .carte-revision-texte.revele:not(.correcte):not(.incorrecte) .declare-texte { display:flex; }
+    .declare-texte button { flex:1; padding:10px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
+    .declare-texte .btn-ok { background:#2ecc71; color:#fff; }
+    .declare-texte .btn-non { background:#e74c3c; color:#fff; }
+
     #toast {
         position:fixed; top:24px; left:50%; transform:translateX(-50%) translateY(-30px); opacity:0;
         background:#2c3e50; color:#fff; padding:12px 22px; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,.3);
@@ -268,6 +307,14 @@
             <div class="segment-group">
                 <label class="icon-btn" for="inputPhoto">📷 Photo</label>
                 <input type="file" id="inputPhoto" accept="image/*" style="display:none;">
+                <label class="icon-btn" for="inputPdf">📄 PDF</label>
+                <input type="file" id="inputPdf" accept="application/pdf" style="display:none;">
+            </div>
+            <div class="segment-group">
+                <button class="icon-btn" id="editionPagePrecedente" onclick="pagePrecedenteEdition()">‹</button>
+                <span class="zoom-val" id="editionIndicateurPage">Page 1/1</span>
+                <button class="icon-btn" id="editionPageSuivante" onclick="pageSuivanteEdition()">›</button>
+                <button class="icon-btn danger" onclick="supprimerPageActuelle()">🗑 Page</button>
             </div>
             <div class="segment-group">
                 <button class="icon-btn" onclick="zoomOut()">➖</button>
@@ -317,10 +364,43 @@
             <button class="icon-btn" onclick="ouvrirModalRappel()">⏰ Programmer un rappel</button>
             <button class="icon-btn danger" onclick="reinitialiserProgression()">🗑 Réinitialiser</button>
         </div>
+        <div class="segment-group" style="margin:0 auto 14px; display:inline-flex;">
+            <button class="icon-btn" id="revisionPagePrecedente" onclick="pagePrecedenteRevision()">‹</button>
+            <span class="zoom-val" id="revisionIndicateurPage">Page 1/1</span>
+            <button class="icon-btn" id="revisionPageSuivante" onclick="pageSuivanteRevision()">›</button>
+        </div>
         <div id="resumeBoites"></div>
         <div id="compteurRevision"></div>
         <div id="instructionsRevision">Tape sur une zone pour la révéler, puis déclare honnêtement si tu savais la réponse.</div>
         <div id="conteneurImage"></div>
+    </div>
+
+    <!-- ===================== VUE ÉDITION TEXTE ===================== -->
+    <div id="vueEditionTexte" style="display:none;">
+        <div id="infoEditionTexte" style="color:var(--gris-texte); font-size:12px; margin-bottom:10px; text-align:center;">
+            Ajoute des paires question/réponse. La réponse sera floutée pendant la révision. <strong id="compteurCartesTexte">0 carte</strong>
+        </div>
+        <div id="listeCartesTexte"></div>
+        <button class="bouton-principal" onclick="ajouterCarteTexte()">+ Ajouter une carte</button>
+    </div>
+
+    <!-- ===================== VUE RÉVISION TEXTE ===================== -->
+    <div id="vueRevisionTexte" style="display:none; text-align:center;">
+        <div class="segmented" id="segmenteTexte" style="margin:0 auto 16px;">
+            <button class="mode-btn actif" data-mode="simple" onclick="changerModeTexte('simple')">Simple</button>
+            <button class="mode-btn" data-mode="complet" onclick="changerModeTexte('complet')">Complet</button>
+            <div class="thumb"></div>
+        </div>
+        <div class="controles-revision">
+            <button class="icon-btn primary" onclick="remasquerToutRevisionTexte()">🔄 Recommencer</button>
+            <button id="btnFiltreTexte" class="icon-btn" onclick="basculerFiltreTexte()">📅 Cartes à réviser</button>
+            <button class="icon-btn" onclick="ouvrirModalRappel()">⏰ Programmer un rappel</button>
+            <button class="icon-btn danger" onclick="reinitialiserProgressionTexte()">🗑 Réinitialiser</button>
+        </div>
+        <div id="resumeBoitesTexte"></div>
+        <div id="compteurRevisionTexte"></div>
+        <div id="instructionsRevisionTexte" style="font-size:13px; color:var(--gris-texte); margin-bottom:16px;">Tape sur la réponse pour la révéler, puis déclare honnêtement si tu savais.</div>
+        <div id="listeRevisionTexte"></div>
     </div>
 
 </main>
@@ -332,6 +412,13 @@
         <h3 id="titreModalSupport">Nouveau support</h3>
         <span class="label-modale">Nom</span>
         <input type="text" id="champNomSupport" class="champ-modale" placeholder="Ex : Leçon sur les fractions">
+        <div id="ligneTypeSupport">
+            <span class="label-modale">Type</span>
+            <select id="champTypeSupport" class="champ-modale">
+                <option value="image">🖼️ Image (zones à mémoriser sur une photo)</option>
+                <option value="texte">🗒️ Texte (questions / réponses)</option>
+            </select>
+        </div>
         <span class="label-modale">Matière</span>
         <select id="champMatiereSupport" class="champ-modale">
             <option value="Français">📖 Français</option>
