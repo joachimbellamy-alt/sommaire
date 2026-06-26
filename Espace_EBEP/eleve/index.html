@@ -45,7 +45,9 @@
     .carte-support img { width:56px; height:56px; object-fit:cover; border-radius:10px; flex-shrink:0; background:#eee; }
     .carte-support .infos { flex:1; min-width:0; }
     .carte-support .infos .nom { font-weight:600; font-size:15px; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .carte-support .infos .meta { font-size:12px; color:var(--gris-texte); }
+    .carte-support .barre-progression { height:5px; border-radius:3px; background:var(--gris-fond); overflow:hidden; margin-bottom:4px; }
+    .carte-support .barre-remplie { height:100%; width:0%; background:#34C759; border-radius:3px; transition:width 0.3s ease; }
+    .carte-support .meta { font-size:12px; color:var(--gris-texte); }
     .carte-support .chevron { color:#c7c7cc; font-size:20px; }
     .bouton-principal {
         display:block; width:100%; background:var(--bleu); color:#fff; border:none;
@@ -252,6 +254,7 @@
     <div id="vueAccueil">
         <div id="listeSupports"></div>
         <button class="bouton-principal" onclick="creerNouveauSupport()">+ Nouveau support de révision</button>
+        <div id="espaceStockage" style="text-align:center; font-size:12px; color:var(--gris-texte); margin-top:10px;"></div>
         <div style="display:flex; gap:8px; margin-top:10px;">
             <button class="icon-btn secondaire-large" onclick="exporterDonnees()" style="flex:1; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:10px;">💾 Exporter une sauvegarde</button>
             <label class="icon-btn secondaire-large" for="inputImport" style="flex:1; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:10px; cursor:pointer;">📂 Importer une sauvegarde</label>
@@ -326,7 +329,7 @@
 
 <div class="modale-fond" id="modalNouveauSupport">
     <div class="modale-boite">
-        <h3>Nouveau support</h3>
+        <h3 id="titreModalSupport">Nouveau support</h3>
         <span class="label-modale">Nom</span>
         <input type="text" id="champNomSupport" class="champ-modale" placeholder="Ex : Leçon sur les fractions">
         <span class="label-modale">Matière</span>
@@ -347,7 +350,7 @@
         </select>
         <div style="margin-top:6px; text-align:right;">
             <button class="btn-modal annuler" onclick="fermerModalNouveauSupport()">Annuler</button>
-            <button class="btn-modal enregistrer" onclick="validerNouveauSupport()">Créer</button>
+            <button class="btn-modal enregistrer" id="btnValiderSupport" onclick="validerNouveauSupport()">Créer</button>
         </div>
     </div>
 </div>
