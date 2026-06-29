@@ -327,6 +327,7 @@
 <header>
     <button id="btnRetour" style="display:none;" onclick="retourAccueil()">← Mes supports</button>
     <h1 id="titreHeader">Mes révisions</h1>
+    <button id="btnPartager" style="display:none;" onclick="partagerSupport()">📤</button>
     <button id="btnBascule" style="display:none;"></button>
 </header>
 
@@ -432,6 +433,12 @@
                 <option value="it-IT">🇮🇹 Italien</option>
                 <option value="la">🏛️ Latin (lu en français)</option>
             </select>
+            <br>
+            <span class="label-modale">Voix précise (facultatif)</span><br>
+            <select id="champVoixSupport" class="champ-modale" style="display:inline-block; width:auto; max-width:260px;" onchange="changerVoixSupport(this.value)">
+                <option value="">— Choix automatique —</option>
+            </select>
+            <button class="icon-btn" onclick="testerVoixSupport()" style="vertical-align:middle;">🔊 Tester</button>
         </div>
         <div id="infoEditionTexte" style="color:var(--gris-texte); font-size:12px; margin-bottom:10px; text-align:center;">
             Ajoute des paires question/réponse, avec une phrase d'exemple si tu veux. La réponse sera floutée pendant la révision. <strong id="compteurCartesTexte">0 carte</strong>
