@@ -347,6 +347,31 @@ function exporterDonnees() {
     a.click();
 }
 
+async function partagerSupport() {
+    if (!supportActif) return;
+    const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: [supportActif] };
+    const texte = JSON.stringify(paquet, null, 2);
+    const nomFichier = 'support-' + supportActif.nom.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.json';
+    const blob = new Blob([texte], { type: 'application/json' });
+
+    if (navigator.share && navigator.canShare && window.File) {
+        try {
+            const fichier = new File([blob], nomFichier, { type: 'application/json' });
+            if (navigator.canShare({ files: [fichier] })) {
+                await navigator.share({ files: [fichier], title: supportActif.nom, text: 'Support de révision : ' + supportActif.nom });
+                return;
+            }
+        } catch (e) {
+            if (e.name === 'AbortError') return; // l'élève a annulé le partage, on ne fait rien de plus
+            // sinon : on retombe sur le téléchargement classique ci-dessous
+        }
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = nomFichier;
+    a.click();
+}
+
 document.getElementById('inputImport').onchange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -406,6 +431,7 @@ function afficherVue(nom) {
     document.getElementById('vueEditionTexte').style.display = nom === 'editionTexte' ? '' : 'none';
     document.getElementById('vueRevisionTexte').style.display = nom === 'revisionTexte' ? '' : 'none';
     document.getElementById('btnRetour').style.display = (nom === 'accueil' || nom === 'recadrage') ? 'none' : '';
+    document.getElementById('btnPartager').style.display = (supportActif && ['edition', 'revision', 'editionTexte', 'revisionTexte'].includes(nom)) ? '' : 'none';
     const btnBascule = document.getElementById('btnBascule');
     if (nom === 'edition') {
         document.getElementById('titreHeader').textContent = supportActif.nom;
@@ -1590,6 +1616,7 @@ function chargerEditionTexte() {
     document.getElementById('titreHeader').textContent = supportActif.nom;
     const conteneur = document.getElementById('listeCartesTexte');
     document.getElementById('champLangueSupport').value = supportActif.langue || 'fr-FR';
+    remplirSelecteurVoix();
     if (supportActif.cartes.length === 0) {
         conteneur.innerHTML = '<div class="vide" style="padding:20px 10px;">Aucune carte pour l\'instant. Ajoute ta première question/réponse.</div>';
     } else {
@@ -1633,10 +1660,40 @@ function chargerEditionTexte() {
     definirTexte('compteurCartesTexte', supportActif.cartes.length + ' carte' + (supportActif.cartes.length === 1 ? '' : 's'));
 }
 
+function remplirSelecteurVoix() {
+    const select = document.getElementById('champVoixSupport');
+    const langue = (supportActif.langue === 'la' ? 'fr-FR' : (supportActif.langue || 'fr-FR'));
+    const prefixe = langue.split('-')[0];
+    if (!voixDisponibles.length) chargerVoixDisponibles();
+    const correspondantes = voixDisponibles.filter(v => v.lang.split('-')[0] === prefixe);
+    select.innerHTML = '<option value="">— Choix automatique —</option>'
+        + correspondantes.map(v => `<option value="${echapperHtml(v.name)}">${echapperHtml(v.name)}${v.localService ? '' : ' (en ligne)'}</option>`).join('');
+    select.value = supportActif.voixNom && correspondantes.some(v => v.name === supportActif.voixNom) ? supportActif.voixNom : '';
+    // Les voix mettent parfois un instant à se charger sur Safari : on retente une fois après un court délai.
+    if (correspondantes.length === 0) {
+        setTimeout(() => {
+            if (document.getElementById('vueEditionTexte').style.display !== 'none') remplirSelecteurVoix();
+        }, 400);
+    }
+}
+
+function changerVoixSupport(valeur) {
+    if (!supportActif) return;
+    supportActif.voixNom = valeur || '';
+    sauvegarderSupports();
+}
+
+function testerVoixSupport() {
+    const texte = (supportActif.cartes[0] && supportActif.cartes[0].question) || 'Ceci est un test de la voix sélectionnée.';
+    lireTexte(texte, supportActif.langue, supportActif.voixNom);
+}
+
 function changerLangueSupport(valeur) {
     if (!supportActif) return;
     supportActif.langue = valeur;
+    supportActif.voixNom = ''; // la voix précise dépend de la langue, on réinitialise au changement
     sauvegarderSupports();
+    remplirSelecteurVoix();
 }
 
 function ajouterCarteTexte() {
@@ -1683,7 +1740,7 @@ if ('speechSynthesis' in window) {
     window.speechSynthesis.onvoiceschanged = chargerVoixDisponibles;
 }
 
-function lireTexte(texte, langue) {
+function lireTexte(texte, langue, voixNom) {
     if (!texte) return;
     if (!('speechSynthesis' in window)) { alert("La lecture audio n'est pas disponible sur cet appareil."); return; }
     window.speechSynthesis.cancel();
@@ -1691,8 +1748,11 @@ function lireTexte(texte, langue) {
     const utter = new SpeechSynthesisUtterance(texte);
     utter.lang = langueEffective;
     if (!voixDisponibles.length) chargerVoixDisponibles();
-    const prefixe = langueEffective.split('-')[0];
-    const voix = voixDisponibles.find(v => v.lang === langueEffective) || voixDisponibles.find(v => v.lang.split('-')[0] === prefixe);
+    let voix = voixNom ? voixDisponibles.find(v => v.name === voixNom) : null;
+    if (!voix) {
+        const prefixe = langueEffective.split('-')[0];
+        voix = voixDisponibles.find(v => v.lang === langueEffective) || voixDisponibles.find(v => v.lang.split('-')[0] === prefixe);
+    }
     if (voix) utter.voice = voix;
     window.speechSynthesis.speak(utter);
 }
@@ -1715,7 +1775,7 @@ function creerElementCarte(support, idx) {
     const btnAudioQ = document.createElement('button');
     btnAudioQ.className = 'btn-audio';
     btnAudioQ.textContent = '🔊';
-    btnAudioQ.addEventListener('click', (ev) => { ev.stopPropagation(); lireTexte(c.question, langue); });
+    btnAudioQ.addEventListener('click', (ev) => { ev.stopPropagation(); lireTexte(c.question, langue, support.voixNom); });
     question.appendChild(btnAudioQ);
     if (modeSessionMelangee) {
         const etiquette = document.createElement('div');
@@ -1762,7 +1822,7 @@ function creerElementCarte(support, idx) {
     const btnAudioR = document.createElement('button');
     btnAudioR.className = 'btn-audio btn-audio-reponse';
     btnAudioR.textContent = '🔊';
-    btnAudioR.addEventListener('click', (ev) => { ev.stopPropagation(); lireTexte(c.reponse, langue); });
+    btnAudioR.addEventListener('click', (ev) => { ev.stopPropagation(); lireTexte(c.reponse, langue, support.voixNom); });
     reponseWrap.appendChild(btnAudioR);
 
     const indiceBtn = document.createElement('div');
