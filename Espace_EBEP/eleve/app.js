@@ -818,9 +818,9 @@ function chargerPdfJs() {
     return new Promise((resolve, reject) => {
         if (window.pdfjsLib) { pdfJsCharge = true; resolve(); return; }
         const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js';
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
         script.onload = () => {
-            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js';
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
             pdfJsCharge = true;
             resolve();
         };
@@ -1676,12 +1676,24 @@ function getDonneesCarte(carteEl) {
     return s.cartes[carteEl.dataset.idx];
 }
 
+let voixDisponibles = [];
+function chargerVoixDisponibles() { voixDisponibles = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
+if ('speechSynthesis' in window) {
+    chargerVoixDisponibles();
+    window.speechSynthesis.onvoiceschanged = chargerVoixDisponibles;
+}
+
 function lireTexte(texte, langue) {
     if (!texte) return;
     if (!('speechSynthesis' in window)) { alert("La lecture audio n'est pas disponible sur cet appareil."); return; }
     window.speechSynthesis.cancel();
+    const langueEffective = (langue === 'la') ? 'fr-FR' : (langue || 'fr-FR');
     const utter = new SpeechSynthesisUtterance(texte);
-    utter.lang = langue || 'fr-FR';
+    utter.lang = langueEffective;
+    if (!voixDisponibles.length) chargerVoixDisponibles();
+    const prefixe = langueEffective.split('-')[0];
+    const voix = voixDisponibles.find(v => v.lang === langueEffective) || voixDisponibles.find(v => v.lang.split('-')[0] === prefixe);
+    if (voix) utter.voice = voix;
     window.speechSynthesis.speak(utter);
 }
 
@@ -1843,7 +1855,7 @@ function ouvrirSessionMelangee() {
         });
     });
     if (paires.length === 0) {
-        alert("Aucune carte à réviser aujourd'hui parmi tes supports Texte. Reviens plus tard, ou ouvre un support en particulier pour réviser par anticipation.");
+        alert("Aucune carte à réviser aujourd'hui parmi tes Flashcards. Reviens plus tard, ou ouvre un support en particulier pour réviser par anticipation.");
         return;
     }
     // Les plus en retard (date d'échéance la plus ancienne) passent en priorité.
