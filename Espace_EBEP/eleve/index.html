@@ -288,6 +288,46 @@
 
     .etiquette-support-melange { font-size:11px; color:var(--bleu); font-weight:600; margin-bottom:6px; }
 
+    /* ---------- Image par carte ---------- */
+    .ligne-image-carte { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .miniature-carte { width:48px; height:48px; object-fit:cover; border-radius:8px; background:var(--gris-fond); }
+    .image-carte-revision { max-width:100%; max-height:160px; border-radius:10px; margin:10px auto; display:block; }
+
+    /* ---------- Mode retournement (flip) ---------- */
+    .carte-revision-texte.mode-flip .reponse-wrap { perspective:1000px; background:none; padding:0; min-height:70px; }
+    .carte-revision-texte.mode-flip .reponse-inner {
+        position:relative; width:100%; min-height:70px; transition:transform .5s; transform-style:preserve-3d;
+    }
+    .carte-revision-texte.mode-flip.revele .reponse-inner { transform:rotateX(180deg); }
+    .carte-revision-texte.mode-flip .face-carte {
+        position:absolute; inset:0; backface-visibility:hidden; border-radius:10px;
+        display:flex; flex-direction:column; align-items:center; justify-content:center; padding:14px; box-sizing:border-box;
+    }
+    .carte-revision-texte.mode-flip .face-avant {
+        background:linear-gradient(135deg, var(--bleu), #5ac8fa); color:#fff; font-size:13px; font-weight:600;
+    }
+    .carte-revision-texte.mode-flip .face-arriere { background:var(--gris-fond); transform:rotateX(180deg); }
+    .carte-revision-texte.mode-flip .reponse-texte, .carte-revision-texte.mode-flip .exemple-texte { filter:none !important; }
+    .carte-revision-texte.mode-flip .btn-audio-reponse { position:static; display:inline-block !important; margin-top:4px; }
+
+    /* ---------- QCM / Écrire ---------- */
+    .carte-exercice { background:#fff; border-radius:14px; padding:22px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+    .choix-qcm { background:var(--gris-fond); border:none; border-radius:10px; padding:12px; font-size:14px; cursor:pointer; text-align:left; }
+    .choix-qcm:hover:not(:disabled) { background:#e5e5ea; }
+    .choix-qcm:disabled { cursor:default; }
+    .choix-correct { background:#d7f5e0 !important; font-weight:600; }
+    .choix-incorrect { background:#fbd9d6 !important; }
+
+    /* ---------- Export PDF ---------- */
+    #zoneImpressionTexte { display:none; }
+    @media print {
+        body.impression-active > *:not(#zoneImpressionTexte) { display:none !important; }
+        body.impression-active #zoneImpressionTexte { display:block !important; }
+        .ligne-impression { display:flex; gap:24px; border-bottom:1px solid #ccc; padding:12px 0; page-break-inside:avoid; }
+        .case-impression { flex:1; font-size:13px; }
+        .case-impression img { max-width:140px; max-height:100px; }
+    }
+
     .masque.difficile .fond, .carte-revision-texte.difficile { box-shadow:0 0 0 2px #e74c3c; }
     .masque.difficile::before, .carte-revision-texte.difficile::before {
         content:'⚠️'; position:absolute; bottom:-9px; right:-9px; font-size:13px; z-index:8;
@@ -439,6 +479,12 @@
                 <option value="">— Choix automatique —</option>
             </select>
             <button class="icon-btn" onclick="testerVoixSupport()" style="vertical-align:middle;">🔊 Tester</button>
+            <br><br>
+            <span class="label-modale">Style de révélation</span><br>
+            <select id="champStyleRevelation" class="champ-modale" style="display:inline-block; width:auto;" onchange="changerStyleRevelation(this.value)">
+                <option value="flou">🌫️ Flou (tap pour révéler)</option>
+                <option value="flip">🔄 Retournement (carte qui se retourne)</option>
+            </select>
         </div>
         <div id="infoEditionTexte" style="color:var(--gris-texte); font-size:12px; margin-bottom:10px; text-align:center;">
             Ajoute des paires question/réponse, avec une phrase d'exemple si tu veux. La réponse sera floutée pendant la révision. <strong id="compteurCartesTexte">0 carte</strong>
@@ -461,6 +507,11 @@
             <button class="icon-btn" onclick="ouvrirModalRappel()">⏰ Programmer un rappel</button>
             <button class="icon-btn danger" onclick="reinitialiserProgressionTexte()">🗑 Réinitialiser</button>
         </div>
+        <div id="controlesExercicesTexte" class="controles-revision">
+            <button class="icon-btn accent" onclick="lancerQCM()">📝 Mode QCM</button>
+            <button class="icon-btn accent" onclick="lancerEcrire()">⌨️ Mode Écrire</button>
+            <button class="icon-btn" onclick="exporterPDF()">📄 Export PDF</button>
+        </div>
         <div class="controles-revision">
             <button class="icon-btn primary" onclick="remasquerToutRevisionTexte()">🔄 Recommencer</button>
         </div>
@@ -468,6 +519,35 @@
         <div id="compteurRevisionTexte"></div>
         <div id="instructionsRevisionTexte" style="font-size:13px; color:var(--gris-texte); margin-bottom:16px;">Choisis ton degré de confiance avant de révéler la réponse, puis déclare honnêtement si tu savais.</div>
         <div id="listeRevisionTexte"></div>
+    </div>
+
+    <!-- ===================== VUE QCM TEXTE ===================== -->
+    <div id="vueQCMTexte" style="display:none; text-align:center;">
+        <div id="progressionQCM" style="font-size:13px; color:var(--gris-texte); margin-bottom:14px;"></div>
+        <div id="carteQCM" class="carte-revision-texte carte-exercice" style="text-align:center; max-width:480px; margin:0 auto;">
+            <div id="questionQCM" class="question-texte" style="justify-content:center; font-size:17px;"></div>
+            <div id="imageQCM"></div>
+            <div id="choixQCM" style="display:flex; flex-direction:column; gap:10px; margin-top:14px;"></div>
+            <div id="feedbackQCM" style="margin-top:12px; font-weight:600;"></div>
+        </div>
+        <button class="icon-btn primary" id="btnSuivantQCM" style="display:none; margin-top:18px;" onclick="questionSuivanteQCM()">Suivant →</button>
+        <br>
+        <button class="icon-btn" onclick="quitterExerciceTexte()" style="margin-top:14px;">← Retour à la révision</button>
+    </div>
+
+    <!-- ===================== VUE ÉCRIRE TEXTE ===================== -->
+    <div id="vueEcrireTexte" style="display:none; text-align:center;">
+        <div id="progressionEcrire" style="font-size:13px; color:var(--gris-texte); margin-bottom:14px;"></div>
+        <div id="carteEcrire" class="carte-revision-texte carte-exercice" style="text-align:center; max-width:480px; margin:0 auto;">
+            <div id="questionEcrire" class="question-texte" style="justify-content:center; font-size:17px;"></div>
+            <div id="imageEcrire"></div>
+            <input type="text" id="champReponseEcrire" class="champ-modale" placeholder="Tape ta réponse..." style="margin-top:14px; text-align:center;">
+            <button class="icon-btn primary" id="btnValiderEcrire" onclick="validerEcrire()" style="margin-top:8px;">Valider</button>
+            <div id="feedbackEcrire" style="margin-top:12px; font-weight:600;"></div>
+        </div>
+        <button class="icon-btn primary" id="btnSuivantEcrire" style="display:none; margin-top:18px;" onclick="questionSuivanteEcrire()">Suivant →</button>
+        <br>
+        <button class="icon-btn" onclick="quitterExerciceTexte()" style="margin-top:14px;">← Retour à la révision</button>
     </div>
 
 </main>
@@ -550,6 +630,8 @@
         </div>
     </div>
 </div>
+
+<div id="zoneImpressionTexte"></div>
 
 <script src="app.js"></script>
 </body>
