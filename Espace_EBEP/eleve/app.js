@@ -430,7 +430,9 @@ function afficherVue(nom) {
     document.getElementById('vueRecadrage').style.display = nom === 'recadrage' ? '' : 'none';
     document.getElementById('vueEditionTexte').style.display = nom === 'editionTexte' ? '' : 'none';
     document.getElementById('vueRevisionTexte').style.display = nom === 'revisionTexte' ? '' : 'none';
-    document.getElementById('btnRetour').style.display = (nom === 'accueil' || nom === 'recadrage') ? 'none' : '';
+    document.getElementById('vueQCMTexte').style.display = nom === 'qcmTexte' ? '' : 'none';
+    document.getElementById('vueEcrireTexte').style.display = nom === 'ecrireTexte' ? '' : 'none';
+    document.getElementById('btnRetour').style.display = (nom === 'accueil' || nom === 'recadrage' || nom === 'qcmTexte' || nom === 'ecrireTexte') ? 'none' : '';
     document.getElementById('btnPartager').style.display = (supportActif && ['edition', 'revision', 'editionTexte', 'revisionTexte'].includes(nom)) ? '' : 'none';
     const btnBascule = document.getElementById('btnBascule');
     if (nom === 'edition') {
@@ -453,6 +455,12 @@ function afficherVue(nom) {
         btnBascule.style.display = supportActif ? '' : 'none';
         btnBascule.textContent = '✏️ Modifier';
         if (supportActif) btnBascule.onclick = () => ouvrirEdition(supportActif.id);
+    } else if (nom === 'qcmTexte') {
+        document.getElementById('titreHeader').textContent = '📝 ' + (supportActif ? supportActif.nom : '');
+        btnBascule.style.display = 'none';
+    } else if (nom === 'ecrireTexte') {
+        document.getElementById('titreHeader').textContent = '⌨️ ' + (supportActif ? supportActif.nom : '');
+        btnBascule.style.display = 'none';
     } else if (nom === 'recadrage') {
         document.getElementById('titreHeader').textContent = 'Cadrage';
         btnBascule.style.display = 'none';
@@ -896,6 +904,12 @@ document.getElementById('inputPdf').onchange = async (e) => {
     };
     reader.readAsArrayBuffer(file);
 };
+
+document.getElementById('champReponseEcrire').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    if (document.getElementById('champReponseEcrire').disabled) questionSuivanteEcrire();
+    else validerEcrire();
+});
 
 /* ---------------- Recadrage avant utilisation ---------------- */
 
@@ -1616,6 +1630,7 @@ function chargerEditionTexte() {
     document.getElementById('titreHeader').textContent = supportActif.nom;
     const conteneur = document.getElementById('listeCartesTexte');
     document.getElementById('champLangueSupport').value = supportActif.langue || 'fr-FR';
+    document.getElementById('champStyleRevelation').value = supportActif.styleRevelation || 'flou';
     remplirSelecteurVoix();
     if (supportActif.cartes.length === 0) {
         conteneur.innerHTML = '<div class="vide" style="padding:20px 10px;">Aucune carte pour l\'instant. Ajoute ta première question/réponse.</div>';
@@ -1635,6 +1650,16 @@ function chargerEditionTexte() {
                         <span class="label-modale">Phrase d'exemple (facultatif)</span>
                         <input type="text" class="champ-modale input-exemple" data-idx="${i}" value="${echapperHtml(c.exemple || '')}" placeholder="Ex : Madrid es la capital de España.">
                     </div>
+                    <div class="champ-carte champ-image-carte">
+                        <span class="label-modale">Image (facultatif)</span>
+                        <div class="ligne-image-carte">
+                            ${c.image ? `<img src="${c.image}" class="miniature-carte">` : ''}
+                            <label class="icon-btn" style="background:var(--gris-fond); border-radius:8px;">📷 ${c.image ? 'Changer' : 'Ajouter'}
+                                <input type="file" accept="image/*" class="input-image-carte" data-idx="${i}" style="display:none;">
+                            </label>
+                            ${c.image ? `<button class="icon-btn danger" data-suppr-image="${i}">🗑</button>` : ''}
+                        </div>
+                    </div>
                 </div>
                 <button class="icon-btn danger" data-suppr-carte="${i}">🗑</button>
             </div>
@@ -1650,6 +1675,33 @@ function chargerEditionTexte() {
         conteneur.querySelectorAll('.input-exemple').forEach(inp => inp.addEventListener('input', () => {
             supportActif.cartes[parseInt(inp.dataset.idx, 10)].exemple = inp.value;
             sauvegarderSupports();
+        }));
+        conteneur.querySelectorAll('.input-image-carte').forEach(inp => inp.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const idx = parseInt(inp.dataset.idx, 10);
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const maxW = 500;
+                    let w = img.naturalWidth, h = img.naturalHeight;
+                    if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+                    const c = document.createElement('canvas');
+                    c.width = w; c.height = h;
+                    c.getContext('2d').drawImage(img, 0, 0, w, h);
+                    supportActif.cartes[idx].image = c.toDataURL('image/jpeg', 0.8);
+                    sauvegarderSupports();
+                    chargerEditionTexte();
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }));
+        conteneur.querySelectorAll('[data-suppr-image]').forEach(btn => btn.addEventListener('click', () => {
+            supportActif.cartes[parseInt(btn.dataset.supprImage, 10)].image = '';
+            sauvegarderSupports();
+            chargerEditionTexte();
         }));
         conteneur.querySelectorAll('[data-suppr-carte]').forEach(btn => btn.addEventListener('click', () => {
             supportActif.cartes.splice(parseInt(btn.dataset.supprCarte, 10), 1);
@@ -1694,6 +1746,12 @@ function changerLangueSupport(valeur) {
     supportActif.voixNom = ''; // la voix précise dépend de la langue, on réinitialise au changement
     sauvegarderSupports();
     remplirSelecteurVoix();
+}
+
+function changerStyleRevelation(valeur) {
+    if (!supportActif) return;
+    supportActif.styleRevelation = valeur;
+    sauvegarderSupports();
 }
 
 function ajouterCarteTexte() {
@@ -1761,9 +1819,10 @@ function creerElementCarte(support, idx) {
     const c = support.cartes[idx];
     const etat = support.etat[idx];
     const langue = support.langue || 'fr-FR';
+    const modeFlip = (support.styleRevelation || 'flou') === 'flip';
 
     const carte = document.createElement('div');
-    carte.className = 'carte-revision-texte';
+    carte.className = 'carte-revision-texte' + (modeFlip ? ' mode-flip' : '');
     carte.dataset.supportId = support.id;
     carte.dataset.idx = idx;
 
@@ -1785,6 +1844,13 @@ function creerElementCarte(support, idx) {
     }
     carte.appendChild(question);
 
+    if (c.image) {
+        const img = document.createElement('img');
+        img.className = 'image-carte-revision';
+        img.src = c.image;
+        carte.appendChild(img);
+    }
+
     const confianceBar = document.createElement('div');
     confianceBar.className = 'confiance-bar';
     [['sur', '🟢 Sûr'], ['incertain', '🟡 Incertain'], ['aucune', '🔴 Aucune idée']].forEach(([val, label]) => {
@@ -1803,27 +1869,43 @@ function creerElementCarte(support, idx) {
     const reponseWrap = document.createElement('div');
     reponseWrap.className = 'reponse-wrap';
 
-    const niveau = document.createElement('div');
-    niveau.className = 'boite-niveau';
-    reponseWrap.appendChild(niveau);
-
+    // Contenu de la réponse (texte + exemple + audio), commun aux deux styles
+    const contenuReponse = document.createElement('div');
     const reponse = document.createElement('div');
     reponse.className = 'reponse-texte';
     reponse.textContent = c.reponse;
-    reponseWrap.appendChild(reponse);
-
+    contenuReponse.appendChild(reponse);
     if (c.exemple) {
         const exemple = document.createElement('div');
         exemple.className = 'exemple-texte';
         exemple.textContent = '« ' + c.exemple + ' »';
-        reponseWrap.appendChild(exemple);
+        contenuReponse.appendChild(exemple);
     }
-
     const btnAudioR = document.createElement('button');
     btnAudioR.className = 'btn-audio btn-audio-reponse';
     btnAudioR.textContent = '🔊';
     btnAudioR.addEventListener('click', (ev) => { ev.stopPropagation(); lireTexte(c.reponse, langue, support.voixNom); });
-    reponseWrap.appendChild(btnAudioR);
+    contenuReponse.appendChild(btnAudioR);
+
+    if (modeFlip) {
+        const inner = document.createElement('div');
+        inner.className = 'reponse-inner';
+        const faceAvant = document.createElement('div');
+        faceAvant.className = 'face-carte face-avant';
+        faceAvant.textContent = '🂠 Tape pour retourner';
+        const faceArriere = document.createElement('div');
+        faceArriere.className = 'face-carte face-arriere';
+        faceArriere.appendChild(contenuReponse);
+        inner.appendChild(faceAvant);
+        inner.appendChild(faceArriere);
+        reponseWrap.appendChild(inner);
+    } else {
+        reponseWrap.appendChild(contenuReponse);
+    }
+
+    const niveau = document.createElement('div');
+    niveau.className = 'boite-niveau';
+    reponseWrap.appendChild(niveau);
 
     const indiceBtn = document.createElement('div');
     indiceBtn.className = 'indice-btn';
@@ -1889,6 +1971,7 @@ function construireVueRevisionTexte() {
 
     document.getElementById('barreModeTexte').style.display = '';
     document.getElementById('controlesSeulTexte').style.display = '';
+    document.getElementById('controlesExercicesTexte').style.display = '';
 
     const mode = supportActif.mode || 'simple';
     document.body.classList.toggle('mode-simple', mode === 'simple');
@@ -1899,7 +1982,12 @@ function construireVueRevisionTexte() {
 
     const conteneur = document.getElementById('listeRevisionTexte');
     conteneur.innerHTML = '';
-    supportActif.cartes.forEach((c, i) => conteneur.appendChild(creerElementCarte(supportActif, i)));
+    const ordre = supportActif.cartes.map((c, i) => i);
+    for (let i = ordre.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [ordre[i], ordre[j]] = [ordre[j], ordre[i]];
+    }
+    ordre.forEach(i => conteneur.appendChild(creerElementCarte(supportActif, i)));
 
     actualiserAffichageRevisionTexte();
 }
@@ -1935,6 +2023,7 @@ function ouvrirSessionMelangee() {
     document.getElementById('titreHeader').textContent = '🔀 Session mélangée';
     document.getElementById('barreModeTexte').style.display = 'none';
     document.getElementById('controlesSeulTexte').style.display = 'none';
+    document.getElementById('controlesExercicesTexte').style.display = 'none';
     document.body.classList.remove('mode-simple', 'filtre-actif');
 
     const conteneur = document.getElementById('listeRevisionTexte');
@@ -2079,6 +2168,193 @@ function changerModeTexte(mode) {
         document.getElementById('btnFiltreTexte').textContent = '📅 Cartes à réviser';
     }
     sauvegarderSupports();
+}
+
+/* ---------------- Mode QCM ---------------- */
+
+let qcmEtat = { cartes: [], index: 0, score: 0 };
+
+function lancerQCM() {
+    if (!supportActif || supportActif.cartes.length < 4) {
+        alert("Il faut au moins 4 cartes dans ce paquet pour lancer un QCM (il en faut assez pour proposer de mauvaises réponses).");
+        return;
+    }
+    const ordre = supportActif.cartes.map((c, i) => i);
+    for (let i = ordre.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [ordre[i], ordre[j]] = [ordre[j], ordre[i]];
+    }
+    qcmEtat = { cartes: ordre, index: 0, score: 0 };
+    afficherVue('qcmTexte');
+    afficherQuestionQCM();
+}
+
+function afficherQuestionQCM() {
+    document.getElementById('feedbackQCM').textContent = '';
+    document.getElementById('btnSuivantQCM').style.display = 'none';
+    const idx = qcmEtat.cartes[qcmEtat.index];
+    const c = supportActif.cartes[idx];
+    document.getElementById('progressionQCM').textContent = 'Question ' + (qcmEtat.index + 1) + ' / ' + qcmEtat.cartes.length + '   ·   Score : ' + qcmEtat.score;
+    document.getElementById('questionQCM').textContent = c.question;
+    document.getElementById('imageQCM').innerHTML = c.image ? '<img src="' + c.image + '" class="image-carte-revision">' : '';
+
+    const autresReponses = supportActif.cartes.filter((cc, ii) => ii !== idx && cc.reponse).map(cc => cc.reponse);
+    const dispo = autresReponses.slice();
+    const leurres = [];
+    while (leurres.length < 3 && dispo.length > 0) {
+        const r = Math.floor(Math.random() * dispo.length);
+        leurres.push(dispo.splice(r, 1)[0]);
+    }
+    const choix = [c.reponse].concat(leurres);
+    for (let i = choix.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [choix[i], choix[j]] = [choix[j], choix[i]];
+    }
+
+    const conteneur = document.getElementById('choixQCM');
+    conteneur.innerHTML = '';
+    choix.forEach(rep => {
+        const btn = document.createElement('button');
+        btn.className = 'choix-qcm';
+        btn.textContent = rep;
+        btn.addEventListener('click', () => repondreQCM(btn, rep === c.reponse, idx));
+        conteneur.appendChild(btn);
+    });
+}
+
+function repondreQCM(btnClique, bon, idx) {
+    document.querySelectorAll('#choixQCM button').forEach(b => b.disabled = true);
+    const c = supportActif.cartes[idx];
+    document.querySelectorAll('#choixQCM button').forEach(b => {
+        if (b.textContent === c.reponse) b.classList.add('choix-correct');
+    });
+    if (!bon) btnClique.classList.add('choix-incorrect');
+    if (bon) qcmEtat.score++;
+    document.getElementById('feedbackQCM').textContent = bon ? '✅ Bonne réponse !' : '❌ La bonne réponse était : ' + c.reponse;
+    document.getElementById('btnSuivantQCM').style.display = '';
+}
+
+function questionSuivanteQCM() {
+    qcmEtat.index++;
+    if (qcmEtat.index >= qcmEtat.cartes.length) {
+        document.getElementById('questionQCM').textContent = '🏁 Terminé !';
+        document.getElementById('imageQCM').innerHTML = '';
+        document.getElementById('choixQCM').innerHTML = '';
+        document.getElementById('feedbackQCM').textContent = '';
+        document.getElementById('progressionQCM').textContent = 'Score final : ' + qcmEtat.score + ' / ' + qcmEtat.cartes.length;
+        document.getElementById('btnSuivantQCM').style.display = 'none';
+        return;
+    }
+    afficherQuestionQCM();
+}
+
+/* ---------------- Mode Écrire (saisie + correction tolérante) ---------------- */
+
+let ecrireEtat = { cartes: [], index: 0, score: 0 };
+
+function lancerEcrire() {
+    if (!supportActif || supportActif.cartes.length === 0) { alert('Ajoute au moins une carte avant de lancer cet exercice.'); return; }
+    const ordre = supportActif.cartes.map((c, i) => i);
+    for (let i = ordre.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [ordre[i], ordre[j]] = [ordre[j], ordre[i]];
+    }
+    ecrireEtat = { cartes: ordre, index: 0, score: 0 };
+    afficherVue('ecrireTexte');
+    afficherQuestionEcrire();
+}
+
+function afficherQuestionEcrire() {
+    document.getElementById('feedbackEcrire').textContent = '';
+    document.getElementById('btnSuivantEcrire').style.display = 'none';
+    document.getElementById('champReponseEcrire').style.display = '';
+    document.getElementById('btnValiderEcrire').style.display = '';
+    const champ = document.getElementById('champReponseEcrire');
+    champ.value = '';
+    champ.disabled = false;
+    const idx = ecrireEtat.cartes[ecrireEtat.index];
+    const c = supportActif.cartes[idx];
+    document.getElementById('progressionEcrire').textContent = 'Question ' + (ecrireEtat.index + 1) + ' / ' + ecrireEtat.cartes.length + '   ·   Score : ' + ecrireEtat.score;
+    document.getElementById('questionEcrire').textContent = c.question;
+    document.getElementById('imageEcrire').innerHTML = c.image ? '<img src="' + c.image + '" class="image-carte-revision">' : '';
+    champ.focus();
+}
+
+function normaliserTexteComparaison(s) {
+    return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().replace(/\s+/g, ' ');
+}
+
+function distanceLevenshtein(a, b) {
+    const m = a.length, n = b.length;
+    const d = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = 0; i <= m; i++) d[i][0] = i;
+    for (let j = 0; j <= n; j++) d[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+            d[i][j] = a[i - 1] === b[j - 1] ? d[i - 1][j - 1] : 1 + Math.min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1]);
+        }
+    }
+    return d[m][n];
+}
+
+function validerEcrire() {
+    const champ = document.getElementById('champReponseEcrire');
+    if (champ.disabled) return;
+    champ.disabled = true;
+    const idx = ecrireEtat.cartes[ecrireEtat.index];
+    const c = supportActif.cartes[idx];
+    const saisie = normaliserTexteComparaison(champ.value);
+    const attendue = normaliserTexteComparaison(c.reponse);
+    const dist = distanceLevenshtein(saisie, attendue);
+    const seuil = attendue.length <= 4 ? 0 : (attendue.length <= 8 ? 1 : 2);
+
+    if (saisie === attendue) {
+        ecrireEtat.score++;
+        document.getElementById('feedbackEcrire').textContent = '✅ Exact !';
+    } else if (dist <= seuil) {
+        ecrireEtat.score++;
+        document.getElementById('feedbackEcrire').textContent = '🟡 Presque ! Réponse attendue : ' + c.reponse + ' (petite faute tolérée, comptée bonne)';
+    } else {
+        document.getElementById('feedbackEcrire').textContent = '❌ Réponse attendue : ' + c.reponse;
+    }
+    document.getElementById('btnSuivantEcrire').style.display = '';
+}
+
+function questionSuivanteEcrire() {
+    ecrireEtat.index++;
+    if (ecrireEtat.index >= ecrireEtat.cartes.length) {
+        document.getElementById('questionEcrire').textContent = '🏁 Terminé !';
+        document.getElementById('imageEcrire').innerHTML = '';
+        document.getElementById('champReponseEcrire').style.display = 'none';
+        document.getElementById('btnValiderEcrire').style.display = 'none';
+        document.getElementById('feedbackEcrire').textContent = '';
+        document.getElementById('progressionEcrire').textContent = 'Score final : ' + ecrireEtat.score + ' / ' + ecrireEtat.cartes.length;
+        document.getElementById('btnSuivantEcrire').style.display = 'none';
+        return;
+    }
+    afficherQuestionEcrire();
+}
+
+function quitterExerciceTexte() {
+    afficherVue('revisionTexte');
+    construireVueRevisionTexte();
+}
+
+/* ---------------- Export PDF du paquet ---------------- */
+
+function exporterPDF() {
+    if (!supportActif || supportActif.cartes.length === 0) { alert("Ajoute des cartes avant d'exporter."); return; }
+    const zone = document.getElementById('zoneImpressionTexte');
+    zone.innerHTML = '<h1 style="text-align:center;">' + echapperHtml(supportActif.nom) + '</h1>'
+        + supportActif.cartes.map((c, i) => `
+            <div class="ligne-impression">
+                <div class="case-impression"><strong>${i + 1}. ${echapperHtml(c.question)}</strong>${c.image ? '<br><img src="' + c.image + '">' : ''}</div>
+                <div class="case-impression">${echapperHtml(c.reponse)}${c.exemple ? '<br><em>' + echapperHtml(c.exemple) + '</em>' : ''}</div>
+            </div>
+        `).join('');
+    document.body.classList.add('impression-active');
+    window.print();
+    setTimeout(() => document.body.classList.remove('impression-active'), 500);
 }
 
 function migrerVersPagesEtType(liste) {
