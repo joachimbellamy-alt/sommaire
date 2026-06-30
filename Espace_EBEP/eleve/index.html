@@ -12,6 +12,38 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Mes révisions</title>
 <style>
+    @font-face {
+        font-family: 'OpenDyslexic';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url(https://cdn.jsdelivr.net/fontsource/fonts/opendyslexic@latest/latin-400-normal.woff2) format('woff2'),
+             url(https://cdn.jsdelivr.net/fontsource/fonts/opendyslexic@latest/latin-400-normal.woff) format('woff');
+    }
+    body.mode-dys #vueEdition, body.mode-dys #vueRevision,
+    body.mode-dys #vueEditionTexte, body.mode-dys #vueRevisionTexte,
+    body.mode-dys #vueQCMTexte, body.mode-dys #vueEcrireTexte {
+        font-family: var(--police-dys, inherit);
+        font-size: var(--taille-dys, 1em);
+        letter-spacing: var(--espacement-lettres-dys, normal);
+        line-height: var(--espacement-lignes-dys, normal);
+    }
+    body.mode-dys .question-texte, body.mode-dys .reponse-texte, body.mode-dys .exemple-texte,
+    body.mode-dys .indice-prof, body.mode-dys .indice-perso-input, body.mode-dys .champ-modale,
+    body.mode-dys .case-impression {
+        font-family: var(--police-dys, inherit);
+        letter-spacing: var(--espacement-lettres-dys, normal);
+        line-height: var(--espacement-lignes-dys, normal);
+    }
+    .panneau-dys-apercu {
+        font-size: var(--taille-dys, 1em);
+        letter-spacing: var(--espacement-lettres-dys, normal);
+        line-height: var(--espacement-lignes-dys, normal);
+        background:var(--gris-fond); border-radius:14px; padding:14px; margin-top:10px; text-align:left;
+    }
+    .ligne-reglage-dys { margin-bottom:16px; text-align:left; }
+    .ligne-reglage-dys .valeur-reglage { font-size:12px; color:var(--gris-texte); float:right; }
+    .ligne-reglage-dys input[type=range] { width:100%; }
     :root {
         --bleu:#007AFF; --gris-fond:#f2f2f7; --gris-texte:#8e8e93; --rouge:#FF3B30;
         --vert:#34C759; --jaune:#f1c40f; --texte:#1c1c1e;
@@ -43,7 +75,7 @@
         box-shadow:0 1px 3px rgba(0,0,0,0.08); display:flex; align-items:center; gap:12px;
         cursor:pointer;
     }
-    .carte-support img { width:56px; height:56px; object-fit:cover; border-radius:10px; flex-shrink:0; background:#eee; }
+    .carte-support img { width:56px; height:56px; object-fit:cover; border-radius:999px; flex-shrink:0; background:#eee; }
     .carte-support .infos { flex:1; min-width:0; }
     .carte-support .infos .nom { font-weight:600; font-size:15px; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .carte-support .barre-progression { height:5px; border-radius:3px; background:var(--gris-fond); overflow:hidden; margin-bottom:4px; }
@@ -52,7 +84,7 @@
     .carte-support .chevron { color:#c7c7cc; font-size:20px; }
     .bouton-principal {
         display:block; width:100%; background:var(--bleu); color:#fff; border:none;
-        padding:14px; border-radius:12px; font-size:16px; font-weight:600; cursor:pointer; margin-top:8px;
+        padding:14px; border-radius:999px; font-size:16px; font-weight:600; cursor:pointer; margin-top:8px;
     }
     .bouton-principal:hover { background:#0066d6; }
     .vide { text-align:center; color:var(--gris-texte); padding:40px 20px; font-size:14px; }
@@ -74,13 +106,13 @@
 
     /* ---------- Barre d'outils édition ---------- */
     .toolbar-ios { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; align-items:center; }
-    .segment-group { display:flex; align-items:center; background:#fff; border-radius:10px; box-shadow:0 1px 2px rgba(0,0,0,0.06); border:1px solid #e3e3e8; overflow:hidden; }
+    .segment-group { display:flex; align-items:center; background:#fff; border-radius:999px; box-shadow:0 1px 2px rgba(0,0,0,0.06); border:1px solid #e3e3e8; overflow:hidden; }
     .icon-btn { display:inline-flex; align-items:center; gap:5px; background:transparent; border:none; padding:7px 11px; font-size:13px; color:var(--bleu); cursor:pointer; white-space:nowrap; font-family:inherit; }
     .icon-btn:hover { background:var(--gris-fond); }
     .icon-btn.danger { color:var(--rouge); }
-    .icon-btn.accent { color:#8a6d00; background:#fff8e1; }
+    .icon-btn.accent { color:#8a6d00; background:#fff8e1; border-radius:999px; }
     .forme-btn.actif { background:var(--bleu); color:#fff; }
-    .icon-btn.primary { color:#fff; background:var(--bleu); font-weight:600; border-radius:9px; padding:8px 16px; }
+    .icon-btn.primary { color:#fff; background:var(--bleu); font-weight:600; border-radius:999px; padding:9px 18px; }
     .icon-btn:disabled { opacity:.3; cursor:default; }
     .zoom-val { font-size:12px; color:var(--gris-texte); padding:0 2px; min-width:38px; text-align:center; }
     .zoom-slider {
@@ -158,10 +190,11 @@
     /* ---------- Vue révision ---------- */
     .controles-revision { margin-bottom:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
     body.mode-simple #resumeBoites, body.mode-simple #btnFiltre { display:none; }
+    body.mode-simple #resumeBoitesTexte, body.mode-simple #btnFiltreTexte { display:none; }
     #resumeBoites { margin-bottom:14px; }
     .boites-titre { font-size:14px; color:#555; margin-bottom:8px; font-weight:bold; text-align:center; }
     .boites-rangee { display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:wrap; }
-    .boite-card { width:64px; padding:8px 4px; border-radius:10px; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); position:relative; border-top:4px solid #ccc; }
+    .boite-card { width:64px; padding:8px 4px; border-radius:14px; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.15); position:relative; border-top:4px solid #ccc; }
     .boite-card-1 { border-top-color:#e74c3c; } .boite-card-2 { border-top-color:#e67e22; }
     .boite-card-3 { border-top-color:#f39c12; } .boite-card-4 { border-top-color:#2ecc71; } .boite-card-5 { border-top-color:#16a085; }
     .boite-num { font-size:11px; color:#999; font-weight:bold; }
@@ -291,7 +324,7 @@
     /* ---------- Image par carte ---------- */
     .ligne-image-carte { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
     .miniature-carte { width:48px; height:48px; object-fit:cover; border-radius:8px; background:var(--gris-fond); }
-    .image-carte-revision { max-width:100%; max-height:160px; border-radius:10px; margin:10px auto; display:block; }
+    .image-carte-revision { max-width:100%; max-height:160px; border-radius:14px; margin:10px auto; display:block; }
 
     /* ---------- Mode retournement (flip) ---------- */
     .carte-revision-texte.mode-flip .reponse-wrap { perspective:1000px; background:none; padding:0; min-height:70px; }
@@ -300,7 +333,7 @@
     }
     .carte-revision-texte.mode-flip.revele .reponse-inner { transform:rotateX(180deg); }
     .carte-revision-texte.mode-flip .face-carte {
-        position:absolute; inset:0; backface-visibility:hidden; border-radius:10px;
+        position:absolute; inset:0; backface-visibility:hidden; border-radius:14px;
         display:flex; flex-direction:column; align-items:center; justify-content:center; padding:14px; box-sizing:border-box;
     }
     .carte-revision-texte.mode-flip .face-avant {
@@ -312,7 +345,7 @@
 
     /* ---------- QCM / Écrire ---------- */
     .carte-exercice { background:#fff; border-radius:14px; padding:22px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
-    .choix-qcm { background:var(--gris-fond); border:none; border-radius:10px; padding:12px; font-size:14px; cursor:pointer; text-align:left; }
+    .choix-qcm { background:var(--gris-fond); border:none; border-radius:999px; padding:12px; font-size:14px; cursor:pointer; text-align:left; }
     .choix-qcm:hover:not(:disabled) { background:#e5e5ea; }
     .choix-qcm:disabled { cursor:default; }
     .choix-correct { background:#d7f5e0 !important; font-weight:600; }
@@ -375,14 +408,17 @@
 
     <!-- ===================== VUE ACCUEIL ===================== -->
     <div id="vueAccueil">
+        <div style="text-align:right; margin-bottom:8px;">
+            <button class="icon-btn" onclick="ouvrirModalDys()" style="background:var(--gris-fond); border-radius:999px;">♿ Accessibilité</button>
+        </div>
         <div id="tableauBordAujourdhui" style="display:none;"></div>
         <div id="listeSupports"></div>
         <button class="bouton-principal" onclick="creerNouveauSupport()">+ Nouveau support de révision</button>
-        <button class="icon-btn secondaire-large" onclick="ouvrirSessionMelangee()" style="width:100%; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:10px; margin-top:8px; box-sizing:border-box;">🔀 Session mélangée (cartes dues, tous les Flashcards)</button>
+        <button class="icon-btn secondaire-large" onclick="ouvrirSessionMelangee()" style="width:100%; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:999px; margin-top:8px; box-sizing:border-box;">🔀 Session mélangée (cartes dues, tous les Flashcards)</button>
         <div id="espaceStockage" style="text-align:center; font-size:12px; color:var(--gris-texte); margin-top:10px;"></div>
         <div style="display:flex; gap:8px; margin-top:10px;">
-            <button class="icon-btn secondaire-large" onclick="exporterDonnees()" style="flex:1; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:10px;">💾 Exporter une sauvegarde</button>
-            <label class="icon-btn secondaire-large" for="inputImport" style="flex:1; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:10px; cursor:pointer;">📂 Importer une sauvegarde</label>
+            <button class="icon-btn secondaire-large" onclick="exporterDonnees()" style="flex:1; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:999px;">💾 Exporter une sauvegarde</button>
+            <label class="icon-btn secondaire-large" for="inputImport" style="flex:1; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:999px; cursor:pointer;">📂 Importer une sauvegarde</label>
             <input type="file" id="inputImport" accept=".json" style="display:none;">
         </div>
     </div>
@@ -430,9 +466,9 @@
             <img id="imgRecadrage">
         </div>
         <div class="controles-recadrage">
-            <button class="icon-btn secondaire-large" onclick="annulerCadrage()" style="background:#fff; border:1px solid #e3e3e8; border-radius:10px;">✕ Annuler</button>
-            <button class="icon-btn secondaire-large" onclick="reinitialiserCadrage()" style="background:#fff; border:1px solid #e3e3e8; border-radius:10px;">↺ Recommencer</button>
-            <button class="icon-btn secondaire-large" onclick="passerCadrage()" style="background:#fff; border:1px solid #e3e3e8; border-radius:10px;">Image entière</button>
+            <button class="icon-btn secondaire-large" onclick="annulerCadrage()" style="background:#fff; border:1px solid #e3e3e8; border-radius:999px;">✕ Annuler</button>
+            <button class="icon-btn secondaire-large" onclick="reinitialiserCadrage()" style="background:#fff; border:1px solid #e3e3e8; border-radius:999px;">↺ Recommencer</button>
+            <button class="icon-btn secondaire-large" onclick="passerCadrage()" style="background:#fff; border:1px solid #e3e3e8; border-radius:999px;">Image entière</button>
             <button class="icon-btn primary" onclick="validerCadrage()">✓ Valider le cadrage</button>
         </div>
     </div>
@@ -632,6 +668,45 @@
 </div>
 
 <div id="zoneImpressionTexte"></div>
+
+<div class="modale-fond" id="modalDys">
+    <div class="modale-boite">
+        <h3>♿ Mode adapté (DYS)</h3>
+        <div class="ligne-rappel-attente" style="margin-bottom:14px;">
+            <span>Activer le mode adapté</span>
+            <input type="checkbox" id="champDysActif" onchange="changerDys('actif', this.checked)" style="width:20px; height:20px;">
+        </div>
+
+        <div class="ligne-reglage-dys">
+            <span class="label-modale">Police</span>
+            <select id="champDysPolice" class="champ-modale" onchange="changerDys('police', this.value)">
+                <option value="systeme">Système (par défaut)</option>
+                <option value="dyslexique">OpenDyslexic (police adaptée)</option>
+            </select>
+        </div>
+
+        <div class="ligne-reglage-dys">
+            <span class="label-modale">Taille du texte <span class="valeur-reglage" id="valeurDysTaille">100%</span></span>
+            <input type="range" id="champDysTaille" min="80" max="200" step="5" value="100" oninput="changerDys('taille', this.value)">
+        </div>
+
+        <div class="ligne-reglage-dys">
+            <span class="label-modale">Espacement entre les lettres <span class="valeur-reglage" id="valeurDysLettres">0</span></span>
+            <input type="range" id="champDysLettres" min="0" max="30" step="1" value="0" oninput="changerDys('lettres', this.value)">
+        </div>
+
+        <div class="ligne-reglage-dys">
+            <span class="label-modale">Espacement entre les lignes <span class="valeur-reglage" id="valeurDysLignes">1.5</span></span>
+            <input type="range" id="champDysLignes" min="10" max="30" step="1" value="15" oninput="changerDys('lignes', this.value)">
+        </div>
+
+        <div class="panneau-dys-apercu" id="apercuDys">Aperçu : le chat dort sur le tapis pendant que la pluie tombe doucement.</div>
+
+        <div style="margin-top:16px; text-align:right;">
+            <button class="btn-modal enregistrer" onclick="fermerModalDys()">Fermer</button>
+        </div>
+    </div>
+</div>
 
 <script src="app.js"></script>
 </body>
