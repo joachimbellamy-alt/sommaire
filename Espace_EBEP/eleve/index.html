@@ -189,6 +189,8 @@
 
     /* ---------- Vue révision ---------- */
     .controles-revision { margin-bottom:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+    .barre-principale-revision { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+    .barre-principale-revision .segmented { margin:0; }
     body.mode-simple #resumeBoites, body.mode-simple #btnFiltre { display:none; }
     body.mode-simple #resumeBoitesTexte, body.mode-simple #btnFiltreTexte { display:none; }
     #resumeBoites { margin-bottom:14px; }
@@ -288,6 +290,9 @@
         color:#fff; z-index:6; box-shadow:0 1px 3px rgba(0,0,0,.4);
     }
     body.mode-simple .carte-revision-texte .boite-niveau { display:none; }
+    body.mode-simple .confiance-bar { display:none; }
+    body.mode-simple .explication-wrap { display:none !important; }
+    body.mode-simple .carte-revision-texte:not(.revele) { cursor:pointer; }
     .carte-revision-texte .indice-btn { position:absolute; top:-9px; right:-9px; }
     .carte-revision-texte.revele .indice-btn, .carte-revision-texte.revele .indice-panel { display:none; }
     .carte-revision-texte .indice-panel { left:0; bottom:auto; top:calc(100% + 8px); }
@@ -531,30 +536,44 @@
 
     <!-- ===================== VUE RÉVISION TEXTE ===================== -->
     <div id="vueRevisionTexte" style="display:none; text-align:center;">
-        <div id="barreModeTexte" style="margin:0 auto 16px;">
-            <div class="segmented" id="segmenteTexte" style="margin:0 auto;">
+        <div class="barre-principale-revision">
+            <button class="icon-btn primary" onclick="remasquerToutRevisionTexte()">🔄 Recommencer</button>
+            <div class="segmented" id="segmenteTexte">
                 <button class="mode-btn actif" data-mode="simple" onclick="changerModeTexte('simple')">Simple</button>
                 <button class="mode-btn" data-mode="complet" onclick="changerModeTexte('complet')">Complet</button>
                 <div class="thumb"></div>
             </div>
-        </div>
-        <div id="controlesSeulTexte" class="controles-revision">
-            <button id="btnFiltreTexte" class="icon-btn" onclick="basculerFiltreTexte()">📅 Cartes à réviser</button>
-            <button class="icon-btn" onclick="ouvrirModalRappel()">⏰ Programmer un rappel</button>
-            <button class="icon-btn danger" onclick="reinitialiserProgressionTexte()">🗑 Réinitialiser</button>
-        </div>
-        <div id="controlesExercicesTexte" class="controles-revision">
-            <button class="icon-btn accent" onclick="lancerQCM()">📝 Mode QCM</button>
-            <button class="icon-btn accent" onclick="lancerEcrire()">⌨️ Mode Écrire</button>
-            <button class="icon-btn" onclick="exporterPDF()">📄 Export PDF</button>
-        </div>
-        <div class="controles-revision">
-            <button class="icon-btn primary" onclick="remasquerToutRevisionTexte()">🔄 Recommencer</button>
+            <button id="controlesExercicesTexte" class="icon-btn accent" onclick="ouvrirMenuExercices()">🎮 Exercices</button>
+            <button id="controlesSeulTexte" class="icon-btn" onclick="ouvrirMenuPlus()">•••</button>
         </div>
         <div id="resumeBoitesTexte"></div>
         <div id="compteurRevisionTexte"></div>
         <div id="instructionsRevisionTexte" style="font-size:13px; color:var(--gris-texte); margin-bottom:16px;">Choisis ton degré de confiance avant de révéler la réponse, puis déclare honnêtement si tu savais.</div>
         <div id="listeRevisionTexte"></div>
+    </div>
+
+    <div class="modale-fond" id="modalMenuPlus">
+        <div class="modale-boite" style="width:300px;">
+            <h3>Options</h3>
+            <button class="icon-btn" onclick="fermerMenuPlus(); basculerFiltreTexte();" id="btnFiltreTexte" style="width:100%; justify-content:center; background:var(--gris-fond); margin-bottom:8px;">📅 Cartes à réviser</button>
+            <button class="icon-btn" onclick="fermerMenuPlus(); ouvrirModalRappel();" style="width:100%; justify-content:center; background:var(--gris-fond); margin-bottom:8px;">⏰ Programmer un rappel</button>
+            <button class="icon-btn danger" onclick="fermerMenuPlus(); reinitialiserProgressionTexte();" style="width:100%; justify-content:center; background:#fde9e7;">🗑 Réinitialiser ma progression</button>
+            <div style="margin-top:14px; text-align:right;">
+                <button class="btn-modal annuler" onclick="fermerMenuPlus()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modale-fond" id="modalMenuExercices">
+        <div class="modale-boite" style="width:300px;">
+            <h3>🎮 Exercices</h3>
+            <button class="icon-btn" onclick="fermerMenuExercices(); lancerQCM();" style="width:100%; justify-content:center; background:var(--gris-fond); margin-bottom:8px;">📝 Mode QCM</button>
+            <button class="icon-btn" onclick="fermerMenuExercices(); lancerEcrire();" style="width:100%; justify-content:center; background:var(--gris-fond); margin-bottom:8px;">⌨️ Mode Écrire</button>
+            <button class="icon-btn" onclick="fermerMenuExercices(); exporterPDF();" style="width:100%; justify-content:center; background:var(--gris-fond);">📄 Export PDF</button>
+            <div style="margin-top:14px; text-align:right;">
+                <button class="btn-modal annuler" onclick="fermerMenuExercices()">Fermer</button>
+            </div>
+        </div>
     </div>
 
     <!-- ===================== VUE QCM TEXTE ===================== -->
