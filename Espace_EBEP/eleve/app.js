@@ -1,6 +1,6 @@
 /* ============================================================
    Application élève — création et révision fusionnées
-   Stockage : localStorage, clé "memo_supports_v2"
+   Stockage : localStorage, clé "memo_supports_v2" 26
    ============================================================ */
 
 let supports = [];
@@ -284,6 +284,11 @@ async function mettreAJourStreak() {
 
 let rappelsEnAttente = [];
 const NOMS_JOURS = { MO: 'Lun', TU: 'Mar', WE: 'Mer', TH: 'Jeu', FR: 'Ven', SA: 'Sam', SU: 'Dim' };
+
+function ouvrirMenuPlus() { document.getElementById('modalMenuPlus').classList.add('ouverte'); }
+function fermerMenuPlus() { document.getElementById('modalMenuPlus').classList.remove('ouverte'); }
+function ouvrirMenuExercices() { document.getElementById('modalMenuExercices').classList.add('ouverte'); }
+function fermerMenuExercices() { document.getElementById('modalMenuExercices').classList.remove('ouverte'); }
 
 function ouvrirModalRappel() {
     if (!supportActif) return;
@@ -1951,6 +1956,14 @@ function creerElementCarte(support, idx) {
     });
     carte.appendChild(confianceBar);
 
+    // En mode simple, la barre de confiance est masquée : un tap direct sur la carte révèle la réponse.
+    carte.addEventListener('click', (ev) => {
+        if (document.body.classList.contains('mode-simple') && !carte.classList.contains('revele')) {
+            if (!carte.dataset.confiance) carte.dataset.confiance = 'sur';
+            toggleReveleTexte(carte);
+        }
+    });
+
     const reponseWrap = document.createElement('div');
     reponseWrap.className = 'reponse-wrap';
 
@@ -2054,9 +2067,9 @@ function construireVueRevisionTexte() {
     modeSessionMelangee = false;
     initEtatRevisionTexte();
 
-    document.getElementById('barreModeTexte').style.display = '';
     document.getElementById('controlesSeulTexte').style.display = '';
     document.getElementById('controlesExercicesTexte').style.display = '';
+    document.getElementById('segmenteTexte').style.display = '';
 
     const mode = supportActif.mode || 'simple';
     document.body.classList.toggle('mode-simple', mode === 'simple');
@@ -2106,9 +2119,9 @@ function ouvrirSessionMelangee() {
     modeSessionMelangee = true;
     afficherVue('revisionTexte');
     document.getElementById('titreHeader').textContent = '🔀 Session mélangée';
-    document.getElementById('barreModeTexte').style.display = 'none';
     document.getElementById('controlesSeulTexte').style.display = 'none';
     document.getElementById('controlesExercicesTexte').style.display = 'none';
+    document.getElementById('segmenteTexte').style.display = 'none';
     document.body.classList.remove('mode-simple', 'filtre-actif');
 
     const conteneur = document.getElementById('listeRevisionTexte');
@@ -2463,6 +2476,46 @@ function migrerVersPagesEtType(liste) {
 
 /* ---------------- Démarrage ---------------- */
 
+/* ---------------- Import direct via lien (?import=fichier.json) ---------------- */
+
+async function traiterImportDepuisLien() {
+    const params = new URLSearchParams(window.location.search);
+    const nomFichier = params.get('import');
+    if (!nomFichier) return;
+
+    // On retire le paramètre de l'URL tout de suite, pour ne pas reproposer l'import à chaque rechargement.
+    const urlSansParam = window.location.pathname;
+    window.history.replaceState({}, '', urlSansParam);
+
+    let urlFichier;
+    try { urlFichier = new URL(nomFichier, window.location.href).href; }
+    catch (e) { return; }
+
+    let paquet;
+    try {
+        const reponse = await fetch(urlFichier);
+        if (!reponse.ok) throw new Error('introuvable');
+        paquet = await reponse.json();
+    } catch (e) {
+        alert("Impossible de récupérer le paquet à importer (" + nomFichier + "). Vérifie ta connexion ou demande à ton professeur de revérifier le lien.");
+        return;
+    }
+
+    const liste = Array.isArray(paquet) ? paquet : paquet.supports;
+    if (!Array.isArray(liste) || liste.length === 0) {
+        alert("Ce lien ne contient pas de paquet valide.");
+        return;
+    }
+    const nomsAffiches = liste.map(s => s.nom || 'Sans titre').join(', ');
+    if (!confirm('Importer ce paquet proposé par ton professeur : « ' + nomsAffiches + ' » ?')) return;
+
+    liste.forEach((s) => { supports.push(Object.assign({}, s, { id: genererId() })); });
+    migrerVersPagesEtType(supports);
+    await sauvegarderSupports();
+    afficherAccueil();
+    alert('Paquet importé : ' + nomsAffiches);
+}
+
 (async function demarrer() {
     supports = await chargerSupports();
     if (migrerVersPagesEtType(supports)) await sauvegarderSupports();
@@ -2471,6 +2524,7 @@ function migrerVersPagesEtType(liste) {
     appliquerPreferencesDys();
     afficherAccueil();
     afficherBanniereEcranAccueilSiBesoin();
+    await traiterImportDepuisLien();
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
