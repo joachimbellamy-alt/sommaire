@@ -141,6 +141,91 @@ function genererId() {
 
 /* ---------------- Suivi de série (streak) ---------------- */
 
+/* ---------------- Mode adapté (DYS) ---------------- */
+
+const CLE_DYS = 'preferencesDys';
+const DYS_DEFAUT = { actif: false, police: 'systeme', taille: 100, lettres: 0, lignes: 15 };
+let preferencesDys = Object.assign({}, DYS_DEFAUT);
+
+async function chargerPreferencesDys() {
+    try {
+        const db = await ouvrirDB();
+        const donnees = await new Promise((resolve, reject) => {
+            const tx = db.transaction(MAGASIN, 'readonly');
+            const req = tx.objectStore(MAGASIN).get(CLE_DYS);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+        return donnees ? Object.assign({}, DYS_DEFAUT, donnees) : Object.assign({}, DYS_DEFAUT);
+    } catch (e) {
+        try {
+            const raw = localStorage.getItem('memo_dys_v1');
+            return raw ? Object.assign({}, DYS_DEFAUT, JSON.parse(raw)) : Object.assign({}, DYS_DEFAUT);
+        } catch (e2) {
+            return Object.assign({}, DYS_DEFAUT);
+        }
+    }
+}
+
+async function sauvegarderPreferencesDys() {
+    try {
+        const db = await ouvrirDB();
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction(MAGASIN, 'readwrite');
+            tx.objectStore(MAGASIN).put(preferencesDys, CLE_DYS);
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (e) {
+        try { localStorage.setItem('memo_dys_v1', JSON.stringify(preferencesDys)); } catch (e2) { /* tant pis */ }
+    }
+}
+
+function appliquerPreferencesDys() {
+    document.body.classList.toggle('mode-dys', !!preferencesDys.actif);
+    const police = preferencesDys.police === 'dyslexique' ? "'OpenDyslexic', sans-serif" : 'inherit';
+    document.documentElement.style.setProperty('--police-dys', police);
+    document.documentElement.style.setProperty('--taille-dys', (preferencesDys.taille / 100) + 'em');
+    document.documentElement.style.setProperty('--espacement-lettres-dys', (preferencesDys.lettres / 100) + 'em');
+    document.documentElement.style.setProperty('--espacement-lignes-dys', (preferencesDys.lignes / 10));
+}
+
+function ouvrirModalDys() {
+    document.getElementById('champDysActif').checked = !!preferencesDys.actif;
+    document.getElementById('champDysPolice').value = preferencesDys.police;
+    document.getElementById('champDysTaille').value = preferencesDys.taille;
+    document.getElementById('champDysLettres').value = preferencesDys.lettres;
+    document.getElementById('champDysLignes').value = preferencesDys.lignes;
+    majAffichageReglagesDys();
+    document.getElementById('modalDys').classList.add('ouverte');
+}
+
+function fermerModalDys() {
+    document.getElementById('modalDys').classList.remove('ouverte');
+}
+
+function majAffichageReglagesDys() {
+    document.getElementById('valeurDysTaille').textContent = preferencesDys.taille + '%';
+    document.getElementById('valeurDysLettres').textContent = (preferencesDys.lettres / 100).toFixed(2) + 'em';
+    document.getElementById('valeurDysLignes').textContent = (preferencesDys.lignes / 10).toFixed(1);
+    const apercu = document.getElementById('apercuDys');
+    apercu.style.fontFamily = preferencesDys.police === 'dyslexique' ? "'OpenDyslexic', sans-serif" : 'inherit';
+    apercu.style.fontSize = (preferencesDys.taille / 100) + 'em';
+    apercu.style.letterSpacing = (preferencesDys.lettres / 100) + 'em';
+    apercu.style.lineHeight = (preferencesDys.lignes / 10);
+}
+
+function changerDys(champ, valeur) {
+    if (champ === 'actif') preferencesDys.actif = valeur;
+    else if (champ === 'police') preferencesDys.police = valeur;
+    else if (champ === 'taille') preferencesDys.taille = parseInt(valeur, 10);
+    else if (champ === 'lettres') preferencesDys.lettres = parseInt(valeur, 10);
+    else if (champ === 'lignes') preferencesDys.lignes = parseInt(valeur, 10);
+    majAffichageReglagesDys();
+    appliquerPreferencesDys();
+    sauvegarderPreferencesDys();
+}
+
 const CLE_STREAK = 'streak';
 
 async function chargerStreak() {
@@ -2382,6 +2467,8 @@ function migrerVersPagesEtType(liste) {
     supports = await chargerSupports();
     if (migrerVersPagesEtType(supports)) await sauvegarderSupports();
     await mettreAJourStreak();
+    preferencesDys = await chargerPreferencesDys();
+    appliquerPreferencesDys();
     afficherAccueil();
     afficherBanniereEcranAccueilSiBesoin();
 
