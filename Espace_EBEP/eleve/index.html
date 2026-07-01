@@ -190,9 +190,31 @@
     /* ---------- Vue révision ---------- */
     .controles-revision { margin-bottom:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
     .barre-principale-revision { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+    .modules-section { flex:1; }
+    .modules-titre { font-size:11px; font-weight:700; color:var(--gris-texte); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+    .modules-gelules { display:flex; gap:8px; flex-wrap:wrap; }
+    .gelule-module {
+        display:inline-flex; align-items:center; gap:6px; padding:7px 14px;
+        border-radius:999px; border:2px solid #e3e3e8; background:#fff;
+        font-size:13px; font-weight:600; color:var(--gris-texte); cursor:pointer;
+        transition:all 0.2s ease; font-family:inherit;
+    }
+    .gelule-module:hover { border-color:#c0c0c8; }
+    .gelule-module.actif { background:var(--bleu); border-color:var(--bleu); color:#fff; }
+    .gelule-module.actif:hover { background:#0066d6; }
     .barre-principale-revision .segmented { margin:0; }
     body.mode-simple #resumeBoites, body.mode-simple #btnFiltre { display:none; }
     body.mode-simple #resumeBoitesTexte, body.mode-simple #btnFiltreTexte { display:none; }
+    body.force-mode-simple-global #segmente,
+    body.force-mode-simple-global #segmenteTexte,
+    body.force-mode-simple-global #resumeBoites,
+    body.force-mode-simple-global #resumeBoitesTexte,
+    body.force-mode-simple-global #btnFiltre,
+    body.force-mode-simple-global #btnFiltreTexte,
+    body.force-mode-simple-global .confiance-bar,
+    body.force-mode-simple-global .explication-wrap,
+    body.force-mode-simple-global .boite-niveau,
+    body.force-mode-simple-global .boite-card { display:none !important; }
     #resumeBoites { margin-bottom:14px; }
     .boites-titre { font-size:14px; color:#555; margin-bottom:8px; font-weight:bold; text-align:center; }
     .boites-rangee { display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:wrap; }
@@ -358,6 +380,43 @@
 
     /* ---------- Export PDF ---------- */
     #zoneImpressionTexte { display:none; }
+
+    /* ---------- Agenda ---------- */
+    .agenda-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; text-align:center; }
+    .agenda-grille { display:grid; gap:2px; margin-bottom:16px; }
+    .agenda-grille.vue-semaine { grid-template-columns: repeat(7, 1fr); }
+    .agenda-grille.vue-mois { grid-template-columns: repeat(7, 1fr); }
+    .agenda-jour-label { font-size:11px; font-weight:700; color:var(--gris-texte); text-align:center; padding:4px 0; text-transform:uppercase; }
+    .agenda-jour {
+        background:#fff; border-radius:10px; padding:6px 4px; min-height:64px; cursor:pointer;
+        box-shadow:0 1px 2px rgba(0,0,0,0.06); position:relative; text-align:center;
+        border:2px solid transparent; transition:border-color 0.15s;
+    }
+    .agenda-jour:hover { border-color:#c0c0c8; }
+    .agenda-jour.aujourd-hui { border-color:var(--bleu); }
+    .agenda-jour.selectionne { border-color:var(--bleu); background:#eaf4ff; }
+    .agenda-jour.hors-mois { opacity:.35; }
+    .agenda-jour .num-jour { font-size:13px; font-weight:600; margin-bottom:4px; }
+    .agenda-jour.aujourd-hui .num-jour { color:var(--bleu); }
+    .agenda-point { width:8px; height:8px; border-radius:50%; margin:1px auto; }
+    .agenda-point.revisions { background:var(--bleu); }
+    .agenda-point.objectif { background:var(--rouge); }
+    .agenda-point.objectif-planifie { background:var(--jaune); }
+    .agenda-detail { background:#fff; border-radius:14px; padding:16px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+    .agenda-detail-titre { font-weight:700; font-size:15px; margin-bottom:10px; }
+    .agenda-item { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--gris-fond); font-size:13px; }
+    .agenda-item:last-child { border-bottom:none; }
+    .agenda-badge { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .agenda-section { background:#fff; border-radius:14px; padding:16px; margin-top:16px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+    .agenda-section-titre { font-weight:700; font-size:15px; margin-bottom:12px; }
+    .objectif-card { display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid var(--gris-fond); }
+    .objectif-card:last-child { border-bottom:none; }
+    .objectif-info { flex:1; font-size:13px; }
+    .objectif-info .titre { font-weight:600; }
+    .objectif-info .dates { font-size:12px; color:var(--gris-texte); margin-top:2px; }
+    .objectif-info .planning-tag { font-size:11px; background:#eaf4ff; color:var(--bleu); padding:2px 8px; border-radius:999px; display:inline-block; margin-top:4px; }
+    .case-support-objectif { display:flex; align-items:center; gap:8px; padding:8px; background:var(--gris-fond); border-radius:8px; margin-bottom:6px; cursor:pointer; }
+    .case-support-objectif input { margin:0; }
     @media print {
         body.impression-active > *:not(#zoneImpressionTexte) { display:none !important; }
         body.impression-active #zoneImpressionTexte { display:block !important; }
@@ -413,17 +472,29 @@
 
     <!-- ===================== VUE ACCUEIL ===================== -->
     <div id="vueAccueil">
-        <div style="text-align:right; margin-bottom:8px;">
-            <button class="icon-btn" onclick="ouvrirModalDys()" style="background:var(--gris-fond); border-radius:999px;">♿ Accessibilité</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div class="modules-section">
+                <div class="modules-titre">Modules actifs</div>
+                <div class="modules-gelules">
+                    <button class="gelule-module" id="geluleAlgo" onclick="basculerModule('algo')">
+                        <span class="gelule-icone">🧠</span> Algorithme complet
+                    </button>
+                    <button class="gelule-module" id="geluleAgenda" onclick="basculerModule('agenda')">
+                        <span class="gelule-icone">📅</span> Agenda
+                    </button>
+                </div>
+            </div>
+            <button class="icon-btn" onclick="ouvrirModalDys()" style="background:var(--gris-fond); border-radius:999px; white-space:nowrap;">♿ Accès</button>
         </div>
         <div id="tableauBordAujourdhui" style="display:none;"></div>
         <div id="listeSupports"></div>
         <button class="bouton-principal" onclick="creerNouveauSupport()">+ Nouveau support de révision</button>
-        <button class="icon-btn secondaire-large" onclick="ouvrirSessionMelangee()" style="width:100%; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:999px; margin-top:8px; box-sizing:border-box;">🔀 flashcards mélangées issues de différents paquets</button>
+        <button class="icon-btn secondaire-large" onclick="ouvrirSessionMelangee()" style="width:100%; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:999px; margin-top:8px; box-sizing:border-box;">🔀 Session mélangée (Flashcards dus)</button>
+        <button class="icon-btn secondaire-large" id="btnOuvrirAgenda" onclick="afficherVue('agenda')" style="display:none; width:100%; justify-content:center; background:#fff; border:1px solid var(--bleu); color:var(--bleu); border-radius:999px; margin-top:8px; box-sizing:border-box;">📅 Ouvrir l'agenda de révision</button>
         <div id="espaceStockage" style="text-align:center; font-size:12px; color:var(--gris-texte); margin-top:10px;"></div>
         <div style="display:flex; gap:8px; margin-top:10px;">
-            <button class="icon-btn secondaire-large" onclick="exporterDonnees()" style="flex:1; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:999px;">💾 Exporter une sauvegarde</button>
-            <label class="icon-btn secondaire-large" for="inputImport" style="flex:1; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:999px; cursor:pointer;">📂 Importer une sauvegarde</label>
+            <button class="icon-btn secondaire-large" onclick="exporterDonnees()" style="flex:1; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:999px;">💾 Exporter</button>
+            <label class="icon-btn secondaire-large" for="inputImport" style="flex:1; justify-content:center; background:#fff; border:1px solid #e3e3e8; border-radius:999px; cursor:pointer;">📂 Importer</label>
             <input type="file" id="inputImport" accept=".json" style="display:none;">
         </div>
     </div>
@@ -605,6 +676,40 @@
         <button class="icon-btn" onclick="quitterExerciceTexte()" style="margin-top:14px;">← Retour à la révision</button>
     </div>
 
+    <!-- ===================== VUE AGENDA ===================== -->
+    <div id="vueAgenda" style="display:none;">
+
+        <!-- En-tête calendrier -->
+        <div class="agenda-header">
+            <button class="icon-btn" onclick="agendaNaviguer(-1)">‹</button>
+            <div>
+                <div id="agendaTitrePeriode" style="font-weight:700; font-size:16px;"></div>
+                <div style="display:flex; gap:6px; justify-content:center; margin-top:6px;">
+                    <button class="gelule-module" id="geluleVueSemaine" onclick="changerVueAgenda('semaine')">Semaine</button>
+                    <button class="gelule-module" id="geluleVueMois" onclick="changerVueAgenda('mois')">Mois</button>
+                </div>
+            </div>
+            <button class="icon-btn" onclick="agendaNaviguer(1)">›</button>
+        </div>
+
+        <!-- Grille calendrier -->
+        <div id="agendaGrille" class="agenda-grille"></div>
+
+        <!-- Détail du jour sélectionné -->
+        <div id="agendaDetailJour" class="agenda-detail" style="display:none;">
+            <div class="agenda-detail-titre" id="agendaDetailTitre"></div>
+            <div id="agendaDetailContenu"></div>
+        </div>
+
+        <!-- Section objectifs d'évaluation -->
+        <div class="agenda-section">
+            <div class="agenda-section-titre">🎯 Objectifs d'évaluation</div>
+            <div id="listeObjectifs"></div>
+            <button class="icon-btn accent" onclick="ouvrirModalObjectif()" style="margin-top:8px;">+ Ajouter une évaluation à préparer</button>
+        </div>
+
+    </div>
+
 </main>
 
 <div id="toast"><div id="toastMsg"></div><div id="toastScore"></div></div>
@@ -687,6 +792,22 @@
 </div>
 
 <div id="zoneImpressionTexte"></div>
+
+<div class="modale-fond" id="modalObjectif">
+    <div class="modale-boite">
+        <h3>🎯 Nouvelle évaluation à préparer</h3>
+        <span class="label-modale">Titre</span>
+        <input type="text" id="champTitreObjectif" class="champ-modale" placeholder="Ex : Contrôle de vocabulaire anglais">
+        <span class="label-modale">Date de l'évaluation</span>
+        <input type="date" id="champDateObjectif" class="champ-modale">
+        <span class="label-modale">Supports à réviser pour cet objectif</span>
+        <div id="listeSupportsObjectif" style="margin-bottom:14px;"></div>
+        <div style="text-align:right;">
+            <button class="btn-modal annuler" onclick="fermerModalObjectif()">Annuler</button>
+            <button class="btn-modal enregistrer" onclick="validerObjectif()">Créer le planning</button>
+        </div>
+    </div>
+</div>
 
 <div class="modale-fond" id="modalDys">
     <div class="modale-boite">
