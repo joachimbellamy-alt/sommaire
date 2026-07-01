@@ -1,6 +1,6 @@
 /* ============================================================
    Application élève — création et révision fusionnées
-   Stockage : localStorage, clé "memo_supports_v2" 26
+   Stockage : localStorage, clé "memo_supports_v2"
    ============================================================ */
 
 let supports = [];
@@ -522,6 +522,7 @@ function afficherVue(nom) {
     document.getElementById('vueRevisionTexte').style.display = nom === 'revisionTexte' ? '' : 'none';
     document.getElementById('vueQCMTexte').style.display = nom === 'qcmTexte' ? '' : 'none';
     document.getElementById('vueEcrireTexte').style.display = nom === 'ecrireTexte' ? '' : 'none';
+    document.getElementById('vueAgenda').style.display = nom === 'agenda' ? '' : 'none';
     document.getElementById('btnRetour').style.display = (nom === 'accueil' || nom === 'recadrage' || nom === 'qcmTexte' || nom === 'ecrireTexte') ? 'none' : '';
     document.getElementById('btnPartager').style.display = (supportActif && ['edition', 'revision', 'editionTexte', 'revisionTexte'].includes(nom)) ? '' : 'none';
     const btnBascule = document.getElementById('btnBascule');
@@ -550,6 +551,9 @@ function afficherVue(nom) {
         btnBascule.style.display = 'none';
     } else if (nom === 'ecrireTexte') {
         document.getElementById('titreHeader').textContent = '⌨️ ' + (supportActif ? supportActif.nom : '');
+        btnBascule.style.display = 'none';
+    } else if (nom === 'agenda') {
+        document.getElementById('titreHeader').textContent = '📅 Agenda';
         btnBascule.style.display = 'none';
     } else if (nom === 'recadrage') {
         document.getElementById('titreHeader').textContent = 'Cadrage';
@@ -2455,6 +2459,364 @@ function exporterPDF() {
     setTimeout(() => document.body.classList.remove('impression-active'), 500);
 }
 
+/* ================================================================
+   MODULES : gélules d'activation/désactivation
+   ================================================================ */
+
+const CLE_MODULES = 'modulesActifs';
+let modulesActifs = { algo: false, agenda: false };
+
+async function chargerModules() {
+    try {
+        const db = await ouvrirDB();
+        const donnees = await new Promise((resolve, reject) => {
+            const tx = db.transaction(MAGASIN, 'readonly');
+            const req = tx.objectStore(MAGASIN).get(CLE_MODULES);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+        return donnees || { algo: false, agenda: false };
+    } catch (e) {
+        try { const r = localStorage.getItem('memo_modules_v1'); return r ? JSON.parse(r) : { algo: false, agenda: false }; }
+        catch (e2) { return { algo: false, agenda: false }; }
+    }
+}
+
+async function sauvegarderModules() {
+    try {
+        const db = await ouvrirDB();
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction(MAGASIN, 'readwrite');
+            tx.objectStore(MAGASIN).put(modulesActifs, CLE_MODULES);
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (e) {
+        try { localStorage.setItem('memo_modules_v1', JSON.stringify(modulesActifs)); } catch (e2) { /* tant pis */ }
+    }
+}
+
+function appliquerModules() {
+    // Gélule Algorithme complet
+    const geluleAlgo = document.getElementById('geluleAlgo');
+    if (geluleAlgo) geluleAlgo.classList.toggle('actif', !!modulesActifs.algo);
+    document.body.classList.toggle('force-mode-simple-global', !modulesActifs.algo);
+
+    // Gélule Agenda
+    const geluleAgenda = document.getElementById('geluleAgenda');
+    if (geluleAgenda) geluleAgenda.classList.toggle('actif', !!modulesActifs.agenda);
+    const btnAgenda = document.getElementById('btnOuvrirAgenda');
+    if (btnAgenda) btnAgenda.style.display = modulesActifs.agenda ? '' : 'none';
+}
+
+async function basculerModule(nom) {
+    modulesActifs[nom] = !modulesActifs[nom];
+    await sauvegarderModules();
+    appliquerModules();
+    // Si on désactive l'agenda et qu'on est dessus, retour accueil
+    if (nom === 'agenda' && !modulesActifs.agenda && vueActuelle === 'agenda') {
+        afficherVue('accueil');
+        afficherAccueil();
+    }
+}
+
+/* ================================================================
+   AGENDA : calendrier semaine/mois + objectifs d'évaluation
+   ================================================================ */
+
+const CLE_OBJECTIFS = 'objectifsRevision';
+let objectifs = [];
+let agendaVue = 'semaine'; // 'semaine' | 'mois'
+let agendaDateRef = new Date(); // date de référence pour navigation
+agendaDateRef.setHours(0, 0, 0, 0);
+let agendaJourSelectionne = null;
+
+async function chargerObjectifs() {
+    try {
+        const db = await ouvrirDB();
+        const donnees = await new Promise((resolve, reject) => {
+            const tx = db.transaction(MAGASIN, 'readonly');
+            const req = tx.objectStore(MAGASIN).get(CLE_OBJECTIFS);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+        return Array.isArray(donnees) ? donnees : [];
+    } catch (e) {
+        try { const r = localStorage.getItem('memo_objectifs_v1'); return r ? JSON.parse(r) : []; }
+        catch (e2) { return []; }
+    }
+}
+
+async function sauvegarderObjectifs() {
+    try {
+        const db = await ouvrirDB();
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction(MAGASIN, 'readwrite');
+            tx.objectStore(MAGASIN).put(objectifs, CLE_OBJECTIFS);
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (e) {
+        try { localStorage.setItem('memo_objectifs_v1', JSON.stringify(objectifs)); } catch (e2) { /* tant pis */ }
+    }
+}
+
+/* -- Navigation -- */
+function agendaNaviguer(delta) {
+    if (agendaVue === 'semaine') {
+        agendaDateRef = new Date(agendaDateRef.getTime() + delta * 7 * 86400000);
+    } else {
+        agendaDateRef = new Date(agendaDateRef.getFullYear(), agendaDateRef.getMonth() + delta, 1);
+    }
+    agendaJourSelectionne = null;
+    rendreAgenda();
+}
+
+function changerVueAgenda(vue) {
+    agendaVue = vue;
+    agendaJourSelectionne = null;
+    rendreAgenda();
+}
+
+/* -- Calcul des données par jour -- */
+function dateStr(d) { return d.toISOString().slice(0, 10); }
+
+function calculerChargeParsupport() {
+    const charge = {}; // { 'YYYY-MM-DD': { revisions: n, objectifs: [{titre,couleur}] } }
+    const today = dateStr(new Date());
+
+    // Révisions dues par jour (calcul prospectif sur 60 jours)
+    supports.forEach(s => {
+        const iterer = (cle, nextDue) => {
+            if (!nextDue) return;
+            const j = nextDue <= today ? today : nextDue;
+            if (!charge[j]) charge[j] = { revisions: 0, objectifs: [] };
+            charge[j].revisions++;
+        };
+        if (s.type === 'texte') {
+            (s.cartes || []).forEach((c, i) => { const e = s.etat && s.etat[i]; if (e) iterer(i, e.nextDue); });
+        } else {
+            (s.pages || []).forEach((page, pi) => {
+                page.zones.forEach((z, zi) => { const e = s.etat && s.etat[pi + '_' + zi]; if (e) iterer(pi + '_' + zi, e.nextDue); });
+            });
+        }
+    });
+
+    // Objectifs d'évaluation
+    objectifs.forEach(obj => {
+        if (!obj.dateEval) return;
+        if (!charge[obj.dateEval]) charge[obj.dateEval] = { revisions: 0, objectifs: [] };
+        charge[obj.dateEval].objectifs.push({ titre: obj.titre, type: 'evaluation' });
+        (obj.joursPlanning || []).forEach(j => {
+            if (!charge[j]) charge[j] = { revisions: 0, objectifs: [] };
+            charge[j].objectifs.push({ titre: obj.titre, type: 'planifie' });
+        });
+    });
+
+    return charge;
+}
+
+/* -- Rendu calendrier -- */
+function rendreAgenda() {
+    const charge = calculerChargeParsupport();
+    const grille = document.getElementById('agendaGrille');
+    const titrePeriode = document.getElementById('agendaTitrePeriode');
+    if (!grille) return;
+
+    const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    const MOIS_NOMS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    const today = dateStr(new Date());
+
+    // Gélules de vue
+    document.getElementById('geluleVueSemaine').classList.toggle('actif', agendaVue === 'semaine');
+    document.getElementById('geluleVueMois').classList.toggle('actif', agendaVue === 'mois');
+
+    let jours = [];
+
+    if (agendaVue === 'semaine') {
+        const lundi = new Date(agendaDateRef);
+        const jourSemaine = lundi.getDay() === 0 ? 6 : lundi.getDay() - 1;
+        lundi.setDate(lundi.getDate() - jourSemaine);
+        titrePeriode.textContent = 'Semaine du ' + lundi.getDate() + ' ' + MOIS_NOMS[lundi.getMonth()];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(lundi);
+            d.setDate(lundi.getDate() + i);
+            jours.push({ date: d, horsAffichage: false });
+        }
+        grille.className = 'agenda-grille vue-semaine';
+    } else {
+        const annee = agendaDateRef.getFullYear(), mois = agendaDateRef.getMonth();
+        titrePeriode.textContent = MOIS_NOMS[mois] + ' ' + annee;
+        const premierJour = new Date(annee, mois, 1);
+        const premierLundi = new Date(premierJour);
+        const jourSemaine = premierLundi.getDay() === 0 ? 6 : premierLundi.getDay() - 1;
+        premierLundi.setDate(premierLundi.getDate() - jourSemaine);
+        for (let i = 0; i < 42; i++) {
+            const d = new Date(premierLundi);
+            d.setDate(premierLundi.getDate() + i);
+            jours.push({ date: d, horsAffichage: d.getMonth() !== mois });
+        }
+        grille.className = 'agenda-grille vue-mois';
+    }
+
+    grille.innerHTML = '';
+    JOURS.forEach(j => {
+        const el = document.createElement('div');
+        el.className = 'agenda-jour-label';
+        el.textContent = j;
+        grille.appendChild(el);
+    });
+
+    jours.forEach(({ date, horsAffichage }) => {
+        const ds = dateStr(date);
+        const el = document.createElement('div');
+        el.className = 'agenda-jour' + (ds === today ? ' aujourd-hui' : '') + (horsAffichage ? ' hors-mois' : '') + (agendaJourSelectionne === ds ? ' selectionne' : '');
+        const numEl = document.createElement('div');
+        numEl.className = 'num-jour';
+        numEl.textContent = date.getDate();
+        el.appendChild(numEl);
+
+        const data = charge[ds];
+        if (data) {
+            if (data.revisions > 0) {
+                const pt = document.createElement('div');
+                pt.className = 'agenda-point revisions';
+                pt.title = data.revisions + ' révision(s)';
+                el.appendChild(pt);
+            }
+            data.objectifs.forEach(obj => {
+                const pt = document.createElement('div');
+                pt.className = 'agenda-point ' + (obj.type === 'evaluation' ? 'objectif' : 'objectif-planifie');
+                pt.title = obj.titre;
+                el.appendChild(pt);
+            });
+        }
+
+        el.addEventListener('click', () => {
+            agendaJourSelectionne = ds;
+            afficherDetailJour(ds, data);
+            rendreAgenda();
+        });
+        grille.appendChild(el);
+    });
+
+    rendreObjectifs();
+}
+
+function afficherDetailJour(ds, data) {
+    const conteneur = document.getElementById('agendaDetailJour');
+    const titre = document.getElementById('agendaDetailTitre');
+    const contenu = document.getElementById('agendaDetailContenu');
+    if (!data || (data.revisions === 0 && data.objectifs.length === 0)) {
+        conteneur.style.display = 'none';
+        return;
+    }
+    const dateObj = new Date(ds + 'T00:00:00');
+    const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+    titre.textContent = dateObj.getDate() + ' ' + MOIS[dateObj.getMonth()] + ' ' + dateObj.getFullYear();
+    contenu.innerHTML = '';
+    if (data.revisions > 0) {
+        const item = document.createElement('div');
+        item.className = 'agenda-item';
+        item.innerHTML = '<div class="agenda-badge" style="background:var(--bleu)"></div><span><strong>' + data.revisions + ' élément(s)</strong> à réviser</span>';
+        contenu.appendChild(item);
+    }
+    data.objectifs.forEach(obj => {
+        const item = document.createElement('div');
+        item.className = 'agenda-item';
+        const couleur = obj.type === 'evaluation' ? 'var(--rouge)' : 'var(--jaune)';
+        const label = obj.type === 'evaluation' ? '🎯 Évaluation : ' : '📚 Révision planifiée : ';
+        item.innerHTML = '<div class="agenda-badge" style="background:' + couleur + '"></div><span>' + label + '<strong>' + echapperHtml(obj.titre) + '</strong></span>';
+        contenu.appendChild(item);
+    });
+    conteneur.style.display = '';
+}
+
+/* -- Objectifs d'évaluation -- */
+function ouvrirModalObjectif() {
+    document.getElementById('champTitreObjectif').value = '';
+    document.getElementById('champDateObjectif').value = '';
+    const liste = document.getElementById('listeSupportsObjectif');
+    liste.innerHTML = supports.map(s => `
+        <div class="case-support-objectif">
+            <input type="checkbox" value="${s.id}" id="cb-${s.id}">
+            <label for="cb-${s.id}" style="cursor:pointer; font-size:13px;">${ICONES_MATIERES[s.matiere] || '📦'} ${echapperHtml(s.nom)}</label>
+        </div>
+    `).join('');
+    document.getElementById('modalObjectif').classList.add('ouverte');
+}
+
+function fermerModalObjectif() { document.getElementById('modalObjectif').classList.remove('ouverte'); }
+
+function calculerJoursPlanning(dateEval, idsSupports) {
+    // Planification inversée : révisions espacées avant la date d'évaluation
+    // J-1, J-3, J-7, J-14 (si assez de temps), en filtrant le passé
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const evalDate = new Date(dateEval + 'T00:00:00');
+    const ecarts = [1, 3, 7, 14];
+    const jours = [];
+    ecarts.forEach(n => {
+        const d = new Date(evalDate);
+        d.setDate(d.getDate() - n);
+        if (d > today) jours.push(dateStr(d));
+    });
+    return jours;
+}
+
+function validerObjectif() {
+    const titre = document.getElementById('champTitreObjectif').value.trim();
+    const dateEval = document.getElementById('champDateObjectif').value;
+    if (!titre) { alert('Donne un titre à cet objectif.'); return; }
+    if (!dateEval) { alert('Choisis une date d\'évaluation.'); return; }
+    const idsCoches = Array.from(document.querySelectorAll('#listeSupportsObjectif input:checked')).map(c => c.value);
+    const joursPlanning = calculerJoursPlanning(dateEval, idsCoches);
+    objectifs.push({
+        id: genererId(),
+        titre: titre,
+        dateEval: dateEval,
+        supportIds: idsCoches,
+        joursPlanning: joursPlanning,
+        creeLe: Date.now()
+    });
+    sauvegarderObjectifs();
+    fermerModalObjectif();
+    rendreAgenda();
+}
+
+function supprimerObjectif(id) {
+    if (!confirm('Supprimer cet objectif ?')) return;
+    objectifs = objectifs.filter(o => o.id !== id);
+    sauvegarderObjectifs();
+    rendreAgenda();
+}
+
+function rendreObjectifs() {
+    const liste = document.getElementById('listeObjectifs');
+    if (!liste) return;
+    if (objectifs.length === 0) {
+        liste.innerHTML = '<div style="font-size:13px; color:var(--gris-texte);">Aucun objectif pour l\'instant.</div>';
+        return;
+    }
+    const MOIS = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
+    liste.innerHTML = objectifs.map(obj => {
+        const evalDate = new Date(obj.dateEval + 'T00:00:00');
+        const joursLabel = obj.joursPlanning.map(j => {
+            const d = new Date(j + 'T00:00:00');
+            return d.getDate() + ' ' + MOIS[d.getMonth()];
+        }).join(', ');
+        return `
+        <div class="objectif-card">
+            <div style="font-size:20px;">🎯</div>
+            <div class="objectif-info">
+                <div class="titre">${echapperHtml(obj.titre)}</div>
+                <div class="dates">Évaluation le ${evalDate.getDate()} ${MOIS[evalDate.getMonth()]} ${evalDate.getFullYear()}</div>
+                ${joursLabel ? '<div class="planning-tag">📚 Révisions planifiées : ' + joursLabel + '</div>' : ''}
+            </div>
+            <button class="icon-btn danger" onclick="supprimerObjectif('${obj.id}')">🗑</button>
+        </div>`;
+    }).join('');
+}
+
 function migrerVersPagesEtType(liste) {
     let modifie = false;
     liste.forEach(s => {
@@ -2522,6 +2884,9 @@ async function traiterImportDepuisLien() {
     await mettreAJourStreak();
     preferencesDys = await chargerPreferencesDys();
     appliquerPreferencesDys();
+    modulesActifs = await chargerModules();
+    appliquerModules();
+    objectifs = await chargerObjectifs();
     afficherAccueil();
     afficherBanniereEcranAccueilSiBesoin();
     await traiterImportDepuisLien();
