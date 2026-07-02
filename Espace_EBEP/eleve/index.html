@@ -118,8 +118,9 @@ main{padding:14px 16px;max-width:800px;margin:0 auto;}
 /* ── Barre d'outils édition image ── */
 .toolbar-ios{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center;}
 .forme-btn.actif{background:var(--bleu);color:#fff;}
-#zoneCanvas{position:relative;display:inline-block;cursor:crosshair;border:1px solid #ccc;background:#fff;user-select:none;touch-action:none;overflow:visible;max-width:100%;}
-#zoneCanvas img{display:block;max-width:90vw;pointer-events:none;user-select:none;-webkit-user-drag:none;}
+#zoneCanvas{position:relative;display:inline-block;cursor:crosshair;border:1px solid #ccc;background:#fff;user-select:none;touch-action:none;overflow:visible;}
+    .wrapper-canvas{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+#zoneCanvas img{display:block;pointer-events:none;user-select:none;-webkit-user-drag:none;}
 .rect{position:absolute;border:2px solid #3498db;background:rgba(52,152,219,0.2);pointer-events:none;}
 .rect-label{position:absolute;top:-9px;left:-9px;background:#3498db;color:#fff;font-size:11px;font-weight:bold;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer;z-index:5;box-shadow:0 1px 3px rgba(0,0,0,0.4);}
 .rect-label.a-un-indice::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:var(--jaune);border:1px solid #fff;}
@@ -418,7 +419,7 @@ body.force-mode-simple-global .btns-mode-devoilement{display:none!important;}
         </div>
     </div>
     <div id="infoEdition">Trace une zone sur ce que tu veux mémoriser. Tape le numéro d'une zone pour lui ajouter un indice. <strong id="compteurZonesEdition">0 zone(s)</strong></div>
-    <div id="zoneCanvas"></div>
+    <div class="wrapper-canvas"><div id="zoneCanvas"></div></div>
 </div>
 
 <!-- ===================== VUE RECADRAGE ===================== -->
