@@ -1136,20 +1136,46 @@ function reinitialiserCadrage() {
 
 function appliquerCadrageEtStocker(callback) {
     const img = document.getElementById('imgRecadrage');
-    let sx = 0, sy = 0, sw = imgRecadrageNaturalW, sh = imgRecadrageNaturalH;
-    if (cropRect) {
-        sx = cropRect.xPct / 100 * imgRecadrageNaturalW;
-        sy = cropRect.yPct / 100 * imgRecadrageNaturalH;
-        sw = cropRect.wPct / 100 * imgRecadrageNaturalW;
-        sh = cropRect.hPct / 100 * imgRecadrageNaturalH;
+
+    // Si l'image n'est pas encore chargée (tap rapide sur "Image entière"), on attend.
+    function faireCadrage() {
+        const nW = img.naturalWidth, nH = img.naturalHeight;
+        if (!nW || !nH) {
+            // Sécurité : si toujours 0 après chargement, on utilise les dimensions affichées
+            imgRecadrageNaturalW = nW || img.width;
+            imgRecadrageNaturalH = nH || img.height;
+        }
+        let sx = 0, sy = 0, sw = imgRecadrageNaturalW, sh = imgRecadrageNaturalH;
+        if (cropRect) {
+            sx = cropRect.xPct / 100 * imgRecadrageNaturalW;
+            sy = cropRect.yPct / 100 * imgRecadrageNaturalH;
+            sw = cropRect.wPct / 100 * imgRecadrageNaturalW;
+            sh = cropRect.hPct / 100 * imgRecadrageNaturalH;
+        }
+        if (!sw || !sh) { sw = imgRecadrageNaturalW; sh = imgRecadrageNaturalH; sx = 0; sy = 0; }
+        const maxW = 1280;
+        let w = sw, h = sh;
+        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+        const c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w));
+        c.height = Math.max(1, Math.round(h));
+        c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+        callback(c.toDataURL('image/jpeg', 0.82));
     }
-    const maxW = 1280;
-    let w = sw, h = sh;
-    if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
-    const c = document.createElement('canvas');
-    c.width = Math.round(w); c.height = Math.round(h);
-    c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
-    callback(c.toDataURL('image/jpeg', 0.82));
+
+    if (img.complete && img.naturalWidth > 0) {
+        imgRecadrageNaturalW = img.naturalWidth;
+        imgRecadrageNaturalH = img.naturalHeight;
+        faireCadrage();
+    } else {
+        const ancienOnload = img.onload;
+        img.onload = () => {
+            imgRecadrageNaturalW = img.naturalWidth;
+            imgRecadrageNaturalH = img.naturalHeight;
+            if (ancienOnload) ancienOnload();
+            faireCadrage();
+        };
+    }
 }
 
 function validerCadrage() {
@@ -1183,7 +1209,9 @@ function zoomOut() { if (!imgNaturalW) return; zoomLevel = Math.max(0.15, zoomLe
 function zoomDepuisCurseur(valeurPourcent) { if (!imgNaturalW) return; zoomLevel = Math.max(0.15, Math.min(3, valeurPourcent / 100)); appliquerZoom(); }
 function zoomReset() {
     if (!imgNaturalW) return;
-    const maxL = Math.min(window.innerWidth * 0.9, 1050);
+    const wrapper = document.querySelector('.wrapper-canvas') || canvasEl.parentElement;
+    const largeurDispo = wrapper ? wrapper.clientWidth : window.innerWidth * 0.9;
+    const maxL = Math.min(largeurDispo, 1280);
     zoomLevel = Math.min(1, maxL / imgNaturalW);
     appliquerZoom();
 }
