@@ -713,6 +713,7 @@ function afficherAccueil() {
                     </div>
                     <button class="icon-btn" data-modifier="${s.id}" style="flex-shrink:0;">✏️</button>
                     <button class="icon-btn danger" data-suppr="${s.id}" style="flex-shrink:0;">🗑</button>
+                    <button class="icon-btn" data-exporter="${s.id}" style="flex-shrink:0;" title="Exporter ce support">📤</button>
                     <div class="chevron">›</div>
                 </div>
             `).join('')}
@@ -728,7 +729,7 @@ function afficherAccueil() {
             const unite = s.type === 'texte' ? ' cartes maîtrisées' : ' zones maîtrisées';
             carte.querySelector('[data-id-meta="' + id + '"]').textContent = total === 0 ? 'Pas encore de contenu' : maitrisees + '/' + total + unite + (difficiles > 0 ? ' · ⚠️ ' + difficiles + ' difficile' + (difficiles > 1 ? 's' : '') : '');
             carte.addEventListener('click', (ev) => {
-                if (ev.target.closest('[data-suppr]') || ev.target.closest('[data-modifier]')) return;
+                if (ev.target.closest('[data-suppr]') || ev.target.closest('[data-modifier]') || ev.target.closest('[data-exporter]')) return;
                 ouvrirRevision(id);
             });
         });
@@ -747,6 +748,17 @@ function afficherAccueil() {
             btn.addEventListener('click', (ev) => {
                 ev.stopPropagation();
                 ouvrirModifierSupport(btn.getAttribute('data-modifier'));
+            });
+        });
+        liste.querySelectorAll('[data-exporter]').forEach(btn => {
+            btn.addEventListener('click', async (ev) => {
+                ev.stopPropagation();
+                const id = btn.getAttribute('data-exporter');
+                const s = supports.find(x => x.id === id);
+                if (!s) return;
+                supportActif = s;
+                await partagerSupport();
+                supportActif = null;
             });
         });
     }
@@ -3173,6 +3185,13 @@ let lettresTimer = null;
 let flashRevele = false;
 
 function construireVueRevisionCarte(paires) {
+    // Initialiser les états Leitner manquants avant de démarrer
+    paires.forEach(item => {
+        if (!item.support.etat) item.support.etat = {};
+        if (!item.support.etat[item.idx]) {
+            item.support.etat[item.idx] = { box: 1, nextDue: todayStr(), indicePerso: '', autoExplication: '' };
+        }
+    });
     flashSession = melangerTableau([...paires]);
     flashIndex = 0;
     flashRevele = false;
@@ -3439,8 +3458,11 @@ function lireReponseFlash() {
 function evaluerFlash(resultat) {
     if (!flashRevele && modeRevisionFlash !== 'saisie') return;
     const item = flashSession[flashIndex % flashSession.length];
+    // Initialisation de l'état si absent (carte nouvellement créée)
+    if (!item.support.etat[item.idx]) {
+        item.support.etat[item.idx] = { box: 1, nextDue: todayStr(), indicePerso: '', autoExplication: '' };
+    }
     const etat = item.support.etat[item.idx];
-    if (!etat) return;
 
     // Sauvegarder indice personnel
     etat.indicePerso = document.getElementById('indicePersoFlash').value;
