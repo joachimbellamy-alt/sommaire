@@ -513,26 +513,51 @@ function fermerBanniereEcranAccueil() {
 
 /* ---------------- Navigation entre vues ---------------- */
 
+let ongletActif = 'reviser'; // 'reviser' | 'agenda' | 'reglages'
+
+function goTab(tab) {
+    ongletActif = tab;
+    ['tabReviser','tabAgenda','tabReglages'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('actif');
+    });
+    if (tab === 'reviser') {
+        document.getElementById('tabReviser').classList.add('actif');
+        afficherAccueil();
+    } else if (tab === 'agenda') {
+        document.getElementById('tabAgenda').classList.add('actif');
+        afficherVue('agenda');
+        rendreAgenda();
+    } else if (tab === 'reglages') {
+        document.getElementById('tabReglages').classList.add('actif');
+        afficherVue('reglages');
+        afficherEspaceStockage();
+    }
+}
+
 function afficherVue(nom) {
-    document.getElementById('vueAccueil').style.display = nom === 'accueil' ? '' : 'none';
-    document.getElementById('vueEdition').style.display = nom === 'edition' ? '' : 'none';
-    document.getElementById('vueRevision').style.display = nom === 'revision' ? '' : 'none';
-    document.getElementById('vueRecadrage').style.display = nom === 'recadrage' ? '' : 'none';
-    document.getElementById('vueEditionTexte').style.display = nom === 'editionTexte' ? '' : 'none';
-    document.getElementById('vueRevisionTexte').style.display = nom === 'revisionTexte' ? '' : 'none';
-    document.getElementById('vueQCMTexte').style.display = nom === 'qcmTexte' ? '' : 'none';
-    document.getElementById('vueEcrireTexte').style.display = nom === 'ecrireTexte' ? '' : 'none';
-    document.getElementById('vueAgenda').style.display = nom === 'agenda' ? '' : 'none';
-    document.getElementById('btnRetour').style.display = (nom === 'accueil' || nom === 'recadrage' || nom === 'qcmTexte' || nom === 'ecrireTexte') ? 'none' : '';
-    document.getElementById('btnPartager').style.display = (supportActif && ['edition', 'revision', 'editionTexte', 'revisionTexte'].includes(nom)) ? '' : 'none';
+    const TOUTES = ['vueAccueil','vueEdition','vueRevision','vueRecadrage','vueEditionTexte',
+        'vueRevisionCarte','vueQCMTexte','vueEcrireTexte','vueAgenda','vueReglages'];
+    TOUTES.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    const cible = document.getElementById('vue' + nom.charAt(0).toUpperCase() + nom.slice(1));
+    if (cible) cible.style.display = '';
+
+    const vuesAvecRetour = ['edition','revision','recadrage','editionTexte','revisionCarte','qcmTexte','ecrireTexte'];
+    const vuesSansRetour = ['accueil','agenda','reglages'];
+    document.getElementById('btnRetour').style.display = vuesAvecRetour.includes(nom) ? '' : 'none';
+    document.getElementById('btnPartager').style.display = (supportActif && ['edition','revision','editionTexte','revisionCarte'].includes(nom)) ? '' : 'none';
+
     const btnBascule = document.getElementById('btnBascule');
     if (nom === 'edition') {
-        document.getElementById('titreHeader').textContent = supportActif.nom;
+        document.getElementById('titreHeader').textContent = supportActif ? supportActif.nom : '';
         btnBascule.style.display = '';
         btnBascule.textContent = '🧠 Réviser';
         btnBascule.onclick = () => ouvrirRevision(supportActif.id);
     } else if (nom === 'revision') {
-        document.getElementById('titreHeader').textContent = supportActif.nom;
+        document.getElementById('titreHeader').textContent = supportActif ? supportActif.nom : '';
         btnBascule.style.display = '';
         btnBascule.textContent = '✏️ Modifier';
         btnBascule.onclick = () => ouvrirEdition(supportActif.id);
@@ -541,7 +566,7 @@ function afficherVue(nom) {
         btnBascule.style.display = supportActif ? '' : 'none';
         btnBascule.textContent = '🧠 Réviser';
         if (supportActif) btnBascule.onclick = () => ouvrirRevision(supportActif.id);
-    } else if (nom === 'revisionTexte') {
+    } else if (nom === 'revisionCarte') {
         document.getElementById('titreHeader').textContent = supportActif ? supportActif.nom : '🔀 Session mélangée';
         btnBascule.style.display = supportActif ? '' : 'none';
         btnBascule.textContent = '✏️ Modifier';
@@ -552,11 +577,14 @@ function afficherVue(nom) {
     } else if (nom === 'ecrireTexte') {
         document.getElementById('titreHeader').textContent = '⌨️ ' + (supportActif ? supportActif.nom : '');
         btnBascule.style.display = 'none';
-    } else if (nom === 'agenda') {
-        document.getElementById('titreHeader').textContent = '📅 Agenda';
-        btnBascule.style.display = 'none';
     } else if (nom === 'recadrage') {
         document.getElementById('titreHeader').textContent = 'Cadrage';
+        btnBascule.style.display = 'none';
+    } else if (nom === 'agenda') {
+        document.getElementById('titreHeader').textContent = 'Mon agenda de révision';
+        btnBascule.style.display = 'none';
+    } else if (nom === 'reglages') {
+        document.getElementById('titreHeader').textContent = 'Réglages';
         btnBascule.style.display = 'none';
     } else {
         document.getElementById('titreHeader').textContent = 'Mes révisions';
@@ -632,23 +660,29 @@ function calculerResumeAujourdhui() {
 }
 
 function afficherTableauBord() {
-    const conteneur = document.getElementById('tableauBordAujourdhui');
-    if (!conteneur) return;
-    if (supports.length === 0) { conteneur.style.display = 'none'; return; }
-    conteneur.style.display = '';
     const r = calculerResumeAujourdhui();
-    let texteResume;
-    if (r.total === 0) {
-        texteResume = '✅ Tout est à jour ! Rien à réviser aujourd\'hui.';
-    } else {
-        const plafonne = r.total > PLAFOND_PAR_JOUR;
-        texteResume = '<strong>' + Math.min(r.total, PLAFOND_PAR_JOUR) + '</strong> élément(s) à réviser aujourd\'hui'
-            + (r.dueImage && r.dueTexte ? ' (' + r.dueImage + ' zones d\'image, ' + r.dueTexte + ' cartes texte)' : '')
-            + ' dans <strong>' + r.supports + '</strong> support(s)'
-            + (plafonne ? '<br><span style="color:var(--gris-texte);">+' + (r.total - PLAFOND_PAR_JOUR) + ' autres reportés à demain pour éviter la surcharge</span>' : '');
+    // Streak
+    const streakEl = document.getElementById('streakJours');
+    if (streakEl) streakEl.textContent = streakActuel.jours + ' jour' + (streakActuel.jours !== 1 ? 's' : '') + ' de suite';
+
+    // Nombre et sous-titre
+    const nb = Math.min(r.total, PLAFOND_PAR_JOUR);
+    const nombreEl = document.getElementById('ajNombre');
+    const sousEl = document.getElementById('ajSous');
+    const btnCommencer = document.getElementById('btnCommencer');
+    if (nombreEl) nombreEl.textContent = nb;
+    if (sousEl) {
+        if (r.total === 0) {
+            sousEl.textContent = 'Rien à réviser aujourd\'hui, bravo !';
+        } else {
+            let txt = 'élément' + (nb > 1 ? 's' : '') + ' à réviser';
+            if (r.dueTexte > 0) txt += ' · ' + r.dueTexte + ' Flashcard' + (r.dueTexte > 1 ? 's' : '');
+            if (r.dueImage > 0) txt += ' · ' + r.dueImage + ' zone' + (r.dueImage > 1 ? 's' : '') + ' image';
+            if (r.total > PLAFOND_PAR_JOUR) txt += '\n(+' + (r.total - PLAFOND_PAR_JOUR) + ' reportés à demain)';
+            sousEl.textContent = txt;
+        }
     }
-    conteneur.innerHTML = '<div class="streak">🔥 ' + streakActuel.jours + '<small>jour' + (streakActuel.jours === 1 ? '' : 's') + ' de suite</small></div>'
-        + '<div class="resume-du-jour">' + texteResume + '</div>';
+    if (btnCommencer) btnCommencer.style.display = r.dueTexte > 0 ? '' : 'none';
 }
 
 function afficherAccueil() {
@@ -844,8 +878,8 @@ function ouvrirRevision(id) {
             ouvrirEdition(id);
             return;
         }
-        afficherVue('revisionTexte');
-        construireVueRevisionTexte();
+        afficherVue('revisionCarte');
+        construireVueRevisionCarte(supportActif.cartes.map((c, i) => ({ support: supportActif, idx: i })));
         return;
     }
     const totalZones = (supportActif.pages || []).reduce((acc, p) => acc + p.zones.length, 0);
@@ -1724,7 +1758,8 @@ function chargerEditionTexte() {
     document.getElementById('titreHeader').textContent = supportActif.nom;
     const conteneur = document.getElementById('listeCartesTexte');
     document.getElementById('champLangueSupport').value = supportActif.langue || 'fr-FR';
-    document.getElementById('champStyleRevelation').value = supportActif.styleRevelation || 'flou';
+    const champStyle = document.getElementById('champStyleRevelation');
+    if (champStyle) champStyle.value = supportActif.styleRevelation || 'flou';
     remplirSelecteurVoix();
     if (supportActif.cartes.length === 0) {
         conteneur.innerHTML = '<div class="vide" style="padding:20px 10px;">Aucune carte pour l\'instant. Ajoute ta première question/réponse.</div>';
@@ -2071,9 +2106,9 @@ function construireVueRevisionTexte() {
     modeSessionMelangee = false;
     initEtatRevisionTexte();
 
-    document.getElementById('controlesSeulTexte').style.display = '';
-    document.getElementById('controlesExercicesTexte').style.display = '';
-    document.getElementById('segmenteTexte').style.display = '';
+    (document.getElementById('controlesSeulTexte') || {style:{}}).style.display = '';
+    (document.getElementById('controlesExercicesTexte') || {style:{}}).style.display = '';
+    (document.getElementById('segmenteTexte') || {style:{}}).style.display = '';
 
     const mode = supportActif.mode || 'simple';
     document.body.classList.toggle('mode-simple', mode === 'simple');
@@ -2121,23 +2156,15 @@ function ouvrirSessionMelangee() {
 
     supportActif = null;
     modeSessionMelangee = true;
-    afficherVue('revisionTexte');
+    afficherVue('revisionCarte');
     document.getElementById('titreHeader').textContent = '🔀 Session mélangée';
-    document.getElementById('controlesSeulTexte').style.display = 'none';
-    document.getElementById('controlesExercicesTexte').style.display = 'none';
-    document.getElementById('segmenteTexte').style.display = 'none';
-    document.body.classList.remove('mode-simple', 'filtre-actif');
-
-    const conteneur = document.getElementById('listeRevisionTexte');
-    conteneur.innerHTML = '';
     if (nbReportees > 0) {
         const note = document.createElement('div');
-        note.style.cssText = 'font-size:13px; color:var(--gris-texte); text-align:center; margin-bottom:14px;';
-        note.textContent = '📦 ' + nbReportees + " carte(s) en plus sont dues aujourd'hui mais reportées à demain pour éviter la surcharge — reviens demain pour continuer.";
-        conteneur.appendChild(note);
+        note.style.cssText = 'font-size:13px;color:var(--gris-texte);text-align:center;margin-bottom:10px;';
+        note.textContent = '📦 ' + nbReportees + " carte(s) dues supplémentaires reportées à demain.";
+        document.getElementById('vueRevisionCarte').prepend(note);
     }
-    paireRetenues.forEach(p => conteneur.appendChild(creerElementCarte(p.support, p.idx)));
-    actualiserAffichageRevisionTexte();
+    construireVueRevisionCarte(paireRetenues);
 }
 
 function toggleReveleTexte(carte) { carte.classList.toggle('revele'); }
@@ -2205,7 +2232,7 @@ function majCompteurRevisionTexte() {
     const total = document.querySelectorAll('#listeRevisionTexte .carte-revision-texte').length;
     const bonnes = document.querySelectorAll('#listeRevisionTexte .carte-revision-texte.correcte').length;
     const mauvaises = document.querySelectorAll('#listeRevisionTexte .carte-revision-texte.incorrecte').length;
-    document.getElementById('compteurRevisionTexte').textContent = '✅ ' + bonnes + '   ❌ ' + mauvaises + '   (sur ' + total + ' cartes, cette session)';
+    ((document.getElementById('compteurRevisionTexte') || {})).textContent = '✅ ' + bonnes + '   ❌ ' + mauvaises + '   (sur ' + total + ' cartes, cette session)';
 }
 
 function actualiserResumeBoitesTexte() {
@@ -2505,18 +2532,24 @@ function appliquerModules() {
     // Gélule Agenda
     const geluleAgenda = document.getElementById('geluleAgenda');
     if (geluleAgenda) geluleAgenda.classList.toggle('actif', !!modulesActifs.agenda);
-    const btnAgenda = document.getElementById('btnOuvrirAgenda');
-    if (btnAgenda) btnAgenda.style.display = modulesActifs.agenda ? '' : 'none';
+
+    // Onglet Agenda (visible seulement si activé)
+    const tabAgenda = document.getElementById('tabAgenda');
+    if (tabAgenda) tabAgenda.style.display = modulesActifs.agenda ? '' : 'none';
+
+    // Toggles dans les réglages
+    const tA = document.getElementById('toggleAlgo');
+    if (tA) { tA.className = 'toggle-switch ' + (modulesActifs.algo ? 'on' : 'off'); }
+    const tG = document.getElementById('toggleAgenda');
+    if (tG) { tG.className = 'toggle-switch ' + (modulesActifs.agenda ? 'on' : 'off'); }
 }
 
 async function basculerModule(nom) {
     modulesActifs[nom] = !modulesActifs[nom];
     await sauvegarderModules();
     appliquerModules();
-    // Si on désactive l'agenda et qu'on est dessus, retour accueil
     if (nom === 'agenda' && !modulesActifs.agenda && vueActuelle === 'agenda') {
-        afficherVue('accueil');
-        afficherAccueil();
+        goTab('reviser');
     }
 }
 
@@ -2616,120 +2649,341 @@ function calculerChargeParsupport() {
     return charge;
 }
 
-/* -- Rendu calendrier -- */
+/* -- Données agenda : étiquettes libres (persistées) -- */
+const CLE_ETIQUETTES_AGENDA = 'etiquettesAgenda';
+let etiquettesAgenda = {}; // { 'YYYY-MM-DD': [{ id, matiere, texte, puce, faite }] }
+
+async function chargerEtiquettesAgenda() {
+    try {
+        const db = await ouvrirDB();
+        const d = await new Promise((res, rej) => {
+            const tx = db.transaction(MAGASIN, 'readonly');
+            const req = tx.objectStore(MAGASIN).get(CLE_ETIQUETTES_AGENDA);
+            req.onsuccess = () => res(req.result);
+            req.onerror = () => rej(req.error);
+        });
+        return d || {};
+    } catch (e) {
+        try { const r = localStorage.getItem('memo_agenda_etiq_v1'); return r ? JSON.parse(r) : {}; }
+        catch (e2) { return {}; }
+    }
+}
+
+async function sauvegarderEtiquettesAgenda() {
+    try {
+        const db = await ouvrirDB();
+        await new Promise((res, rej) => {
+            const tx = db.transaction(MAGASIN, 'readwrite');
+            tx.objectStore(MAGASIN).put(etiquettesAgenda, CLE_ETIQUETTES_AGENDA);
+            tx.oncomplete = res;
+            tx.onerror = () => rej(tx.error);
+        });
+    } catch (e) {
+        try { localStorage.setItem('memo_agenda_etiq_v1', JSON.stringify(etiquettesAgenda)); } catch (e2) {}
+    }
+}
+
+const COULEURS_MATIERES_AGENDA = {
+    'Anglais':{ bg:'#d1eaff', txt:'#0055aa', puce:'#007AFF' },
+    'Histoire-Géo-EMC':{ bg:'#ffe4cc', txt:'#a04800', puce:'#FF9500' },
+    'Maths':{ bg:'#e0d4ff', txt:'#5500cc', puce:'#9B59B6' },
+    'SVT':{ bg:'#d4f5dd', txt:'#1a6e30', puce:'#2ecc71' },
+    'Espagnol':{ bg:'#ffd6d6', txt:'#cc0000', puce:'#FF3B30' },
+    'Latin':{ bg:'#f5e8c8', txt:'#7a5500', puce:'#e67e22' },
+    'Français':{ bg:'#ffeef5', txt:'#880044', puce:'#e91e63' },
+    'Sciences physiques':{ bg:'#e8f0fe', txt:'#1a5276', puce:'#3498db' },
+    'EMI':{ bg:'#e8f5e9', txt:'#1b5e20', puce:'#4caf50' },
+    'Sciences':{ bg:'#e0f7fa', txt:'#006064', puce:'#00bcd4' },
+    'Éducation musicale':{ bg:'#fce4ec', txt:'#880e4f', puce:'#e91e63' },
+    'Arts plastiques':{ bg:'#fff3e0', txt:'#e65100', puce:'#ff9800' },
+};
+
+function couleurEtiquette(matiere) {
+    return COULEURS_MATIERES_AGENDA[matiere] || { bg:'#e8e8e8', txt:'#555', puce:'#888' };
+}
+
+/* -- Injection auto depuis les objectifs d'évaluation -- */
+function calculerEtiquettesAuto() {
+    const auto = {};
+    const today = dateStr(new Date());
+    // Révisions dues (par matière)
+    supports.forEach(s => {
+        const iterer = (nextDue) => {
+            if (!nextDue) return;
+            const j = nextDue <= today ? today : nextDue;
+            if (!auto[j]) auto[j] = [];
+            const existant = auto[j].find(e => e.matiere === s.matiere && e.texte.startsWith('Révision'));
+            if (!existant) auto[j].push({ auto: true, matiere: s.matiere, texte: 'Révision', puce: couleurEtiquette(s.matiere).puce });
+        };
+        if (s.type === 'texte') {
+            (s.cartes || []).forEach((c, i) => { const e = s.etat && s.etat[i]; if (e) iterer(e.nextDue); });
+        } else {
+            (s.pages || []).forEach((page, pi) => {
+                page.zones.forEach((z, zi) => { const e = s.etat && s.etat[pi + '_' + zi]; if (e) iterer(e.nextDue); });
+            });
+        }
+    });
+    // Objectifs d'évaluation → étiquettes auto
+    objectifs.forEach(obj => {
+        if (obj.dateEval) {
+            if (!auto[obj.dateEval]) auto[obj.dateEval] = [];
+            auto[obj.dateEval].push({ auto: true, matiere: 'Éval', texte: '🎯 ' + obj.titre, puce: '#FF3B30' });
+        }
+        (obj.joursPlanning || []).forEach(j => {
+            if (!auto[j]) auto[j] = [];
+            auto[j].push({ auto: true, matiere: obj.titre.split(' ')[0], texte: '📚 ' + obj.titre, puce: '#FF9500' });
+        });
+    });
+    return auto;
+}
+
+let agendaEditionEtat = { ds: null, idx: null, ajout: false };
+
 function rendreAgenda() {
-    const charge = calculerChargeParsupport();
     const grille = document.getElementById('agendaGrille');
+    const joursLabels = document.getElementById('agendaJoursLabels');
     const titrePeriode = document.getElementById('agendaTitrePeriode');
     if (!grille) return;
 
-    const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    const JOURS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
     const MOIS_NOMS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
     const today = dateStr(new Date());
+    const etiqAuto = calculerEtiquettesAuto();
 
-    // Gélules de vue
-    document.getElementById('geluleVueSemaine').classList.toggle('actif', agendaVue === 'semaine');
-    document.getElementById('geluleVueMois').classList.toggle('actif', agendaVue === 'mois');
+    // Pills de vue
+    document.getElementById('pillSemaine').classList.toggle('actif', agendaVue === 'semaine');
+    document.getElementById('pillMois').classList.toggle('actif', agendaVue === 'mois');
 
     let jours = [];
-
     if (agendaVue === 'semaine') {
         const lundi = new Date(agendaDateRef);
-        const jourSemaine = lundi.getDay() === 0 ? 6 : lundi.getDay() - 1;
-        lundi.setDate(lundi.getDate() - jourSemaine);
+        const js = lundi.getDay() === 0 ? 6 : lundi.getDay() - 1;
+        lundi.setDate(lundi.getDate() - js);
         titrePeriode.textContent = 'Semaine du ' + lundi.getDate() + ' ' + MOIS_NOMS[lundi.getMonth()];
         for (let i = 0; i < 7; i++) {
-            const d = new Date(lundi);
-            d.setDate(lundi.getDate() + i);
-            jours.push({ date: d, horsAffichage: false });
+            const d = new Date(lundi); d.setDate(lundi.getDate() + i);
+            jours.push({ date: d, hors: false });
         }
-        grille.className = 'agenda-grille vue-semaine';
     } else {
         const annee = agendaDateRef.getFullYear(), mois = agendaDateRef.getMonth();
         titrePeriode.textContent = MOIS_NOMS[mois] + ' ' + annee;
-        const premierJour = new Date(annee, mois, 1);
-        const premierLundi = new Date(premierJour);
-        const jourSemaine = premierLundi.getDay() === 0 ? 6 : premierLundi.getDay() - 1;
-        premierLundi.setDate(premierLundi.getDate() - jourSemaine);
+        const premier = new Date(annee, mois, 1);
+        const js = premier.getDay() === 0 ? 6 : premier.getDay() - 1;
+        premier.setDate(premier.getDate() - js);
         for (let i = 0; i < 42; i++) {
-            const d = new Date(premierLundi);
-            d.setDate(premierLundi.getDate() + i);
-            jours.push({ date: d, horsAffichage: d.getMonth() !== mois });
+            const d = new Date(premier); d.setDate(premier.getDate() + i);
+            jours.push({ date: d, hors: d.getMonth() !== mois });
         }
-        grille.className = 'agenda-grille vue-mois';
     }
 
+    joursLabels.innerHTML = JOURS.map(j => `<div class="agenda-jour-label">${j}</div>`).join('');
     grille.innerHTML = '';
-    JOURS.forEach(j => {
-        const el = document.createElement('div');
-        el.className = 'agenda-jour-label';
-        el.textContent = j;
-        grille.appendChild(el);
-    });
 
-    jours.forEach(({ date, horsAffichage }) => {
+    jours.forEach(({ date, hors }) => {
         const ds = dateStr(date);
-        const el = document.createElement('div');
-        el.className = 'agenda-jour' + (ds === today ? ' aujourd-hui' : '') + (horsAffichage ? ' hors-mois' : '') + (agendaJourSelectionne === ds ? ' selectionne' : '');
-        const numEl = document.createElement('div');
-        numEl.className = 'num-jour';
-        numEl.textContent = date.getDate();
-        el.appendChild(numEl);
+        const estAjd = ds === today;
+        const estSel = agendaJourSelectionne === ds;
+        const cell = document.createElement('div');
+        cell.className = 'agenda-jour-cell' + (estAjd ? ' aujourd-hui' : '') + (hors ? ' hors-mois' : '') + (estSel ? ' selectionne' : '');
+        const numDiv = document.createElement('div');
+        numDiv.className = 'agenda-num-jour' + (estAjd ? ' ajd' : '');
+        numDiv.textContent = date.getDate();
+        cell.appendChild(numDiv);
 
-        const data = charge[ds];
-        if (data) {
-            if (data.revisions > 0) {
-                const pt = document.createElement('div');
-                pt.className = 'agenda-point revisions';
-                pt.title = data.revisions + ' révision(s)';
-                el.appendChild(pt);
-            }
-            data.objectifs.forEach(obj => {
-                const pt = document.createElement('div');
-                pt.className = 'agenda-point ' + (obj.type === 'evaluation' ? 'objectif' : 'objectif-planifie');
-                pt.title = obj.titre;
-                el.appendChild(pt);
-            });
-        }
-
-        el.addEventListener('click', () => {
-            agendaJourSelectionne = ds;
-            afficherDetailJour(ds, data);
-            rendreAgenda();
+        // Étiquettes auto (issues du calcul)
+        const autoJour = etiqAuto[ds] || [];
+        autoJour.forEach(e => {
+            const div = creerEtiqDOM(e, null);
+            cell.appendChild(div);
         });
-        grille.appendChild(el);
+
+        // Étiquettes manuelles (stockées)
+        const manuelles = etiquettesAgenda[ds] || [];
+        manuelles.forEach((e, i) => {
+            const div = creerEtiqDOM(e, i, ds);
+            cell.appendChild(div);
+        });
+
+        cell.addEventListener('click', () => {
+            agendaJourSelectionne = ds;
+            agendaEditionEtat = { ds, idx: null, ajout: false };
+            rendreAgenda();
+            afficherDetailJour(ds);
+        });
+        grille.appendChild(cell);
     });
 
+    if (agendaJourSelectionne) afficherDetailJour(agendaJourSelectionne);
     rendreObjectifs();
 }
 
-function afficherDetailJour(ds, data) {
-    const conteneur = document.getElementById('agendaDetailJour');
-    const titre = document.getElementById('agendaDetailTitre');
-    const contenu = document.getElementById('agendaDetailContenu');
-    if (!data || (data.revisions === 0 && data.objectifs.length === 0)) {
-        conteneur.style.display = 'none';
-        return;
+function creerEtiqDOM(e, idx, ds) {
+    const couleur = e.puce ? e.puce : couleurEtiquette(e.matiere).puce;
+    const bgBadge = couleurEtiquette(e.matiere).bg;
+    const txtBadge = couleurEtiquette(e.matiere).txt;
+    const div = document.createElement('div');
+    div.className = 'agenda-etiq' + (e.faite ? ' faite' : '');
+    div.innerHTML = `<div class="agenda-etiq-puce" style="background:${couleur}"></div>
+        <span class="agenda-etiq-badge" style="background:${bgBadge};color:${txtBadge};">${e.matiere || ''}</span>
+        <span class="agenda-etiq-txt">${echapperHtml(e.texte)}</span>`;
+    if (idx !== null && ds) {
+        div.style.cursor = 'pointer';
+        div.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            agendaJourSelectionne = ds;
+            agendaEditionEtat = { ds, idx, ajout: false };
+            rendreAgenda();
+            afficherDetailJour(ds);
+        });
     }
+    return div;
+}
+
+let agendaDetailJourActuel = null;
+
+function afficherDetailJour(ds) {
+    const panel = document.getElementById('agendaDetailPanel');
+    const dateEl = document.getElementById('agendaDetailDate');
+    const contenu = document.getElementById('agendaDetailContenu');
+    if (!panel) return;
+    agendaDetailJourActuel = ds;
+
     const dateObj = new Date(ds + 'T00:00:00');
     const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-    titre.textContent = dateObj.getDate() + ' ' + MOIS[dateObj.getMonth()] + ' ' + dateObj.getFullYear();
+    dateEl.textContent = dateObj.getDate() + ' ' + MOIS[dateObj.getMonth()] + ' ' + dateObj.getFullYear();
+
+    const manuelles = etiquettesAgenda[ds] || [];
+    const autoJ = calculerEtiquettesAuto()[ds] || [];
+    const toutes = [...autoJ.map(e => ({ ...e, manuel: false })), ...manuelles.map((e, i) => ({ ...e, manuel: true, idx: i }))];
+
     contenu.innerHTML = '';
-    if (data.revisions > 0) {
-        const item = document.createElement('div');
-        item.className = 'agenda-item';
-        item.innerHTML = '<div class="agenda-badge" style="background:var(--bleu)"></div><span><strong>' + data.revisions + ' élément(s)</strong> à réviser</span>';
-        contenu.appendChild(item);
+    if (toutes.length === 0) {
+        contenu.innerHTML = '<div style="font-size:13px;color:var(--gris-texte);padding:6px 0;">Aucune révision prévue ce jour.</div>';
+    } else {
+        toutes.forEach(e => {
+            const couleur = e.puce || couleurEtiquette(e.matiere || '').puce;
+            const bgBadge = couleurEtiquette(e.matiere || '').bg;
+            const txtBadge = couleurEtiquette(e.matiere || '').txt;
+
+            // Mode édition ?
+            if (e.manuel && agendaEditionEtat.ds === ds && agendaEditionEtat.idx === e.idx && !agendaEditionEtat.ajout) {
+                const wrap = document.createElement('div');
+                wrap.className = 'agenda-edit-wrap';
+                wrap.innerHTML = `<div style="font-size:10px;color:var(--gris-texte);margin-bottom:4px;">${e.matiere}</div>
+                    <input type="text" id="agendaEditInput" value="${echapperHtml(e.texte)}" style="width:100%;border:none;background:transparent;font-size:13px;color:var(--texte);font-family:inherit;outline:none;">
+                    <div class="agenda-edit-actions">
+                        <button class="btn-ok-small" onclick="validerEditionEtiquette('${ds}',${e.idx})">OK</button>
+                        <button class="btn-cancel-small" onclick="annulerEditionEtiquette()">Annuler</button>
+                        <button class="btn-delete-small" onclick="supprimerEtiquette('${ds}',${e.idx})">Supprimer</button>
+                    </div>`;
+                contenu.appendChild(wrap);
+                setTimeout(() => { const inp = document.getElementById('agendaEditInput'); if (inp) inp.focus(); }, 30);
+                return;
+            }
+
+            const row = document.createElement('div');
+            row.className = 'agenda-detail-item';
+            const check = document.createElement('div');
+            check.className = 'agenda-check' + (e.faite ? ' fait' : '');
+            check.innerHTML = e.faite ? '✓' : '';
+            if (e.manuel) {
+                check.addEventListener('click', () => { cocherEtiquette(ds, e.idx); });
+            }
+            const badge = document.createElement('span');
+            badge.className = 'agenda-detail-badge';
+            badge.style.background = bgBadge;
+            badge.style.color = txtBadge;
+            badge.textContent = e.matiere || 'Auto';
+            const txt = document.createElement('span');
+            txt.className = 'agenda-detail-txt' + (e.faite ? ' faite' : '');
+            txt.textContent = e.texte;
+            row.appendChild(check);
+            row.appendChild(badge);
+            row.appendChild(txt);
+            if (e.manuel) {
+                const btnEdit = document.createElement('button');
+                btnEdit.className = 'agenda-detail-edit';
+                btnEdit.textContent = '✏️';
+                btnEdit.addEventListener('click', () => {
+                    agendaEditionEtat = { ds, idx: e.idx, ajout: false };
+                    afficherDetailJour(ds);
+                });
+                row.appendChild(btnEdit);
+            }
+            contenu.appendChild(row);
+        });
     }
-    data.objectifs.forEach(obj => {
-        const item = document.createElement('div');
-        item.className = 'agenda-item';
-        const couleur = obj.type === 'evaluation' ? 'var(--rouge)' : 'var(--jaune)';
-        const label = obj.type === 'evaluation' ? '🎯 Évaluation : ' : '📚 Révision planifiée : ';
-        item.innerHTML = '<div class="agenda-badge" style="background:' + couleur + '"></div><span>' + label + '<strong>' + echapperHtml(obj.titre) + '</strong></span>';
-        contenu.appendChild(item);
-    });
-    conteneur.style.display = '';
+
+    // Mode ajout ?
+    if (agendaEditionEtat.ds === ds && agendaEditionEtat.ajout) {
+        const wrap = document.createElement('div');
+        wrap.className = 'agenda-edit-wrap';
+        wrap.innerHTML = `<div style="font-size:10px;color:var(--gris-texte);margin-bottom:4px;">Nouvelle étiquette</div>
+            <input type="text" id="agendaAjoutInput" placeholder="Ex : Histoire-Géo · J1" style="width:100%;border:none;background:transparent;font-size:13px;color:var(--texte);font-family:inherit;outline:none;">
+            <div class="agenda-edit-actions">
+                <button class="btn-ok-small" onclick="validerAjoutEtiquette('${ds}')">Ajouter</button>
+                <button class="btn-cancel-small" onclick="annulerEditionEtiquette()">Annuler</button>
+            </div>`;
+        contenu.appendChild(wrap);
+        setTimeout(() => { const inp = document.getElementById('agendaAjoutInput'); if (inp) inp.focus(); }, 30);
+    }
+    panel.style.display = '';
+}
+
+function ajouterEtiquetteJour() {
+    if (!agendaDetailJourActuel) return;
+    agendaEditionEtat = { ds: agendaDetailJourActuel, idx: null, ajout: true };
+    afficherDetailJour(agendaDetailJourActuel);
+}
+
+async function validerAjoutEtiquette(ds) {
+    const inp = document.getElementById('agendaAjoutInput');
+    if (!inp || !inp.value.trim()) { annulerEditionEtiquette(); return; }
+    if (!etiquettesAgenda[ds]) etiquettesAgenda[ds] = [];
+    // Détection de la matière depuis le texte (pattern "Matière · ...")
+    let matiere = 'Autre', texte = inp.value.trim();
+    const parts = texte.split('·');
+    if (parts.length >= 2) { matiere = parts[0].trim(); texte = parts.slice(1).join('·').trim(); }
+    const couleur = couleurEtiquette(matiere);
+    etiquettesAgenda[ds].push({ id: genererId(), matiere, texte: inp.value.trim(), puce: couleur.puce, faite: false });
+    agendaEditionEtat = { ds, idx: null, ajout: false };
+    await sauvegarderEtiquettesAgenda();
+    rendreAgenda();
+    afficherDetailJour(ds);
+}
+
+async function validerEditionEtiquette(ds, idx) {
+    const inp = document.getElementById('agendaEditInput');
+    if (!inp) return;
+    if (etiquettesAgenda[ds] && etiquettesAgenda[ds][idx]) {
+        etiquettesAgenda[ds][idx].texte = inp.value.trim();
+    }
+    agendaEditionEtat = { ds, idx: null, ajout: false };
+    await sauvegarderEtiquettesAgenda();
+    rendreAgenda();
+    afficherDetailJour(ds);
+}
+
+async function supprimerEtiquette(ds, idx) {
+    if (etiquettesAgenda[ds]) etiquettesAgenda[ds].splice(idx, 1);
+    agendaEditionEtat = { ds, idx: null, ajout: false };
+    await sauvegarderEtiquettesAgenda();
+    rendreAgenda();
+    afficherDetailJour(ds);
+}
+
+async function cocherEtiquette(ds, idx) {
+    if (etiquettesAgenda[ds] && etiquettesAgenda[ds][idx]) {
+        etiquettesAgenda[ds][idx].faite = !etiquettesAgenda[ds][idx].faite;
+        await sauvegarderEtiquettesAgenda();
+        rendreAgenda();
+        afficherDetailJour(ds);
+    }
+}
+
+function annulerEditionEtiquette() {
+    agendaEditionEtat = { ds: agendaDetailJourActuel, idx: null, ajout: false };
+    afficherDetailJour(agendaDetailJourActuel);
 }
 
 /* -- Objectifs d'évaluation -- */
@@ -2817,6 +3071,312 @@ function rendreObjectifs() {
     }).join('');
 }
 
+/* ================================================================
+   RÉVISION FLASHCARDS — une carte à la fois
+   ================================================================ */
+
+let flashSession = []; // [{ support, idx }]
+let flashIndex = 0;
+let modeRevisionFlash = 'reveler'; // 'reveler' | 'lettres' | 'saisie'
+let lettresDecoilees = 0;
+let lettresTimer = null;
+let flashRevele = false;
+
+function construireVueRevisionCarte(paires) {
+    flashSession = melangerTableau([...paires]);
+    flashIndex = 0;
+    flashRevele = false;
+    afficherCarteFlash();
+    afficherResumeBoitesFlash();
+}
+
+function melangerTableau(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+function afficherCarteFlash() {
+    if (!flashSession.length) return;
+    flashRevele = false;
+    lettresDecoilees = 0;
+    if (lettresTimer) { clearInterval(lettresTimer); lettresTimer = null; }
+
+    // Progression
+    const pct = Math.round((flashIndex / flashSession.length) * 100);
+    document.getElementById('barreProgressionFlash').style.width = pct + '%';
+    document.getElementById('compteurFlash').textContent = (flashIndex + 1) + ' / ' + flashSession.length;
+
+    const item = flashSession[flashIndex % flashSession.length];
+    const support = item.support;
+    const c = support.cartes[item.idx];
+    const etat = support.etat[item.idx];
+    const langue = support.langue || 'fr-FR';
+
+    // Badge matière
+    const couleursMat = {
+        'Anglais':{ bg:'#d1eaff', txt:'#0055aa' },'Histoire-Géo-EMC':{ bg:'#ffe4cc', txt:'#a04800' },
+        'Maths':{ bg:'#e0d4ff', txt:'#5500cc' },'SVT':{ bg:'#d4f5dd', txt:'#1a6e30' },
+        'Espagnol':{ bg:'#ffd6d6', txt:'#cc0000' },'Latin':{ bg:'#f5e8c8', txt:'#7a5500' },
+        'Français':{ bg:'#ffeef5', txt:'#880044' },'Sciences physiques':{ bg:'#e8f0fe', txt:'#1a5276' },
+    };
+    const couleur = couleursMat[support.matiere] || { bg:'#e8e8e8', txt:'#555' };
+    const badge = document.getElementById('badgeMatiereFlash');
+    badge.textContent = (support.matiere || 'Autre');
+    badge.style.background = couleur.bg;
+    badge.style.color = couleur.txt;
+
+    // Question
+    document.getElementById('questionFlash').textContent = c.question || '';
+
+    // Image
+    const imgEl = document.getElementById('imageFlash');
+    if (c.image) { imgEl.src = c.image; imgEl.style.display = ''; }
+    else imgEl.style.display = 'none';
+
+    // Audio question
+    document.getElementById('btnAudioQuestion').dataset.question = c.question || '';
+    document.getElementById('btnAudioQuestion').dataset.langue = langue;
+    document.getElementById('btnAudioQuestion').dataset.voix = support.voixNom || '';
+
+    // Réponse : réinitialiser la zone
+    const zoneRep = document.getElementById('zoneReponseFlash');
+    zoneRep.classList.remove('revele');
+    document.getElementById('masqueReponse').style.display = '';
+    document.getElementById('reponseFlash').style.display = 'none';
+    document.getElementById('lettresFlash').style.display = 'none';
+    document.getElementById('saisieFLashWrap').style.display = 'none';
+    document.getElementById('exempleFlash').style.display = 'none';
+    document.getElementById('btnAudioReponse').style.display = 'none';
+    document.getElementById('texteReponseFlash').textContent = c.reponse || '';
+    document.getElementById('exempleFlash').textContent = c.exemple ? '« ' + c.exemple + ' »' : '';
+    document.getElementById('btnAudioReponse').dataset.reponse = c.reponse || '';
+    document.getElementById('btnAudioReponse').dataset.langue = langue;
+    document.getElementById('btnAudioReponse').dataset.voix = support.voixNom || '';
+
+    // Indice
+    document.getElementById('indiceProfFlash').textContent = c.indice ? '👩‍🏫 ' + c.indice : '';
+    document.getElementById('indicePersoFlash').value = etat ? (etat.indicePerso || '') : '';
+    document.getElementById('carteFlashcard').classList.remove('indice-ouvert');
+
+    // Boutons d'évaluation
+    document.getElementById('btnsEvaluation').style.display = 'none';
+
+    // Selon le mode de dévoilement
+    if (modeRevisionFlash === 'saisie') {
+        document.getElementById('masqueReponse').style.display = 'none';
+        document.getElementById('saisieFLashWrap').style.display = '';
+        document.getElementById('saisieFlash').value = '';
+        document.getElementById('feedbackSaisie').textContent = '';
+        setTimeout(() => document.getElementById('saisieFlash').focus(), 100);
+    } else {
+        const hint = modeRevisionFlash === 'lettres' ? 'Tap pour dévoiler lettre par lettre' : 'Tap pour révéler';
+        document.getElementById('masqueReponse').textContent = hint;
+    }
+
+    // Colorisation selon résultat précédent
+    const carte = document.getElementById('carteFlashcard');
+    carte.classList.remove('correcte','incorrecte','moyenne');
+
+    afficherResumeBoitesFlash();
+}
+
+function revelerCarteFlash() {
+    if (flashRevele) return;
+    const item = flashSession[flashIndex % flashSession.length];
+    const c = item.support.cartes[item.idx];
+
+    if (modeRevisionFlash === 'saisie') return; // géré par verifierSaisieFlash
+
+    if (modeRevisionFlash === 'lettres') {
+        const reponse = c.reponse || '';
+        lettresDecoilees++;
+        if (lettresDecoilees >= reponse.length) {
+            finirRevelationFlash();
+        } else {
+            document.getElementById('lettresFlash').style.display = '';
+            document.getElementById('masqueReponse').style.display = 'none';
+            document.getElementById('lettresFlash').textContent = reponse.slice(0, lettresDecoilees) + '_'.repeat(reponse.length - lettresDecoilees);
+        }
+        return;
+    }
+
+    // Mode révéler
+    finirRevelationFlash();
+}
+
+function finirRevelationFlash() {
+    flashRevele = true;
+    const item = flashSession[flashIndex % flashSession.length];
+    const c = item.support.cartes[item.idx];
+    const zoneRep = document.getElementById('zoneReponseFlash');
+    zoneRep.classList.add('revele');
+    document.getElementById('masqueReponse').style.display = 'none';
+    document.getElementById('lettresFlash').style.display = 'none';
+    document.getElementById('reponseFlash').style.display = 'flex';
+    document.getElementById('btnAudioReponse').style.display = 'inline-block';
+    if (c.exemple) document.getElementById('exempleFlash').style.display = '';
+    document.getElementById('btnsEvaluation').style.display = 'flex';
+}
+
+function verifierSaisieFlash() {
+    const saisie = document.getElementById('saisieFlash');
+    const item = flashSession[flashIndex % flashSession.length];
+    const c = item.support.cartes[item.idx];
+    const attendue = normaliserTexteComparaison(c.reponse || '');
+    const entree = normaliserTexteComparaison(saisie.value);
+    if (!entree) { document.getElementById('feedbackSaisie').textContent = ''; return; }
+    const dist = distanceLevenshtein(entree, attendue);
+    const seuil = attendue.length <= 4 ? 0 : attendue.length <= 8 ? 1 : 2;
+    const fb = document.getElementById('feedbackSaisie');
+    if (entree === attendue) {
+        fb.textContent = '✅ Exact !'; fb.className = 'feedback-saisie bon';
+        setTimeout(() => evaluerFlash('oui'), 700);
+    } else if (dist <= seuil) {
+        fb.textContent = '🟡 Presque ! (' + c.reponse + ')'; fb.className = 'feedback-saisie moyen';
+        setTimeout(() => evaluerFlash('moyen'), 900);
+    } else if (entree.length >= Math.max(3, attendue.length - 2)) {
+        fb.textContent = '❌ Réponse : ' + c.reponse; fb.className = 'feedback-saisie mauvais';
+    }
+}
+
+function changerModeRevision(mode) {
+    modeRevisionFlash = mode;
+    document.querySelectorAll('.btn-mode-rev').forEach(b => b.classList.toggle('actif', b.dataset.mode === mode));
+    afficherCarteFlash();
+}
+
+function toggleIndiceFlash() {
+    document.getElementById('carteFlashcard').classList.toggle('indice-ouvert');
+}
+
+function lireQuestionFlash() {
+    const btn = document.getElementById('btnAudioQuestion');
+    lireTexte(btn.dataset.question, btn.dataset.langue, btn.dataset.voix);
+}
+function lireReponseFlash() {
+    const btn = document.getElementById('btnAudioReponse');
+    lireTexte(btn.dataset.reponse, btn.dataset.langue, btn.dataset.voix);
+}
+
+function evaluerFlash(resultat) {
+    if (!flashRevele && modeRevisionFlash !== 'saisie') return;
+    const item = flashSession[flashIndex % flashSession.length];
+    const etat = item.support.etat[item.idx];
+    if (!etat) return;
+
+    // Sauvegarder indice personnel
+    etat.indicePerso = document.getElementById('indicePersoFlash').value;
+
+    // Calculer qualité SM-2
+    const bon = resultat === 'oui';
+    const moyen = resultat === 'moyen';
+    majEchecsConsecutifs(etat, bon);
+
+    if (modulesActifs.algo) {
+        // SM-2
+        let qualite = bon ? 5 : moyen ? 3 : 0;
+        appliquerSM2(etat, qualite);
+    } else {
+        // Leitner simple à 3 niveaux
+        if (!bon && !moyen) {
+            etat.box = 1;
+        } else if (moyen) {
+            etat.box = Math.min(3, etat.box + 1);
+        } else {
+            etat.box = Math.min(5, etat.box + 1);
+        }
+        etat.nextDue = addDays(todayStr(), INTERVALLES[etat.box - 1]);
+    }
+
+    sauvegarderSupports();
+
+    // Feedback visuel bref
+    const toast = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = bon ? '✅ Bien joué !' : moyen ? '〜 Presque !' : '❌ À revoir';
+    document.getElementById('toastScore').textContent = '';
+    toast.className = bon ? 'bonne show' : moyen ? 'moyenne show' : 'mauvaise show';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 900);
+
+    flashIndex++;
+    if (flashIndex >= flashSession.length) {
+        // Fin de session
+        flashIndex = 0;
+        afficherFinSessionFlash();
+    } else {
+        afficherCarteFlash();
+    }
+}
+
+function afficherFinSessionFlash() {
+    document.getElementById('barreProgressionFlash').style.width = '100%';
+    document.getElementById('compteurFlash').textContent = 'Session terminée !';
+    const carte = document.getElementById('carteFlashcard');
+    carte.innerHTML = `<div style="text-align:center;padding:30px 20px;">
+        <div style="font-size:40px;margin-bottom:12px;">🎉</div>
+        <div style="font-size:18px;font-weight:600;margin-bottom:8px;">Session terminée !</div>
+        <div style="font-size:14px;color:var(--gris-texte);margin-bottom:20px;">${flashSession.length} carte${flashSession.length > 1 ? 's' : ''} révisée${flashSession.length > 1 ? 's' : ''}</div>
+        <button class="bouton-principal" onclick="construireVueRevisionCarte(flashSession)" style="max-width:200px;margin:0 auto 10px;">🔄 Recommencer</button>
+        <br>
+        <button class="icon-btn" onclick="retourAccueil()">← Retour à l'accueil</button>
+    </div>`;
+    document.getElementById('btnsEvaluation').style.display = 'none';
+    document.getElementById('btnsModeDevoilement').style.display = 'none';
+    document.getElementById('controlesFlahs').style.display = 'none';
+    document.getElementById('resumeBoitesTexte').style.display = 'none';
+    afficherResumeBoitesFlash();
+}
+
+function afficherResumeBoitesFlash() {
+    if (!modulesActifs.algo || !supportActif) return;
+    const resume = document.getElementById('resumeBoitesTexte');
+    if (!resume) return;
+    // Calcul des boîtes pour le support actif
+    const counts = [0,0,0,0,0];
+    (supportActif.cartes || []).forEach((c, i) => {
+        const e = supportActif.etat[i];
+        if (e) counts[(e.box || 1) - 1]++;
+    });
+    const total = counts.reduce((a, b) => a + b, 0);
+    if (!total) { resume.innerHTML = ''; return; }
+    resume.innerHTML = '<div style="display:flex;gap:4px;justify-content:center;margin:8px 0;">'
+        + counts.map((n, i) => `<div style="text-align:center;padding:4px 8px;border-radius:8px;background:#fff;font-size:11px;box-shadow:0 1px 2px rgba(0,0,0,.08);">
+            <div style="font-size:14px;font-weight:700;color:${'#e74c3c #e67e22 #f39c12 #2ecc71 #16a085'.split(' ')[i]};">${n}</div>
+            <div style="color:var(--gris-texte);">B${i+1}</div>
+        </div>`).join('')
+        + '</div>';
+}
+
+function lancerSessionAujourdhui() {
+    const today = todayStr();
+    const paires = [];
+    supports.forEach(s => {
+        if (s.type !== 'texte') return;
+        const etat = s.etat || {};
+        (s.cartes || []).forEach((c, i) => {
+            if (!etat[i]) etat[i] = { box: 1, nextDue: today, indicePerso: '' };
+            if (etat[i].nextDue <= today) paires.push({ support: s, idx: i });
+        });
+    });
+    if (!paires.length) { alert("Aucune Flashcard à réviser aujourd'hui."); return; }
+    supportActif = null;
+    afficherVue('revisionCarte');
+    construireVueRevisionCarte(paires);
+}
+
+// Fermer exercices
+function quitterExerciceTexte() {
+    if (supportActif) {
+        afficherVue('revisionCarte');
+        construireVueRevisionCarte(supportActif.cartes.map((c, i) => ({ support: supportActif, idx: i })));
+    } else {
+        retourAccueil();
+    }
+}
+
 function migrerVersPagesEtType(liste) {
     let modifie = false;
     liste.forEach(s => {
@@ -2887,6 +3447,7 @@ async function traiterImportDepuisLien() {
     modulesActifs = await chargerModules();
     appliquerModules();
     objectifs = await chargerObjectifs();
+    etiquettesAgenda = await chargerEtiquettesAgenda();
     afficherAccueil();
     afficherBanniereEcranAccueilSiBesoin();
     await traiterImportDepuisLien();
