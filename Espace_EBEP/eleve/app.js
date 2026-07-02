@@ -1752,86 +1752,140 @@ function changerMode(mode) {
     sauvegarderSupports();
 }
 
-/* ---------------- Mode Texte : édition des cartes question/réponse ---------------- */
+/* ── Utilitaire : compression image ── */
+function compresserImageFichier(file, maxW, qualite, callback) {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+            let w = img.naturalWidth, h = img.naturalHeight;
+            if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            callback(canvas.toDataURL('image/jpeg', qualite));
+        };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+}
 
+/* ── Enregistrement audio par champ ── */
+let mediaRecorder = null;
+let audioChunks = [];
+let enregistrementEnCours = { idx: null, champ: null };
+
+function demarrerEnregistrement(idx, champ, btnEl) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("L'enregistrement audio n'est pas disponible sur cet appareil ou navigateur.");
+        return;
+    }
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        arreterEnregistrement();
+        return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        audioChunks = [];
+        const options = MediaRecorder.isTypeSupported('audio/mp4') ? { mimeType: 'audio/mp4' } :
+                        MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm' } : {};
+        mediaRecorder = new MediaRecorder(stream, options);
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+            stream.getTracks().forEach(t => t.stop());
+            const reader = new FileReader();
+            reader.onload = ev => {
+                const cle = champ + 'Audio'; // questionAudio, reponseAudio, exempleAudio, indiceAudio
+                supportActif.cartes[enregistrementEnCours.idx][cle] = ev.target.result;
+                sauvegarderSupports();
+                chargerEditionTexte();
+            };
+            reader.readAsDataURL(blob);
+        };
+        enregistrementEnCours = { idx, champ };
+        mediaRecorder.start();
+        if (btnEl) { btnEl.textContent = '⏹ Stop'; btnEl.classList.add('enregistrement'); }
+    }).catch(() => alert("Impossible d'accéder au microphone."));
+}
+
+function arreterEnregistrement() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+}
+
+function supprimerAudio(idx, champ) {
+    delete supportActif.cartes[idx][champ + 'Audio'];
+    sauvegarderSupports();
+    chargerEditionTexte();
+}
+
+/* ── Champ média (image + audio) ── */
+function htmlChampMedia(c, i, champ, labelTexte, placeholder) {
+    const cleImage = champ + 'Image';
+    const cleAudio = champ + 'Audio';
+    const hasImage = !!c[cleImage];
+    const hasAudio = !!c[cleAudio];
+    return `
+    <div class="champ-carte">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span class="label-modale" style="flex:1;">${labelTexte}</span>
+            <label class="btn-media" title="Image">
+                📷
+                <input type="file" accept="image/*" class="input-image-champ" data-idx="${i}" data-champ="${champ}" style="display:none;">
+            </label>
+            <button class="btn-media btn-audio-rec" data-idx="${i}" data-champ="${champ}" onclick="demarrerEnregistrement(${i},'${champ}',this)">🎙️</button>
+        </div>
+        <input type="text" class="champ-modale input-champ-texte" data-idx="${i}" data-champ="${champ}" value="${echapperHtml(c[champ] || '')}" placeholder="${placeholder}" style="margin-bottom:4px;">
+        ${hasImage ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <img src="${c[cleImage]}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;">
+            <button class="icon-btn danger" style="font-size:11px;" onclick="supprimerImageChamp(${i},'${champ}')">🗑 Image</button>
+        </div>` : ''}
+        ${hasAudio ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <audio src="${c[cleAudio]}" controls style="height:28px;flex:1;"></audio>
+            <button class="icon-btn danger" style="font-size:11px;" onclick="supprimerAudio(${i},'${champ}')">🗑</button>
+        </div>` : ''}
+    </div>`;
+}
+
+/* ── Édition des cartes ── */
 function chargerEditionTexte() {
     document.getElementById('titreHeader').textContent = supportActif.nom;
     const conteneur = document.getElementById('listeCartesTexte');
     document.getElementById('champLangueSupport').value = supportActif.langue || 'fr-FR';
-    const champStyle = document.getElementById('champStyleRevelation');
-    if (champStyle) champStyle.value = supportActif.styleRevelation || 'flou';
     remplirSelecteurVoix();
+
     if (supportActif.cartes.length === 0) {
         conteneur.innerHTML = '<div class="vide" style="padding:20px 10px;">Aucune carte pour l\'instant. Ajoute ta première question/réponse.</div>';
     } else {
         conteneur.innerHTML = supportActif.cartes.map((c, i) => `
             <div class="ligne-carte-texte">
                 <div class="champs-carte-empiles">
-                    <div class="champ-carte">
-                        <span class="label-modale">Question</span>
-                        <input type="text" class="champ-modale input-question" data-idx="${i}" value="${echapperHtml(c.question || '')}" placeholder="Ex : Capitale de l'Espagne">
-                    </div>
-                    <div class="champ-carte">
-                        <span class="label-modale">Réponse</span>
-                        <input type="text" class="champ-modale input-reponse" data-idx="${i}" value="${echapperHtml(c.reponse || '')}" placeholder="Ex : Madrid">
-                    </div>
-                    <div class="champ-carte">
-                        <span class="label-modale">Phrase d'exemple (facultatif)</span>
-                        <input type="text" class="champ-modale input-exemple" data-idx="${i}" value="${echapperHtml(c.exemple || '')}" placeholder="Ex : Madrid es la capital de España.">
-                    </div>
-                    <div class="champ-carte champ-image-carte">
-                        <span class="label-modale">Image (facultatif)</span>
-                        <div class="ligne-image-carte">
-                            ${c.image ? `<img src="${c.image}" class="miniature-carte">` : ''}
-                            <label class="icon-btn" style="background:var(--gris-fond); border-radius:8px;">📷 ${c.image ? 'Changer' : 'Ajouter'}
-                                <input type="file" accept="image/*" class="input-image-carte" data-idx="${i}" style="display:none;">
-                            </label>
-                            ${c.image ? `<button class="icon-btn danger" data-suppr-image="${i}">🗑</button>` : ''}
-                        </div>
-                    </div>
+                    ${htmlChampMedia(c, i, 'question', 'Question', "Ex : Capitale de l'Espagne")}
+                    ${htmlChampMedia(c, i, 'reponse', 'Réponse', 'Ex : Madrid')}
+                    ${htmlChampMedia(c, i, 'exemple', 'Phrase d\'exemple (facultatif)', 'Ex : Madrid es la capital de España.')}
+                    ${htmlChampMedia(c, i, 'indice', '💡 Indice prof (facultatif)', 'Ex : commence par M...')}
                 </div>
                 <button class="icon-btn danger" data-suppr-carte="${i}">🗑</button>
             </div>
         `).join('');
-        conteneur.querySelectorAll('.input-question').forEach(inp => inp.addEventListener('input', () => {
-            supportActif.cartes[parseInt(inp.dataset.idx, 10)].question = inp.value;
+
+        // Textes
+        conteneur.querySelectorAll('.input-champ-texte').forEach(inp => inp.addEventListener('input', () => {
+            supportActif.cartes[parseInt(inp.dataset.idx, 10)][inp.dataset.champ] = inp.value;
             sauvegarderSupports();
         }));
-        conteneur.querySelectorAll('.input-reponse').forEach(inp => inp.addEventListener('input', () => {
-            supportActif.cartes[parseInt(inp.dataset.idx, 10)].reponse = inp.value;
-            sauvegarderSupports();
-        }));
-        conteneur.querySelectorAll('.input-exemple').forEach(inp => inp.addEventListener('input', () => {
-            supportActif.cartes[parseInt(inp.dataset.idx, 10)].exemple = inp.value;
-            sauvegarderSupports();
-        }));
-        conteneur.querySelectorAll('.input-image-carte').forEach(inp => inp.addEventListener('change', (e) => {
+        // Images par champ
+        conteneur.querySelectorAll('.input-image-champ').forEach(inp => inp.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const idx = parseInt(inp.dataset.idx, 10);
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const img = new Image();
-                img.onload = () => {
-                    const maxW = 500;
-                    let w = img.naturalWidth, h = img.naturalHeight;
-                    if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
-                    const c = document.createElement('canvas');
-                    c.width = w; c.height = h;
-                    c.getContext('2d').drawImage(img, 0, 0, w, h);
-                    supportActif.cartes[idx].image = c.toDataURL('image/jpeg', 0.8);
-                    sauvegarderSupports();
-                    chargerEditionTexte();
-                };
-                img.src = ev.target.result;
-            };
-            reader.readAsDataURL(file);
+            const champ = inp.dataset.champ;
+            compresserImageFichier(file, 600, 0.82, dataUrl => {
+                supportActif.cartes[idx][champ + 'Image'] = dataUrl;
+                sauvegarderSupports();
+                chargerEditionTexte();
+            });
         }));
-        conteneur.querySelectorAll('[data-suppr-image]').forEach(btn => btn.addEventListener('click', () => {
-            supportActif.cartes[parseInt(btn.dataset.supprImage, 10)].image = '';
-            sauvegarderSupports();
-            chargerEditionTexte();
-        }));
+        // Suppression carte
         conteneur.querySelectorAll('[data-suppr-carte]').forEach(btn => btn.addEventListener('click', () => {
             supportActif.cartes.splice(parseInt(btn.dataset.supprCarte, 10), 1);
             sauvegarderSupports();
@@ -1839,6 +1893,12 @@ function chargerEditionTexte() {
         }));
     }
     definirTexte('compteurCartesTexte', supportActif.cartes.length + ' carte' + (supportActif.cartes.length === 1 ? '' : 's'));
+}
+
+function supprimerImageChamp(idx, champ) {
+    delete supportActif.cartes[idx][champ + 'Image'];
+    sauvegarderSupports();
+    chargerEditionTexte();
 }
 
 function remplirSelecteurVoix() {
@@ -2989,12 +3049,17 @@ function annulerEditionEtiquette() {
 /* -- Objectifs d'évaluation -- */
 function ouvrirModalObjectif() {
     document.getElementById('champTitreObjectif').value = '';
+    document.getElementById('champMatiereObjectif').value = '';
     document.getElementById('champDateObjectif').value = '';
+    document.getElementById('champJoursObjectif').value = '1, 3, 7, 14';
+    document.getElementById('apercuJoursObjectif').textContent = '';
     const liste = document.getElementById('listeSupportsObjectif');
-    liste.innerHTML = supports.map(s => `
+    liste.innerHTML = supports.length === 0
+        ? '<div style="font-size:12px;color:var(--gris-texte);">Aucun support disponible.</div>'
+        : supports.map(s => `
         <div class="case-support-objectif">
             <input type="checkbox" value="${s.id}" id="cb-${s.id}">
-            <label for="cb-${s.id}" style="cursor:pointer; font-size:13px;">${ICONES_MATIERES[s.matiere] || '📦'} ${echapperHtml(s.nom)}</label>
+            <label for="cb-${s.id}" style="cursor:pointer;font-size:13px;">${ICONES_MATIERES[s.matiere] || '📦'} ${echapperHtml(s.nom)}</label>
         </div>
     `).join('');
     document.getElementById('modalObjectif').classList.add('ouverte');
@@ -3002,14 +3067,33 @@ function ouvrirModalObjectif() {
 
 function fermerModalObjectif() { document.getElementById('modalObjectif').classList.remove('ouverte'); }
 
-function calculerJoursPlanning(dateEval, idsSupports) {
-    // Planification inversée : révisions espacées avant la date d'évaluation
-    // J-1, J-3, J-7, J-14 (si assez de temps), en filtrant le passé
+function parseJours(valeur) {
+    return valeur.split(',').map(v => parseInt(v.trim(), 10)).filter(n => !isNaN(n) && n > 0).sort((a, b) => b - a);
+}
+
+function majJoursPlanningSuggeres() {
+    const dateEval = document.getElementById('champDateObjectif').value;
+    const joursValeur = document.getElementById('champJoursObjectif').value;
+    const apercuEl = document.getElementById('apercuJoursObjectif');
+    if (!dateEval) { apercuEl.textContent = ''; return; }
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const evalDate = new Date(dateEval + 'T00:00:00');
-    const ecarts = [1, 3, 7, 14];
+    const MOIS = ['jan','fév','mars','avr','mai','juin','juil','août','sep','oct','nov','déc'];
+    const joursNbr = parseJours(joursValeur);
+    const dates = joursNbr.map(n => {
+        const d = new Date(evalDate);
+        d.setDate(d.getDate() - n);
+        return { n, d, valide: d > today };
+    });
+    if (!dates.length) { apercuEl.textContent = 'Aucun jour valide.'; return; }
+    apercuEl.textContent = 'Révisions le : ' + dates.filter(x => x.valide).map(x => x.d.getDate() + ' ' + MOIS[x.d.getMonth()]).join(', ') + (dates.some(x => !x.valide) ? ' (certaines dates sont passées)' : '');
+}
+
+function calculerJoursPlanning(dateEval, joursNbr) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const evalDate = new Date(dateEval + 'T00:00:00');
     const jours = [];
-    ecarts.forEach(n => {
+    joursNbr.forEach(n => {
         const d = new Date(evalDate);
         d.setDate(d.getDate() - n);
         if (d > today) jours.push(dateStr(d));
@@ -3022,13 +3106,18 @@ function validerObjectif() {
     const dateEval = document.getElementById('champDateObjectif').value;
     if (!titre) { alert('Donne un titre à cet objectif.'); return; }
     if (!dateEval) { alert('Choisis une date d\'évaluation.'); return; }
+    const matiere = document.getElementById('champMatiereObjectif').value;
+    const joursNbr = parseJours(document.getElementById('champJoursObjectif').value);
+    if (!joursNbr.length) { alert('Saisis au moins un nombre de jours (ex : 1, 3, 7).'); return; }
     const idsCoches = Array.from(document.querySelectorAll('#listeSupportsObjectif input:checked')).map(c => c.value);
-    const joursPlanning = calculerJoursPlanning(dateEval, idsCoches);
+    const joursPlanning = calculerJoursPlanning(dateEval, joursNbr);
     objectifs.push({
         id: genererId(),
         titre: titre,
+        matiere: matiere,
         dateEval: dateEval,
         supportIds: idsCoches,
+        joursNbr: joursNbr,
         joursPlanning: joursPlanning,
         creeLe: Date.now()
     });
@@ -3048,23 +3137,24 @@ function rendreObjectifs() {
     const liste = document.getElementById('listeObjectifs');
     if (!liste) return;
     if (objectifs.length === 0) {
-        liste.innerHTML = '<div style="font-size:13px; color:var(--gris-texte);">Aucun objectif pour l\'instant.</div>';
+        liste.innerHTML = '<div style="font-size:13px; color:var(--gris-texte);">Aucune évaluation pour l\'instant.</div>';
         return;
     }
     const MOIS = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
     liste.innerHTML = objectifs.map(obj => {
         const evalDate = new Date(obj.dateEval + 'T00:00:00');
-        const joursLabel = obj.joursPlanning.map(j => {
+        const joursLabel = (obj.joursPlanning || []).map(j => {
             const d = new Date(j + 'T00:00:00');
             return d.getDate() + ' ' + MOIS[d.getMonth()];
         }).join(', ');
+        const matiereLabel = obj.matiere ? (ICONES_MATIERES[obj.matiere] || '📦') + ' ' + obj.matiere : '';
         return `
         <div class="objectif-card">
             <div style="font-size:20px;">🎯</div>
             <div class="objectif-info">
-                <div class="titre">${echapperHtml(obj.titre)}</div>
+                <div class="titre">${echapperHtml(obj.titre)}${matiereLabel ? ' <span style="font-size:11px;font-weight:400;color:var(--gris-texte);">— ' + matiereLabel + '</span>' : ''}</div>
                 <div class="dates">Évaluation le ${evalDate.getDate()} ${MOIS[evalDate.getMonth()]} ${evalDate.getFullYear()}</div>
-                ${joursLabel ? '<div class="planning-tag">📚 Révisions planifiées : ' + joursLabel + '</div>' : ''}
+                ${joursLabel ? '<div class="planning-tag">📚 Révisions planifiées : ' + joursLabel + '</div>' : '<div style="font-size:11px;color:var(--gris-texte);">Aucune révision planifiée (dates passées ou non définies)</div>'}
             </div>
             <button class="icon-btn danger" onclick="supprimerObjectif('${obj.id}')">🗑</button>
         </div>`;
@@ -3131,15 +3221,34 @@ function afficherCarteFlash() {
     // Question
     document.getElementById('questionFlash').textContent = c.question || '';
 
-    // Image
-    const imgEl = document.getElementById('imageFlash');
-    if (c.image) { imgEl.src = c.image; imgEl.style.display = ''; }
-    else imgEl.style.display = 'none';
+    // Image question (dans la zone question)
+    let imgQEl = document.getElementById('imageQuestionFlash');
+    if (!imgQEl) {
+        imgQEl = document.createElement('img');
+        imgQEl.id = 'imageQuestionFlash';
+        imgQEl.className = 'image-flash';
+        document.getElementById('questionFlash').after(imgQEl);
+    }
+    if (c.questionImage) { imgQEl.src = c.questionImage; imgQEl.style.display = ''; }
+    else imgQEl.style.display = 'none';
 
     // Audio question
-    document.getElementById('btnAudioQuestion').dataset.question = c.question || '';
-    document.getElementById('btnAudioQuestion').dataset.langue = langue;
-    document.getElementById('btnAudioQuestion').dataset.voix = support.voixNom || '';
+    const btnAQ = document.getElementById('btnAudioQuestion');
+    if (c.questionAudio) {
+        btnAQ.dataset.audioSrc = c.questionAudio;
+        btnAQ.onclick = () => jouerAudioFlash(c.questionAudio);
+    } else {
+        delete btnAQ.dataset.audioSrc;
+        btnAQ.onclick = lireQuestionFlash;
+    }
+    btnAQ.dataset.question = c.question || '';
+    btnAQ.dataset.langue = langue;
+    btnAQ.dataset.voix = support.voixNom || '';
+
+    // Image carte globale (compatibilité anciens supports)
+    const imgEl = document.getElementById('imageFlash');
+    if (c.image && !c.questionImage) { imgEl.src = c.image; imgEl.style.display = ''; }
+    else imgEl.style.display = 'none';
 
     // Réponse : réinitialiser la zone
     const zoneRep = document.getElementById('zoneReponseFlash');
@@ -3151,13 +3260,64 @@ function afficherCarteFlash() {
     document.getElementById('exempleFlash').style.display = 'none';
     document.getElementById('btnAudioReponse').style.display = 'none';
     document.getElementById('texteReponseFlash').textContent = c.reponse || '';
-    document.getElementById('exempleFlash').textContent = c.exemple ? '« ' + c.exemple + ' »' : '';
-    document.getElementById('btnAudioReponse').dataset.reponse = c.reponse || '';
-    document.getElementById('btnAudioReponse').dataset.langue = langue;
-    document.getElementById('btnAudioReponse').dataset.voix = support.voixNom || '';
 
-    // Indice
-    document.getElementById('indiceProfFlash').textContent = c.indice ? '👩‍🏫 ' + c.indice : '';
+    // Image réponse
+    let imgRepEl = document.getElementById('imageReponseFlash');
+    if (!imgRepEl) {
+        imgRepEl = document.createElement('img');
+        imgRepEl.id = 'imageReponseFlash';
+        imgRepEl.className = 'image-flash';
+        document.getElementById('reponseFlash').after(imgRepEl);
+    }
+    if (c.reponseImage) { imgRepEl.src = c.reponseImage; }
+    imgRepEl.style.display = 'none'; // cachée jusqu'à révélation
+
+    // Exemple + image exemple
+    document.getElementById('exempleFlash').textContent = c.exemple ? '« ' + c.exemple + ' »' : '';
+    let imgExEl = document.getElementById('imageExempleFlash');
+    if (!imgExEl) {
+        imgExEl = document.createElement('img');
+        imgExEl.id = 'imageExempleFlash';
+        imgExEl.className = 'image-flash';
+        document.getElementById('exempleFlash').after(imgExEl);
+    }
+    if (c.exempleImage) { imgExEl.src = c.exempleImage; }
+    imgExEl.style.display = 'none';
+
+    // Audio réponse
+    const btnAR = document.getElementById('btnAudioReponse');
+    if (c.reponseAudio) {
+        btnAR.dataset.audioSrc = c.reponseAudio;
+        btnAR.onclick = () => jouerAudioFlash(c.reponseAudio);
+    } else {
+        delete btnAR.dataset.audioSrc;
+        btnAR.onclick = lireReponseFlash;
+    }
+    btnAR.dataset.reponse = c.reponse || '';
+    btnAR.dataset.langue = langue;
+    btnAR.dataset.voix = support.voixNom || '';
+
+    // Indice prof (avec image et audio éventuels)
+    const indiceProf = document.getElementById('indiceProfFlash');
+    indiceProf.innerHTML = '';
+    if (c.indice) {
+        const texteIndice = document.createElement('div');
+        texteIndice.textContent = '👩‍🏫 ' + c.indice;
+        indiceProf.appendChild(texteIndice);
+    }
+    if (c.indiceImage) {
+        const imgInd = document.createElement('img');
+        imgInd.src = c.indiceImage;
+        imgInd.className = 'image-flash';
+        indiceProf.appendChild(imgInd);
+    }
+    if (c.indiceAudio) {
+        const audioInd = document.createElement('audio');
+        audioInd.src = c.indiceAudio;
+        audioInd.controls = true;
+        audioInd.style.cssText = 'height:28px;width:100%;margin-top:4px;';
+        indiceProf.appendChild(audioInd);
+    }
     document.getElementById('indicePersoFlash').value = etat ? (etat.indicePerso || '') : '';
     document.getElementById('carteFlashcard').classList.remove('indice-ouvert');
 
@@ -3207,6 +3367,11 @@ function revelerCarteFlash() {
     finirRevelationFlash();
 }
 
+function jouerAudioFlash(src) {
+    const audio = new Audio(src);
+    audio.play().catch(() => {});
+}
+
 function finirRevelationFlash() {
     flashRevele = true;
     const item = flashSession[flashIndex % flashSession.length];
@@ -3217,7 +3382,17 @@ function finirRevelationFlash() {
     document.getElementById('lettresFlash').style.display = 'none';
     document.getElementById('reponseFlash').style.display = 'flex';
     document.getElementById('btnAudioReponse').style.display = 'inline-block';
-    if (c.exemple) document.getElementById('exempleFlash').style.display = '';
+    // Afficher image réponse si elle existe
+    const imgRep = document.getElementById('imageReponseFlash');
+    if (imgRep && c.reponseImage) imgRep.style.display = '';
+    // Afficher exemple + image exemple
+    if (c.exemple) {
+        document.getElementById('exempleFlash').style.display = '';
+        const imgEx = document.getElementById('imageExempleFlash');
+        if (imgEx && c.exempleImage) imgEx.style.display = '';
+    }
+    // Lecture automatique audio réponse si enregistrement (pas TTS) — optionnelle
+    if (c.reponseAudio) jouerAudioFlash(c.reponseAudio);
     document.getElementById('btnsEvaluation').style.display = 'flex';
 }
 
