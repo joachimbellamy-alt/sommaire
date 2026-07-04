@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#007AFF">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mes révisions">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Mes révisions</title>
+<style>
+/* ── Police DYS ── */
+@font-face {
+    font-family:'OpenDyslexic'; font-style:normal; font-weight:400; font-display:swap;
+    src:url(https://cdn.jsdelivr.net/fontsource/fonts/opendyslexic@latest/latin-400-normal.woff2) format('woff2'),
+        url(https://cdn.jsdelivr.net/fontsource/fonts/opendyslexic@latest/latin-400-normal.woff) format('woff');
+}
+/* ── Tokens ── */
+:root {
+    --bleu:#007AFF; --gris-fond:#f2f2f7; --gris-texte:#8e8e93; --rouge:#FF3B30;
+    --vert:#34C759; --jaune:#FF9500; --texte:#1c1c1e; --tab-h:58px;
+}
+/* ── Reset ── */
+*{box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0;background:var(--gris-fond);color:var(--texte);padding-bottom:calc(var(--tab-h) + env(safe-area-inset-bottom));}
+
+/* ── Mode DYS ── */
+body.mode-dys .carte-flashcard,body.mode-dys .question-flash,body.mode-dys .reponse-flash,
+body.mode-dys .indice-prof,body.mode-dys .indice-perso-input,body.mode-dys .champ-modale{
+    font-family:var(--police-dys,inherit);font-size:var(--taille-dys,1em);
+    letter-spacing:var(--espacement-lettres-dys,normal);line-height:var(--espacement-lignes-dys,normal);
+}
+.panneau-dys-apercu{font-size:var(--taille-dys,1em);letter-spacing:var(--espacement-lettres-dys,normal);line-height:var(--espacement-lignes-dys,normal);background:var(--gris-fond);border-radius:14px;padding:14px;margin-top:10px;text-align:left;}
+.ligne-reglage-dys{margin-bottom:16px;text-align:left;}
+.ligne-reglage-dys .valeur-reglage{font-size:12px;color:var(--gris-texte);float:right;}
+.ligne-reglage-dys input[type=range]{width:100%;}
+
+/* ── Header ── */
+header{background:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:0.5px solid #e3e3e8;position:sticky;top:0;z-index:50;}
+header h1{font-size:17px;font-weight:600;margin:0;flex:1;text-align:center;}
+.hbtn{background:none;border:none;color:var(--bleu);font-size:14px;cursor:pointer;padding:4px 6px;white-space:nowrap;font-family:inherit;font-weight:500;}
+.hbtn-aa{background:var(--gris-fond);border-radius:8px;font-size:13px;font-weight:700;color:var(--gris-texte);padding:5px 9px;}
+
+/* ── Bannière ── */
+#banniereAjoutEcran{display:none;align-items:center;gap:10px;background:#fff3cd;color:#664d03;padding:10px 14px;font-size:13px;line-height:1.4;border-bottom:1px solid #ffe69c;}
+.banniere-icone{font-size:18px;flex-shrink:0;}
+.banniere-texte{flex:1;}
+.banniere-fermer{background:none;border:none;color:#664d03;font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;}
+
+/* ── Main ── */
+main{padding:14px 16px;max-width:800px;margin:0 auto;}
+
+/* ── Tab bar ── */
+.tab-bar{position:fixed;bottom:0;left:0;right:0;height:calc(var(--tab-h) + env(safe-area-inset-bottom));background:#fff;border-top:0.5px solid #e3e3e8;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;cursor:pointer;padding:6px 0;}
+.tab-item .ti{font-size:22px;color:var(--gris-texte);}
+.tab-item .tab-label{font-size:10px;color:var(--gris-texte);font-weight:500;}
+.tab-item.actif .ti,.tab-item.actif .tab-label{color:var(--bleu);}
+
+/* ── Composants communs ── */
+.bouton-principal{display:block;width:100%;background:var(--bleu);color:#fff;border:none;padding:13px;border-radius:999px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;}
+.bouton-principal:hover{background:#0066d6;}
+.icon-btn{display:inline-flex;align-items:center;gap:5px;background:transparent;border:none;padding:7px 11px;font-size:13px;color:var(--bleu);cursor:pointer;white-space:nowrap;font-family:inherit;}
+.icon-btn:hover{background:var(--gris-fond);}
+.icon-btn.primary{color:#fff;background:var(--bleu);font-weight:600;border-radius:999px;padding:9px 18px;}
+.icon-btn.danger{color:var(--rouge);}
+.icon-btn.accent{color:#8a6d00;background:#fff8e1;border-radius:999px;}
+.icon-btn:disabled{opacity:.3;cursor:default;}
+.vide{text-align:center;color:var(--gris-texte);padding:40px 20px;font-size:14px;}
+.champ-modale{display:block;width:100%;padding:10px;margin:4px 0 14px;border:1px solid #ccc;border-radius:8px;font-size:15px;font-family:inherit;background:#fff;}
+.label-modale{font-size:13px;font-weight:600;color:#555;}
+.modale-fond{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;align-items:center;justify-content:center;}
+.modale-fond.ouverte{display:flex;}
+.modale-boite{background:#fff;border-radius:14px;padding:20px;max-width:90vw;max-height:80vh;overflow:auto;width:420px;}
+.modale-boite h3{margin-top:0;}
+.btn-modal{font-family:inherit;font-size:14px;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;margin-left:6px;}
+.btn-modal.annuler{background:var(--gris-fond);color:var(--texte);}
+.btn-modal.enregistrer{background:var(--bleu);color:#fff;font-weight:600;}
+.segment-group{display:flex;align-items:center;background:#fff;border-radius:999px;box-shadow:0 1px 2px rgba(0,0,0,0.06);border:1px solid #e3e3e8;overflow:hidden;}
+.zoom-val{font-size:12px;color:var(--gris-texte);padding:0 2px;min-width:38px;text-align:center;}
+.zoom-slider{-webkit-appearance:none;appearance:none;width:180px;height:4px;border-radius:2px;background:#d1d1d6;margin:0 4px;outline:none;}
+.zoom-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid #d1d1d6;box-shadow:0 1px 3px rgba(0,0,0,0.25);cursor:pointer;}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px;}
+.section-titre{font-size:11px;font-weight:700;color:var(--gris-texte);text-transform:uppercase;letter-spacing:0.5px;}
+.btn-plus-section{background:var(--bleu);border:none;border-radius:999px;color:#fff;font-size:16px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1;flex-shrink:0;}
+
+/* ── Gélules de modules ── */
+.modules-gelules{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.gelule-module{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;border:2px solid #e3e3e8;background:#fff;font-size:13px;font-weight:600;color:var(--gris-texte);cursor:pointer;transition:all 0.2s ease;font-family:inherit;}
+.gelule-module.actif{background:var(--bleu);border-color:var(--bleu);color:#fff;}
+
+/* ── Accueil : bloc Aujourd'hui ── */
+#blocAujourdhui{background:var(--bleu);border-radius:18px;padding:16px;margin-bottom:16px;position:relative;overflow:hidden;}
+#blocAujourdhui .streak{float:right;text-align:center;background:rgba(255,255,255,0.2);border-radius:12px;padding:6px 10px;}
+#blocAujourdhui .streak-feu{font-size:22px;line-height:1;}
+#blocAujourdhui .streak-jours{font-size:10px;color:rgba(255,255,255,0.9);}
+#blocAujourdhui .aj-titre{font-size:11px;font-weight:600;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+#blocAujourdhui .aj-nombre{font-size:32px;font-weight:700;color:#fff;line-height:1;}
+#blocAujourdhui .aj-sous{font-size:12px;color:rgba(255,255,255,0.85);margin:4px 0 12px;}
+#blocAujourdhui .btn-commencer{background:#fff;color:var(--bleu);border:none;border-radius:999px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer;}
+
+/* ── Accueil : cartes supports ── */
+.titre-matiere{font-size:11px;font-weight:700;color:var(--gris-texte);text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 6px;}
+.titre-matiere:first-child{margin-top:4px;}
+.carte-support{background:#fff;border-radius:14px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,0.06);}
+.carte-support img{width:50px;height:50px;object-fit:cover;border-radius:10px;flex-shrink:0;background:#eee;}
+.carte-support .icone-type{width:50px;height:50px;border-radius:10px;flex-shrink:0;background:var(--gris-fond);display:flex;align-items:center;justify-content:center;font-size:22px;}
+.carte-support .infos{flex:1;min-width:0;}
+.carte-support .nom{font-weight:600;font-size:14px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.carte-support .barre-progression{height:4px;border-radius:2px;background:var(--gris-fond);overflow:hidden;margin:4px 0 2px;}
+.carte-support .barre-remplie{height:100%;width:0%;background:var(--vert);border-radius:2px;transition:width 0.3s ease;}
+.carte-support .meta{font-size:11px;color:var(--gris-texte);}
+.carte-support .chevron{color:#c7c7cc;font-size:18px;}
+
+/* ── Barre d'outils édition image ── */
+.toolbar-ios{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center;}
+.forme-btn.actif{background:var(--bleu);color:#fff;}
+#zoneCanvas{position:relative;display:inline-block;cursor:crosshair;border:1px solid #ccc;background:#fff;user-select:none;touch-action:none;overflow:visible;}
+    .wrapper-canvas{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+#zoneCanvas img{display:block;pointer-events:none;user-select:none;-webkit-user-drag:none;}
+.rect{position:absolute;border:2px solid #3498db;background:rgba(52,152,219,0.2);pointer-events:none;}
+.rect-label{position:absolute;top:-9px;left:-9px;background:#3498db;color:#fff;font-size:11px;font-weight:bold;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer;z-index:5;box-shadow:0 1px 3px rgba(0,0,0,0.4);}
+.rect-label.a-un-indice::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:var(--jaune);border:1px solid #fff;}
+.bulle-indice-edition{position:fixed;z-index:3000;background:#fff;border-radius:12px;padding:12px;box-shadow:0 6px 24px rgba(0,0,0,0.3);width:240px;}
+.bulle-indice-edition .titre{font-size:12px;font-weight:700;color:#555;margin-bottom:6px;}
+.bulle-indice-edition input{width:100%;padding:8px;box-sizing:border-box;border:1px solid #ccc;border-radius:7px;font-size:14px;font-family:inherit;}
+.bulle-indice-edition .actions{display:flex;justify-content:flex-end;gap:6px;margin-top:8px;}
+#infoEdition{color:var(--gris-texte);font-size:12px;margin-bottom:10px;}
+#infoEdition strong{color:var(--texte);}
+
+/* ── Recadrage ── */
+#canvasRecadrage{position:relative;display:inline-block;border:1px solid #ccc;background:#000;user-select:none;touch-action:none;max-width:95vw;line-height:0;overflow:hidden;}
+#canvasRecadrage img{display:block;max-width:90vw;max-height:65vh;pointer-events:none;user-select:none;-webkit-user-drag:none;}
+.rect-crop{position:absolute;border:2px dashed #fff;background:rgba(0,122,255,0.25);pointer-events:none;box-shadow:0 0 0 2000px rgba(0,0,0,0.45);}
+.controles-recadrage{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px;}
+#infoRecadrage{color:var(--gris-texte);font-size:13px;margin-bottom:10px;}
+
+/* ── Révision image (zones) ── */
+.controles-revision{margin-bottom:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+#resumeBoites{margin-bottom:14px;}
+.boites-titre{font-size:14px;color:#555;margin-bottom:8px;font-weight:bold;text-align:center;}
+.boites-rangee{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;}
+.boite-card{width:64px;padding:8px 4px;border-radius:14px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.15);position:relative;border-top:4px solid #ccc;}
+.boite-card-1{border-top-color:#e74c3c;}.boite-card-2{border-top-color:#e67e22;}.boite-card-3{border-top-color:#f39c12;}.boite-card-4{border-top-color:#2ecc71;}.boite-card-5{border-top-color:#16a085;}
+.boite-num{font-size:11px;color:#999;font-weight:bold;}.boite-count{font-size:22px;font-weight:bold;color:#333;line-height:1.1;}.boite-label{font-size:10px;color:#777;margin-top:2px;}
+.boite-flag{position:absolute;top:-10px;right:-6px;background:#e74c3c;color:#fff;font-size:9px;padding:2px 5px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.3);white-space:nowrap;}
+.due-card{box-shadow:0 0 0 3px rgba(231,76,60,.45),0 1px 4px rgba(0,0,0,.15);}
+.boite-fleche{font-size:16px;color:#bbb;}.boites-legende{margin-top:6px;font-size:11px;color:#999;text-align:center;}.boites-resume-txt{margin-top:8px;font-size:13px;color:#555;text-align:center;}
+#compteurRevision{margin-bottom:6px;font-size:17px;color:#444;font-weight:bold;text-align:center;}
+#instructionsRevision{margin-bottom:16px;font-size:13px;color:#777;text-align:center;}
+#conteneurImage{position:relative;display:inline-block;max-width:100%;text-align:center;}
+#conteneurImage img{display:block;max-width:100%;}
+.masque{position:absolute;cursor:pointer;transition:opacity .25s ease;-webkit-tap-highlight-color:transparent;}
+.masque .fond{position:absolute;inset:0;background:#fff;border:2px solid rgba(0,122,255,0.4);pointer-events:none;transition:background .25s,border-color .25s;}
+.masque:not(.due):not(.revele){opacity:.45;}
+body.force-mode-simple-global .masque:not(.due):not(.revele){opacity:1;}
+.masque.revele .fond{background:transparent;border-color:transparent;}
+.masque.revele{opacity:1;}
+body.filtre-actif .masque:not(.due){display:none;}
+.masque .boite-niveau{position:absolute;top:-9px;left:-9px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;color:#fff;z-index:6;box-shadow:0 1px 3px rgba(0,0,0,.4);pointer-events:none;}
+.niveau-1{background:#e74c3c;}.niveau-2{background:#e67e22;}.niveau-3{background:#f39c12;}.niveau-4{background:#2ecc71;}.niveau-5{background:#16a085;}
+.masque .declare{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);display:none;gap:6px;background:#fff;padding:5px 7px;border-radius:20px;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:10;white-space:nowrap;}
+.masque .declare.dessous{bottom:auto;top:calc(100% + 8px);}
+.masque.revele:not(.correcte):not(.incorrecte):not(.moyenne) .declare{display:flex;}
+.masque .declare button{width:32px;height:32px;border-radius:50%;border:none;font-size:16px;cursor:pointer;padding:0;line-height:32px;}
+.btn-ok{background:#2ecc71;color:#fff;}.btn-moyen{background:#f39c12;color:#fff;}.btn-non{background:#e74c3c;color:#fff;}
+.masque.correcte .fond{border-color:#2ecc71;box-shadow:0 0 0 2px rgba(46,204,113,.6) inset;}
+.masque.incorrecte .fond{border-color:#e74c3c;box-shadow:0 0 0 2px rgba(231,76,60,.6) inset;}
+.masque.moyenne .fond{border-color:#f39c12;box-shadow:0 0 0 2px rgba(243,156,18,.6) inset;}
+.masque .indice-btn{position:absolute;top:-9px;right:-9px;width:22px;height:22px;border-radius:50%;background:var(--jaune);display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;z-index:7;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+.masque.revele .indice-btn,.masque.revele .indice-panel{display:none;}
+.masque .indice-panel{display:none;position:absolute;bottom:calc(100% + 8px);left:0;min-width:170px;max-width:240px;background:#fff8e1;border:1px solid var(--jaune);border-radius:8px;padding:8px 10px;box-shadow:0 2px 8px rgba(0,0,0,.25);z-index:9;text-align:left;}
+.masque .indice-panel.dessous{bottom:auto;top:calc(100% + 8px);}
+.masque.indice-actif .indice-panel{display:block;}
+.indice-prof{font-size:12px;color:#7a5c00;margin-bottom:6px;line-height:1.3;}
+.indice-perso-input{width:100%;box-sizing:border-box;padding:6px 7px;font-size:12px;border:1px solid #ddd;border-radius:5px;}
+.indice-perso-label{font-size:10px;color:#999;margin-bottom:2px;display:block;}
+.masque.difficile .fond{box-shadow:0 0 0 2px #e74c3c;}
+
+/* ── Révision Flashcards : une carte à la fois ── */
+#vueRevisionCarte{display:flex;flex-direction:column;min-height:calc(100vh - 120px - var(--tab-h));}
+.barre-progression-flash{height:4px;background:var(--gris-fond);border-radius:2px;overflow:hidden;margin-bottom:10px;flex-shrink:0;}
+.barre-progression-fill{height:100%;background:var(--bleu);border-radius:2px;transition:width .3s;}
+.compteur-flash{text-align:center;font-size:12px;color:var(--gris-texte);margin-bottom:10px;flex-shrink:0;}
+.carte-flashcard{flex:1;background:#fff;border-radius:18px;padding:20px;display:flex;flex-direction:column;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:12px;min-height:300px;}
+.carte-flashcard-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.badge-matiere-flash{font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;}
+.etiquette-support-melange{font-size:11px;color:var(--bleu);font-weight:600;}
+.btn-audio-flash{background:none;border:none;font-size:18px;cursor:pointer;padding:4px;color:var(--bleu);}
+.question-flash{font-size:18px;font-weight:600;color:var(--texte);text-align:center;flex:1;display:flex;align-items:center;justify-content:center;padding:10px 0;line-height:1.4;}
+.image-flash{max-width:100%;max-height:140px;object-fit:contain;border-radius:10px;display:block;margin:10px auto;}
+.separateur-flash{height:1px;background:var(--gris-fond);margin:10px 0;flex-shrink:0;}
+/* Zone réponse : masque opaque avant révélation */
+.zone-reponse-flash{border-radius:12px;padding:14px;background:var(--gris-fond);position:relative;min-height:60px;display:flex;flex-direction:column;gap:6px;}
+.masque-reponse{position:absolute;inset:0;background:#e3e3e8;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--gris-texte);cursor:pointer;user-select:none;font-weight:500;}
+.zone-reponse-flash.revele .masque-reponse{display:none;}
+.reponse-flash{font-size:16px;color:var(--texte);font-weight:500;display:flex;align-items:center;gap:8px;}
+.exemple-flash{font-size:13px;font-style:italic;color:var(--gris-texte);}
+.lettres-flash{font-size:18px;font-weight:600;color:var(--texte);text-align:center;letter-spacing:3px;font-family:monospace;}
+/* Mode saisie */
+.saisie-flash{width:100%;padding:10px;border:1.5px solid #ccc;border-radius:8px;font-size:16px;font-family:inherit;text-align:center;}
+.saisie-flash:focus{border-color:var(--bleu);outline:none;}
+.feedback-saisie{text-align:center;font-size:14px;font-weight:600;padding:6px 0;}
+.feedback-saisie.bon{color:#2ecc71;}.feedback-saisie.moyen{color:#f39c12;}.feedback-saisie.mauvais{color:#e74c3c;}
+/* Indices sur la carte */
+.bloc-indice-flash{background:#fff8e1;border:1px solid #f39c12;border-radius:10px;padding:10px;margin-top:6px;display:none;}
+.carte-flashcard.indice-ouvert .bloc-indice-flash{display:block;}
+.btn-indice-flash{background:none;border:1px solid var(--jaune);border-radius:999px;color:#7a5c00;font-size:11px;padding:4px 10px;cursor:pointer;align-self:flex-end;}
+/* Boutons d'évaluation */
+.btns-evaluation{display:flex;gap:8px;flex-shrink:0;}
+.btns-evaluation .hidden{display:none;}
+.btn-eval{flex:1;padding:12px 6px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+.btn-eval-non{background:#fde9e7;color:#e74c3c;}
+.btn-eval-moyen{background:#fff3e0;color:#e67e22;}
+.btn-eval-oui{background:#e8faf0;color:#2ecc71;}
+.btns-mode-devoilement{display:flex;gap:6px;margin-bottom:10px;justify-content:center;flex-shrink:0;}
+.btn-mode-rev{padding:6px 12px;border-radius:999px;border:1.5px solid #e3e3e8;background:#fff;font-size:12px;font-weight:600;color:var(--gris-texte);cursor:pointer;font-family:inherit;}
+.btn-mode-rev.actif{background:var(--bleu);border-color:var(--bleu);color:#fff;}
+/* Indices, boites en mode pro */
+body.force-mode-simple-global #segmente,body.force-mode-simple-global #segmenteTexte,
+body.force-mode-simple-global #resumeBoites,body.force-mode-simple-global #resumeBoitesTexte,
+body.force-mode-simple-global #btnFiltre,body.force-mode-simple-global #btnFiltreTexte,
+body.force-mode-simple-global .boite-niveau,.force-mode-simple-global .boite-card{display:none!important;}
+body.force-mode-simple-global .btns-mode-devoilement{display:none!important;}
+
+/* ── Édition Flashcards ── */
+.config-support{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.06);}
+.config-support-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.ligne-carte-texte{background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.06);}
+.carte-edit-compacte{background:#fff;border-radius:12px;padding:10px 14px;margin-bottom:6px;box-shadow:0 1px 2px rgba(0,0,0,.06);cursor:pointer;}
+.carte-edit-compacte .cq{font-size:13px;font-weight:600;color:var(--texte);}
+.carte-edit-compacte .cr{font-size:12px;color:var(--gris-texte);margin-top:2px;}
+.champ-carte-label{font-size:10px;font-weight:700;color:var(--gris-texte);text-transform:uppercase;letter-spacing:0.4px;margin:8px 0 4px;}
+.champ-carte-input{width:100%;padding:9px;border:1px solid #e3e3e8;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;}
+.champ-carte-input:focus{border-color:var(--bleu);outline:none;}
+.ligne-image-carte{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.miniature-carte{width:44px;height:44px;object-fit:cover;border-radius:8px;background:var(--gris-fond);}
+.image-carte-revision{max-width:100%;max-height:160px;border-radius:14px;margin:10px auto;display:block;}
+.barre-actions-edition{display:flex;gap:6px;padding:8px 0 0;justify-content:flex-end;}
+    .btn-media{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;border:0.5px solid #e3e3e8;background:#fff;font-size:14px;cursor:pointer;flex-shrink:0;font-family:inherit;}
+    .btn-media:hover{background:var(--gris-fond);}
+    .btn-audio-rec.enregistrement{background:#fde9e7;animation:pulse-rec 1s ease infinite;}
+    @keyframes pulse-rec{0%,100%{opacity:1;}50%{opacity:0.5;}}
+
+/* ── Mode QCM / Écrire ── */
+.carte-exercice{background:#fff;border-radius:14px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.choix-qcm{background:var(--gris-fond);border:none;border-radius:999px;padding:12px;font-size:14px;cursor:pointer;text-align:left;width:100%;}
+.choix-qcm:hover:not(:disabled){background:#e5e5ea;}
+.choix-qcm:disabled{cursor:default;}
+.choix-correct{background:#d7f5e0!important;font-weight:600;}
+.choix-incorrect{background:#fbd9d6!important;}
+#zoneImpressionTexte{display:none;}
+@media print{
+    body.impression-active>*:not(#zoneImpressionTexte){display:none!important;}
+    body.impression-active #zoneImpressionTexte{display:block!important;}
+    .ligne-impression{display:flex;gap:24px;border-bottom:1px solid #ccc;padding:12px 0;page-break-inside:avoid;}
+    .case-impression{flex:1;font-size:13px;}
+    .case-impression img{max-width:140px;max-height:100px;}
+}
+
+/* ── Agenda ── */
+.agenda-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.agenda-periode{font-size:16px;font-weight:700;color:var(--texte);}
+.agenda-vue-pills{display:flex;gap:4px;}
+.pill-vue{padding:5px 12px;border-radius:999px;border:1.5px solid #e3e3e8;background:#fff;font-size:12px;font-weight:600;color:var(--gris-texte);cursor:pointer;font-family:inherit;}
+.pill-vue.actif{background:var(--bleu);border-color:var(--bleu);color:#fff;}
+.agenda-jours-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px;}
+.agenda-jour-label{font-size:10px;font-weight:700;color:var(--gris-texte);text-align:center;padding:2px 0;text-transform:uppercase;}
+.agenda-grille{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px;}
+.agenda-jour-cell{background:#fff;border-radius:10px;padding:5px 3px;min-height:80px;cursor:pointer;border:1.5px solid transparent;display:flex;flex-direction:column;}
+.agenda-jour-cell:hover{border-color:#c0c0c8;}
+.agenda-jour-cell.aujourd-hui{border-color:var(--bleu);}
+.agenda-jour-cell.selectionne{background:#eaf4ff;border-color:var(--bleu);}
+.agenda-jour-cell.hors-mois{opacity:.35;}
+.agenda-num-jour{font-size:12px;font-weight:600;text-align:center;margin-bottom:3px;color:var(--texte);}
+.agenda-num-jour.ajd{background:var(--bleu);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 3px;font-size:11px;}
+/* Étiquette texte dans la case */
+.agenda-etiq{display:flex;align-items:center;gap:2px;background:var(--gris-fond);border-radius:5px;padding:2px 4px;margin-bottom:2px;}
+.agenda-etiq-puce{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.agenda-etiq-badge{font-size:8px;font-weight:600;padding:1px 4px;border-radius:999px;white-space:nowrap;flex-shrink:0;}
+.agenda-etiq-txt{font-size:8px;color:var(--gris-texte);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.agenda-etiq.faite .agenda-etiq-txt,.agenda-etiq.faite .agenda-etiq-badge{text-decoration:line-through;opacity:.5;}
+/* Panneau détail du jour */
+.agenda-detail-panel{background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.agenda-detail-date{font-size:14px;font-weight:700;color:var(--texte);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.btn-agenda-ajout{background:none;border:1px dashed #c0c0c8;border-radius:999px;color:var(--bleu);font-size:12px;padding:4px 12px;cursor:pointer;font-family:inherit;}
+.agenda-detail-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--gris-fond);}
+.agenda-detail-item:last-child{border-bottom:none;}
+.agenda-check{width:18px;height:18px;border-radius:5px;border:1.5px solid #c0c0c8;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#fff;}
+.agenda-check.fait{background:var(--vert);border-color:var(--vert);color:#fff;font-size:11px;}
+.agenda-detail-badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;flex-shrink:0;}
+.agenda-detail-txt{font-size:13px;color:var(--texte);flex:1;}
+.agenda-detail-txt.faite{text-decoration:line-through;color:var(--gris-texte);}
+.agenda-detail-edit{color:var(--bleu);font-size:12px;cursor:pointer;background:none;border:none;padding:2px 6px;flex-shrink:0;}
+/* Édition inline dans le panneau */
+.agenda-edit-wrap{background:var(--gris-fond);border-radius:8px;padding:8px;margin-bottom:6px;}
+.agenda-edit-wrap input{width:100%;border:none;background:transparent;font-size:13px;color:var(--texte);font-family:inherit;outline:none;}
+.agenda-edit-actions{display:flex;gap:6px;margin-top:6px;}
+.btn-ok-small{padding:4px 12px;background:var(--bleu);color:#fff;border:none;border-radius:999px;font-size:11px;cursor:pointer;}
+.btn-cancel-small{padding:4px 10px;background:none;border:0.5px solid #c0c0c8;border-radius:999px;font-size:11px;color:var(--gris-texte);cursor:pointer;}
+.btn-delete-small{padding:4px 10px;background:none;border:0.5px solid var(--rouge);border-radius:999px;font-size:11px;color:var(--rouge);cursor:pointer;}
+/* Objectifs */
+.agenda-section{background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.agenda-section-titre{font-size:14px;font-weight:700;color:var(--texte);margin-bottom:10px;}
+.objectif-card{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--gris-fond);}
+.objectif-card:last-child{border-bottom:none;}
+.objectif-info{flex:1;font-size:13px;}
+.objectif-info .titre{font-weight:600;}.objectif-info .dates{font-size:11px;color:var(--gris-texte);margin-top:2px;}
+.planning-tag{font-size:10px;background:#eaf4ff;color:var(--bleu);padding:2px 8px;border-radius:999px;display:inline-block;margin-top:4px;}
+.case-support-objectif{display:flex;align-items:center;gap:8px;padding:7px;background:var(--gris-fond);border-radius:8px;margin-bottom:5px;cursor:pointer;}
+.case-support-objectif input{margin:0;}
+
+/* ── Réglages ── */
+.settings-group{background:#fff;border-radius:14px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 2px rgba(0,0,0,.06);}
+.settings-row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:0.5px solid var(--gris-fond);cursor:pointer;}
+.settings-row:last-child{border-bottom:none;}
+.settings-row:hover{background:var(--gris-fond);}
+.settings-icon{font-size:20px;width:26px;text-align:center;flex-shrink:0;}
+.settings-label{flex:1;font-size:14px;color:var(--texte);}
+.settings-value{font-size:13px;color:var(--gris-texte);}
+.settings-arrow{color:#c7c7cc;font-size:16px;}
+.toggle-switch{width:44px;height:26px;border-radius:13px;position:relative;cursor:pointer;border:none;transition:background .2s;flex-shrink:0;}
+.toggle-switch.on{background:var(--vert);}
+.toggle-switch.off{background:#e3e3e8;}
+.toggle-knob{position:absolute;top:2px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.3);transition:left .2s;}
+.toggle-switch.on .toggle-knob{left:20px;}
+.toggle-switch.off .toggle-knob{left:2px;}
+.settings-danger{color:var(--rouge)!important;}
+#espaceStockage{text-align:center;font-size:11px;color:var(--gris-texte);padding:6px 0;}
+
+/* ── Toast ── */
+#toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-30px);opacity:0;background:#2c3e50;color:#fff;padding:12px 22px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.3);z-index:1000;pointer-events:none;transition:opacity .3s,transform .3s;text-align:center;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.bonne{background:#27ae60;}#toast.mauvaise{background:#c0392b;}#toast.moyenne{background:#e67e22;}
+#toastMsg{font-size:16px;font-weight:bold;}#toastScore{font-size:13px;opacity:.9;margin-top:2px;}
+
+/* ── Rappel calendrier ── */
+.case-jour{display:flex;align-items:center;gap:4px;font-size:13px;background:var(--gris-fond);padding:6px 10px;border-radius:8px;cursor:pointer;}
+.case-jour input{margin:0;}
+.ligne-rappel-attente{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--gris-fond);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:13px;}
+.ligne-rappel-attente button{background:none;border:none;color:var(--rouge);font-size:15px;cursor:pointer;padding:0 4px;}
+</style>
+</head>
+<body>
+
+<div id="banniereAjoutEcran" style="display:none;">
+    <span class="banniere-icone">📌</span>
+    <span class="banniere-texte">Pour ne jamais perdre ta progression, ouvre ce lien dans <strong>Safari</strong>, puis <strong>Partager → Sur l'écran d'accueil</strong>.</span>
+    <button class="banniere-fermer" onclick="fermerBanniereEcranAccueil()">✕</button>
+</div>
+
+<header>
+    <button id="btnRetour" style="display:none;" onclick="retourAccueil()" class="hbtn">← Retour</button>
+    <h1 id="titreHeader">Mes révisions</h1>
+    <button id="btnPartager" style="display:none;" onclick="partagerSupport()" class="hbtn">📤</button>
+    <button id="btnBascule" style="display:none;" class="hbtn"></button>
+    <button class="hbtn hbtn-aa" onclick="ouvrirModalDys()">Aa</button>
+</header>
+
+<main>
+
+<!-- ===================== VUE ACCUEIL ===================== -->
+<div id="vueAccueil">
+    <div id="blocAujourdhui">
+        <div class="streak" id="streakBloc"><div class="streak-feu">🔥</div><div class="streak-jours" id="streakJours">0 jour</div></div>
+        <div class="aj-titre">Aujourd'hui</div>
+        <div class="aj-nombre" id="ajNombre">0</div>
+        <div class="aj-sous" id="ajSous">Rien à réviser, bravo !</div>
+        <button class="btn-commencer" id="btnCommencer" onclick="lancerSessionAujourdhui()" style="display:none;">▶ Commencer</button>
+    </div>
+
+    <div class="modules-gelules">
+        <button class="gelule-module" id="geluleAlgo" onclick="basculerModule('algo')">⚡ Mode Pro</button>
+        <button class="gelule-module" id="geluleAgenda" onclick="basculerModule('agenda')">📅 Mon agenda de révision</button>
+    </div>
+
+    <div class="section-header">
+        <span class="section-titre">Mes supports</span>
+        <button class="btn-plus-section" onclick="creerNouveauSupport()" title="Nouveau support">+</button>
+    </div>
+    <div id="listeSupports"></div>
+
+    <button class="icon-btn" onclick="ouvrirSessionMelangee()" style="width:100%;justify-content:center;background:#fff;border:1px solid #e3e3e8;border-radius:999px;margin-top:4px;box-sizing:border-box;">🔀 Session mélangée (Flashcards dus)</button>
+</div>
+
+<!-- ===================== VUE ÉDITION IMAGE ===================== -->
+<div id="vueEdition" style="display:none; text-align:center;">
+    <div class="toolbar-ios">
+        <div class="segment-group">
+            <label class="icon-btn" for="inputPhoto">📷 Photo</label>
+            <input type="file" id="inputPhoto" accept="image/*" style="display:none;">
+            <label class="icon-btn" for="inputPdf">📄 PDF</label>
+            <input type="file" id="inputPdf" accept="application/pdf" style="display:none;">
+        </div>
+        <div class="segment-group">
+            <button class="icon-btn" id="editionPagePrecedente" onclick="pagePrecedenteEdition()">‹</button>
+            <span class="zoom-val" id="editionIndicateurPage">Page 1/1</span>
+            <button class="icon-btn" id="editionPageSuivante" onclick="pageSuivanteEdition()">›</button>
+            <button class="icon-btn danger" onclick="supprimerPageActuelle()">🗑 Page</button>
+        </div>
+        <div class="segment-group">
+            <button class="icon-btn" onclick="zoomOut()">➖</button>
+            <input type="range" id="zoomSlider" min="15" max="300" step="0.5" value="100" class="zoom-slider" oninput="zoomDepuisCurseur(this.value)">
+            <span class="zoom-val" id="zoomLabel">100%</span>
+            <button class="icon-btn" onclick="zoomIn()">➕</button>
+            <button class="icon-btn" onclick="zoomReset()">⤢ Ajuster</button>
+        </div>
+        <div class="segment-group" id="groupeFormes">
+            <button class="icon-btn forme-btn actif" data-forme="rect" onclick="choisirForme('rect')">▭</button>
+            <button class="icon-btn forme-btn" data-forme="ellipse" onclick="choisirForme('ellipse')">◯</button>
+            <button class="icon-btn forme-btn" data-forme="libre" onclick="choisirForme('libre')">✏️</button>
+        </div>
+        <div class="segment-group">
+            <button class="icon-btn" onclick="effacerDerniereZone()">↩ Annuler</button>
+            <button class="icon-btn danger" onclick="effacerToutesZones()">🗑 Tout effacer</button>
+        </div>
+    </div>
+    <div id="infoEdition">Trace une zone sur ce que tu veux mémoriser. Tape le numéro d'une zone pour lui ajouter un indice. <strong id="compteurZonesEdition">0 zone(s)</strong></div>
+    <div class="wrapper-canvas"><div id="zoneCanvas"></div></div>
+</div>
+
+<!-- ===================== VUE RECADRAGE ===================== -->
+<div id="vueRecadrage" style="display:none; text-align:center;">
+    <div id="infoRecadrage">Trace un cadre sur la partie à garder, ou laisse tel quel.</div>
+    <div id="canvasRecadrage"><img id="imgRecadrage"></div>
+    <div class="controles-recadrage">
+        <button class="icon-btn" onclick="annulerCadrage()" style="background:#fff;border:1px solid #e3e3e8;border-radius:999px;">✕ Annuler</button>
+        <button class="icon-btn" onclick="reinitialiserCadrage()" style="background:#fff;border:1px solid #e3e3e8;border-radius:999px;">↺ Recommencer</button>
+        <button class="icon-btn" onclick="passerCadrage()" style="background:#fff;border:1px solid #e3e3e8;border-radius:999px;">Image entière</button>
+        <button class="icon-btn primary" onclick="validerCadrage()">✓ Valider</button>
+    </div>
+</div>
+
+<!-- ===================== VUE RÉVISION IMAGE ===================== -->
+<div id="vueRevision" style="display:none; text-align:center;">
+    <div class="controles-revision">
+        <button class="icon-btn primary" onclick="remasquerToutRevision()">🔄 Recommencer</button>
+        <button id="btnFiltre" class="icon-btn" onclick="basculerFiltre()">📅 Zones dues</button>
+        <button class="icon-btn" onclick="ouvrirModalRappel()">⏰ Rappel</button>
+        <button class="icon-btn danger" onclick="reinitialiserProgression()">🗑 Réinitialiser</button>
+    </div>
+    <div class="segment-group" style="margin:0 auto 14px;display:inline-flex;">
+        <button class="icon-btn" id="revisionPagePrecedente" onclick="pagePrecedenteRevision()">‹</button>
+        <span class="zoom-val" id="revisionIndicateurPage">Page 1/1</span>
+        <button class="icon-btn" id="revisionPageSuivante" onclick="pageSuivanteRevision()">›</button>
+    </div>
+    <div id="resumeBoites"></div>
+    <div id="compteurRevision"></div>
+    <div id="instructionsRevision">Tape sur une zone pour la révéler, puis déclare honnêtement si tu savais la réponse.</div>
+    <div id="conteneurImage"></div>
+</div>
+
+<!-- ===================== VUE ÉDITION FLASHCARDS ===================== -->
+<div id="vueEditionTexte" style="display:none;">
+    <div class="config-support">
+        <div class="config-support-row">
+            <span class="label-modale" style="flex-shrink:0;">🔊 Langue</span>
+            <select id="champLangueSupport" style="flex:1;padding:6px;border:1px solid #e3e3e8;border-radius:8px;font-family:inherit;font-size:13px;" onchange="changerLangueSupport(this.value)">
+                <option value="fr-FR">🇫🇷 Français</option>
+                <option value="en-US">🇬🇧 Anglais</option>
+                <option value="es-ES">🇪🇸 Espagnol</option>
+                <option value="de-DE">🇩🇪 Allemand</option>
+                <option value="it-IT">🇮🇹 Italien</option>
+                <option value="la">🏛️ Latin</option>
+            </select>
+            <select id="champVoixSupport" style="flex:1;padding:6px;border:1px solid #e3e3e8;border-radius:8px;font-family:inherit;font-size:13px;max-width:160px;" onchange="changerVoixSupport(this.value)">
+                <option value="">— Voix auto —</option>
+            </select>
+            <button class="icon-btn" onclick="testerVoixSupport()" style="padding:6px;">🔊</button>
+        </div>
+    </div>
+    <div style="color:var(--gris-texte);font-size:12px;margin-bottom:10px;text-align:center;">
+        <strong id="compteurCartesTexte">0 carte</strong> — tape une carte pour la modifier
+    </div>
+    <div id="listeCartesTexte"></div>
+    <button class="bouton-principal" onclick="ajouterCarteTexte()">+ Ajouter une carte</button>
+</div>
+
+<!-- ===================== VUE RÉVISION FLASHCARDS (une carte à la fois) ===================== -->
+<div id="vueRevisionCarte" style="display:none;">
+    <div id="btnsModeDevoilement" class="btns-mode-devoilement">
+        <button class="btn-mode-rev actif" data-mode="reveler" onclick="changerModeRevision('reveler')">Révéler</button>
+        <button class="btn-mode-rev" data-mode="lettres" onclick="changerModeRevision('lettres')">Lettres</button>
+        <button class="btn-mode-rev" data-mode="saisie" onclick="changerModeRevision('saisie')">Écrire</button>
+    </div>
+    <div class="barre-progression-flash"><div class="barre-progression-fill" id="barreProgressionFlash"></div></div>
+    <div class="compteur-flash" id="compteurFlash"></div>
+    <div class="carte-flashcard" id="carteFlashcard">
+        <div class="carte-flashcard-header">
+            <span class="badge-matiere-flash" id="badgeMatiereFlash"></span>
+            <div style="display:flex;gap:6px;align-items:center;">
+                <button class="btn-audio-flash" id="btnAudioQuestion" onclick="lireQuestionFlash()">🔊</button>
+                <button class="btn-indice-flash" id="btnIndiceFlash" onclick="toggleIndiceFlash()">💡 Indice</button>
+            </div>
+        </div>
+        <div class="question-flash" id="questionFlash"></div>
+        <img id="imageFlash" class="image-flash" style="display:none;">
+        <div class="separateur-flash"></div>
+        <div class="zone-reponse-flash" id="zoneReponseFlash">
+            <div class="masque-reponse" id="masqueReponse" onclick="revelerCarteFlash()">Tap pour révéler</div>
+            <div class="reponse-flash" id="reponseFlash">
+                <span id="texteReponseFlash"></span>
+                <button class="btn-audio-flash" id="btnAudioReponse" onclick="lireReponseFlash()" style="display:none;">🔊</button>
+            </div>
+            <div class="lettres-flash" id="lettresFlash" style="display:none;"></div>
+            <div id="saisieFLashWrap" style="display:none;">
+                <input type="text" class="saisie-flash" id="saisieFlash" placeholder="Ta réponse…" oninput="verifierSaisieFlash()">
+                <div class="feedback-saisie" id="feedbackSaisie"></div>
+            </div>
+            <div class="exemple-flash" id="exempleFlash" style="display:none;"></div>
+            <div class="bloc-indice-flash" id="blocIndiceFlash">
+                <div class="indice-prof" id="indiceProfFlash"></div>
+                <div class="indice-perso-label">✏️ Mon indice personnel</div>
+                <input type="text" class="indice-perso-input" id="indicePersoFlash" placeholder="Ex : ça me fait penser à…">
+            </div>
+        </div>
+    </div>
+    <div class="btns-evaluation" id="btnsEvaluation">
+        <button class="btn-eval btn-eval-non" onclick="evaluerFlash('non')">✗ À revoir</button>
+        <button class="btn-eval btn-eval-moyen" onclick="evaluerFlash('moyen')">〜 Moyen</button>
+        <button class="btn-eval btn-eval-oui" onclick="evaluerFlash('oui')">✓ Je savais</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;justify-content:center;flex-wrap:wrap;" id="controlesFlahs">
+        <button class="icon-btn" onclick="ouvrirMenuPlus()">••• Options</button>
+        <button class="icon-btn accent" onclick="ouvrirMenuExercices()">🎮 Exercices</button>
+        <button class="icon-btn" onclick="ouvrirModalRappel()">⏰ Rappel</button>
+    </div>
+    <div id="resumeBoitesTexte" style="margin-top:14px;"></div>
+</div>
+
+<!-- ===================== VUE QCM ===================== -->
+<div id="vueQCMTexte" style="display:none; text-align:center;">
+    <div id="progressionQCM" style="font-size:13px;color:var(--gris-texte);margin-bottom:14px;"></div>
+    <div id="carteQCM" class="carte-exercice" style="text-align:center;max-width:480px;margin:0 auto;">
+        <div id="questionQCM" style="font-size:17px;font-weight:600;margin-bottom:14px;"></div>
+        <div id="imageQCM"></div>
+        <div id="choixQCM" style="display:flex;flex-direction:column;gap:10px;margin-top:14px;"></div>
+        <div id="feedbackQCM" style="margin-top:12px;font-weight:600;"></div>
+    </div>
+    <button class="icon-btn primary" id="btnSuivantQCM" style="display:none;margin-top:18px;" onclick="questionSuivanteQCM()">Suivant →</button>
+    <br>
+    <button class="icon-btn" onclick="quitterExerciceTexte()" style="margin-top:14px;">← Retour</button>
+</div>
+
+<!-- ===================== VUE ÉCRIRE ===================== -->
+<div id="vueEcrireTexte" style="display:none; text-align:center;">
+    <div id="progressionEcrire" style="font-size:13px;color:var(--gris-texte);margin-bottom:14px;"></div>
+    <div id="carteEcrire" class="carte-exercice" style="text-align:center;max-width:480px;margin:0 auto;">
+        <div id="questionEcrire" style="font-size:17px;font-weight:600;margin-bottom:14px;"></div>
+        <div id="imageEcrire"></div>
+        <input type="text" id="champReponseEcrire" class="champ-modale" placeholder="Tape ta réponse…" style="margin-top:14px;text-align:center;">
+        <button class="icon-btn primary" id="btnValiderEcrire" onclick="validerEcrire()" style="margin-top:8px;">Valider</button>
+        <div id="feedbackEcrire" style="margin-top:12px;font-weight:600;"></div>
+    </div>
+    <button class="icon-btn primary" id="btnSuivantEcrire" style="display:none;margin-top:18px;" onclick="questionSuivanteEcrire()">Suivant →</button>
+    <br>
+    <button class="icon-btn" onclick="quitterExerciceTexte()" style="margin-top:14px;">← Retour</button>
+</div>
+
+<!-- ===================== VUE AGENDA ===================== -->
+<div id="vueAgenda" style="display:none;">
+    <div class="agenda-nav">
+        <button class="icon-btn" onclick="agendaNaviguer(-1)">‹</button>
+        <div class="agenda-periode" id="agendaTitrePeriode"></div>
+        <div style="display:flex;gap:6px;align-items:center;">
+            <button class="icon-btn" onclick="agendaNaviguer(1)">›</button>
+            <div class="agenda-vue-pills">
+                <button class="pill-vue actif" id="pillSemaine" onclick="changerVueAgenda('semaine')">Semaine</button>
+                <button class="pill-vue" id="pillMois" onclick="changerVueAgenda('mois')">Mois</button>
+            </div>
+        </div>
+    </div>
+    <div class="agenda-jours-labels" id="agendaJoursLabels"></div>
+    <div class="agenda-grille" id="agendaGrille"></div>
+    <div id="agendaDetailPanel" class="agenda-detail-panel" style="display:none;">
+        <div class="agenda-detail-date">
+            <span id="agendaDetailDate"></span>
+            <button class="btn-agenda-ajout" onclick="ajouterEtiquetteJour()">+ Ajouter</button>
+        </div>
+        <div id="agendaDetailContenu"></div>
+    </div>
+    <div class="agenda-section" style="margin-top:12px;">
+        <div class="agenda-section-titre">🎯 Évaluations à préparer</div>
+        <div id="listeObjectifs"></div>
+        <button class="icon-btn" onclick="ouvrirModalObjectif()" style="margin-top:8px;color:var(--bleu);">+ Ajouter une évaluation</button>
+    </div>
+</div>
+
+<!-- ===================== VUE RÉGLAGES ===================== -->
+<div id="vueReglages" style="display:none;">
+    <div class="settings-group">
+        <div class="settings-row">
+            <span class="settings-icon">⚡</span>
+            <span class="settings-label">Mode Pro (algorithme SM-2)</span>
+            <button class="toggle-switch" id="toggleAlgo" onclick="basculerModule('algo')"><div class="toggle-knob"></div></button>
+        </div>
+        <div class="settings-row">
+            <span class="settings-icon">📅</span>
+            <span class="settings-label">Mon agenda de révision</span>
+            <button class="toggle-switch" id="toggleAgenda" onclick="basculerModule('agenda')"><div class="toggle-knob"></div></button>
+        </div>
+    </div>
+
+    <div class="settings-group">
+        <div class="settings-row" onclick="ouvrirModalDys()">
+            <span class="settings-icon">Aa</span>
+            <span class="settings-label">Affichage et accessibilité</span>
+            <span class="settings-arrow">›</span>
+        </div>
+    </div>
+
+    <div class="settings-group">
+        <div class="settings-row" onclick="exporterDonnees()">
+            <span class="settings-icon">💾</span>
+            <span class="settings-label">Exporter une sauvegarde</span>
+            <span class="settings-arrow">›</span>
+        </div>
+        <div class="settings-row" onclick="document.getElementById('inputImport').click()">
+            <span class="settings-icon">📂</span>
+            <span class="settings-label">Importer une sauvegarde</span>
+            <span class="settings-arrow">›</span>
+        </div>
+        <input type="file" id="inputImport" accept=".json" style="display:none;">
+    </div>
+
+    <div id="espaceStockage"></div>
+    <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
+        Mes révisions · <span id="versionApp">v31</span> · Données stockées sur cet appareil
+    </div>
+</div>
+
+</main>
+
+<!-- Barre d'onglets fixe -->
+<nav class="tab-bar" id="tabBar">
+    <button class="tab-item actif" id="tabReviser" onclick="goTab('reviser')">
+        <span class="ti" style="font-size:22px;">🏠</span>
+        <span class="tab-label">Réviser</span>
+    </button>
+    <button class="tab-item" id="tabAgenda" onclick="goTab('agenda')" style="display:none;">
+        <span class="ti" style="font-size:22px;">📅</span>
+        <span class="tab-label">Agenda</span>
+    </button>
+    <button class="tab-item" id="tabReglages" onclick="goTab('reglages')">
+        <span class="ti" style="font-size:22px;">⚙️</span>
+        <span class="tab-label">Réglages</span>
+    </button>
+</nav>
+
+<!-- Toast -->
+<div id="toast"><div id="toastMsg"></div><div id="toastScore"></div></div>
+
+<!-- ===================== MODALES ===================== -->
+
+<div class="modale-fond" id="modalNouveauSupport">
+    <div class="modale-boite">
+        <h3 id="titreModalSupport">Nouveau support</h3>
+        <span class="label-modale">Nom</span>
+        <input type="text" id="champNomSupport" class="champ-modale" placeholder="Ex : Vocabulaire anglais Ch.3">
+        <div id="ligneTypeSupport">
+            <span class="label-modale">Type</span>
+            <select id="champTypeSupport" class="champ-modale">
+                <option value="texte">🗒️ Flashcards (questions / réponses)</option>
+                <option value="image">🖼️ Image (zones à mémoriser)</option>
+            </select>
+        </div>
+        <span class="label-modale">Matière</span>
+        <select id="champMatiereSupport" class="champ-modale">
+            <option value="Français">📖 Français</option>
+            <option value="Maths">📐 Maths</option>
+            <option value="Histoire-Géo-EMC">🌍 Histoire-Géo-EMC</option>
+            <option value="Anglais">🇬🇧 Anglais</option>
+            <option value="Espagnol">🇪🇸 Espagnol</option>
+            <option value="EMI">📰 EMI</option>
+            <option value="Sciences">🧪 Sciences</option>
+            <option value="SVT">🔬 SVT</option>
+            <option value="Sciences physiques">⚛️ Sciences physiques</option>
+            <option value="Latin">🏛️ Latin</option>
+            <option value="Éducation musicale">🎵 Éducation musicale</option>
+            <option value="Arts plastiques">🎨 Arts plastiques</option>
+            <option value="Autre">📦 Autre</option>
+        </select>
+        <div style="margin-top:6px;text-align:right;">
+            <button class="btn-modal annuler" onclick="fermerModalNouveauSupport()">Annuler</button>
+            <button class="btn-modal enregistrer" id="btnValiderSupport" onclick="validerNouveauSupport()">Créer</button>
+        </div>
+    </div>
+</div>
+
+<div class="modale-fond" id="modalRappel">
+    <div class="modale-boite">
+        <h3 id="titreModalRappel">📅 Rappel de révision</h3>
+        <div id="listeRappelsEnAttente"></div>
+        <span class="label-modale">Fréquence</span>
+        <select id="champFrequenceRappel" class="champ-modale" onchange="majAffichageChampsRappel()">
+            <option value="jour">Tous les jours</option>
+            <option value="semaine">Jours spécifiques</option>
+            <option value="unique">Une seule fois</option>
+        </select>
+        <div id="joursSemaineRappel" style="display:none;margin-bottom:14px;">
+            <span class="label-modale">Jours</span>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">
+                <label class="case-jour"><input type="checkbox" value="MO">Lun</label>
+                <label class="case-jour"><input type="checkbox" value="TU">Mar</label>
+                <label class="case-jour"><input type="checkbox" value="WE">Mer</label>
+                <label class="case-jour"><input type="checkbox" value="TH">Jeu</label>
+                <label class="case-jour"><input type="checkbox" value="FR">Ven</label>
+                <label class="case-jour"><input type="checkbox" value="SA">Sam</label>
+                <label class="case-jour"><input type="checkbox" value="SU">Dim</label>
+            </div>
+        </div>
+        <div id="dateUniqueRappelWrap" style="display:none;">
+            <span class="label-modale">Date</span>
+            <input type="date" id="champDateRappel" class="champ-modale">
+        </div>
+        <span class="label-modale">Heure</span>
+        <input type="time" id="champHeureRappel" class="champ-modale" value="18:00">
+        <button class="btn-modal enregistrer" onclick="ajouterRappelListe()" style="width:100%;box-sizing:border-box;margin:4px 0 14px;">+ Ajouter ce rappel</button>
+        <div style="text-align:right;">
+            <button class="btn-modal annuler" onclick="fermerModalRappel()">Fermer</button>
+            <button class="btn-modal enregistrer" onclick="telechargerRappels()">⬇ Télécharger (.ics)</button>
+        </div>
+    </div>
+</div>
+
+<div class="modale-fond" id="modalMenuPlus">
+    <div class="modale-boite" style="width:300px;">
+        <h3>Options</h3>
+        <button class="icon-btn" onclick="fermerMenuPlus();basculerFiltreTexte();" id="btnFiltreTexte" style="width:100%;justify-content:center;background:var(--gris-fond);margin-bottom:8px;border-radius:999px;">📅 Cartes dues seulement</button>
+        <button class="icon-btn danger" onclick="fermerMenuPlus();reinitialiserProgressionTexte();" style="width:100%;justify-content:center;background:#fde9e7;border-radius:999px;">🗑 Réinitialiser ma progression</button>
+        <div style="margin-top:14px;text-align:right;">
+            <button class="btn-modal annuler" onclick="fermerMenuPlus()">Fermer</button>
+        </div>
+    </div>
+</div>
+
+<div class="modale-fond" id="modalMenuExercices">
+    <div class="modale-boite" style="width:300px;">
+        <h3>🎮 Exercices</h3>
+        <button class="icon-btn" onclick="fermerMenuExercices();lancerQCM();" style="width:100%;justify-content:center;background:var(--gris-fond);margin-bottom:8px;border-radius:999px;">📝 Mode QCM</button>
+        <button class="icon-btn" onclick="fermerMenuExercices();lancerEcrire();" style="width:100%;justify-content:center;background:var(--gris-fond);margin-bottom:8px;border-radius:999px;">⌨️ Mode Écrire</button>
+        <button class="icon-btn" onclick="fermerMenuExercices();exporterPDF();" style="width:100%;justify-content:center;background:var(--gris-fond);border-radius:999px;">📄 Export PDF</button>
+        <div style="margin-top:14px;text-align:right;">
+            <button class="btn-modal annuler" onclick="fermerMenuExercices()">Fermer</button>
+        </div>
+    </div>
+</div>
+
+<div class="modale-fond" id="modalObjectif">
+    <div class="modale-boite">
+        <h3>🎯 Nouvelle évaluation à préparer</h3>
+        <span class="label-modale">Titre</span>
+        <input type="text" id="champTitreObjectif" class="champ-modale" placeholder="Ex : Contrôle vocabulaire anglais">
+        <span class="label-modale">Matière</span>
+        <select id="champMatiereObjectif" class="champ-modale">
+            <option value="">— Aucune —</option>
+            <option value="Français">📖 Français</option>
+            <option value="Maths">📐 Maths</option>
+            <option value="Histoire-Géo-EMC">🌍 Histoire-Géo-EMC</option>
+            <option value="Anglais">🇬🇧 Anglais</option>
+            <option value="Espagnol">🇪🇸 Espagnol</option>
+            <option value="EMI">📰 EMI</option>
+            <option value="Sciences">🧪 Sciences</option>
+            <option value="SVT">🔬 SVT</option>
+            <option value="Sciences physiques">⚛️ Sciences physiques</option>
+            <option value="Latin">🏛️ Latin</option>
+            <option value="Éducation musicale">🎵 Éducation musicale</option>
+            <option value="Arts plastiques">🎨 Arts plastiques</option>
+            <option value="Autre">📦 Autre</option>
+        </select>
+        <span class="label-modale">Date de l'évaluation</span>
+        <input type="date" id="champDateObjectif" class="champ-modale" onchange="majJoursPlanningSuggeres()">
+        <span class="label-modale">Jours de révision avant l'évaluation</span>
+        <div style="font-size:11px;color:var(--gris-texte);margin-bottom:6px;">Saisir les nombres de jours séparés par des virgules (ex : 1,3,7,14)</div>
+        <input type="text" id="champJoursObjectif" class="champ-modale" placeholder="Ex : 1, 3, 7, 14" value="1, 3, 7, 14">
+        <div id="apercuJoursObjectif" style="font-size:12px;color:var(--gris-texte);margin-top:-8px;margin-bottom:14px;"></div>
+        <span class="label-modale">Supports concernés (facultatif)</span>
+        <div id="listeSupportsObjectif" style="margin-bottom:14px;"></div>
+        <div style="text-align:right;">
+            <button class="btn-modal annuler" onclick="fermerModalObjectif()">Annuler</button>
+            <button class="btn-modal enregistrer" onclick="validerObjectif()">Créer le planning</button>
+        </div>
+    </div>
+</div>
+
+<div class="modale-fond" id="modalDys">
+    <div class="modale-boite">
+        <h3>Aa — Affichage et accessibilité</h3>
+        <div class="ligne-rappel-attente" style="margin-bottom:14px;">
+            <span>Activer le mode adapté (DYS)</span>
+            <input type="checkbox" id="champDysActif" onchange="changerDys('actif',this.checked)" style="width:20px;height:20px;">
+        </div>
+        <div class="ligne-reglage-dys">
+            <span class="label-modale">Police</span>
+            <select id="champDysPolice" class="champ-modale" onchange="changerDys('police',this.value)">
+                <option value="systeme">Système (par défaut)</option>
+                <option value="dyslexique">OpenDyslexic</option>
+            </select>
+        </div>
+        <div class="ligne-reglage-dys">
+            <span class="label-modale">Taille du texte <span class="valeur-reglage" id="valeurDysTaille">100%</span></span>
+            <input type="range" id="champDysTaille" min="80" max="200" step="5" value="100" oninput="changerDys('taille',this.value)">
+        </div>
+        <div class="ligne-reglage-dys">
+            <span class="label-modale">Espacement lettres <span class="valeur-reglage" id="valeurDysLettres">0</span></span>
+            <input type="range" id="champDysLettres" min="0" max="30" step="1" value="0" oninput="changerDys('lettres',this.value)">
+        </div>
+        <div class="ligne-reglage-dys">
+            <span class="label-modale">Espacement lignes <span class="valeur-reglage" id="valeurDysLignes">1.5</span></span>
+            <input type="range" id="champDysLignes" min="10" max="30" step="1" value="15" oninput="changerDys('lignes',this.value)">
+        </div>
+        <div class="panneau-dys-apercu" id="apercuDys">Aperçu : le chat dort sur le tapis.</div>
+        <div style="margin-top:16px;text-align:right;">
+            <button class="btn-modal enregistrer" onclick="fermerModalDys()">Fermer</button>
+        </div>
+    </div>
+</div>
+
+<div id="zoneImpressionTexte"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
