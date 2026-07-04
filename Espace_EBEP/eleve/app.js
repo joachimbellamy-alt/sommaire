@@ -1584,10 +1584,13 @@ function construireVueRevision() {
 
     const mode = supportActif.mode || 'simple';
     document.body.classList.toggle('mode-simple', mode === 'simple');
-    document.querySelectorAll('#segmente .mode-btn').forEach(b => b.classList.toggle('actif', b.dataset.mode === mode));
-    document.querySelector('#segmente .thumb').classList.toggle('pos-1', mode === 'complet');
+    const segmenteBtns = document.querySelectorAll('#segmente .mode-btn');
+    segmenteBtns.forEach(b => b.classList.toggle('actif', b.dataset.mode === mode));
+    const segmenteThumb = document.querySelector('#segmente .thumb');
+    if (segmenteThumb) segmenteThumb.classList.toggle('pos-1', mode === 'complet');
     document.body.classList.remove('filtre-actif');
-    document.getElementById('btnFiltre').textContent = '📅 Zones à réviser';
+    const btnFiltre = document.getElementById('btnFiltre');
+    if (btnFiltre) btnFiltre.textContent = '📅 Zones dues';
 
     chargerPageRevision();
 }
@@ -1794,10 +1797,12 @@ function changerMode(mode) {
     supportActif.mode = mode;
     document.body.classList.toggle('mode-simple', mode === 'simple');
     document.querySelectorAll('#segmente .mode-btn').forEach(b => b.classList.toggle('actif', b.dataset.mode === mode));
-    document.querySelector('#segmente .thumb').classList.toggle('pos-1', mode === 'complet');
+    const thumb = document.querySelector('#segmente .thumb');
+    if (thumb) thumb.classList.toggle('pos-1', mode === 'complet');
     if (mode === 'simple') {
         document.body.classList.remove('filtre-actif');
-        document.getElementById('btnFiltre').textContent = '📅 Zones à réviser';
+        const btnFiltre = document.getElementById('btnFiltre');
+        if (btnFiltre) btnFiltre.textContent = '📅 Zones à réviser';
     }
     sauvegarderSupports();
 }
