@@ -182,49 +182,85 @@ body.filtre-actif .masque:not(.due){display:none;}
 
 /* ── Révision Flashcards : une carte à la fois ── */
 #vueRevisionCarte{display:flex;flex-direction:column;min-height:calc(100vh - 120px - var(--tab-h));}
-.barre-progression-flash{height:4px;background:var(--gris-fond);border-radius:2px;overflow:hidden;margin-bottom:10px;flex-shrink:0;}
+.barre-progression-flash{height:4px;background:var(--gris-fond);border-radius:2px;overflow:hidden;margin-bottom:8px;flex-shrink:0;}
 .barre-progression-fill{height:100%;background:var(--bleu);border-radius:2px;transition:width .3s;}
-.compteur-flash{text-align:center;font-size:12px;color:var(--gris-texte);margin-bottom:10px;flex-shrink:0;}
-.carte-flashcard{flex:1;background:#fff;border-radius:18px;padding:20px;display:flex;flex-direction:column;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:12px;min-height:300px;}
-.carte-flashcard-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.compteur-flash{text-align:center;font-size:12px;color:var(--gris-texte);margin-bottom:8px;flex-shrink:0;}
+
+/* Bandeau feedback inter-cartes */
+.bandeau-feedback{border-radius:10px;padding:10px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-shrink:0;}
+.bandeau-feedback.bon{background:#e8faf0;color:#1a6e30;}
+.bandeau-feedback.mauvais{background:#fde9e7;color:#a32d2d;}
+.bandeau-feedback.moyen{background:#fff3e0;color:#7a4e00;}
+
+/* Carte */
+.carte-flashcard{flex:1;background:#fff;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:10px;}
+.carte-flashcard-header{display:flex;align-items:center;justify-content:space-between;}
 .badge-matiere-flash{font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;}
-.etiquette-support-melange{font-size:11px;color:var(--bleu);font-weight:600;}
-.btn-audio-flash{background:none;border:none;font-size:18px;cursor:pointer;padding:4px;color:var(--bleu);}
-.question-flash{font-size:18px;font-weight:600;color:var(--texte);text-align:center;flex:1;display:flex;align-items:center;justify-content:center;padding:10px 0;line-height:1.4;}
-.image-flash{max-width:100%;max-height:140px;object-fit:contain;border-radius:10px;display:block;margin:10px auto;}
-.separateur-flash{height:1px;background:var(--gris-fond);margin:10px 0;flex-shrink:0;}
-/* Zone réponse : masque opaque avant révélation */
-.zone-reponse-flash{border-radius:12px;padding:14px;background:var(--gris-fond);position:relative;min-height:60px;display:flex;flex-direction:column;gap:6px;}
-.masque-reponse{position:absolute;inset:0;background:#e3e3e8;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--gris-texte);cursor:pointer;user-select:none;font-weight:500;}
-.zone-reponse-flash.revele .masque-reponse{display:none;}
-.reponse-flash{font-size:16px;color:var(--texte);font-weight:500;display:flex;align-items:center;gap:8px;}
+.btn-indice-flash{background:none;border:1px solid #f0c040;border-radius:999px;color:#7a5c00;font-size:11px;padding:4px 10px;cursor:pointer;}
+.question-flash{font-size:18px;font-weight:600;color:var(--texte);text-align:center;line-height:1.4;}
+.image-flash{max-width:100%;max-height:130px;object-fit:contain;border-radius:10px;display:block;margin:0 auto;}
+
+/* Bouton audio central */
+.btn-audio-central{display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;cursor:pointer;margin:0 auto;padding:4px;}
+.audio-central-icone{width:44px;height:44px;border-radius:50%;background:var(--gris-fond);display:flex;align-items:center;justify-content:center;font-size:20px;transition:background .15s;}
+.btn-audio-central:active .audio-central-icone,.btn-audio-central.playing .audio-central-icone{background:var(--bleu);color:#fff;}
+.audio-central-label{font-size:10px;color:var(--gris-texte);}
+
+/* Zone confiance AVANT révélation */
+#zoneConfiance{display:flex;flex-direction:column;gap:8px;}
+.confiance-titre{font-size:11px;font-weight:600;color:var(--gris-texte);text-align:center;text-transform:uppercase;letter-spacing:0.4px;}
+.confiance-btns{display:flex;gap:6px;}
+.conf-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border-radius:12px;border:1.5px solid #e3e3e8;background:#fff;cursor:pointer;font-family:inherit;}
+.conf-icone{font-size:16px;font-weight:700;}
+.conf-label{font-size:10px;color:var(--gris-texte);text-align:center;line-height:1.3;}
+.conf-btn.selected{border-width:2px;}
+.conf-ne-sais-pas.selected{background:#fde9e7;border-color:#e74c3c;}.conf-ne-sais-pas.selected .conf-icone{color:#e74c3c;}
+.conf-pas-sur.selected{background:#fff3e0;border-color:#e67e22;}.conf-pas-sur.selected .conf-icone{color:#e67e22;}
+.conf-sur.selected{background:#e8faf0;border-color:#2ecc71;}.conf-sur.selected .conf-icone{color:#2ecc71;}
+.masque-reponse-new{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:var(--gris-fond);border-radius:12px;font-size:13px;color:var(--gris-texte);cursor:pointer;font-weight:500;user-select:none;border:1.5px dashed #c8c8d0;}
+.masque-reponse-new:active{background:#e3e3e8;}
+.masque-oeil{font-size:18px;}
+
+/* Zone réponse */
+.zone-reponse-flash{display:flex;flex-direction:column;gap:8px;}
+.reponse-flash{font-size:16px;color:var(--texte);font-weight:500;line-height:1.4;}
+.btn-audio-reponse{background:var(--gris-fond);border:none;border-radius:999px;padding:6px 14px;font-size:12px;color:var(--bleu);cursor:pointer;align-self:flex-start;}
 .exemple-flash{font-size:13px;font-style:italic;color:var(--gris-texte);}
 .lettres-flash{font-size:18px;font-weight:600;color:var(--texte);text-align:center;letter-spacing:3px;font-family:monospace;}
-/* Mode saisie */
 .saisie-flash{width:100%;padding:10px;border:1.5px solid #ccc;border-radius:8px;font-size:16px;font-family:inherit;text-align:center;}
 .saisie-flash:focus{border-color:var(--bleu);outline:none;}
 .feedback-saisie{text-align:center;font-size:14px;font-weight:600;padding:6px 0;}
 .feedback-saisie.bon{color:#2ecc71;}.feedback-saisie.moyen{color:#f39c12;}.feedback-saisie.mauvais{color:#e74c3c;}
-/* Indices sur la carte */
-.bloc-indice-flash{background:#fff8e1;border:1px solid #f39c12;border-radius:10px;padding:10px;margin-top:6px;display:none;}
-.carte-flashcard.indice-ouvert .bloc-indice-flash{display:block;}
-.btn-indice-flash{background:none;border:1px solid var(--jaune);border-radius:999px;color:#7a5c00;font-size:11px;padding:4px 10px;cursor:pointer;align-self:flex-end;}
-/* Boutons d'évaluation */
-.btns-evaluation{display:flex;gap:8px;flex-shrink:0;}
-.btns-evaluation .hidden{display:none;}
+
+/* Zone confirmation après révélation */
+.zone-confirmation{background:var(--gris-fond);border-radius:12px;padding:12px;}
+.texte-confirmation{font-size:12px;color:var(--gris-texte);text-align:center;margin-bottom:10px;font-weight:500;}
+.texte-confirmation strong{color:var(--texte);}
+.btns-evaluation{display:flex;gap:8px;}
 .btn-eval{flex:1;padding:12px 6px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
 .btn-eval-non{background:#fde9e7;color:#e74c3c;}
-.btn-eval-moyen{background:#fff3e0;color:#e67e22;}
 .btn-eval-oui{background:#e8faf0;color:#2ecc71;}
-.btns-mode-devoilement{display:flex;gap:6px;margin-bottom:10px;justify-content:center;flex-shrink:0;}
-.btn-mode-rev{padding:6px 12px;border-radius:999px;border:1.5px solid #e3e3e8;background:#fff;font-size:12px;font-weight:600;color:var(--gris-texte);cursor:pointer;font-family:inherit;}
-.btn-mode-rev.actif{background:var(--bleu);border-color:var(--bleu);color:#fff;}
-/* Indices, boites en mode pro */
+
+/* Bloc indice */
+.bloc-indice-flash{background:#fff8e1;border:1px solid #f0c040;border-radius:10px;padding:10px;display:none;}
+.carte-flashcard.indice-ouvert .bloc-indice-flash{display:block;}
+
+/* Écran de fin */
+.fin-session{display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px;text-align:center;}
+.fin-emoji{font-size:44px;}
+.fin-titre{font-size:19px;font-weight:600;color:var(--texte);}
+.fin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;}
+.fin-stat{background:#fff;border-radius:12px;padding:12px 6px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.fin-stat-n{font-size:22px;font-weight:600;}
+.fin-stat-l{font-size:10px;color:var(--gris-texte);margin-top:2px;}
+.fin-hint{font-size:12px;color:var(--gris-texte);}
+.fin-btn{width:100%;padding:12px;border-radius:999px;border:none;background:var(--bleu);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+.fin-btn-sec{width:100%;padding:12px;border-radius:999px;border:1.5px solid #e3e3e8;background:#fff;color:var(--texte);font-size:14px;cursor:pointer;font-family:inherit;}
+
 body.force-mode-simple-global #segmente,body.force-mode-simple-global #segmenteTexte,
 body.force-mode-simple-global #resumeBoites,body.force-mode-simple-global #resumeBoitesTexte,
 body.force-mode-simple-global #btnFiltre,body.force-mode-simple-global #btnFiltreTexte,
 body.force-mode-simple-global .boite-niveau,.force-mode-simple-global .boite-card{display:none!important;}
-body.force-mode-simple-global .btns-mode-devoilement{display:none!important;}
 
 /* ── Édition Flashcards ── */
 .config-support{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.06);}
@@ -481,54 +517,98 @@ body.force-mode-simple-global .btns-mode-devoilement{display:none!important;}
 
 <!-- ===================== VUE RÉVISION FLASHCARDS (une carte à la fois) ===================== -->
 <div id="vueRevisionCarte" style="display:none;">
-    <div id="btnsModeDevoilement" class="btns-mode-devoilement">
-        <button class="btn-mode-rev actif" data-mode="reveler" onclick="changerModeRevision('reveler')">Révéler</button>
-        <button class="btn-mode-rev" data-mode="lettres" onclick="changerModeRevision('lettres')">Lettres</button>
-        <button class="btn-mode-rev" data-mode="saisie" onclick="changerModeRevision('saisie')">Écrire</button>
-    </div>
     <div class="barre-progression-flash"><div class="barre-progression-fill" id="barreProgressionFlash"></div></div>
     <div class="compteur-flash" id="compteurFlash"></div>
+
+    <!-- Bandeau feedback inter-cartes -->
+    <div id="bandeauFeedback" class="bandeau-feedback" style="display:none;"></div>
+
     <div class="carte-flashcard" id="carteFlashcard">
+        <!-- Header : matière + indice -->
         <div class="carte-flashcard-header">
             <span class="badge-matiere-flash" id="badgeMatiereFlash"></span>
-            <div style="display:flex;gap:6px;align-items:center;">
-                <button class="btn-audio-flash" id="btnAudioQuestion" onclick="lireQuestionFlash()">🔊</button>
-                <button class="btn-indice-flash" id="btnIndiceFlash" onclick="toggleIndiceFlash()">💡 Indice</button>
-            </div>
+            <button class="btn-indice-flash" id="btnIndiceFlash" onclick="toggleIndiceFlash()">💡 Indice</button>
         </div>
+
+        <!-- Question -->
         <div class="question-flash" id="questionFlash"></div>
         <img id="imageFlash" class="image-flash" style="display:none;">
-        <div class="separateur-flash"></div>
+
+        <!-- Bouton audio central -->
+        <button class="btn-audio-central" id="btnAudioQuestion" onclick="lireQuestionFlash()">
+            <div class="audio-central-icone" id="audioIconeQ">🔊</div>
+            <span class="audio-central-label">Écouter</span>
+        </button>
+
+        <!-- Zone confiance AVANT révélation -->
+        <div id="zoneConfiance">
+            <div class="confiance-titre">Avant de voir — tu sais ?</div>
+            <div class="confiance-btns">
+                <button class="conf-btn conf-ne-sais-pas" onclick="choisirConfiance('ne-sais-pas', this)">
+                    <span class="conf-icone">✗</span>
+                    <span class="conf-label">Je ne<br>sais pas</span>
+                </button>
+                <button class="conf-btn conf-pas-sur" onclick="choisirConfiance('pas-sur', this)">
+                    <span class="conf-icone">〜</span>
+                    <span class="conf-label">Pas<br>sûr·e</span>
+                </button>
+                <button class="conf-btn conf-sur" onclick="choisirConfiance('sur', this)">
+                    <span class="conf-icone">✓</span>
+                    <span class="conf-label">Sûr·e<br>de moi</span>
+                </button>
+            </div>
+            <div class="masque-reponse-new" id="masqueReponse" onclick="revelerCarteFlash()">
+                <span class="masque-oeil">👁</span>
+                <span>Tap pour révéler</span>
+            </div>
+        </div>
+
+        <!-- Zone réponse (cachée jusqu'à révélation) -->
         <div class="zone-reponse-flash" id="zoneReponseFlash">
-            <div class="masque-reponse" id="masqueReponse" onclick="revelerCarteFlash()">Tap pour révéler</div>
             <div class="reponse-flash" id="reponseFlash">
                 <span id="texteReponseFlash"></span>
-                <button class="btn-audio-flash" id="btnAudioReponse" onclick="lireReponseFlash()" style="display:none;">🔊</button>
+                <button class="btn-audio-reponse" id="btnAudioReponse" onclick="lireReponseFlash()" style="display:none;">🔊 Écouter la réponse</button>
             </div>
             <div class="lettres-flash" id="lettresFlash" style="display:none;"></div>
             <div id="saisieFLashWrap" style="display:none;">
-                <input type="text" class="saisie-flash" id="saisieFlash" placeholder="Ta réponse…" oninput="verifierSaisieFlash()">
+                <input type="text" class="saisie-flash" id="saisieFlash" placeholder="Ta réponse…">
                 <div class="feedback-saisie" id="feedbackSaisie"></div>
             </div>
             <div class="exemple-flash" id="exempleFlash" style="display:none;"></div>
-            <div class="bloc-indice-flash" id="blocIndiceFlash">
-                <div class="indice-prof" id="indiceProfFlash"></div>
-                <div class="indice-perso-label">✏️ Mon indice personnel</div>
-                <input type="text" class="indice-perso-input" id="indicePersoFlash" placeholder="Ex : ça me fait penser à…">
+
+            <!-- Rappel de la confiance choisie + confirmation -->
+            <div id="zoneConfirmation" class="zone-confirmation" style="display:none;">
+                <div id="texteConfirmation" class="texte-confirmation"></div>
+                <div class="btns-evaluation" id="btnsEvaluation">
+                    <button class="btn-eval btn-eval-non" onclick="evaluerFlash('non')">✗ Non</button>
+                    <button class="btn-eval btn-eval-oui" onclick="evaluerFlash('oui')">✓ Oui</button>
+                </div>
             </div>
         </div>
+
+        <!-- Bloc indice -->
+        <div class="bloc-indice-flash" id="blocIndiceFlash">
+            <div class="indice-prof" id="indiceProfFlash"></div>
+            <div class="indice-perso-label">✏️ Mon indice personnel</div>
+            <input type="text" class="indice-perso-input" id="indicePersoFlash" placeholder="Ex : ça me fait penser à…">
+        </div>
     </div>
-    <div class="btns-evaluation" id="btnsEvaluation">
-        <button class="btn-eval btn-eval-non" onclick="evaluerFlash('non')">✗ À revoir</button>
-        <button class="btn-eval btn-eval-moyen" onclick="evaluerFlash('moyen')">〜 Moyen</button>
-        <button class="btn-eval btn-eval-oui" onclick="evaluerFlash('oui')">✓ Je savais</button>
+
+    <!-- Écran de fin de session -->
+    <div id="finSession" class="fin-session" style="display:none;">
+        <div class="fin-emoji">🎉</div>
+        <div class="fin-titre">Session terminée !</div>
+        <div class="fin-stats" id="finStats"></div>
+        <div class="fin-hint" id="finHint"></div>
+        <button class="fin-btn" onclick="recommencerSession()">🔄 Recommencer</button>
+        <button class="fin-btn-sec" onclick="retourAccueil()">← Retour à mes supports</button>
     </div>
+
     <div style="display:flex;gap:8px;margin-top:10px;justify-content:center;flex-wrap:wrap;" id="controlesFlahs">
         <button class="icon-btn" onclick="ouvrirMenuPlus()">••• Options</button>
         <button class="icon-btn accent" onclick="ouvrirMenuExercices()">🎮 Exercices</button>
         <button class="icon-btn" onclick="ouvrirModalRappel()">⏰ Rappel</button>
     </div>
-    <div id="resumeBoitesTexte" style="margin-top:14px;"></div>
 </div>
 
 <!-- ===================== VUE QCM ===================== -->
@@ -628,7 +708,7 @@ body.force-mode-simple-global .btns-mode-devoilement{display:none!important;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v33</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v34</span> · Données stockées sur cet appareil
     </div>
 </div>
 

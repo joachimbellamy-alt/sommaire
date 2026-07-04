@@ -3226,9 +3226,10 @@ let modeRevisionFlash = 'reveler'; // 'reveler' | 'lettres' | 'saisie'
 let lettresDecoilees = 0;
 let lettresTimer = null;
 let flashRevele = false;
+let flashConfianceChoisie = null; // 'ne-sais-pas' | 'pas-sur' | 'sur'
+let flashResultats = { oui: 0, moyen: 0, non: 0 };
 
 function construireVueRevisionCarte(paires) {
-    // Initialiser les états Leitner manquants avant de démarrer
     paires.forEach(item => {
         if (!item.support.etat) item.support.etat = {};
         if (!item.support.etat[item.idx]) {
@@ -3238,8 +3239,12 @@ function construireVueRevisionCarte(paires) {
     flashSession = melangerTableau([...paires]);
     flashIndex = 0;
     flashRevele = false;
+    flashConfianceChoisie = null;
+    flashResultats = { oui: 0, moyen: 0, non: 0 };
+    document.getElementById('bandeauFeedback').style.display = 'none';
+    document.getElementById('carteFlashcard').style.display = '';
+    document.getElementById('finSession').style.display = 'none';
     afficherCarteFlash();
-    afficherResumeBoitesFlash();
 }
 
 function melangerTableau(arr) {
@@ -3253,6 +3258,7 @@ function melangerTableau(arr) {
 function afficherCarteFlash() {
     if (!flashSession.length) return;
     flashRevele = false;
+    flashConfianceChoisie = null;
     lettresDecoilees = 0;
     if (lettresTimer) { clearInterval(lettresTimer); lettresTimer = null; }
 
@@ -3276,156 +3282,90 @@ function afficherCarteFlash() {
     };
     const couleur = couleursMat[support.matiere] || { bg:'#e8e8e8', txt:'#555' };
     const badge = document.getElementById('badgeMatiereFlash');
-    badge.textContent = (support.matiere || 'Autre');
+    badge.textContent = support.matiere || 'Autre';
     badge.style.background = couleur.bg;
     badge.style.color = couleur.txt;
 
     // Question
     document.getElementById('questionFlash').textContent = c.question || '';
 
-    // Image question (dans la zone question)
-    let imgQEl = document.getElementById('imageQuestionFlash');
-    if (!imgQEl) {
-        imgQEl = document.createElement('img');
-        imgQEl.id = 'imageQuestionFlash';
-        imgQEl.className = 'image-flash';
-        document.getElementById('questionFlash').after(imgQEl);
-    }
-    if (c.questionImage) { imgQEl.src = c.questionImage; imgQEl.style.display = ''; }
-    else imgQEl.style.display = 'none';
-
-    // Audio question
-    const btnAQ = document.getElementById('btnAudioQuestion');
-    if (c.questionAudio) {
-        btnAQ.dataset.audioSrc = c.questionAudio;
-        btnAQ.onclick = () => jouerAudioFlash(c.questionAudio);
-    } else {
-        delete btnAQ.dataset.audioSrc;
-        btnAQ.onclick = lireQuestionFlash;
-    }
-    btnAQ.dataset.question = c.question || '';
-    btnAQ.dataset.langue = langue;
-    btnAQ.dataset.voix = support.voixNom || '';
-
-    // Image carte globale (compatibilité anciens supports)
+    // Image question
     const imgEl = document.getElementById('imageFlash');
-    if (c.image && !c.questionImage) { imgEl.src = c.image; imgEl.style.display = ''; }
+    const imgSrc = c.questionImage || c.image || '';
+    if (imgSrc) { imgEl.src = imgSrc; imgEl.style.display = ''; }
     else imgEl.style.display = 'none';
 
-    // Réponse : réinitialiser la zone
-    const zoneRep = document.getElementById('zoneReponseFlash');
-    zoneRep.classList.remove('revele');
+    // Bouton audio central
+    const btnAQ = document.getElementById('btnAudioQuestion');
+    btnAQ.onclick = c.questionAudio
+        ? () => jouerAudioFlash(c.questionAudio)
+        : () => lireTexte(c.question || '', langue, support.voixNom || '');
+    btnAQ.classList.remove('playing');
+
+    // Réinitialiser zone confiance
+    document.getElementById('zoneConfiance').style.display = '';
+    document.querySelectorAll('.conf-btn').forEach(b => b.classList.remove('selected'));
     document.getElementById('masqueReponse').style.display = '';
+
+    // Réinitialiser zone réponse
+    document.getElementById('zoneReponseFlash').style.display = 'none';
     document.getElementById('reponseFlash').style.display = 'none';
     document.getElementById('lettresFlash').style.display = 'none';
     document.getElementById('saisieFLashWrap').style.display = 'none';
     document.getElementById('exempleFlash').style.display = 'none';
-    document.getElementById('btnAudioReponse').style.display = 'none';
+    document.getElementById('zoneConfirmation').style.display = 'none';
     document.getElementById('texteReponseFlash').textContent = c.reponse || '';
-
-    // Image réponse
-    let imgRepEl = document.getElementById('imageReponseFlash');
-    if (!imgRepEl) {
-        imgRepEl = document.createElement('img');
-        imgRepEl.id = 'imageReponseFlash';
-        imgRepEl.className = 'image-flash';
-        document.getElementById('reponseFlash').after(imgRepEl);
-    }
-    if (c.reponseImage) { imgRepEl.src = c.reponseImage; }
-    imgRepEl.style.display = 'none'; // cachée jusqu'à révélation
-
-    // Exemple + image exemple
     document.getElementById('exempleFlash').textContent = c.exemple ? '« ' + c.exemple + ' »' : '';
-    let imgExEl = document.getElementById('imageExempleFlash');
-    if (!imgExEl) {
-        imgExEl = document.createElement('img');
-        imgExEl.id = 'imageExempleFlash';
-        imgExEl.className = 'image-flash';
-        document.getElementById('exempleFlash').after(imgExEl);
-    }
-    if (c.exempleImage) { imgExEl.src = c.exempleImage; }
-    imgExEl.style.display = 'none';
 
-    // Audio réponse
+    // Réponse audio
     const btnAR = document.getElementById('btnAudioReponse');
-    if (c.reponseAudio) {
-        btnAR.dataset.audioSrc = c.reponseAudio;
-        btnAR.onclick = () => jouerAudioFlash(c.reponseAudio);
-    } else {
-        delete btnAR.dataset.audioSrc;
-        btnAR.onclick = lireReponseFlash;
-    }
-    btnAR.dataset.reponse = c.reponse || '';
-    btnAR.dataset.langue = langue;
-    btnAR.dataset.voix = support.voixNom || '';
+    btnAR.style.display = 'none';
+    btnAR.onclick = c.reponseAudio
+        ? () => jouerAudioFlash(c.reponseAudio)
+        : () => lireTexte(c.reponse || '', langue, support.voixNom || '');
 
-    // Indice prof (avec image et audio éventuels)
+    // Indice prof
     const indiceProf = document.getElementById('indiceProfFlash');
-    indiceProf.innerHTML = '';
-    if (c.indice) {
-        const texteIndice = document.createElement('div');
-        texteIndice.textContent = '👩‍🏫 ' + c.indice;
-        indiceProf.appendChild(texteIndice);
-    }
-    if (c.indiceImage) {
-        const imgInd = document.createElement('img');
-        imgInd.src = c.indiceImage;
-        imgInd.className = 'image-flash';
-        indiceProf.appendChild(imgInd);
-    }
-    if (c.indiceAudio) {
-        const audioInd = document.createElement('audio');
-        audioInd.src = c.indiceAudio;
-        audioInd.controls = true;
-        audioInd.style.cssText = 'height:28px;width:100%;margin-top:4px;';
-        indiceProf.appendChild(audioInd);
-    }
+    indiceProf.innerHTML = c.indice ? '👩‍🏫 ' + echapperHtml(c.indice) : '';
     document.getElementById('indicePersoFlash').value = etat ? (etat.indicePerso || '') : '';
-    document.getElementById('carteFlashcard').classList.remove('indice-ouvert');
+    document.getElementById('carteFlashcard').classList.remove('indice-ouvert', 'correcte', 'incorrecte');
 
-    // Boutons d'évaluation
-    document.getElementById('btnsEvaluation').style.display = 'none';
-
-    // Selon le mode de dévoilement
+    // Mode saisie : pas de confiance, directement la saisie
     if (modeRevisionFlash === 'saisie') {
-        document.getElementById('masqueReponse').style.display = 'none';
+        document.getElementById('zoneConfiance').style.display = 'none';
+        document.getElementById('zoneReponseFlash').style.display = '';
         document.getElementById('saisieFLashWrap').style.display = '';
         document.getElementById('saisieFlash').value = '';
         document.getElementById('feedbackSaisie').textContent = '';
         setTimeout(() => document.getElementById('saisieFlash').focus(), 100);
-    } else {
-        const hint = modeRevisionFlash === 'lettres' ? 'Tap pour dévoiler lettre par lettre' : 'Tap pour révéler';
-        document.getElementById('masqueReponse').textContent = hint;
     }
+}
 
-    // Colorisation selon résultat précédent
-    const carte = document.getElementById('carteFlashcard');
-    carte.classList.remove('correcte','incorrecte','moyenne');
-
-    afficherResumeBoitesFlash();
+function choisirConfiance(valeur, bouton) {
+    flashConfianceChoisie = valeur;
+    document.querySelectorAll('.conf-btn').forEach(b => b.classList.remove('selected'));
+    bouton.classList.add('selected');
 }
 
 function revelerCarteFlash() {
     if (flashRevele) return;
     const item = flashSession[flashIndex % flashSession.length];
     const c = item.support.cartes[item.idx];
-
-    if (modeRevisionFlash === 'saisie') return; // géré par verifierSaisieFlash
-
+    if (modeRevisionFlash === 'saisie') return;
     if (modeRevisionFlash === 'lettres') {
         const reponse = c.reponse || '';
         lettresDecoilees++;
-        if (lettresDecoilees >= reponse.length) {
-            finirRevelationFlash();
-        } else {
-            document.getElementById('lettresFlash').style.display = '';
-            document.getElementById('masqueReponse').style.display = 'none';
-            document.getElementById('lettresFlash').textContent = reponse.slice(0, lettresDecoilees) + '_'.repeat(reponse.length - lettresDecoilees);
-        }
+        const affichage = reponse.split('').map((ch, i) =>
+            i < lettresDecoilees ? ch : (ch === ' ' ? ' ' : '_')
+        ).join('');
+        document.getElementById('lettresFlash').textContent = affichage;
+        document.getElementById('lettresFlash').style.display = '';
+        document.getElementById('masqueReponse').style.display = 'none';
+        document.getElementById('zoneReponseFlash').style.display = '';
+        document.getElementById('zoneConfiance').style.display = 'none';
+        if (lettresDecoilees >= reponse.length) finirRevelationFlash();
         return;
     }
-
-    // Mode révéler
     finirRevelationFlash();
 }
 
@@ -3438,24 +3378,84 @@ function finirRevelationFlash() {
     flashRevele = true;
     const item = flashSession[flashIndex % flashSession.length];
     const c = item.support.cartes[item.idx];
-    const zoneRep = document.getElementById('zoneReponseFlash');
-    zoneRep.classList.add('revele');
-    document.getElementById('masqueReponse').style.display = 'none';
-    document.getElementById('lettresFlash').style.display = 'none';
-    document.getElementById('reponseFlash').style.display = 'flex';
-    document.getElementById('btnAudioReponse').style.display = 'inline-block';
-    // Afficher image réponse si elle existe
-    const imgRep = document.getElementById('imageReponseFlash');
-    if (imgRep && c.reponseImage) imgRep.style.display = '';
-    // Afficher exemple + image exemple
-    if (c.exemple) {
-        document.getElementById('exempleFlash').style.display = '';
-        const imgEx = document.getElementById('imageExempleFlash');
-        if (imgEx && c.exempleImage) imgEx.style.display = '';
-    }
-    // Lecture automatique audio réponse si enregistrement (pas TTS) — optionnelle
+    document.getElementById('zoneConfiance').style.display = 'none';
+    document.getElementById('zoneReponseFlash').style.display = '';
+    document.getElementById('reponseFlash').style.display = '';
+    if (c.exemple) document.getElementById('exempleFlash').style.display = '';
+    document.getElementById('btnAudioReponse').style.display = '';
     if (c.reponseAudio) jouerAudioFlash(c.reponseAudio);
-    document.getElementById('btnsEvaluation').style.display = 'flex';
+    const libelles = {
+        'ne-sais-pas': "Tu avais dit ✗ <strong>Je ne sais pas</strong> — c'était juste ?",
+        'pas-sur': "Tu avais dit 〜 <strong>Pas sûr·e</strong> — c'était juste ?",
+        'sur': "Tu avais dit ✓ <strong>Sûr·e de moi</strong> — c'était juste ?",
+    };
+    document.getElementById('texteConfirmation').innerHTML = flashConfianceChoisie
+        ? libelles[flashConfianceChoisie]
+        : "C'était juste ?";
+    document.getElementById('zoneConfirmation').style.display = '';
+}
+
+function lireQuestionFlash() {
+    const item = flashSession[flashIndex % flashSession.length];
+    if (!item) return;
+    const c = item.support.cartes[item.idx];
+    const langue = item.support.langue || 'fr-FR';
+    if (c.questionAudio) jouerAudioFlash(c.questionAudio);
+    else lireTexte(c.question || '', langue, item.support.voixNom || '');
+}
+
+function lireReponseFlash() {
+    const item = flashSession[flashIndex % flashSession.length];
+    if (!item) return;
+    const c = item.support.cartes[item.idx];
+    const langue = item.support.langue || 'fr-FR';
+    if (c.reponseAudio) jouerAudioFlash(c.reponseAudio);
+    else lireTexte(c.reponse || '', langue, item.support.voixNom || '');
+}
+
+function evaluerFlash(resultat) {
+    if (!flashRevele && modeRevisionFlash !== 'saisie') return;
+    const item = flashSession[flashIndex % flashSession.length];
+    if (!item.support.etat[item.idx]) {
+        item.support.etat[item.idx] = { box: 1, nextDue: todayStr(), indicePerso: '', autoExplication: '' };
+    }
+    const etat = item.support.etat[item.idx];
+    etat.indicePerso = document.getElementById('indicePersoFlash').value;
+    const bon = resultat === 'oui';
+    const moyen = resultat === 'moyen';
+    majEchecsConsecutifs(etat, bon);
+    let qualite;
+    if (!bon) { qualite = 0; }
+    else if (flashConfianceChoisie === 'ne-sais-pas') { qualite = 3; }
+    else if (flashConfianceChoisie === 'pas-sur' || moyen) { qualite = 4; }
+    else { qualite = 5; }
+    if (modulesActifs.algo) {
+        appliquerSM2(etat, qualite);
+    } else {
+        if (!bon) { etat.box = 1; }
+        else if (qualite <= 3) { etat.box = Math.min(2, etat.box + 1); }
+        else if (qualite === 4) { etat.box = Math.min(3, etat.box + 1); }
+        else { etat.box = Math.min(5, etat.box + 1); }
+        etat.nextDue = addDays(todayStr(), INTERVALLES[etat.box - 1]);
+    }
+    sauvegarderSupports();
+    if (bon) flashResultats.oui++; else flashResultats.non++;
+    const bandeau = document.getElementById('bandeauFeedback');
+    const prochainJours = etat.intervalle || INTERVALLES[etat.box - 1];
+    if (bon) {
+        bandeau.className = 'bandeau-feedback bon';
+        bandeau.textContent = '\u2705 Bien joué ! Prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : '');
+    } else {
+        bandeau.className = 'bandeau-feedback mauvais';
+        bandeau.textContent = '\u274C À retravailler — réponse : ' + (item.support.cartes[item.idx].reponse || '');
+    }
+    bandeau.style.display = '';
+    flashIndex++;
+    if (flashIndex >= flashSession.length) {
+        afficherFinSessionFlash();
+    } else {
+        afficherCarteFlash();
+    }
 }
 
 function verifierSaisieFlash() {
@@ -3469,19 +3469,41 @@ function verifierSaisieFlash() {
     const seuil = attendue.length <= 4 ? 0 : attendue.length <= 8 ? 1 : 2;
     const fb = document.getElementById('feedbackSaisie');
     if (entree === attendue) {
-        fb.textContent = '✅ Exact !'; fb.className = 'feedback-saisie bon';
+        fb.textContent = '\u2705 Exact !'; fb.className = 'feedback-saisie bon';
         setTimeout(() => evaluerFlash('oui'), 700);
     } else if (dist <= seuil) {
-        fb.textContent = '🟡 Presque ! (' + c.reponse + ')'; fb.className = 'feedback-saisie moyen';
+        fb.textContent = '\U0001F7E1 Presque ! (' + c.reponse + ')'; fb.className = 'feedback-saisie moyen';
         setTimeout(() => evaluerFlash('moyen'), 900);
     } else if (entree.length >= Math.max(3, attendue.length - 2)) {
-        fb.textContent = '❌ Réponse : ' + c.reponse; fb.className = 'feedback-saisie mauvais';
+        fb.textContent = '\u274C Réponse : ' + c.reponse; fb.className = 'feedback-saisie mauvais';
     }
+}
+
+function afficherFinSessionFlash() {
+    document.getElementById('barreProgressionFlash').style.width = '100%';
+    document.getElementById('compteurFlash').textContent = flashSession.length + ' cartes révisées';
+    document.getElementById('bandeauFeedback').style.display = 'none';
+    document.getElementById('carteFlashcard').style.display = 'none';
+    document.getElementById('controlesFlahs').style.display = 'none';
+    const fin = document.getElementById('finSession');
+    fin.style.display = '';
+    document.getElementById('finStats').innerHTML =
+        '<div class="fin-stat"><div class="fin-stat-n" style="color:#2ecc71;">' + flashResultats.oui + '</div><div class="fin-stat-l">Je savais</div></div>' +
+        '<div class="fin-stat"><div class="fin-stat-n" style="color:#e67e22;">' + flashResultats.moyen + '</div><div class="fin-stat-l">Pas sûr·e</div></div>' +
+        '<div class="fin-stat"><div class="fin-stat-n" style="color:#e74c3c;">' + flashResultats.non + '</div><div class="fin-stat-l">À revoir</div></div>';
+    document.getElementById('finHint').textContent = flashResultats.non > 0
+        ? 'Reviens demain pour consolider les cartes à retravailler.'
+        : 'Excellent ! Continue comme ça.';
+}
+
+function recommencerSession() {
+    document.getElementById('carteFlashcard').style.display = '';
+    document.getElementById('controlesFlahs').style.display = '';
+    construireVueRevisionCarte(flashSession);
 }
 
 function changerModeRevision(mode) {
     modeRevisionFlash = mode;
-    document.querySelectorAll('.btn-mode-rev').forEach(b => b.classList.toggle('actif', b.dataset.mode === mode));
     afficherCarteFlash();
 }
 
@@ -3489,106 +3511,7 @@ function toggleIndiceFlash() {
     document.getElementById('carteFlashcard').classList.toggle('indice-ouvert');
 }
 
-function lireQuestionFlash() {
-    const btn = document.getElementById('btnAudioQuestion');
-    lireTexte(btn.dataset.question, btn.dataset.langue, btn.dataset.voix);
-}
-function lireReponseFlash() {
-    const btn = document.getElementById('btnAudioReponse');
-    lireTexte(btn.dataset.reponse, btn.dataset.langue, btn.dataset.voix);
-}
-
-function evaluerFlash(resultat) {
-    if (!flashRevele && modeRevisionFlash !== 'saisie') return;
-    const item = flashSession[flashIndex % flashSession.length];
-    // Initialisation de l'état si absent (carte nouvellement créée)
-    if (!item.support.etat[item.idx]) {
-        item.support.etat[item.idx] = { box: 1, nextDue: todayStr(), indicePerso: '', autoExplication: '' };
-    }
-    const etat = item.support.etat[item.idx];
-
-    // Sauvegarder indice personnel
-    etat.indicePerso = document.getElementById('indicePersoFlash').value;
-
-    // Calculer qualité SM-2
-    const bon = resultat === 'oui';
-    const moyen = resultat === 'moyen';
-    majEchecsConsecutifs(etat, bon);
-
-    if (modulesActifs.algo) {
-        // SM-2
-        let qualite = bon ? 5 : moyen ? 3 : 0;
-        appliquerSM2(etat, qualite);
-    } else {
-        // Leitner simple à 3 niveaux
-        if (!bon && !moyen) {
-            etat.box = 1;
-        } else if (moyen) {
-            etat.box = Math.min(3, etat.box + 1);
-        } else {
-            etat.box = Math.min(5, etat.box + 1);
-        }
-        etat.nextDue = addDays(todayStr(), INTERVALLES[etat.box - 1]);
-    }
-
-    sauvegarderSupports();
-
-    // Feedback visuel bref
-    const toast = document.getElementById('toast');
-    document.getElementById('toastMsg').textContent = bon ? '✅ Bien joué !' : moyen ? '〜 Presque !' : '❌ À revoir';
-    document.getElementById('toastScore').textContent = '';
-    toast.className = bon ? 'bonne show' : moyen ? 'moyenne show' : 'mauvaise show';
-    if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('show'), 900);
-
-    flashIndex++;
-    if (flashIndex >= flashSession.length) {
-        // Fin de session
-        flashIndex = 0;
-        afficherFinSessionFlash();
-    } else {
-        afficherCarteFlash();
-    }
-}
-
-function afficherFinSessionFlash() {
-    document.getElementById('barreProgressionFlash').style.width = '100%';
-    document.getElementById('compteurFlash').textContent = 'Session terminée !';
-    const carte = document.getElementById('carteFlashcard');
-    carte.innerHTML = `<div style="text-align:center;padding:30px 20px;">
-        <div style="font-size:40px;margin-bottom:12px;">🎉</div>
-        <div style="font-size:18px;font-weight:600;margin-bottom:8px;">Session terminée !</div>
-        <div style="font-size:14px;color:var(--gris-texte);margin-bottom:20px;">${flashSession.length} carte${flashSession.length > 1 ? 's' : ''} révisée${flashSession.length > 1 ? 's' : ''}</div>
-        <button class="bouton-principal" onclick="construireVueRevisionCarte(flashSession)" style="max-width:200px;margin:0 auto 10px;">🔄 Recommencer</button>
-        <br>
-        <button class="icon-btn" onclick="retourAccueil()">← Retour à l'accueil</button>
-    </div>`;
-    document.getElementById('btnsEvaluation').style.display = 'none';
-    document.getElementById('btnsModeDevoilement').style.display = 'none';
-    document.getElementById('controlesFlahs').style.display = 'none';
-    document.getElementById('resumeBoitesTexte').style.display = 'none';
-    afficherResumeBoitesFlash();
-}
-
-function afficherResumeBoitesFlash() {
-    if (!modulesActifs.algo || !supportActif) return;
-    const resume = document.getElementById('resumeBoitesTexte');
-    if (!resume) return;
-    // Calcul des boîtes pour le support actif
-    const counts = [0,0,0,0,0];
-    (supportActif.cartes || []).forEach((c, i) => {
-        const e = supportActif.etat[i];
-        if (e) counts[(e.box || 1) - 1]++;
-    });
-    const total = counts.reduce((a, b) => a + b, 0);
-    if (!total) { resume.innerHTML = ''; return; }
-    resume.innerHTML = '<div style="display:flex;gap:4px;justify-content:center;margin:8px 0;">'
-        + counts.map((n, i) => `<div style="text-align:center;padding:4px 8px;border-radius:8px;background:#fff;font-size:11px;box-shadow:0 1px 2px rgba(0,0,0,.08);">
-            <div style="font-size:14px;font-weight:700;color:${'#e74c3c #e67e22 #f39c12 #2ecc71 #16a085'.split(' ')[i]};">${n}</div>
-            <div style="color:var(--gris-texte);">B${i+1}</div>
-        </div>`).join('')
-        + '</div>';
-}
+function afficherResumeBoitesFlash() { /* conservé pour compatibilité */ }
 
 function lancerSessionAujourdhui() {
     const today = todayStr();
