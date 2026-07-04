@@ -201,10 +201,10 @@ body.filtre-actif .masque:not(.due){display:none;}
 .image-flash{max-width:100%;max-height:130px;object-fit:contain;border-radius:10px;display:block;margin:0 auto;}
 
 /* Bouton audio central */
-.btn-audio-central{display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;cursor:pointer;margin:0 auto;padding:4px;}
-.audio-central-icone{width:44px;height:44px;border-radius:50%;background:var(--gris-fond);display:flex;align-items:center;justify-content:center;font-size:20px;transition:background .15s;}
-.btn-audio-central:active .audio-central-icone,.btn-audio-central.playing .audio-central-icone{background:var(--bleu);color:#fff;}
-.audio-central-label{font-size:10px;color:var(--gris-texte);}
+.btn-audio-central{display:inline-flex;align-items:center;gap:7px;background:var(--gris-fond);border:none;border-radius:999px;padding:8px 16px;font-size:13px;color:var(--gris-texte);cursor:pointer;font-family:inherit;margin:0 auto;}
+.btn-audio-central:active{background:#dde;color:var(--bleu);}
+.btn-audio-central.playing{background:#e8f0ff;color:var(--bleu);}
+.confiance-hint{font-size:10px;color:var(--gris-texte);text-align:center;margin-top:4px;}
 
 /* Zone confiance AVANT révélation */
 #zoneConfiance{display:flex;flex-direction:column;gap:8px;}
@@ -534,15 +534,15 @@ body.force-mode-simple-global .boite-niveau,.force-mode-simple-global .boite-car
         <div class="question-flash" id="questionFlash"></div>
         <img id="imageFlash" class="image-flash" style="display:none;">
 
-        <!-- Bouton audio central -->
+        <!-- Bouton audio -->
         <button class="btn-audio-central" id="btnAudioQuestion" onclick="lireQuestionFlash()">
-            <div class="audio-central-icone" id="audioIconeQ">🔊</div>
-            <span class="audio-central-label">Écouter</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            Écouter la question
         </button>
 
         <!-- Zone confiance AVANT révélation -->
         <div id="zoneConfiance">
-            <div class="confiance-titre">Avant de voir — tu sais ?</div>
+            <div class="confiance-titre">Avant de vérifier, comment évalues-tu ta réponse ?</div>
             <div class="confiance-btns">
                 <button class="conf-btn conf-ne-sais-pas" onclick="choisirConfiance('ne-sais-pas', this)">
                     <span class="conf-icone">✗</span>
@@ -557,10 +557,7 @@ body.force-mode-simple-global .boite-niveau,.force-mode-simple-global .boite-car
                     <span class="conf-label">Sûr·e<br>de moi</span>
                 </button>
             </div>
-            <div class="masque-reponse-new" id="masqueReponse" onclick="revelerCarteFlash()">
-                <span class="masque-oeil">👁</span>
-                <span>Tap pour révéler</span>
-            </div>
+            <div class="confiance-hint">Choisis, la réponse apparaît</div>
         </div>
 
         <!-- Zone réponse (cachée jusqu'à révélation) -->
@@ -708,7 +705,7 @@ body.force-mode-simple-global .boite-niveau,.force-mode-simple-global .boite-car
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v34</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v35</span> · Données stockées sur cet appareil
     </div>
 </div>
 

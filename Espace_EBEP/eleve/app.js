@@ -3305,7 +3305,6 @@ function afficherCarteFlash() {
     // Réinitialiser zone confiance
     document.getElementById('zoneConfiance').style.display = '';
     document.querySelectorAll('.conf-btn').forEach(b => b.classList.remove('selected'));
-    document.getElementById('masqueReponse').style.display = '';
 
     // Réinitialiser zone réponse
     document.getElementById('zoneReponseFlash').style.display = 'none';
@@ -3345,6 +3344,8 @@ function choisirConfiance(valeur, bouton) {
     flashConfianceChoisie = valeur;
     document.querySelectorAll('.conf-btn').forEach(b => b.classList.remove('selected'));
     bouton.classList.add('selected');
+    // La sélection de la confiance déclenche immédiatement la révélation
+    setTimeout(() => finirRevelationFlash(), 180); // petit délai pour que l'élève voit sa sélection
 }
 
 function revelerCarteFlash() {
