@@ -3302,19 +3302,18 @@ function afficherCarteFlash() {
         : () => lireTexte(c.question || '', langue, support.voixNom || '');
     btnAQ.classList.remove('playing');
 
-    // Réinitialiser zone confiance
     document.getElementById('zoneConfiance').style.display = '';
     document.querySelectorAll('.conf-btn').forEach(b => b.classList.remove('selected'));
 
     // Réinitialiser zone réponse
     document.getElementById('zoneReponseFlash').style.display = 'none';
     document.getElementById('reponseFlash').style.display = 'none';
+    document.getElementById('reponseFlash').textContent = c.reponse || '';
     document.getElementById('lettresFlash').style.display = 'none';
     document.getElementById('saisieFLashWrap').style.display = 'none';
     document.getElementById('exempleFlash').style.display = 'none';
-    document.getElementById('zoneConfirmation').style.display = 'none';
-    document.getElementById('texteReponseFlash').textContent = c.reponse || '';
     document.getElementById('exempleFlash').textContent = c.exemple ? '« ' + c.exemple + ' »' : '';
+    document.getElementById('zoneConfirmation').style.display = 'none';
 
     // Réponse audio
     const btnAR = document.getElementById('btnAudioReponse');
@@ -3361,7 +3360,6 @@ function revelerCarteFlash() {
         ).join('');
         document.getElementById('lettresFlash').textContent = affichage;
         document.getElementById('lettresFlash').style.display = '';
-        document.getElementById('masqueReponse').style.display = 'none';
         document.getElementById('zoneReponseFlash').style.display = '';
         document.getElementById('zoneConfiance').style.display = 'none';
         if (lettresDecoilees >= reponse.length) finirRevelationFlash();
@@ -3379,12 +3377,18 @@ function finirRevelationFlash() {
     flashRevele = true;
     const item = flashSession[flashIndex % flashSession.length];
     const c = item.support.cartes[item.idx];
+
     document.getElementById('zoneConfiance').style.display = 'none';
     document.getElementById('zoneReponseFlash').style.display = '';
-    document.getElementById('reponseFlash').style.display = '';
+
+    const repEl = document.getElementById('reponseFlash');
+    repEl.textContent = c.reponse || '';
+    repEl.style.display = '';
+
     if (c.exemple) document.getElementById('exempleFlash').style.display = '';
     document.getElementById('btnAudioReponse').style.display = '';
     if (c.reponseAudio) jouerAudioFlash(c.reponseAudio);
+
     const libelles = {
         'ne-sais-pas': "Tu avais dit ✗ <strong>Je ne sais pas</strong> — c'était juste ?",
         'pas-sur': "Tu avais dit 〜 <strong>Pas sûr·e</strong> — c'était juste ?",
