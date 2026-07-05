@@ -1675,6 +1675,85 @@ function chargerPageRevision() {
         inputPerso.value = etatRevision[cle].indicePerso || '';
         inputPerso.addEventListener('input', () => { etatRevision[cle].indicePerso = inputPerso.value; sauvegarderSupports(); });
         panel.appendChild(inputPerso);
+
+        // Bouton enregistrement vocal
+        const audioRow = document.createElement('div');
+        audioRow.className = 'indice-audio-row';
+        audioRow.style.marginTop = '6px';
+
+        const btnEnr = document.createElement('button');
+        btnEnr.className = 'indice-audio-btn';
+        btnEnr.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="23" x2="16" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Enregistrer';
+        audioRow.appendChild(btnEnr);
+
+        const lecteur = document.createElement('audio');
+        lecteur.style.cssText = 'height:24px;width:100%;display:none;margin-top:4px;';
+        lecteur.controls = true;
+        audioRow.appendChild(lecteur);
+
+        const btnSuppAudio = document.createElement('button');
+        btnSuppAudio.className = 'indice-audio-del';
+        btnSuppAudio.textContent = '🗑';
+        btnSuppAudio.style.display = 'none';
+        audioRow.appendChild(btnSuppAudio);
+
+        // Charger l'audio existant
+        if (etatRevision[cle].indicePersoAudio) {
+            lecteur.src = etatRevision[cle].indicePersoAudio;
+            lecteur.style.display = '';
+            btnSuppAudio.style.display = '';
+        }
+
+        let enrZone = false;
+        let mrZone = null;
+        let chunksZone = [];
+
+        btnEnr.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            if (enrZone) {
+                if (mrZone && mrZone.state === 'recording') mrZone.stop();
+                return;
+            }
+            if (!navigator.mediaDevices) { alert("Micro non disponible."); return; }
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                chunksZone = [];
+                const opts = MediaRecorder.isTypeSupported('audio/mp4') ? { mimeType:'audio/mp4' } :
+                             MediaRecorder.isTypeSupported('audio/webm') ? { mimeType:'audio/webm' } : {};
+                mrZone = new MediaRecorder(stream, opts);
+                mrZone.ondataavailable = e => { if (e.data.size > 0) chunksZone.push(e.data); };
+                mrZone.onstop = () => {
+                    stream.getTracks().forEach(t => t.stop());
+                    const blob = new Blob(chunksZone, { type: mrZone.mimeType });
+                    const reader = new FileReader();
+                    reader.onload = ev2 => {
+                        etatRevision[cle].indicePersoAudio = ev2.target.result;
+                        sauvegarderSupports();
+                        lecteur.src = ev2.target.result;
+                        lecteur.style.display = '';
+                        btnSuppAudio.style.display = '';
+                    };
+                    reader.readAsDataURL(blob);
+                    enrZone = false;
+                    btnEnr.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="23" x2="16" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Enregistrer';
+                    btnEnr.classList.remove('enregistrement');
+                };
+                mrZone.start();
+                enrZone = true;
+                btnEnr.textContent = '⏹ Arrêter';
+                btnEnr.classList.add('enregistrement');
+            }).catch(() => alert("Impossible d'accéder au microphone."));
+        });
+
+        btnSuppAudio.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            delete etatRevision[cle].indicePersoAudio;
+            sauvegarderSupports();
+            lecteur.src = '';
+            lecteur.style.display = 'none';
+            btnSuppAudio.style.display = 'none';
+        });
+
+        panel.appendChild(audioRow);
         masque.appendChild(panel);
 
         const declare = document.createElement('div');
