@@ -3340,11 +3340,14 @@ function afficherCarteFlash() {
 }
 
 function choisirConfiance(valeur, bouton) {
-    flashConfianceChoisie = valeur;
-    document.querySelectorAll('.conf-btn').forEach(b => b.classList.remove('selected'));
-    bouton.classList.add('selected');
-    // La sélection de la confiance déclenche immédiatement la révélation
-    setTimeout(() => finirRevelationFlash(), 180); // petit délai pour que l'élève voit sa sélection
+    try {
+        flashConfianceChoisie = valeur;
+        document.querySelectorAll('.conf-btn').forEach(b => b.classList.remove('selected'));
+        bouton.classList.add('selected');
+        finirRevelationFlash();
+    } catch(e) {
+        alert('Erreur : ' + e.message + ' | session=' + flashSession.length + ' idx=' + flashIndex + ' revele=' + flashRevele);
+    }
 }
 
 function revelerCarteFlash() {
