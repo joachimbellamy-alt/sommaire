@@ -1563,8 +1563,14 @@ function ouvrirBulleIndice(labelEl, idxZone) {
 
 /* ---------------- Révision (Leitner) — agrégée sur toutes les pages d'un support image ---------------- */
 
-function todayStr() { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString().slice(0, 10); }
-function addDays(dateStr, n) { const d = new Date(dateStr + 'T00:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+function localeDateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const j = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${j}`;
+}
+function todayStr() { return localeDateStr(new Date()); }
+function addDays(s, n) { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() + n); return localeDateStr(d); }
 function estDue(cle) { return etatRevision[cle].nextDue <= todayStr(); }
 
 function initEtatRevisionImage() {
@@ -2738,7 +2744,7 @@ function changerVueAgenda(vue) {
 }
 
 /* -- Calcul des données par jour -- */
-function dateStr(d) { return d.toISOString().slice(0, 10); }
+function dateStr(d) { return localeDateStr(d); }
 
 function calculerChargeParsupport() {
     const charge = {}; // { 'YYYY-MM-DD': { revisions: n, objectifs: [{titre,couleur}] } }
