@@ -306,6 +306,55 @@ body.force-mode-simple-global .boite-niveau,.force-mode-simple-global .boite-car
 .choix-correct{background:#d7f5e0!important;font-weight:600;}
 .choix-incorrect{background:#fbd9d6!important;}
 #zoneImpressionTexte{display:none;}
+    /* ── Onboarding ── */
+    #overlayOnboarding{display:flex;}
+    .onboarding-corps{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 28px 16px;text-align:center;}
+    .onboarding-slide{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;}
+    .ob-icone{font-size:72px;line-height:1;margin-bottom:4px;}
+    .ob-titre{font-size:24px;font-weight:700;color:#1C1C1E;line-height:1.25;letter-spacing:-0.5px;}
+    .ob-sous{font-size:15px;color:#8E8E93;line-height:1.55;max-width:340px;}
+    .ob-etapes{display:flex;flex-direction:column;gap:14px;text-align:left;width:100%;}
+    .ob-etape{display:flex;align-items:flex-start;gap:12px;font-size:14px;color:#3A3A3C;line-height:1.5;}
+    .ob-num{width:26px;height:26px;border-radius:50%;background:#007AFF;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+    .ob-choix{display:flex;flex-direction:column;gap:10px;width:100%;}
+    .ob-choix-carte{background:#fff;border-radius:16px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;border:2px solid transparent;text-align:left;transition:all .15s;}
+    .ob-choix-carte.selectionne{border-color:#007AFF;background:#EAF3FF;}
+    .ob-choix-carte:active{transform:scale(0.98);}
+    .ob-choix-icone{font-size:28px;flex-shrink:0;}
+    .ob-choix-titre{font-size:14px;font-weight:600;color:#1C1C1E;margin-bottom:2px;}
+    .ob-choix-desc{font-size:12px;color:#8E8E93;}
+    .ob-nav{padding:0 28px 28px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+    .ob-dots{display:flex;gap:6px;margin-bottom:4px;}
+    .ob-dot{width:6px;height:6px;border-radius:3px;background:#C7C7CC;transition:all .2s;}
+    .ob-dot.on{background:#007AFF;width:18px;}
+    .ob-btn-suite{width:100%;padding:15px;border-radius:14px;border:none;background:#007AFF;color:#fff;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;}
+    .ob-btn-suite:active{background:#0066d6;}
+    .ob-btn-passer{background:none;border:none;color:#8E8E93;font-size:14px;cursor:pointer;padding:4px;font-family:inherit;}
+    /* ── Fin de session enrichie ── */
+    .fin-session{display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 4px;text-align:center;}
+    .fin-emoji-grand{font-size:64px;line-height:1;}
+    .fin-score-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;}
+    .fin-score-n{font-size:52px;font-weight:800;color:#1C1C1E;letter-spacing:-2px;line-height:1;}
+    .fin-score-label{font-size:13px;color:#8E8E93;}
+    .fin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;}
+    .fin-stat{background:#fff;border-radius:14px;padding:12px 6px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+    .fin-stat-n{font-size:24px;font-weight:700;letter-spacing:-0.5px;}
+    .fin-stat-l{font-size:11px;color:#8E8E93;margin-top:3px;font-weight:500;}
+    .fin-message{background:#fff;border-radius:14px;padding:13px 16px;width:100%;text-align:left;border-left:3px solid #007AFF;font-size:13px;color:#1C1C1E;line-height:1.55;}
+    .fin-message.mauvais{border-left-color:#FF9500;}
+    .fin-streak{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:11px 14px;width:100%;}
+    .fin-streak-feu{font-size:26px;}
+    .fin-streak-n{font-size:15px;font-weight:700;color:#FF9500;}
+    .fin-streak-sub{font-size:11px;color:#8E8E93;margin-top:1px;}
+    .fin-btn{width:100%;padding:14px;border-radius:14px;border:none;background:#007AFF;color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
+    .fin-btn:active{background:#0066d6;}
+    .fin-btn-sec{width:100%;padding:14px;border-radius:14px;border:1.5px solid #C7C7CC;background:#fff;color:#1C1C1E;font-size:15px;cursor:pointer;font-family:inherit;}
+    /* ── Indice vocal élève ── */
+    .indice-audio-row{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap;}
+    .indice-audio-btn{display:inline-flex;align-items:center;gap:6px;background:#EAF3FF;border:none;border-radius:999px;padding:7px 14px;font-size:12px;font-weight:500;color:#007AFF;cursor:pointer;font-family:inherit;transition:all .15s;}
+    .indice-audio-btn:active{background:#007AFF;color:#fff;}
+    .indice-audio-btn.enregistrement{background:#fde9e7;color:#FF3B30;animation:pulse-rec 1s ease infinite;}
+    .indice-audio-del{background:none;border:none;font-size:14px;cursor:pointer;color:#8E8E93;padding:4px;}
 @media print{
     body.impression-active>*:not(#zoneImpressionTexte){display:none!important;}
     body.impression-active #zoneImpressionTexte{display:block!important;}
@@ -555,6 +604,14 @@ body.force-mode-simple-global .boite-niveau,.force-mode-simple-global .boite-car
             <div class="indice-prof" id="indiceProfFlash"></div>
             <div class="indice-perso-label">✏️ Mon indice personnel</div>
             <input type="text" class="indice-perso-input" id="indicePersoFlash" placeholder="Ex : ça me fait penser à…">
+            <div class="indice-audio-row">
+                <button class="indice-audio-btn" id="btnEnrIndicePerso" onclick="toggleEnrIndicePerso()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="23" x2="16" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    Enregistrer ma voix
+                </button>
+                <audio id="lecteurIndicePerso" style="display:none;height:28px;width:100%;"></audio>
+                <button class="indice-audio-del" id="btnSuppIndiceAudio" style="display:none;" onclick="supprimerIndiceAudio()">🗑</button>
+            </div>
         </div>
     </div>
 
@@ -709,7 +766,7 @@ body.force-mode-simple-global .boite-niveau,.force-mode-simple-global .boite-car
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v41</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v43</span> · Données stockées sur cet appareil
     </div>
 </div>
 
@@ -901,6 +958,63 @@ body.force-mode-simple-global .boite-niveau,.force-mode-simple-global .boite-car
 </div>
 
 <div id="zoneImpressionTexte"></div>
+
+<!-- ===================== ONBOARDING ===================== -->
+<div id="overlayOnboarding" style="display:none;position:fixed;inset:0;z-index:9000;background:#F2F2F7;flex-direction:column;">
+    <div style="height:env(safe-area-inset-top,0px);"></div>
+    <div class="onboarding-corps" id="onboardingCorps">
+
+        <!-- Slide 1 -->
+        <div class="onboarding-slide" id="slide1">
+            <div class="ob-icone">🧠</div>
+            <div class="ob-titre">Bienvenue dans<br>Mes révisions</div>
+            <div class="ob-sous">Révise intelligemment avec la méthode des flashcards espacées — en quelques minutes par jour, tu mémoriseras mieux et plus longtemps.</div>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="onboarding-slide" id="slide2" style="display:none;">
+            <div class="ob-icone">🔄</div>
+            <div class="ob-titre">La magie de la répétition</div>
+            <div class="ob-etapes">
+                <div class="ob-etape"><span class="ob-num">1</span><span>Tu vois une question et tu évalues ta confiance <strong>avant</strong> de voir la réponse.</span></div>
+                <div class="ob-etape"><span class="ob-num">2</span><span>L'app calcule quand revoir chaque carte — ni trop tôt, ni trop tard.</span></div>
+                <div class="ob-etape"><span class="ob-num">3</span><span>En quelques jours, ce que tu révises passe dans ta mémoire à long terme.</span></div>
+            </div>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="onboarding-slide" id="slide3" style="display:none;">
+            <div class="ob-titre" style="margin-bottom:6px;">Par quoi veux-tu commencer ?</div>
+            <div class="ob-sous" style="margin-bottom:16px;">Tu pourras en ajouter d'autres après.</div>
+            <div class="ob-choix">
+                <div class="ob-choix-carte selectionne" onclick="selectTypeOb('texte',this)">
+                    <span class="ob-choix-icone">🗒️</span>
+                    <div><div class="ob-choix-titre">Flashcards</div><div class="ob-choix-desc">Questions / réponses. Vocabulaire, définitions, dates.</div></div>
+                </div>
+                <div class="ob-choix-carte" onclick="selectTypeOb('image',this)">
+                    <span class="ob-choix-icone">🖼️</span>
+                    <div><div class="ob-choix-titre">Image avec zones</div><div class="ob-choix-desc">Schéma, carte ou texte avec zones à mémoriser.</div></div>
+                </div>
+                <div class="ob-choix-carte" onclick="selectTypeOb('import',this)">
+                    <span class="ob-choix-icone">📂</span>
+                    <div><div class="ob-choix-titre">Importer un paquet</div><div class="ob-choix-desc">Mon prof m'a envoyé un fichier à importer.</div></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navigation -->
+    <div class="ob-nav">
+        <div class="ob-dots">
+            <div class="ob-dot on" id="obDot1"></div>
+            <div class="ob-dot" id="obDot2"></div>
+            <div class="ob-dot" id="obDot3"></div>
+        </div>
+        <button class="ob-btn-suite" id="obBtnSuite" onclick="avancerOnboarding()">Commencer →</button>
+        <button class="ob-btn-passer" onclick="terminerOnboarding('skip')">Passer</button>
+    </div>
+</div>
 
 <script src="app.js"></script>
 </body>

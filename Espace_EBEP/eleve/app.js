@@ -804,13 +804,13 @@ function definirTexte(id, texte) {
 
 let idSupportEnEdition = null;
 
-function creerNouveauSupport() {
+function creerNouveauSupport(typePrefill) {
     idSupportEnEdition = null;
     definirTexte('titreModalSupport', 'Nouveau support');
     definirTexte('btnValiderSupport', 'Créer');
     document.getElementById('champNomSupport').value = '';
     document.getElementById('champMatiereSupport').value = 'Français';
-    document.getElementById('champTypeSupport').value = 'image';
+    document.getElementById('champTypeSupport').value = typePrefill || 'image';
     document.getElementById('ligneTypeSupport').style.display = '';
     document.getElementById('modalNouveauSupport').classList.add('ouverte');
     setTimeout(() => document.getElementById('champNomSupport').focus(), 50);
@@ -3344,6 +3344,8 @@ function afficherCarteFlash() {
     indiceProf.innerHTML = c.indice ? '👩‍🏫 ' + echapperHtml(c.indice) : '';
     document.getElementById('indicePersoFlash').value = etat ? (etat.indicePerso || '') : '';
     document.getElementById('carteFlashcard').classList.remove('indice-ouvert', 'correcte', 'incorrecte');
+    // Charger l'audio de l'indice perso si existant
+    majUIIndiceAudio(etat && etat.indicePersoAudio ? etat.indicePersoAudio : null);
 
     // Mode saisie : pas de confiance, directement la saisie
     if (modeRevisionFlash === 'saisie') {
@@ -3446,6 +3448,8 @@ function evaluerFlash(resultat) {
     }
     const etat = item.support.etat[item.idx];
     etat.indicePerso = document.getElementById('indicePersoFlash').value;
+    // Arrêter un enregistrement en cours si l'élève valide sans avoir arrêté
+    if (indiceEnregistrement) arreterEnrIndicePerso();
     const bon = resultat === 'oui';
     const moyen = resultat === 'moyen';
     majEchecsConsecutifs(etat, bon);
@@ -3565,6 +3569,130 @@ function quitterExerciceTexte() {
     }
 }
 
+/* ================================================================
+   ONBOARDING
+   ================================================================ */
+
+let obSlideActuel = 1;
+let obTypeChoisi = 'texte';
+
+function verifierOnboarding() {
+    const deja = localStorage.getItem('memo_onboarding_v1');
+    if (!deja && supports.length === 0) {
+        document.getElementById('overlayOnboarding').style.display = 'flex';
+    }
+}
+
+function avancerOnboarding() {
+    if (obSlideActuel < 3) {
+        document.getElementById('slide' + obSlideActuel).style.display = 'none';
+        obSlideActuel++;
+        document.getElementById('slide' + obSlideActuel).style.display = '';
+        document.querySelectorAll('.ob-dot').forEach((d, i) => d.classList.toggle('on', i === obSlideActuel - 1));
+        const btn = document.getElementById('obBtnSuite');
+        btn.textContent = obSlideActuel === 3 ? "C'est parti 🚀" : 'Suivant →';
+    } else {
+        terminerOnboarding(obTypeChoisi);
+    }
+}
+
+function selectTypeOb(type, el) {
+    obTypeChoisi = type;
+    document.querySelectorAll('.ob-choix-carte').forEach(c => c.classList.remove('selectionne'));
+    el.classList.add('selectionne');
+}
+
+function terminerOnboarding(type) {
+    localStorage.setItem('memo_onboarding_v1', '1');
+    document.getElementById('overlayOnboarding').style.display = 'none';
+    if (type === 'import') {
+        document.getElementById('inputImport').click();
+    } else if (type === 'texte' || type === 'image') {
+        creerNouveauSupport(type);
+    }
+}
+
+/* ================================================================
+   FIN DE SESSION ENRICHIE
+   ================================================================ */
+
+/* ── Indice vocal élève (indice perso enregistré à la voix) ── */
+
+let indiceMediaRecorder = null;
+let indiceAudioChunks = [];
+let indiceEnregistrement = false;
+
+function toggleEnrIndicePerso() {
+    if (indiceEnregistrement) {
+        arreterEnrIndicePerso();
+    } else {
+        demarrerEnrIndicePerso();
+    }
+}
+
+function demarrerEnrIndicePerso() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("L'enregistrement audio n'est pas disponible sur cet appareil.");
+        return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        indiceAudioChunks = [];
+        const options = MediaRecorder.isTypeSupported('audio/mp4') ? { mimeType: 'audio/mp4' } :
+                        MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm' } : {};
+        indiceMediaRecorder = new MediaRecorder(stream, options);
+        indiceMediaRecorder.ondataavailable = e => { if (e.data.size > 0) indiceAudioChunks.push(e.data); };
+        indiceMediaRecorder.onstop = () => {
+            stream.getTracks().forEach(t => t.stop());
+            const blob = new Blob(indiceAudioChunks, { type: indiceMediaRecorder.mimeType });
+            const reader = new FileReader();
+            reader.onload = ev => {
+                const item = flashSession[flashIndex % flashSession.length];
+                if (!item) return;
+                if (!item.support.etat[item.idx]) return;
+                item.support.etat[item.idx].indicePersoAudio = ev.target.result;
+                sauvegarderSupports();
+                majUIIndiceAudio(ev.target.result);
+            };
+            reader.readAsDataURL(blob);
+            indiceEnregistrement = false;
+            const btn = document.getElementById('btnEnrIndicePerso');
+            if (btn) { btn.textContent = ''; btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="23" x2="16" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Enregistrer ma voix'; btn.classList.remove('enregistrement'); }
+        };
+        indiceMediaRecorder.start();
+        indiceEnregistrement = true;
+        const btn = document.getElementById('btnEnrIndicePerso');
+        if (btn) { btn.textContent = '⏹ Arrêter'; btn.classList.add('enregistrement'); }
+    }).catch(() => alert("Impossible d'accéder au microphone."));
+}
+
+function arreterEnrIndicePerso() {
+    if (indiceMediaRecorder && indiceMediaRecorder.state === 'recording') {
+        indiceMediaRecorder.stop();
+    }
+}
+
+function majUIIndiceAudio(src) {
+    const lecteur = document.getElementById('lecteurIndicePerso');
+    const btnSuppr = document.getElementById('btnSuppIndiceAudio');
+    if (src) {
+        lecteur.src = src;
+        lecteur.style.display = '';
+        if (btnSuppr) btnSuppr.style.display = '';
+    } else {
+        lecteur.src = '';
+        lecteur.style.display = 'none';
+        if (btnSuppr) btnSuppr.style.display = 'none';
+    }
+}
+
+function supprimerIndiceAudio() {
+    const item = flashSession[flashIndex % flashSession.length];
+    if (!item || !item.support.etat[item.idx]) return;
+    delete item.support.etat[item.idx].indicePersoAudio;
+    sauvegarderSupports();
+    majUIIndiceAudio(null);
+}
+
 function migrerVersPagesEtType(liste) {
     let modifie = false;
     liste.forEach(s => {
@@ -3638,6 +3766,7 @@ async function traiterImportDepuisLien() {
     etiquettesAgenda = await chargerEtiquettesAgenda();
     afficherAccueil();
     afficherBanniereEcranAccueilSiBesoin();
+    verifierOnboarding();
     await traiterImportDepuisLien();
 
     if ('serviceWorker' in navigator) {
