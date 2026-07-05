@@ -1603,11 +1603,19 @@ function pageSuivanteRevision() {
 }
 
 function chargerPageRevision() {
+    try {
     const page = supportActif.pages[pageActuelle];
     const conteneur = document.getElementById('conteneurImage');
     conteneur.innerHTML = '';
     const img = document.createElement('img');
     img.src = page.image;
+    img.style.display = 'block';
+    img.style.maxWidth = '100%';
+    if (!page.image) {
+        conteneur.innerHTML = '<div style="padding:40px;color:#999;text-align:center;">⚠️ Image absente — essaie de réimporter ce support.</div>';
+        majNavigateurPages('revision');
+        return;
+    }
     conteneur.appendChild(img);
 
     page.zones.forEach((z, i) => {
@@ -1683,6 +1691,9 @@ function chargerPageRevision() {
 
     majNavigateurPages('revision');
     actualiserAffichageRevision();
+    } catch(e) {
+        alert('Erreur révision image : ' + e.message + '\n\npage=' + pageActuelle + ' pages=' + (supportActif && supportActif.pages ? supportActif.pages.length : '?'));
+    }
 }
 
 function toggleRevele(masque) { masque.classList.toggle('revele'); }
