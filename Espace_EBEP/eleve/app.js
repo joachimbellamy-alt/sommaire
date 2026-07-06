@@ -1652,7 +1652,13 @@ function chargerPageRevision() {
         const indiceBtn = document.createElement('div');
         indiceBtn.className = 'indice-btn';
         indiceBtn.textContent = '💡';
-        indiceBtn.addEventListener('click', (ev) => { ev.stopPropagation(); masque.classList.toggle('indice-actif'); });
+        indiceBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            // Fermer tous les autres panneaux ouverts avant d'ouvrir celui-ci
+            const etaitActif = masque.classList.contains('indice-actif');
+            document.querySelectorAll('#conteneurImage .masque.indice-actif').forEach(m => m.classList.remove('indice-actif'));
+            if (!etaitActif) masque.classList.add('indice-actif');
+        });
         masque.appendChild(indiceBtn);
 
         const panel = document.createElement('div');
@@ -1697,9 +1703,10 @@ function chargerPageRevision() {
         btnSuppAudio.style.display = 'none';
         audioRow.appendChild(btnSuppAudio);
 
-        // Charger l'audio existant
-        if (etatRevision[cle].indicePersoAudio) {
-            lecteur.src = etatRevision[cle].indicePersoAudio;
+        // Charger l'audio existant — seulement si une vraie donnée est stockée
+        const audioExistant = etatRevision[cle].indicePersoAudio;
+        if (audioExistant && audioExistant.length > 100) {
+            lecteur.src = audioExistant;
             lecteur.style.display = '';
             btnSuppAudio.style.display = '';
         }
