@@ -108,9 +108,9 @@ main{padding:14px 16px;max-width:800px;margin:0 auto;}
 #blocAujourdhui .streak-feu{font-size:24px;line-height:1;}
 #blocAujourdhui .streak-jours{font-size:10px;color:rgba(255,255,255,0.85);margin-top:1px;}
 #blocAujourdhui .aj-titre{font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px;}
-#blocAujourdhui .aj-nombre{font-size:36px;font-weight:700;color:#fff;line-height:1;letter-spacing:-1px;}
+#blocAujourdhui .aj-nombre{font-size:44px;font-weight:800;color:#fff;line-height:1;letter-spacing:-2px;}
 #blocAujourdhui .aj-sous{font-size:13px;color:rgba(255,255,255,0.8);margin:5px 0 14px;}
-#blocAujourdhui .btn-commencer{background:#fff;color:var(--bleu);border:none;border-radius:14px;padding:11px 22px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:-0.2px;}
+#blocAujourdhui .btn-commencer{background:#fff;color:var(--bleu);border:none;border-radius:14px;padding:14px;font-size:17px;font-weight:700;cursor:pointer;letter-spacing:-0.3px;width:100%;margin-top:4px;}
 #blocAujourdhui .btn-commencer:active{transform:scale(0.97);}
 
 /* ── Accueil : cartes supports ── */
@@ -155,6 +155,10 @@ main{padding:14px 16px;max-width:800px;margin:0 auto;}
 
 /* ── Révision image (zones) ── */
 .controles-revision{margin-bottom:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+    .nav-zone-focus{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface);border-radius:14px;padding:10px 14px;margin-bottom:10px;box-shadow:var(--ombre);}
+    #btnModeFocus.actif{background:var(--bleu);color:#fff;}
+    .masque.dimme{opacity:.18!important;}
+    .masque.active-focus .fond{border-color:var(--bleu);border-width:3px;box-shadow:0 0 0 4px rgba(0,122,255,.2);}
 #resumeBoites{margin-bottom:14px;}
 .boites-titre{font-size:14px;color:#555;margin-bottom:8px;font-weight:bold;text-align:center;}
 .boites-rangee{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;}
@@ -168,11 +172,16 @@ main{padding:14px 16px;max-width:800px;margin:0 auto;}
 #instructionsRevision{margin-bottom:16px;font-size:13px;color:#777;text-align:center;}
 #conteneurImage{position:relative;display:inline-block;max-width:100%;text-align:center;}
 #conteneurImage img{display:block;max-width:100%;}
-.masque{position:absolute;cursor:pointer;transition:opacity .25s ease;-webkit-tap-highlight-color:transparent;}
-.masque .fond{position:absolute;inset:0;background:#fff;border:2px solid rgba(0,122,255,0.4);pointer-events:none;transition:background .25s,border-color .25s;}
+.masque{position:absolute;cursor:pointer;transition:opacity .25s ease;-webkit-tap-highlight-color:transparent;border-radius:8px;}
+.masque .fond{position:absolute;inset:0;background:rgba(255,255,255,.88);border:2px solid rgba(0,122,255,.5);pointer-events:none;transition:all .25s;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;}
+    .masque .fond::after{content:"👁";font-size:clamp(14px,3%,22px);opacity:.55;pointer-events:none;}
+    .masque.active-focus{animation:pulseZone 1.5s ease infinite;}
+    .masque.revele .fond{animation:revealZone .3s ease forwards;}
+    .masque:not(.revele):not(.due){animation:none;}
 .masque:not(.due):not(.revele){opacity:.45;}
 body.force-mode-simple-global .masque:not(.due):not(.revele){opacity:1;}
-.masque.revele .fond{background:transparent;border-color:transparent;}
+.masque.active-focus{animation:pulseZone 1.5s ease infinite;}
+    .masque.revele .fond{background:transparent;border-color:transparent;}
 .masque.revele{opacity:1;}
 body.filtre-actif .masque:not(.due){display:none;}
 .masque .boite-niveau{position:absolute;top:-9px;left:-9px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;color:#fff;z-index:6;box-shadow:0 1px 3px rgba(0,0,0,.4);pointer-events:none;}
@@ -208,7 +217,18 @@ body.filtre-actif .masque:not(.due){display:none;}
 .bandeau-feedback.moyen{background:var(--jaune-clair);color:#7a4e00;border-left:3px solid var(--jaune);}
 
 /* Carte question */
-.carte-flashcard{background:var(--surface);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--ombre-forte);margin-bottom:10px;}
+
+    /* ── Animations transitions ── */
+    @keyframes slideInUp{from{transform:translateY(24px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+    @keyframes slideInRight{from{transform:translateX(32px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+    @keyframes slideOutLeft{from{transform:translateX(0);opacity:1;}to{transform:translateX(-32px);opacity:0;}}
+    @keyframes revealZone{from{opacity:1;transform:scale(1);}50%{opacity:.6;transform:scale(1.04);}to{opacity:0;transform:scale(1);}}
+    @keyframes pulseZone{0%,100%{box-shadow:0 0 0 0 rgba(0,122,255,.4);}50%{box-shadow:0 0 0 8px rgba(0,122,255,0);}}
+    .carte-flashcard.anim-entree{animation:slideInRight .28s cubic-bezier(.34,1.56,.64,1);}
+    .carte-confiance.anim-entree{animation:slideInUp .25s cubic-bezier(.34,1.56,.64,1);}
+    .carte-reponse.anim-entree{animation:slideInUp .28s cubic-bezier(.34,1.56,.64,1);}
+
+    .carte-flashcard{background:var(--surface);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--ombre-forte);margin-bottom:10px;}
 .carte-flashcard-header{display:flex;align-items:center;justify-content:space-between;}
 .badge-matiere-flash{font-size:11px;font-weight:600;padding:4px 12px;border-radius:999px;letter-spacing:0.1px;}
 .btn-indice-flash{background:var(--jaune-clair);border:1px solid var(--jaune-bord);border-radius:999px;color:#7a5500;font-size:12px;padding:6px 13px;cursor:pointer;font-weight:500;font-family:inherit;display:flex;align-items:center;gap:4px;}
@@ -541,7 +561,7 @@ body.force-mode-simple-global .boite-niveau,.force-mode-simple-global .boite-car
     <div class="controles-revision">
         <button class="icon-btn primary" onclick="remasquerToutRevision()">🔄 Recommencer</button>
         <button id="btnFiltre" class="icon-btn" onclick="basculerFiltre()">📅 Zones dues</button>
-        <button class="icon-btn" onclick="ouvrirModalRappel()">⏰ Rappel</button>
+        <button id="btnModeFocus" class="icon-btn" onclick="toggleModeFocus()">🎯 Zone par zone</button>
         <button class="icon-btn danger" onclick="reinitialiserProgression()">🗑 Réinitialiser</button>
     </div>
     <div class="segment-group" style="margin:0 auto 14px;display:inline-flex;">
@@ -552,6 +572,12 @@ body.force-mode-simple-global .boite-niveau,.force-mode-simple-global .boite-car
     <div id="resumeBoites"></div>
     <div id="compteurRevision"></div>
     <div id="instructionsRevision">Tape sur une zone pour la révéler, puis déclare honnêtement si tu savais la réponse.</div>
+    <!-- Barre navigation zone par zone (mode focus) -->
+    <div id="navZoneFocus" style="display:none;" class="nav-zone-focus">
+        <button class="icon-btn" onclick="zoneParZoneNav(-1)">‹ Précédente</button>
+        <span id="compteurZoneFocus" style="font-size:13px;font-weight:600;color:var(--gris-texte);"></span>
+        <button class="icon-btn primary" onclick="zoneParZoneNav(1)">Suivante ›</button>
+    </div>
     <div id="conteneurImage"></div>
 </div>
 
@@ -766,7 +792,7 @@ body.force-mode-simple-global .boite-niveau,.force-mode-simple-global .boite-car
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v45</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v46</span> · Données stockées sur cet appareil
     </div>
 </div>
 

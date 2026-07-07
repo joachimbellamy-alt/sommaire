@@ -1781,6 +1781,11 @@ function chargerPageRevision() {
         conteneur.appendChild(masque);
     });
 
+    if (modeFocusActif) {
+        indexZoneFocus = 0;
+        // Appliquer le focus après le rendu (léger délai)
+        setTimeout(() => appliquerFocusZone(), 100);
+    }
     majNavigateurPages('revision');
     actualiserAffichageRevision();
     } catch(e) {
@@ -1812,8 +1817,19 @@ function declarer(masque, bon) {
     etatRevision[cle].nextDue = addDays(todayStr(), INTERVALLES[etatRevision[cle].box - 1]);
     sauvegarderSupports();
     majCompteurRevision();
+    haptic(bon ? 'success' : 'error');
     afficherToast(bon, document.querySelectorAll('#conteneurImage .masque').length);
     actualiserAffichageRevision();
+    // En mode focus, passer automatiquement à la zone suivante
+    if (modeFocusActif) {
+        setTimeout(() => {
+            const masques = document.querySelectorAll('#conteneurImage .masque');
+            if (indexZoneFocus < masques.length - 1) {
+                indexZoneFocus++;
+                appliquerFocusZone();
+            }
+        }, 700);
+    }
 }
 
 function actualiserAffichageRevision() {
@@ -3433,6 +3449,9 @@ function afficherCarteFlash() {
     // Charger l'audio de l'indice perso si existant
     majUIIndiceAudio(etat && etat.indicePersoAudio ? etat.indicePersoAudio : null);
 
+    animerEntree(document.getElementById('carteFlashcard'), 'anim-entree');
+    animerEntree(document.getElementById('zoneConfiance'), 'anim-entree');
+
     // Mode saisie : pas de confiance, directement la saisie
     if (modeRevisionFlash === 'saisie') {
         document.getElementById('zoneConfiance').style.display = 'none';
@@ -3446,6 +3465,7 @@ function afficherCarteFlash() {
 
 function choisirConfiance(valeur, bouton) {
     try {
+        haptic('select');
         flashConfianceChoisie = valeur;
         document.querySelectorAll('.conf-btn').forEach(b => b.classList.remove('selected'));
         bouton.classList.add('selected');
@@ -3488,6 +3508,7 @@ function finirRevelationFlash() {
 
     document.getElementById('zoneConfiance').style.display = 'none';
     document.getElementById('zoneReponseFlash').style.display = '';
+    animerEntree(document.getElementById('zoneReponseFlash'), 'anim-entree');
 
     const repEl = document.getElementById('reponseFlash');
     repEl.textContent = c.reponse || '';
@@ -3554,7 +3575,8 @@ function evaluerFlash(resultat) {
         etat.nextDue = addDays(todayStr(), INTERVALLES[etat.box - 1]);
     }
     sauvegarderSupports();
-    if (bon) flashResultats.oui++; else flashResultats.non++;
+    if (bon) { flashResultats.oui++; haptic('success'); }
+    else { flashResultats.non++; haptic('error'); }
     const bandeau = document.getElementById('bandeauFeedback');
     const prochainJours = etat.intervalle || INTERVALLES[etat.box - 1];
     if (bon) {
@@ -3777,6 +3799,63 @@ function supprimerIndiceAudio() {
     delete item.support.etat[item.idx].indicePersoAudio;
     sauvegarderSupports();
     majUIIndiceAudio(null);
+}
+
+/* ── Haptic feedback ── */
+function haptic(type) {
+    if (!navigator.vibrate) return;
+    if (type === 'select') navigator.vibrate(6);
+    else if (type === 'success') navigator.vibrate(10);
+    else if (type === 'error') navigator.vibrate([20, 40, 20]);
+    else if (type === 'light') navigator.vibrate(4);
+}
+
+/* ── Animation entrée carte ── */
+function animerEntree(el, cls) {
+    if (!el) return;
+    el.classList.remove(cls);
+    void el.offsetWidth; // force reflow
+    el.classList.add(cls);
+    el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+}
+
+/* ── Mode zone par zone ── */
+let modeFocusActif = false;
+let indexZoneFocus = 0;
+
+function toggleModeFocus() {
+    modeFocusActif = !modeFocusActif;
+    const btn = document.getElementById('btnModeFocus');
+    const nav = document.getElementById('navZoneFocus');
+    if (btn) btn.classList.toggle('actif', modeFocusActif);
+    if (nav) nav.style.display = modeFocusActif ? '' : 'none';
+    if (modeFocusActif) {
+        indexZoneFocus = 0;
+        appliquerFocusZone();
+    } else {
+        document.querySelectorAll('#conteneurImage .masque').forEach(m => {
+            m.classList.remove('dimme', 'active-focus');
+        });
+    }
+}
+
+function appliquerFocusZone() {
+    const masques = Array.from(document.querySelectorAll('#conteneurImage .masque'));
+    if (!masques.length) return;
+    indexZoneFocus = Math.max(0, Math.min(indexZoneFocus, masques.length - 1));
+    masques.forEach((m, i) => {
+        m.classList.toggle('dimme', i !== indexZoneFocus);
+        m.classList.toggle('active-focus', i === indexZoneFocus);
+    });
+    const cpt = document.getElementById('compteurZoneFocus');
+    if (cpt) cpt.textContent = 'Zone ' + (indexZoneFocus + 1) + ' / ' + masques.length;
+    haptic('light');
+}
+
+function zoneParZoneNav(delta) {
+    const masques = Array.from(document.querySelectorAll('#conteneurImage .masque'));
+    indexZoneFocus = (indexZoneFocus + delta + masques.length) % masques.length;
+    appliquerFocusZone();
 }
 
 function migrerVersPagesEtType(liste) {
