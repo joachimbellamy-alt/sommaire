@@ -661,28 +661,80 @@ function calculerResumeAujourdhui() {
 
 function afficherTableauBord() {
     const r = calculerResumeAujourdhui();
-    // Streak
-    const streakEl = document.getElementById('streakJours');
-    if (streakEl) streakEl.textContent = streakActuel.jours + ' jour' + (streakActuel.jours !== 1 ? 's' : '') + ' de suite';
-
-    // Nombre et sous-titre
     const nb = Math.min(r.total, PLAFOND_PAR_JOUR);
+
+    // Nombre
     const nombreEl = document.getElementById('ajNombre');
-    const sousEl = document.getElementById('ajSous');
-    const btnCommencer = document.getElementById('btnCommencer');
     if (nombreEl) nombreEl.textContent = nb;
+
+    // Sous-titre
+    const sousEl = document.getElementById('ajSous');
     if (sousEl) {
         if (r.total === 0) {
-            sousEl.textContent = 'Rien à réviser aujourd\'hui, bravo !';
+            sousEl.textContent = 'Rien à réviser aujourd\'hui, bravo ! 🎉';
         } else {
-            let txt = 'élément' + (nb > 1 ? 's' : '') + ' à réviser';
-            if (r.dueTexte > 0) txt += ' · ' + r.dueTexte + ' Flashcard' + (r.dueTexte > 1 ? 's' : '');
-            if (r.dueImage > 0) txt += ' · ' + r.dueImage + ' zone' + (r.dueImage > 1 ? 's' : '') + ' image';
-            if (r.total > PLAFOND_PAR_JOUR) txt += '\n(+' + (r.total - PLAFOND_PAR_JOUR) + ' reportés à demain)';
-            sousEl.textContent = txt;
+            const parties = [];
+            if (r.dueTexte > 0) parties.push(r.dueTexte + ' flashcard' + (r.dueTexte > 1 ? 's' : ''));
+            if (r.dueImage > 0) parties.push(r.dueImage + ' zone' + (r.dueImage > 1 ? 's' : '') + ' image');
+            sousEl.textContent = parties.join(' · ');
         }
     }
-    if (btnCommencer) btnCommencer.style.display = r.dueTexte > 0 ? '' : 'none';
+
+    // Durée estimée (~18 secondes par élément)
+    const dureeEl = document.getElementById('dureeEstimee');
+    if (dureeEl && nb > 0) {
+        const minutes = Math.max(1, Math.round(nb * 18 / 60));
+        dureeEl.textContent = '~' + minutes + ' min';
+        dureeEl.style.display = '';
+    } else if (dureeEl) dureeEl.style.display = 'none';
+
+    // Streak badge
+    const streakEl = document.getElementById('streakJours');
+    if (streakEl) streakEl.textContent = streakActuel.jours + (streakActuel.jours === 1 ? ' jour' : ' jours');
+
+    // Streak semaine (7 jours, les X derniers jours avec activité)
+    const swEl = document.getElementById('streakSemaine');
+    if (swEl && streakActuel.jours > 0) {
+        const jours = streakActuel.jours;
+        const jDone = Math.min(jours, 7);
+        swEl.style.display = '';
+        swEl.innerHTML = `
+            <div class="sw-left">
+                <span style="font-size:22px;">🔥</span>
+                <div>
+                    <div class="sw-n">${jours} jour${jours > 1 ? 's' : ''}</div>
+                    <div class="sw-label">de suite</div>
+                </div>
+            </div>
+            <div class="sw-days">
+                ${Array.from({length:7}, (_, i) => `<div class="sw-day${i < jDone ? ' done' : ''}"></div>`).join('')}
+            </div>`;
+    } else if (swEl) swEl.style.display = 'none';
+
+    // Alerte contrôle si agenda actif et évaluation proche (< 7 jours)
+    const alerteEl = document.getElementById('alerteControle');
+    if (alerteEl && objectifs.length > 0) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const prochaine = objectifs
+            .filter(o => o.dateEval)
+            .map(o => ({ ...o, date: new Date(o.dateEval + 'T00:00:00') }))
+            .filter(o => o.date >= today)
+            .sort((a, b) => a.date - b.date)[0];
+        if (prochaine) {
+            const diffJ = Math.round((prochaine.date - today) / 86400000);
+            if (diffJ <= 7) {
+                const msg = diffJ === 0 ? '⚠️ Contrôle aujourd\'hui : ' + prochaine.titre
+                          : diffJ === 1 ? '📅 Contrôle demain : ' + prochaine.titre
+                          : '📅 Contrôle dans ' + diffJ + ' jours : ' + prochaine.titre;
+                alerteEl.textContent = msg;
+                alerteEl.style.display = '';
+            } else alerteEl.style.display = 'none';
+        } else alerteEl.style.display = 'none';
+    } else if (alerteEl) alerteEl.style.display = 'none';
+
+    // Bouton Commencer
+    const btnCommencer = document.getElementById('btnCommencer');
+    if (btnCommencer) btnCommencer.style.display = nb > 0 ? '' : 'none';
 }
 
 function afficherAccueil() {
@@ -703,31 +755,44 @@ function afficherAccueil() {
 
         liste.innerHTML = matieresPresentes.map(m => `
             <div class="titre-matiere">${ICONES_MATIERES[m] || '📦'} ${m}</div>
-            ${parMatiere[m].slice().reverse().map(s => `
+            ${parMatiere[m].slice().reverse().map(s => {
+                const { maitrisees, total, difficiles } = calculerProgression(s);
+                const pct = total > 0 ? Math.round((maitrisees / total) * 100) : 0;
+                const circonference = 2 * Math.PI * 15; // r=15
+                const dash = (pct / 100) * circonference;
+                const unite = s.type === 'texte' ? 'cartes' : 'zones';
+                const metaText = total === 0 ? 'Pas encore de contenu'
+                    : maitrisees + '/' + total + ' ' + unite + ' maîtrisées'
+                    + (difficiles > 0 ? ' · ⚠️ ' + difficiles : '');
+                return `
                 <div class="carte-support" data-id="${s.id}">
-                    ${vignetteSupport(s) ? `<img src="${vignetteSupport(s)}" alt="">` : `<div style="width:56px;height:56px;border-radius:10px;background:var(--gris-fond);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>`}
-                    <div class="infos">
-                        <div class="nom"></div>
-                        <div class="barre-progression"><div class="barre-remplie" data-id-barre="${s.id}"></div></div>
-                        <div class="meta" data-id-meta="${s.id}"></div>
+                    ${vignetteSupport(s)
+                        ? `<img src="${vignetteSupport(s)}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:10px;flex-shrink:0;">`
+                        : `<div style="width:48px;height:48px;border-radius:10px;background:var(--bleu-clair);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>`
+                    }
+                    <div class="infos" style="flex:1;min-width:0;">
+                        <div class="nom" style="font-weight:600;font-size:14px;color:var(--texte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${echapperHtml(s.nom)}</div>
+                        <div class="meta" style="font-size:11px;color:var(--gris-texte);margin-top:2px;">${metaText}</div>
                     </div>
-                    <button class="icon-btn" data-modifier="${s.id}" style="flex-shrink:0;">✏️</button>
-                    <button class="icon-btn danger" data-suppr="${s.id}" style="flex-shrink:0;">🗑</button>
-                    <button class="icon-btn" data-exporter="${s.id}" style="flex-shrink:0;" title="Exporter ce support">📤</button>
-                    <div class="chevron">›</div>
-                </div>
-            `).join('')}
+                    <div class="progress-ring-wrap">
+                        <svg viewBox="0 0 36 36" width="40" height="40">
+                            <circle cx="18" cy="18" r="15" fill="none" stroke="#E5E5EA" stroke-width="3"/>
+                            <circle cx="18" cy="18" r="15" fill="none" stroke="${pct >= 80 ? '#34C759' : pct >= 40 ? '#FF9500' : '#007AFF'}" stroke-width="3"
+                                stroke-dasharray="${dash.toFixed(1)} ${(circonference - dash).toFixed(1)}"
+                                stroke-dashoffset="${(circonference / 4).toFixed(1)}"
+                                transform="rotate(-90 18 18)" stroke-linecap="round"/>
+                        </svg>
+                        <div class="progress-ring-pct">${pct}%</div>
+                    </div>
+                    <button class="icon-btn" data-modifier="${s.id}" style="flex-shrink:0;padding:6px;">✏️</button>
+                    <button class="icon-btn danger" data-suppr="${s.id}" style="flex-shrink:0;padding:6px;">🗑</button>
+                    <button class="icon-btn" data-exporter="${s.id}" style="flex-shrink:0;padding:6px;" title="Exporter">📤</button>
+                </div>`;
+            }).join('')}
         `).join('');
 
         liste.querySelectorAll('.carte-support').forEach(carte => {
             const id = carte.getAttribute('data-id');
-            const s = supports.find(x => x.id === id);
-            carte.querySelector('.nom').textContent = s.nom + (s.type === 'image' && s.pages && s.pages.length > 1 ? ' (' + s.pages.length + ' pages)' : '');
-            const { maitrisees, total, difficiles } = calculerProgression(s);
-            const pct = total > 0 ? Math.round((maitrisees / total) * 100) : 0;
-            carte.querySelector('[data-id-barre="' + id + '"]').style.width = pct + '%';
-            const unite = s.type === 'texte' ? ' cartes maîtrisées' : ' zones maîtrisées';
-            carte.querySelector('[data-id-meta="' + id + '"]').textContent = total === 0 ? 'Pas encore de contenu' : maitrisees + '/' + total + unite + (difficiles > 0 ? ' · ⚠️ ' + difficiles + ' difficile' + (difficiles > 1 ? 's' : '') : '');
             carte.addEventListener('click', (ev) => {
                 if (ev.target.closest('[data-suppr]') || ev.target.closest('[data-modifier]') || ev.target.closest('[data-exporter]')) return;
                 ouvrirRevision(id);
@@ -1813,8 +1878,9 @@ function declarer(masque, bon) {
     masque.classList.add(bon ? 'correcte' : 'incorrecte');
     const cle = masque.dataset.cle;
     majEchecsConsecutifs(etatRevision[cle], bon);
-    etatRevision[cle].box = bon ? Math.min(5, etatRevision[cle].box + 1) : 1;
-    etatRevision[cle].nextDue = addDays(todayStr(), INTERVALLES[etatRevision[cle].box - 1]);
+    // SM-2 toujours actif
+    const qualiteZone = bon ? 5 : 0;
+    appliquerSM2(etatRevision[cle], qualiteZone);
     sauvegarderSupports();
     majCompteurRevision();
     haptic(bon ? 'success' : 'error');
@@ -2736,10 +2802,20 @@ async function chargerModules() {
             req.onsuccess = () => resolve(req.result);
             req.onerror = () => reject(req.error);
         });
-        return donnees || { algo: false, agenda: false };
+        // Migration : si ancien format avec 'algo', convertir en 'stats'
+        const base = { stats: false, agenda: false };
+        const sauvegarde = donnees || {};
+        if ('algo' in sauvegarde && !('stats' in sauvegarde)) {
+            sauvegarde.stats = sauvegarde.algo;
+        }
+        return Object.assign(base, sauvegarde);
     } catch (e) {
-        try { const r = localStorage.getItem('memo_modules_v1'); return r ? JSON.parse(r) : { algo: false, agenda: false }; }
-        catch (e2) { return { algo: false, agenda: false }; }
+        try {
+            const r = localStorage.getItem('memo_modules_v1');
+            const sauvegarde = r ? JSON.parse(r) : {};
+            if ('algo' in sauvegarde && !('stats' in sauvegarde)) sauvegarde.stats = sauvegarde.algo;
+            return Object.assign({ stats: false, agenda: false }, sauvegarde);
+        } catch (e2) { return { stats: false, agenda: false }; }
     }
 }
 
@@ -2758,33 +2834,24 @@ async function sauvegarderModules() {
 }
 
 function appliquerModules() {
-    // Gélule Algorithme complet
-    const geluleAlgo = document.getElementById('geluleAlgo');
-    if (geluleAlgo) geluleAlgo.classList.toggle('actif', !!modulesActifs.algo);
-    document.body.classList.toggle('force-mode-simple-global', !modulesActifs.algo);
+    // Statistiques détaillées — contrôle uniquement la visibilité
+    const stats = !!modulesActifs.stats;
+    document.body.classList.toggle('stats-cachees', !stats);
 
-    // Gélule Agenda
-    const geluleAgenda = document.getElementById('geluleAgenda');
-    if (geluleAgenda) geluleAgenda.classList.toggle('actif', !!modulesActifs.agenda);
+    // Toggle stats dans les Réglages
+    const tS = document.getElementById('toggleStats');
+    if (tS) tS.className = 'toggle-switch ' + (stats ? 'on' : 'off');
 
-    // Onglet Agenda (visible seulement si activé)
-    const tabAgenda = document.getElementById('tabAgenda');
-    if (tabAgenda) tabAgenda.style.display = modulesActifs.agenda ? '' : 'none';
-
-    // Toggles dans les réglages
-    const tA = document.getElementById('toggleAlgo');
-    if (tA) { tA.className = 'toggle-switch ' + (modulesActifs.algo ? 'on' : 'off'); }
+    // L'agenda est toujours visible — plus de toggle
     const tG = document.getElementById('toggleAgenda');
-    if (tG) { tG.className = 'toggle-switch ' + (modulesActifs.agenda ? 'on' : 'off'); }
+    if (tG) tG.parentElement.style.display = 'none'; // Cacher la ligne agenda dans réglages
 }
 
 async function basculerModule(nom) {
+    if (nom === 'agenda') return; // L'agenda est toujours actif
     modulesActifs[nom] = !modulesActifs[nom];
     await sauvegarderModules();
     appliquerModules();
-    if (nom === 'agenda' && !modulesActifs.agenda && vueActuelle === 'agenda') {
-        goTab('reviser');
-    }
 }
 
 /* ================================================================
@@ -3565,15 +3632,8 @@ function evaluerFlash(resultat) {
     else if (flashConfianceChoisie === 'ne-sais-pas') { qualite = 3; }
     else if (flashConfianceChoisie === 'pas-sur' || moyen) { qualite = 4; }
     else { qualite = 5; }
-    if (modulesActifs.algo) {
-        appliquerSM2(etat, qualite);
-    } else {
-        if (!bon) { etat.box = 1; }
-        else if (qualite <= 3) { etat.box = Math.min(2, etat.box + 1); }
-        else if (qualite === 4) { etat.box = Math.min(3, etat.box + 1); }
-        else { etat.box = Math.min(5, etat.box + 1); }
-        etat.nextDue = addDays(todayStr(), INTERVALLES[etat.box - 1]);
-    }
+    // SM-2 tourne toujours — "Statistiques" contrôle seulement ce qui est affiché
+    appliquerSM2(etat, qualite);
     sauvegarderSupports();
     if (bon) { flashResultats.oui++; haptic('success'); }
     else { flashResultats.non++; haptic('error'); }
@@ -3856,6 +3916,15 @@ function zoneParZoneNav(delta) {
     const masques = Array.from(document.querySelectorAll('#conteneurImage .masque'));
     indexZoneFocus = (indexZoneFocus + delta + masques.length) % masques.length;
     appliquerFocusZone();
+}
+
+function toggleOptionsAccueil() {
+    const panneau = document.getElementById('panneauOptions');
+    const btn = document.getElementById('btnPlusOptions');
+    if (!panneau) return;
+    const visible = panneau.style.display !== 'none' && panneau.style.display !== '';
+    panneau.style.display = visible ? 'none' : 'flex';
+    if (btn) btn.textContent = visible ? '⚙️ Plus d\'options' : '⚙️ Moins d\'options';
 }
 
 function migrerVersPagesEtType(liste) {
