@@ -285,10 +285,13 @@ async function mettreAJourStreak() {
 let rappelsEnAttente = [];
 const NOMS_JOURS = { MO: 'Lun', TU: 'Mar', WE: 'Mer', TH: 'Jeu', FR: 'Ven', SA: 'Sam', SU: 'Dim' };
 
-function ouvrirMenuPlus() { document.getElementById('modalMenuPlus').classList.add('ouverte'); }
-function fermerMenuPlus() { document.getElementById('modalMenuPlus').classList.remove('ouverte'); }
-function ouvrirMenuExercices() { document.getElementById('modalMenuExercices').classList.add('ouverte'); }
-function fermerMenuExercices() { document.getElementById('modalMenuExercices').classList.remove('ouverte'); }
+function ouvrirMenuContextuel() { document.getElementById('modalContextuel').classList.add('ouverte'); }
+function fermerMenuContextuel() { document.getElementById('modalContextuel').classList.remove('ouverte'); }
+// Aliases pour compatibilité
+function ouvrirMenuPlus() { ouvrirMenuContextuel(); }
+function fermerMenuPlus() { fermerMenuContextuel(); }
+function ouvrirMenuExercices() { ouvrirMenuContextuel(); }
+function fermerMenuExercices() { fermerMenuContextuel(); }
 
 function ouvrirModalRappel() {
     if (!supportActif) return;
@@ -545,51 +548,21 @@ function afficherVue(nom) {
     const cible = document.getElementById('vue' + nom.charAt(0).toUpperCase() + nom.slice(1));
     if (cible) cible.style.display = '';
 
-    const vuesAvecRetour = ['edition','revision','recadrage','editionTexte','revisionCarte','qcmTexte','ecrireTexte'];
-    const vuesSansRetour = ['accueil','agenda','reglages'];
-    document.getElementById('btnRetour').style.display = vuesAvecRetour.includes(nom) ? '' : 'none';
-    document.getElementById('btnPartager').style.display = (supportActif && ['edition','revision','editionTexte','revisionCarte'].includes(nom)) ? '' : 'none';
-
-    const btnBascule = document.getElementById('btnBascule');
-    if (nom === 'edition') {
-        document.getElementById('titreHeader').textContent = supportActif ? supportActif.nom : '';
-        btnBascule.style.display = '';
-        btnBascule.textContent = '🧠 Réviser';
-        btnBascule.onclick = () => ouvrirRevision(supportActif.id);
-    } else if (nom === 'revision') {
-        document.getElementById('titreHeader').textContent = supportActif ? supportActif.nom : '';
-        btnBascule.style.display = '';
-        btnBascule.textContent = '✏️ Modifier';
-        btnBascule.onclick = () => ouvrirEdition(supportActif.id);
-    } else if (nom === 'editionTexte') {
-        document.getElementById('titreHeader').textContent = supportActif ? supportActif.nom : '';
-        btnBascule.style.display = supportActif ? '' : 'none';
-        btnBascule.textContent = '🧠 Réviser';
-        if (supportActif) btnBascule.onclick = () => ouvrirRevision(supportActif.id);
-    } else if (nom === 'revisionCarte') {
-        document.getElementById('titreHeader').textContent = supportActif ? supportActif.nom : '🔀 Session mélangée';
-        btnBascule.style.display = supportActif ? '' : 'none';
-        btnBascule.textContent = '✏️ Modifier';
-        if (supportActif) btnBascule.onclick = () => ouvrirEdition(supportActif.id);
-    } else if (nom === 'qcmTexte') {
-        document.getElementById('titreHeader').textContent = '📝 ' + (supportActif ? supportActif.nom : '');
-        btnBascule.style.display = 'none';
-    } else if (nom === 'ecrireTexte') {
-        document.getElementById('titreHeader').textContent = '⌨️ ' + (supportActif ? supportActif.nom : '');
-        btnBascule.style.display = 'none';
-    } else if (nom === 'recadrage') {
-        document.getElementById('titreHeader').textContent = 'Cadrage';
-        btnBascule.style.display = 'none';
-    } else if (nom === 'agenda') {
-        document.getElementById('titreHeader').textContent = 'Mon agenda de révision';
-        btnBascule.style.display = 'none';
-    } else if (nom === 'reglages') {
-        document.getElementById('titreHeader').textContent = 'Réglages';
-        btnBascule.style.display = 'none';
-    } else {
-        document.getElementById('titreHeader').textContent = 'Mes révisions';
-        btnBascule.style.display = 'none';
-    }
+    // Titre du header selon la vue
+    const titres = {
+        accueil: 'Mes révisions',
+        edition: supportActif ? supportActif.nom : '',
+        revision: supportActif ? supportActif.nom : '',
+        recadrage: 'Recadrage',
+        editionTexte: supportActif ? supportActif.nom : '',
+        revisionCarte: supportActif ? supportActif.nom : '🔀 Session mélangée',
+        qcmTexte: '📝 ' + (supportActif ? supportActif.nom : ''),
+        ecrireTexte: '⌨️ ' + (supportActif ? supportActif.nom : ''),
+        agenda: 'Mon agenda de révision',
+        reglages: 'Réglages',
+    };
+    const titreEl = document.getElementById('titreHeader');
+    if (titreEl) titreEl.textContent = titres[nom] || 'Mes révisions';
     vueActuelle = nom;
 }
 
@@ -3758,7 +3731,8 @@ function avancerOnboarding() {
         document.getElementById('slide' + obSlideActuel).style.display = '';
         document.querySelectorAll('.ob-dot').forEach((d, i) => d.classList.toggle('on', i === obSlideActuel - 1));
         const btn = document.getElementById('obBtnSuite');
-        btn.textContent = obSlideActuel === 3 ? "C'est parti 🚀" : 'Suivant →';
+        const textes = { 1: 'Découvrir →', 2: 'Choisir mon premier support →', 3: "C'est parti 🚀" };
+        btn.textContent = textes[obSlideActuel] || "C'est parti 🚀";
     } else {
         terminerOnboarding(obTypeChoisi);
     }

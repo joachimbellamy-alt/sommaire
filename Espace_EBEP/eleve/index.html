@@ -475,11 +475,7 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
 </div>
 
 <header>
-    <button id="btnRetour" style="display:none;" onclick="retourAccueil()" class="hbtn">← Retour</button>
     <h1 id="titreHeader">Mes révisions</h1>
-    <button id="btnPartager" style="display:none;" onclick="partagerSupport()" class="hbtn">📤</button>
-    <button id="btnBascule" style="display:none;" class="hbtn"></button>
-    <button class="hbtn hbtn-aa" onclick="ouvrirModalDys()">Aa</button>
 </header>
 
 <main>
@@ -517,14 +513,7 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
     <div style="margin-top:8px;">
         <button class="btn-plus-options" onclick="toggleOptionsAccueil()" id="btnPlusOptions">⚙️ Plus d'options</button>
         <div id="panneauOptions" style="display:none;margin-top:10px;display:flex;flex-direction:column;gap:8px;">
-            <div class="modules-gelules">
-                </div>
-            <button class="icon-btn" onclick="ouvrirSessionMelangee()" style="width:100%;justify-content:center;">🔀 Session mélangée</button>
-            <div style="display:flex;gap:8px;">
-                <button class="icon-btn" onclick="exporterDonnees()" style="flex:1;justify-content:center;">💾 Exporter</button>
-                <label class="icon-btn" for="inputImport" style="flex:1;justify-content:center;cursor:pointer;">📂 Importer</label>
-                <input type="file" id="inputImport" accept=".json" style="display:none;">
-            </div>
+            <button class="icon-btn" onclick="ouvrirSessionMelangee()" style="width:100%;justify-content:center;">🔀 Session mélangée (toutes les flashcards dues)</button>
             <div id="espaceStockage"></div>
         </div>
     </div>
@@ -710,10 +699,9 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
         <button class="fin-btn-sec" onclick="retourAccueil()">← Retour à mes supports</button>
     </div>
 
-    <div style="display:flex;gap:8px;margin-top:10px;justify-content:center;flex-wrap:wrap;" id="controlesFlahs">
-        <button class="icon-btn" onclick="ouvrirMenuPlus()">••• Options</button>
-        <button class="icon-btn accent" onclick="ouvrirMenuExercices()">🎮 Exercices</button>
-        <button class="icon-btn" onclick="ouvrirModalRappel()">⏰ Rappel</button>
+    <div style="display:flex;justify-content:center;margin-top:10px;" id="controlesFlahs">
+        <button class="icon-btn" onclick="ouvrirMenuContextuel()" style="padding:8px 20px;">⋯ Options</button>
+    </div>
     </div>
 </div>
 
@@ -814,7 +802,7 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v49</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v52</span> · Données stockées sur cet appareil
     </div>
 </div>
 
@@ -912,25 +900,19 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
     </div>
 </div>
 
-<div class="modale-fond" id="modalMenuPlus">
-    <div class="modale-boite" style="width:300px;">
+<div class="modale-fond" id="modalContextuel">
+    <div class="modale-boite">
         <h3>Options</h3>
-        <button class="icon-btn" onclick="fermerMenuPlus();basculerFiltreTexte();" id="btnFiltreTexte" style="width:100%;justify-content:center;background:var(--gris-fond);margin-bottom:8px;border-radius:999px;">📅 Cartes dues seulement</button>
-        <button class="icon-btn danger" onclick="fermerMenuPlus();reinitialiserProgressionTexte();" style="width:100%;justify-content:center;background:#fde9e7;border-radius:999px;">🗑 Réinitialiser ma progression</button>
-        <div style="margin-top:14px;text-align:right;">
-            <button class="btn-modal annuler" onclick="fermerMenuPlus()">Fermer</button>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="icon-btn" onclick="fermerMenuContextuel();basculerFiltreTexte();" id="btnFiltreTexte" style="width:100%;justify-content:flex-start;">📅 Cartes dues seulement</button>
+            <button class="icon-btn" onclick="fermerMenuContextuel();lancerQCM();" style="width:100%;justify-content:flex-start;">📝 Mode QCM</button>
+            <button class="icon-btn" onclick="fermerMenuContextuel();lancerEcrire();" style="width:100%;justify-content:flex-start;">⌨️ Mode Écrire</button>
+            <button class="icon-btn" onclick="fermerMenuContextuel();exporterPDF();" style="width:100%;justify-content:flex-start;">📄 Export PDF</button>
+            <button class="icon-btn" onclick="fermerMenuContextuel();ouvrirModalRappel();" style="width:100%;justify-content:flex-start;">⏰ Programmer un rappel</button>
+            <button class="icon-btn danger" onclick="fermerMenuContextuel();reinitialiserProgressionTexte();" style="width:100%;justify-content:flex-start;">🗑 Réinitialiser ma progression</button>
         </div>
-    </div>
-</div>
-
-<div class="modale-fond" id="modalMenuExercices">
-    <div class="modale-boite" style="width:300px;">
-        <h3>🎮 Exercices</h3>
-        <button class="icon-btn" onclick="fermerMenuExercices();lancerQCM();" style="width:100%;justify-content:center;background:var(--gris-fond);margin-bottom:8px;border-radius:999px;">📝 Mode QCM</button>
-        <button class="icon-btn" onclick="fermerMenuExercices();lancerEcrire();" style="width:100%;justify-content:center;background:var(--gris-fond);margin-bottom:8px;border-radius:999px;">⌨️ Mode Écrire</button>
-        <button class="icon-btn" onclick="fermerMenuExercices();exporterPDF();" style="width:100%;justify-content:center;background:var(--gris-fond);border-radius:999px;">📄 Export PDF</button>
         <div style="margin-top:14px;text-align:right;">
-            <button class="btn-modal annuler" onclick="fermerMenuExercices()">Fermer</button>
+            <button class="btn-modal annuler" onclick="fermerMenuContextuel()">Fermer</button>
         </div>
     </div>
 </div>
@@ -1012,40 +994,66 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
     <div style="height:env(safe-area-inset-top,0px);"></div>
     <div class="onboarding-corps" id="onboardingCorps">
 
-        <!-- Slide 1 -->
+        <!-- Slide 1 — L'accroche -->
         <div class="onboarding-slide" id="slide1">
             <div class="ob-icone">🧠</div>
-            <div class="ob-titre">Bienvenue dans<br>Mes révisions</div>
-            <div class="ob-sous">Révise intelligemment avec la méthode des flashcards espacées — en quelques minutes par jour, tu mémoriseras mieux et plus longtemps.</div>
-        </div>
-
-        <!-- Slide 2 -->
-        <div class="onboarding-slide" id="slide2" style="display:none;">
-            <div class="ob-icone">🔄</div>
-            <div class="ob-titre">La magie de la répétition</div>
-            <div class="ob-etapes">
-                <div class="ob-etape"><span class="ob-num">1</span><span>Tu vois une question et tu évalues ta confiance <strong>avant</strong> de voir la réponse.</span></div>
-                <div class="ob-etape"><span class="ob-num">2</span><span>L'app calcule quand revoir chaque carte — ni trop tôt, ni trop tard.</span></div>
-                <div class="ob-etape"><span class="ob-num">3</span><span>En quelques jours, ce que tu révises passe dans ta mémoire à long terme.</span></div>
+            <div class="ob-titre">La plupart des élèves révise.<br>Peu s'en souviennent vraiment.</div>
+            <div class="ob-sous">Il existe un cheat code pour ça.</div>
+            <div style="background:#fff;border-radius:16px;padding:14px 16px;text-align:left;margin-top:4px;border-left:3px solid #007AFF;">
+                <div style="font-size:13px;color:#3A3A3C;line-height:1.55;">Répétition espacée, schémas à compléter, auto-évaluation — la méthode que les scientifiques recommandent. Maintenant sur ton iPad.</div>
             </div>
         </div>
 
-        <!-- Slide 3 -->
+        <!-- Slide 2 — Les deux modes -->
+        <div class="onboarding-slide" id="slide2" style="display:none;">
+            <div class="ob-titre" style="font-size:20px;">Deux façons de mémoriser</div>
+            <div class="ob-sous" style="margin-bottom:8px;">Selon ce que tu dois apprendre.</div>
+            <div style="display:flex;flex-direction:column;gap:10px;width:100%;">
+                <div style="background:#fff;border-radius:16px;padding:14px;display:flex;gap:12px;align-items:flex-start;border-left:4px solid #007AFF;">
+                    <span style="font-size:28px;flex-shrink:0;">🗒️</span>
+                    <div>
+                        <div style="font-size:14px;font-weight:700;color:#1C1C1E;margin-bottom:3px;">Flashcards</div>
+                        <div style="font-size:12px;color:#8E8E93;line-height:1.4;">Vocabulaire, conjugaisons, dates, définitions… Tu vois la question, tu évalues ta réponse, l'app retient ce que tu sais.</div>
+                    </div>
+                </div>
+                <div style="background:#fff;border-radius:16px;padding:14px;display:flex;gap:12px;align-items:flex-start;border-left:4px solid #34C759;">
+                    <span style="font-size:28px;flex-shrink:0;">🖼️</span>
+                    <div>
+                        <div style="font-size:14px;font-weight:700;color:#1C1C1E;margin-bottom:3px;">Schémas à zones</div>
+                        <div style="font-size:12px;color:#8E8E93;line-height:1.4;">Carte de géo, schéma de SVT, texte annoté… Des zones sont floutées. Tu les identifies, tu révèles, tu retiens.</div>
+                    </div>
+                </div>
+                <div style="background:#EAF3FF;border-radius:12px;padding:10px 14px;">
+                    <div style="font-size:12px;color:#0055CC;line-height:1.45;">⚡ Dans les deux cas, l'app calcule exactement quand te reproposer chaque élément pour que ça reste gravé longtemps.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3 — Premier pas -->
         <div class="onboarding-slide" id="slide3" style="display:none;">
-            <div class="ob-titre" style="margin-bottom:6px;">Par quoi veux-tu commencer ?</div>
-            <div class="ob-sous" style="margin-bottom:16px;">Tu pourras en ajouter d'autres après.</div>
+            <div class="ob-titre" style="font-size:20px;">Par où commencer ?</div>
+            <div class="ob-sous" style="margin-bottom:12px;">Tu pourras tout changer et tout ajouter après.</div>
             <div class="ob-choix">
                 <div class="ob-choix-carte selectionne" onclick="selectTypeOb('texte',this)">
                     <span class="ob-choix-icone">🗒️</span>
-                    <div><div class="ob-choix-titre">Flashcards</div><div class="ob-choix-desc">Questions / réponses. Vocabulaire, définitions, dates.</div></div>
+                    <div>
+                        <div class="ob-choix-titre">Créer des Flashcards</div>
+                        <div class="ob-choix-desc">Je saisis mes questions et réponses moi-même.</div>
+                    </div>
                 </div>
                 <div class="ob-choix-carte" onclick="selectTypeOb('image',this)">
                     <span class="ob-choix-icone">🖼️</span>
-                    <div><div class="ob-choix-titre">Image avec zones</div><div class="ob-choix-desc">Schéma, carte ou texte avec zones à mémoriser.</div></div>
+                    <div>
+                        <div class="ob-choix-titre">Ajouter un schéma</div>
+                        <div class="ob-choix-desc">Je prends une photo ou importe un PDF de mon cours.</div>
+                    </div>
                 </div>
                 <div class="ob-choix-carte" onclick="selectTypeOb('import',this)">
                     <span class="ob-choix-icone">📂</span>
-                    <div><div class="ob-choix-titre">Importer un paquet</div><div class="ob-choix-desc">Mon prof m'a envoyé un fichier à importer.</div></div>
+                    <div>
+                        <div class="ob-choix-titre">Importer le paquet de mon prof</div>
+                        <div class="ob-choix-desc">Mon professeur m'a envoyé un fichier prêt à utiliser.</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1059,8 +1067,8 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
             <div class="ob-dot" id="obDot2"></div>
             <div class="ob-dot" id="obDot3"></div>
         </div>
-        <button class="ob-btn-suite" id="obBtnSuite" onclick="avancerOnboarding()">Commencer →</button>
-        <button class="ob-btn-passer" onclick="terminerOnboarding('skip')">Passer</button>
+        <button class="ob-btn-suite" id="obBtnSuite" onclick="avancerOnboarding()">Découvrir →</button>
+        <button class="ob-btn-passer" onclick="terminerOnboarding('skip')">Je connais déjà, passer</button>
     </div>
 </div>
 
