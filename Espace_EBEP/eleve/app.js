@@ -15,6 +15,18 @@ let toastTimer = null;
 const CLICK_THRESHOLD = 6;
 const INTERVALLES = [0, 1, 3, 7, 16]; // jours avant prochaine révision (Mode simple, Leitner), indexé sur (boîte - 1)
 
+// Palette iOS pour les zones image — 8 couleurs distinctes et accessibles
+const COULEURS_ZONES = [
+    { bord: '#007AFF', fond: 'rgba(0,122,255,0.06)' },   // Bleu
+    { bord: '#34C759', fond: 'rgba(52,199,89,0.06)' },    // Vert
+    { bord: '#FF9500', fond: 'rgba(255,149,0,0.06)' },    // Orange
+    { bord: '#AF52DE', fond: 'rgba(175,82,222,0.06)' },   // Violet
+    { bord: '#FF2D55', fond: 'rgba(255,45,85,0.06)' },    // Rose
+    { bord: '#5AC8FA', fond: 'rgba(90,200,250,0.06)' },   // Bleu ciel
+    { bord: '#FF3B30', fond: 'rgba(255,59,48,0.06)' },    // Rouge
+    { bord: '#5856D6', fond: 'rgba(88,86,214,0.06)' },    // Indigo
+];
+
 /* ---------------- Algorithme SM-2 (façon Anki) — utilisé en Mode complet ---------------- */
 
 function qualiteSM2(bon, confiance) {
@@ -1465,12 +1477,17 @@ function redessinerZonesEdition() {
         const largeur = z.wPct / 100 * rect.width;
         const hauteur = z.hPct / 100 * rect.height;
 
+        // Couleur distinctive par zone
+        const couleur = COULEURS_ZONES[i % COULEURS_ZONES.length];
+
         const conteneur = document.createElement('div');
         conteneur.className = 'rect';
         conteneur.style.left = left + 'px';
         conteneur.style.top = top + 'px';
         conteneur.style.width = largeur + 'px';
         conteneur.style.height = hauteur + 'px';
+        conteneur.style.borderColor = couleur.bord;
+        conteneur.style.background = couleur.fond;
 
         if (z.forme === 'libre' && z.points) {
             conteneur.style.border = 'none';
@@ -1483,8 +1500,8 @@ function redessinerZonesEdition() {
             svg.style.display = 'block';
             const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
             poly.setAttribute('points', z.points.map(p => p.x + ',' + p.y).join(' '));
-            poly.setAttribute('fill', 'rgba(52,152,219,0.2)');
-            poly.setAttribute('stroke', '#3498db');
+            poly.setAttribute('fill', couleur.fond.replace('0.06', '0.2'));
+            poly.setAttribute('stroke', couleur.bord);
             poly.setAttribute('stroke-width', '2');
             poly.setAttribute('vector-effect', 'non-scaling-stroke');
             svg.appendChild(poly);
@@ -1496,6 +1513,9 @@ function redessinerZonesEdition() {
         const label = document.createElement('span');
         label.className = 'rect-label' + (z.indice ? ' a-un-indice' : '');
         label.textContent = i + 1;
+        label.style.background = couleur.bord;
+        label.style.color = '#fff';
+        label.style.borderColor = couleur.bord;
         label.addEventListener('click', (ev) => {
             ev.stopPropagation();
             ouvrirBulleIndice(label, i);
@@ -1509,6 +1529,8 @@ function majCompteurZonesEdition() {
     if (!supportActif) return;
     const n = pageEnCours().zones.length;
     document.getElementById('compteurZonesEdition').textContent = n + ' zone' + (n === 1 ? '' : 's');
+    const btnRev = document.getElementById('btnReviserMaintenant');
+    if (btnRev) btnRev.style.display = n > 0 ? '' : 'none';
 }
 
 function echapperHtml(s) {
@@ -1673,8 +1695,14 @@ function chargerPageRevision() {
         masque.style.height = z.hPct + '%';
         masque.addEventListener('click', () => toggleRevele(masque));
 
+        // Couleur distinctive par zone (palette iOS)
+        const couleur = COULEURS_ZONES[i % COULEURS_ZONES.length];
+
         const fond = document.createElement('div');
         fond.className = 'fond';
+        fond.style.background = '#fff';
+        fond.style.borderColor = couleur.bord;
+        fond.style.borderWidth = '2.5px';
         if (z.forme === 'ellipse') {
             fond.style.borderRadius = '50%';
         } else if (z.forme === 'libre' && z.points) {
@@ -2106,6 +2134,8 @@ function chargerEditionTexte() {
         }));
     }
     definirTexte('compteurCartesTexte', supportActif.cartes.length + ' carte' + (supportActif.cartes.length === 1 ? '' : 's'));
+    const btnRevFlash = document.getElementById('btnReviserFlash');
+    if (btnRevFlash) btnRevFlash.style.display = supportActif.cartes.length > 0 ? '' : 'none';
 }
 
 function supprimerImageChamp(idx, champ) {
