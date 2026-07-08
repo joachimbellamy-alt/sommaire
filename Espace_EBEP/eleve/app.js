@@ -693,22 +693,25 @@ function afficherTableauBord() {
 
     // Barre des 7 jours
     if (swEl && jours > 0) {
-        const JOURS_COURTS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+        const LETTRES = ['L','M','M','J','V','S','D'];
         const today = new Date();
         const jourSemaine = today.getDay() === 0 ? 6 : today.getDay() - 1; // 0=lundi
-        swEl.style.display = '';
+        swEl.style.display = 'flex';
         swEl.innerHTML = `
-            <div class="sw-left">
-                <span style="font-size:22px;">🔥</span>
+            <div class="sw-gauche">
+                <span style="font-size:22px;line-height:1;">🔥</span>
                 <div>
                     <div class="sw-n">${joursActifsSemaine}/7</div>
-                    <div class="sw-label">jours actifs</div>
+                    <div class="sw-sous">jours actifs</div>
                 </div>
             </div>
-            <div class="sw-days">
-                ${Array.from({length:7}, (_, i) => {
+            <div class="sw-grille">
+                ${LETTRES.map((l, i) => {
                     const actif = i <= jourSemaine && i >= jourSemaine - joursActifsSemaine + 1;
-                    return `<div class="sw-day-wrap"><div class="sw-day${actif ? ' done' : ''}"></div><div class="sw-day-label">${JOURS_COURTS[i]}</div></div>`;
+                    return `<div class="sw-col">
+                        <div class="sw-barre${actif ? ' actif' : ''}"></div>
+                        <div class="sw-lettre">${l}</div>
+                    </div>`;
                 }).join('')}
             </div>`;
     } else if (swEl) swEl.style.display = 'none';

@@ -480,6 +480,17 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
 .case-jour input{margin:0;}
 .ligne-rappel-attente{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--gris-fond);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:13px;}
 .ligne-rappel-attente button{background:none;border:none;color:var(--rouge);font-size:15px;cursor:pointer;padding:0 4px;}
+
+    /* ── Barre streak semaine ── */
+    .streak-semaine-bar{background:var(--surface);border-radius:16px;padding:12px 16px;margin-bottom:12px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;box-shadow:var(--ombre);}
+    .sw-gauche{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+    .sw-n{font-size:18px;font-weight:800;color:#FF9500;line-height:1;}
+    .sw-sous{font-size:11px;color:var(--gris-texte);margin-top:2px;}
+    .sw-grille{display:flex;flex-direction:row;align-items:flex-end;gap:5px;}
+    .sw-col{display:flex;flex-direction:column;align-items:center;gap:3px;}
+    .sw-barre{width:20px;height:5px;border-radius:3px;background:#E5E5EA;}
+    .sw-barre.actif{background:#FF9500;}
+    .sw-lettre{font-size:9px;color:var(--gris-texte);font-weight:600;}
 </style>
 </head>
 <body>
@@ -822,7 +833,7 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v55</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v56</span> · Données stockées sur cet appareil
     </div>
 </div>
 
