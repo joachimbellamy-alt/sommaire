@@ -673,26 +673,43 @@ function afficherTableauBord() {
         dureeEl.style.display = '';
     } else if (dureeEl) dureeEl.style.display = 'none';
 
-    // Streak badge
+    // Streak : compter les jours actifs cette semaine (lundi → aujourd'hui)
     const streakEl = document.getElementById('streakJours');
-    if (streakEl) streakEl.textContent = streakActuel.jours + (streakActuel.jours === 1 ? ' jour' : ' jours');
-
-    // Streak semaine (7 jours, les X derniers jours avec activité)
     const swEl = document.getElementById('streakSemaine');
-    if (swEl && streakActuel.jours > 0) {
-        const jours = streakActuel.jours;
-        const jDone = Math.min(jours, 7);
+    const jours = streakActuel.jours;
+
+    // Calculer le nombre de jours actifs cette semaine (max 7)
+    const joursActifsSemaine = Math.min(jours, 7);
+
+    if (streakEl) {
+        if (jours === 0) {
+            streakEl.textContent = 'Commence aujourd\'hui !';
+        } else if (jours === 1) {
+            streakEl.textContent = 'Révisé aujourd\'hui 👏';
+        } else {
+            streakEl.textContent = joursActifsSemaine + ' fois cette semaine';
+        }
+    }
+
+    // Barre des 7 jours
+    if (swEl && jours > 0) {
+        const JOURS_COURTS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+        const today = new Date();
+        const jourSemaine = today.getDay() === 0 ? 6 : today.getDay() - 1; // 0=lundi
         swEl.style.display = '';
         swEl.innerHTML = `
             <div class="sw-left">
                 <span style="font-size:22px;">🔥</span>
                 <div>
-                    <div class="sw-n">${jours} jour${jours > 1 ? 's' : ''}</div>
-                    <div class="sw-label">de suite</div>
+                    <div class="sw-n">${joursActifsSemaine}/7</div>
+                    <div class="sw-label">jours actifs</div>
                 </div>
             </div>
             <div class="sw-days">
-                ${Array.from({length:7}, (_, i) => `<div class="sw-day${i < jDone ? ' done' : ''}"></div>`).join('')}
+                ${Array.from({length:7}, (_, i) => {
+                    const actif = i <= jourSemaine && i >= jourSemaine - joursActifsSemaine + 1;
+                    return `<div class="sw-day-wrap"><div class="sw-day${actif ? ' done' : ''}"></div><div class="sw-day-label">${JOURS_COURTS[i]}</div></div>`;
+                }).join('')}
             </div>`;
     } else if (swEl) swEl.style.display = 'none';
 
@@ -717,9 +734,16 @@ function afficherTableauBord() {
         } else alerteEl.style.display = 'none';
     } else if (alerteEl) alerteEl.style.display = 'none';
 
-    // Bouton Commencer
+    // Bouton Commencer (cartes du jour)
     const btnCommencer = document.getElementById('btnCommencer');
     if (btnCommencer) btnCommencer.style.display = nb > 0 ? '' : 'none';
+
+    // Bouton Tout réviser (session mélangée, si des flashcards existent)
+    const btnTout = document.getElementById('btnToutReviser');
+    if (btnTout) {
+        const hasFlash = supports.some(s => s.type === 'texte' && s.cartes && s.cartes.length > 0);
+        btnTout.style.display = hasFlash ? '' : 'none';
+    }
 }
 
 function afficherAccueil() {
@@ -1933,21 +1957,7 @@ function actualiserResumeBoites() {
             if (estDue(cle)) { duesParBoite[b - 1]++; duesTotal++; }
         });
     });
-    const labels = ['Tous les jours', 'Dans 1 jour', 'Dans 3 jours', 'Dans 7 jours', 'Dans 16 jours ou plus'];
-    let html = '<div class="boites-titre">📦 Mes boîtes de révision</div><div class="boites-rangee">';
-    for (let b = 1; b <= 5; b++) {
-        const due = duesParBoite[b - 1] > 0;
-        html += '<div class="boite-card boite-card-' + b + (due ? ' due-card' : '') + '">'
-            + '<div class="boite-num">Boîte ' + b + '</div>'
-            + '<div class="boite-count">' + counts[b - 1] + '</div>'
-            + '<div class="boite-label">' + labels[b - 1] + '</div>'
-            + (due ? '<div class="boite-flag">📅 à revoir</div>' : '')
-            + '</div>';
-        if (b < 5) html += '<div class="boite-fleche">→</div>';
-    }
-    html += '</div><div class="boites-legende">← zones fragiles, revues souvent &nbsp;|&nbsp; zones maîtrisées, espacées →</div>';
-    html += '<div class="boites-resume-txt">📅 ' + duesTotal + " zone(s) à réviser aujourd'hui sur " + total + ' (toutes pages confondues)</div>';
-    document.getElementById('resumeBoites').innerHTML = html;
+    document.getElementById('resumeBoites').innerHTML = htmlStatsVisuelles(counts, total, duesTotal, 'zone(s)');
 }
 
 function remasquerToutRevision() {
@@ -2547,21 +2557,7 @@ function actualiserResumeBoitesTexte() {
         total++;
         if (e.nextDue <= todayStr()) { duesParBoite[e.box - 1]++; duesTotal++; }
     });
-    const labels = ['Tous les jours', 'Dans 1 jour', 'Dans 3 jours', 'Dans 7 jours', 'Dans 16 jours ou plus'];
-    let html = '<div class="boites-titre">📦 Mes boîtes de révision</div><div class="boites-rangee">';
-    for (let b = 1; b <= 5; b++) {
-        const due = duesParBoite[b - 1] > 0;
-        html += '<div class="boite-card boite-card-' + b + (due ? ' due-card' : '') + '">'
-            + '<div class="boite-num">Boîte ' + b + '</div>'
-            + '<div class="boite-count">' + counts[b - 1] + '</div>'
-            + '<div class="boite-label">' + labels[b - 1] + '</div>'
-            + (due ? '<div class="boite-flag">📅 à revoir</div>' : '')
-            + '</div>';
-        if (b < 5) html += '<div class="boite-fleche">→</div>';
-    }
-    html += '</div><div class="boites-legende">← cartes fragiles, revues souvent &nbsp;|&nbsp; cartes maîtrisées, espacées →</div>';
-    html += '<div class="boites-resume-txt">📅 ' + duesTotal + " carte(s) à réviser aujourd'hui sur " + total + '</div>';
-    document.getElementById('resumeBoitesTexte').innerHTML = html;
+    document.getElementById('resumeBoitesTexte').innerHTML = htmlStatsVisuelles(counts, total, duesTotal, 'carte(s)');
 }
 
 function remasquerToutRevisionTexte() {

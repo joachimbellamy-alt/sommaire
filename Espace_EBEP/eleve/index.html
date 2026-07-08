@@ -112,6 +112,8 @@ main{padding:14px 16px;max-width:800px;margin:0 auto;}
 #blocAujourdhui .aj-sous{font-size:13px;color:rgba(255,255,255,0.8);margin:5px 0 14px;}
 #blocAujourdhui .btn-commencer{background:#fff;color:var(--bleu);border:none;border-radius:14px;padding:14px;font-size:17px;font-weight:700;cursor:pointer;letter-spacing:-0.3px;width:100%;margin-top:4px;}
 #blocAujourdhui .btn-commencer:active{transform:scale(0.97);}
+    #blocAujourdhui .btn-tout-reviser{background:rgba(255,255,255,0.18);color:#fff;border:1.5px solid rgba(255,255,255,0.4);border-radius:14px;padding:10px;font-size:14px;font-weight:500;cursor:pointer;width:100%;margin-top:6px;font-family:inherit;}
+    #blocAujourdhui .btn-tout-reviser:active{background:rgba(255,255,255,0.28);}
 
 /* ── Accueil : cartes supports ── */
 .titre-matiere{font-size:11px;font-weight:600;color:var(--gris-texte);text-transform:uppercase;letter-spacing:0.6px;margin:16px 0 6px;}
@@ -326,6 +328,20 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
 .choix-correct{background:#d7f5e0!important;font-weight:600;}
 .choix-incorrect{background:#fbd9d6!important;}
 #zoneImpressionTexte{display:none;}
+    /* ── Statistiques visuelles (remplace les boîtes) ── */
+    .stats-visuelles{background:var(--surface);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:var(--ombre);}
+    .stats-barre{height:10px;border-radius:5px;overflow:hidden;display:flex;margin-bottom:10px;background:#E5E5EA;}
+    .stats-seg{height:100%;transition:width .4s ease;}
+    .stats-seg.stats-maitrise{background:#34C759;}
+    .stats-seg.stats-encours{background:#FF9500;}
+    .stats-seg.stats-retravailler{background:#FF3B30;}
+    .stats-legende{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;}
+    .stats-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--texte);}
+    .stats-puce{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .stats-puce.stats-maitrise{background:#34C759;}
+    .stats-puce.stats-encours{background:#FF9500;}
+    .stats-puce.stats-retravailler{background:#FF3B30;}
+    .stats-due{font-size:12px;color:var(--gris-texte);padding-top:8px;border-top:0.5px solid var(--bord);}
     /* ── Onboarding ── */
     #overlayOnboarding{display:flex;}
     .onboarding-corps{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 28px 16px;text-align:center;}
@@ -496,7 +512,8 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
             </div>
         </div>
         <div id="alerteControle" style="display:none;background:rgba(255,255,255,0.18);border-radius:10px;padding:7px 10px;margin:8px 0;font-size:12px;color:#fff;"></div>
-        <button class="btn-commencer" id="btnCommencer" onclick="lancerSessionAujourdhui()" style="display:none;">▶ Commencer maintenant</button>
+        <button class="btn-commencer" id="btnCommencer" onclick="lancerSessionAujourdhui()" style="display:none;">▶ Réviser les cartes du jour</button>
+        <button class="btn-tout-reviser" id="btnToutReviser" onclick="ouvrirSessionMelangee()" style="display:none;">🔀 Tout réviser maintenant</button>
     </div>
 
     <!-- Streak semaine -->
@@ -513,7 +530,6 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
     <div style="margin-top:8px;">
         <button class="btn-plus-options" onclick="toggleOptionsAccueil()" id="btnPlusOptions">⚙️ Plus d'options</button>
         <div id="panneauOptions" style="display:none;margin-top:10px;display:flex;flex-direction:column;gap:8px;">
-            <button class="icon-btn" onclick="ouvrirSessionMelangee()" style="width:100%;justify-content:center;">🔀 Session mélangée (toutes les flashcards dues)</button>
             <div id="espaceStockage"></div>
         </div>
     </div>
@@ -806,7 +822,7 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v54</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v55</span> · Données stockées sur cet appareil
     </div>
 </div>
 
