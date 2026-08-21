@@ -673,47 +673,39 @@ function afficherTableauBord() {
         dureeEl.style.display = '';
     } else if (dureeEl) dureeEl.style.display = 'none';
 
-    // Streak : compter les jours actifs cette semaine (lundi → aujourd'hui)
+    // Streak : compter les jours actifs cette semaine
     const streakEl = document.getElementById('streakJours');
     const swEl = document.getElementById('streakSemaine');
     const jours = streakActuel.jours;
-
-    // Calculer le nombre de jours actifs cette semaine (max 7)
     const joursActifsSemaine = Math.min(jours, 7);
 
     if (streakEl) {
-        if (jours === 0) {
-            streakEl.textContent = 'Commence aujourd\'hui !';
-        } else if (jours === 1) {
-            streakEl.textContent = 'Révisé aujourd\'hui 👏';
-        } else {
-            streakEl.textContent = joursActifsSemaine + ' fois cette semaine';
-        }
+        if (jours === 0) streakEl.textContent = 'Commence aujourd\'hui !';
+        else if (jours === 1) streakEl.textContent = 'Révisé aujourd\'hui 👏';
+        else streakEl.textContent = joursActifsSemaine + ' fois cette semaine';
     }
 
-    // Barre des 7 jours
+    // Barre des 7 jours — styles inline pour garantir le rendu
     if (swEl && jours > 0) {
         const LETTRES = ['L','M','M','J','V','S','D'];
         const today = new Date();
-        const jourSemaine = today.getDay() === 0 ? 6 : today.getDay() - 1; // 0=lundi
-        swEl.style.display = 'flex';
-        swEl.innerHTML = `
-            <div class="sw-gauche">
-                <span style="font-size:22px;line-height:1;">🔥</span>
-                <div>
-                    <div class="sw-n">${joursActifsSemaine}/7</div>
-                    <div class="sw-sous">jours actifs</div>
-                </div>
-            </div>
-            <div class="sw-grille">
-                ${LETTRES.map((l, i) => {
-                    const actif = i <= jourSemaine && i >= jourSemaine - joursActifsSemaine + 1;
-                    return `<div class="sw-col">
-                        <div class="sw-barre${actif ? ' actif' : ''}"></div>
-                        <div class="sw-lettre">${l}</div>
-                    </div>`;
-                }).join('')}
-            </div>`;
+        const jourSemaine = today.getDay() === 0 ? 6 : today.getDay() - 1;
+        swEl.style.cssText = 'display:flex;flex-direction:row;align-items:center;justify-content:space-between;background:#fff;border-radius:16px;padding:12px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);gap:12px;';
+        swEl.innerHTML =
+            '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">'
+            + '<span style="font-size:24px;line-height:1;">🔥</span>'
+            + '<div><div style="font-size:18px;font-weight:800;color:#FF9500;">' + joursActifsSemaine + '/7</div>'
+            + '<div style="font-size:11px;color:#8E8E93;">jours actifs</div></div>'
+            + '</div>'
+            + '<div style="display:flex;flex-direction:row;align-items:flex-end;gap:5px;">'
+            + LETTRES.map((l, i) => {
+                const actif = i <= jourSemaine && i >= jourSemaine - joursActifsSemaine + 1;
+                return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">'
+                    + '<div style="width:20px;height:5px;border-radius:3px;background:' + (actif ? '#FF9500' : '#E5E5EA') + ';"></div>'
+                    + '<div style="font-size:9px;font-weight:600;color:#8E8E93;">' + l + '</div>'
+                    + '</div>';
+            }).join('')
+            + '</div>';
     } else if (swEl) swEl.style.display = 'none';
 
     // Alerte contrôle si agenda actif et évaluation proche (< 7 jours)
@@ -770,35 +762,37 @@ function afficherAccueil() {
             ${parMatiere[m].slice().reverse().map(s => {
                 const { maitrisees, total, difficiles } = calculerProgression(s);
                 const pct = total > 0 ? Math.round((maitrisees / total) * 100) : 0;
-                const circonference = 2 * Math.PI * 15; // r=15
-                const dash = (pct / 100) * circonference;
+                const r = 14, circonf = 2 * Math.PI * r;
+                const dash = (pct / 100) * circonf;
+                const couleurAnneau = pct >= 80 ? '#34C759' : pct >= 40 ? '#FF9500' : '#007AFF';
                 const unite = s.type === 'texte' ? 'cartes' : 'zones';
                 const metaText = total === 0 ? 'Pas encore de contenu'
                     : maitrisees + '/' + total + ' ' + unite + ' maîtrisées'
                     + (difficiles > 0 ? ' · ⚠️ ' + difficiles : '');
                 return `
-                <div class="carte-support" data-id="${s.id}">
+                <div class="carte-support" data-id="${s.id}" style="cursor:pointer;">
                     ${vignetteSupport(s)
-                        ? `<img src="${vignetteSupport(s)}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:10px;flex-shrink:0;">`
-                        : `<div style="width:48px;height:48px;border-radius:10px;background:var(--bleu-clair);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>`
+                        ? `<img src="${vignetteSupport(s)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:10px;flex-shrink:0;">`
+                        : `<div style="width:44px;height:44px;border-radius:10px;background:#EAF3FF;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>`
                     }
-                    <div class="infos" style="flex:1;min-width:0;">
-                        <div class="nom" style="font-weight:600;font-size:14px;color:var(--texte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${echapperHtml(s.nom)}</div>
-                        <div class="meta" style="font-size:11px;color:var(--gris-texte);margin-top:2px;">${metaText}</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:600;font-size:14px;color:var(--texte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${echapperHtml(s.nom)}</div>
+                        <div style="font-size:11px;color:var(--gris-texte);margin-top:2px;">${metaText}</div>
                     </div>
-                    <div class="progress-ring-wrap">
-                        <svg viewBox="0 0 36 36" width="40" height="40">
-                            <circle cx="18" cy="18" r="15" fill="none" stroke="#E5E5EA" stroke-width="3"/>
-                            <circle cx="18" cy="18" r="15" fill="none" stroke="${pct >= 80 ? '#34C759' : pct >= 40 ? '#FF9500' : '#007AFF'}" stroke-width="3"
-                                stroke-dasharray="${dash.toFixed(1)} ${(circonference - dash).toFixed(1)}"
-                                stroke-dashoffset="${(circonference / 4).toFixed(1)}"
-                                transform="rotate(-90 18 18)" stroke-linecap="round"/>
+                    <div style="position:relative;width:36px;height:36px;flex-shrink:0;">
+                        <svg viewBox="0 0 32 32" width="36" height="36" style="display:block;">
+                            <circle cx="16" cy="16" r="${r}" fill="none" stroke="#E5E5EA" stroke-width="3"/>
+                            <circle cx="16" cy="16" r="${r}" fill="none" stroke="${couleurAnneau}" stroke-width="3"
+                                stroke-dasharray="${dash.toFixed(1)} ${(circonf - dash).toFixed(1)}"
+                                stroke-linecap="round" transform="rotate(-90 16 16)"/>
                         </svg>
-                        <div class="progress-ring-pct">${pct}%</div>
+                        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:${couleurAnneau};">${pct}%</div>
                     </div>
-                    <button class="icon-btn" data-modifier="${s.id}" style="flex-shrink:0;padding:6px;">✏️</button>
-                    <button class="icon-btn danger" data-suppr="${s.id}" style="flex-shrink:0;padding:6px;">🗑</button>
-                    <button class="icon-btn" data-exporter="${s.id}" style="flex-shrink:0;padding:6px;" title="Exporter">📤</button>
+                    <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+                        <button data-modifier="${s.id}" style="background:none;border:none;font-size:14px;cursor:pointer;padding:3px;" title="Modifier">✏️</button>
+                        <button data-suppr="${s.id}" style="background:none;border:none;font-size:14px;cursor:pointer;padding:3px;" title="Supprimer">🗑</button>
+                        <button data-exporter="${s.id}" style="background:none;border:none;font-size:14px;cursor:pointer;padding:3px;" title="Exporter">📤</button>
+                    </div>
                 </div>`;
             }).join('')}
         `).join('');
