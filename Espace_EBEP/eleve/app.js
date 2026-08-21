@@ -195,7 +195,14 @@ async function sauvegarderPreferencesDys() {
 
 function appliquerPreferencesDys() {
     document.body.classList.toggle('mode-dys', !!preferencesDys.actif);
-    const police = preferencesDys.police === 'dyslexique' ? "'OpenDyslexic', sans-serif" : 'inherit';
+    // Police appliquée sur tout le body
+    const policeMap = {
+        'dyslexique': "'OpenDyslexic', sans-serif",
+        'arial': "Arial, 'Helvetica Neue', sans-serif",
+        'systeme': "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    };
+    const police = policeMap[preferencesDys.police] || policeMap['systeme'];
+    document.body.style.fontFamily = police;
     document.documentElement.style.setProperty('--police-dys', police);
     document.documentElement.style.setProperty('--taille-dys', (preferencesDys.taille / 100) + 'em');
     document.documentElement.style.setProperty('--espacement-lettres-dys', (preferencesDys.lettres / 100) + 'em');
@@ -220,8 +227,13 @@ function majAffichageReglagesDys() {
     document.getElementById('valeurDysTaille').textContent = preferencesDys.taille + '%';
     document.getElementById('valeurDysLettres').textContent = (preferencesDys.lettres / 100).toFixed(2) + 'em';
     document.getElementById('valeurDysLignes').textContent = (preferencesDys.lignes / 10).toFixed(1);
+    const policeMap = {
+        'dyslexique': "'OpenDyslexic', sans-serif",
+        'arial': "Arial, 'Helvetica Neue', sans-serif",
+        'systeme': "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    };
     const apercu = document.getElementById('apercuDys');
-    apercu.style.fontFamily = preferencesDys.police === 'dyslexique' ? "'OpenDyslexic', sans-serif" : 'inherit';
+    apercu.style.fontFamily = policeMap[preferencesDys.police] || policeMap['systeme'];
     apercu.style.fontSize = (preferencesDys.taille / 100) + 'em';
     apercu.style.letterSpacing = (preferencesDys.lettres / 100) + 'em';
     apercu.style.lineHeight = (preferencesDys.lignes / 10);
@@ -692,10 +704,10 @@ function afficherTableauBord() {
         const jourSemaine = today.getDay() === 0 ? 6 : today.getDay() - 1;
         swEl.style.cssText = 'display:flex;flex-direction:row;align-items:center;justify-content:space-between;background:#fff;border-radius:16px;padding:12px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);gap:12px;';
         swEl.innerHTML =
-            '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">'
-            + '<span style="font-size:24px;line-height:1;">🔥</span>'
-            + '<div><div style="font-size:18px;font-weight:800;color:#FF9500;">' + joursActifsSemaine + '/7</div>'
-            + '<div style="font-size:11px;color:#8E8E93;">jours actifs</div></div>'
+            '<div style="display:flex;align-items:center;gap:9px;flex-shrink:0;">'
+            + '<span style="font-size:26px;line-height:1;">🔥</span>'
+            + '<div><div style="font-size:20px;font-weight:800;color:#FF9500;line-height:1;">' + joursActifsSemaine + '</div>'
+            + '<div style="font-size:11px;color:#8E8E93;margin-top:1px;">cette semaine</div></div>'
             + '</div>'
             + '<div style="display:flex;flex-direction:row;align-items:flex-end;gap:5px;">'
             + LETTRES.map((l, i) => {
