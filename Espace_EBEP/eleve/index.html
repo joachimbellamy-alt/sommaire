@@ -510,6 +510,30 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
     .sheet-tuile-chevron{color:var(--gris-texte2);font-size:16px;flex-shrink:0;}
     .sheet-annuler{width:100%;padding:14px;border-radius:14px;border:none;background:var(--surface);color:var(--bleu);font-size:16px;font-weight:500;cursor:pointer;font-family:inherit;}
     .sheet-annuler:active{background:var(--gris-fond);}
+
+    /* ── Pilule accessibilité ── */
+    #piluleAa{
+        position:fixed;
+        right:14px;
+        bottom:calc(var(--tab-h) + env(safe-area-inset-bottom) + 10px);
+        z-index:500;
+        background:rgba(255,255,255,0.85);
+        backdrop-filter:blur(10px);
+        -webkit-backdrop-filter:blur(10px);
+        border:0.5px solid #C7C7CC;
+        border-radius:999px;
+        padding:6px 12px;
+        font-size:13px;
+        font-weight:600;
+        color:#3A3A3C;
+        cursor:pointer;
+        font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+        box-shadow:0 2px 8px rgba(0,0,0,0.12);
+    }
+    #piluleAa:active{
+        background:rgba(240,240,240,0.95);
+        transform:scale(0.96);
+    }
 </style>
 </head>
 <body>
@@ -852,11 +876,14 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v58</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v59</span> · Données stockées sur cet appareil
     </div>
 </div>
 
 </main>
+
+<!-- Pilule accessibilité permanente -->
+<button id="piluleAa" onclick="ouvrirModalDys()" aria-label="Accessibilité et affichage">Aa</button>
 
 <!-- Barre d'onglets fixe -->
 <nav class="tab-bar" id="tabBar">
