@@ -491,6 +491,25 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
     .sw-barre{width:20px;height:5px;border-radius:3px;background:#E5E5EA;}
     .sw-barre.actif{background:#FF9500;}
     .sw-lettre{font-size:9px;color:var(--gris-texte);font-weight:600;}
+
+    /* ── Sheet Ajouter ── */
+    .sheet-ajouter-boite{position:fixed;bottom:0;left:0;right:0;background:#F2F2F7;border-radius:20px 20px 0 0;padding:12px 16px calc(16px + env(safe-area-inset-bottom));animation:slideUp .3s cubic-bezier(.34,1.2,.64,1);}
+    @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+    .sheet-handle-bar{width:36px;height:4px;border-radius:2px;background:#C7C7CC;margin:0 auto 14px;}
+    .sheet-ajouter-titre{font-size:13px;font-weight:600;color:var(--gris-texte);text-align:center;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;}
+    .sheet-tuiles{display:flex;flex-direction:column;gap:2px;margin-bottom:10px;}
+    .sheet-tuile{background:var(--surface);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;}
+    .sheet-tuile:first-child{border-radius:14px 14px 4px 4px;}
+    .sheet-tuile:last-child{border-radius:4px 4px 14px 14px;}
+    .sheet-tuile:only-child{border-radius:14px;}
+    .sheet-tuile:active{background:var(--gris-fond);}
+    .sheet-tuile-ic{font-size:24px;flex-shrink:0;}
+    .sheet-tuile-texte{flex:1;min-width:0;}
+    .sheet-tuile-titre{font-size:15px;font-weight:500;color:var(--texte);}
+    .sheet-tuile-sous{font-size:12px;color:var(--gris-texte);margin-top:2px;}
+    .sheet-tuile-chevron{color:var(--gris-texte2);font-size:16px;flex-shrink:0;}
+    .sheet-annuler{width:100%;padding:14px;border-radius:14px;border:none;background:var(--surface);color:var(--bleu);font-size:16px;font-weight:500;cursor:pointer;font-family:inherit;}
+    .sheet-annuler:active{background:var(--gris-fond);}
 </style>
 </head>
 <body>
@@ -533,7 +552,7 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
     <!-- Mes supports -->
     <div class="section-header" style="margin-top:4px;">
         <span class="section-titre">Mes supports</span>
-        <button class="btn-plus-section" onclick="creerNouveauSupport()" title="Nouveau support">+</button>
+        <button class="btn-plus-section" onclick="ouvrirSheetAjouter()" title="Ajouter un support">+</button>
     </div>
     <div id="listeSupports"></div>
 
@@ -833,7 +852,7 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v56</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v57</span> · Données stockées sur cet appareil
     </div>
 </div>
 
@@ -1019,6 +1038,50 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
 </div>
 
 <div id="zoneImpressionTexte"></div>
+
+<!-- ===================== SHEET AJOUTER ===================== -->
+<div id="sheetAjouter" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,0.4);" onclick="fermerSheetAjouter(event)">
+    <div class="sheet-ajouter-boite" id="sheetAjouterBoite">
+        <div class="sheet-handle-bar"></div>
+        <div class="sheet-ajouter-titre">Que veux-tu ajouter ?</div>
+        <div class="sheet-tuiles">
+            <div class="sheet-tuile" onclick="fermerSheetAjouter();creerNouveauSupport('texte')">
+                <div class="sheet-tuile-ic">🗒️</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre">Créer des flashcards</div>
+                    <div class="sheet-tuile-sous">Vocab, définitions, dates…</div>
+                </div>
+                <i class="ti ti-chevron-right sheet-tuile-chevron" aria-hidden="true"></i>
+            </div>
+            <div class="sheet-tuile" onclick="fermerSheetAjouter();creerNouveauSupport('image')">
+                <div class="sheet-tuile-ic">🖼️</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre">Créer un support de cours masqué</div>
+                    <div class="sheet-tuile-sous">Carte, texte, frise chronologique…</div>
+                </div>
+                <i class="ti ti-chevron-right sheet-tuile-chevron" aria-hidden="true"></i>
+            </div>
+            <div class="sheet-tuile" onclick="fermerSheetAjouter();document.getElementById('inputImportFlash').click()">
+                <div class="sheet-tuile-ic">📂</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre">Importer des flashcards</div>
+                    <div class="sheet-tuile-sous">Fichier envoyé par le prof ou un camarade</div>
+                </div>
+                <i class="ti ti-chevron-right sheet-tuile-chevron" aria-hidden="true"></i>
+            </div>
+            <div class="sheet-tuile" onclick="fermerSheetAjouter();document.getElementById('inputImport').click()">
+                <div class="sheet-tuile-ic">📂</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre">Importer un support masqué</div>
+                    <div class="sheet-tuile-sous">Fichier envoyé par le prof ou un camarade</div>
+                </div>
+                <i class="ti ti-chevron-right sheet-tuile-chevron" aria-hidden="true"></i>
+            </div>
+        </div>
+        <button class="sheet-annuler" onclick="fermerSheetAjouter()">Annuler</button>
+    </div>
+</div>
+<input type="file" id="inputImportFlash" accept=".json" style="display:none;">
 
 <!-- ===================== ONBOARDING ===================== -->
 <div id="overlayOnboarding" style="display:none;position:fixed;inset:0;z-index:9000;background:#F2F2F7;flex-direction:column;">

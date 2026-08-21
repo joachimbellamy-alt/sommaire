@@ -1940,27 +1940,57 @@ function actualiserAffichageRevision() {
     actualiserResumeBoites();
 }
 
+function htmlStatsVisuelles(counts, total, duesTotal, unite) {
+    const aretravailler = (counts[0] || 0) + (counts[1] || 0);
+    const enCours = counts[2] || 0;
+    const maitrise = (counts[3] || 0) + (counts[4] || 0);
+    const pctM = total ? Math.round(maitrise / total * 100) : 0;
+    const pctC = total ? Math.round(enCours / total * 100) : 0;
+    const pctR = total ? 100 - pctM - pctC : 0;
+    return '<div class="stats-visuelles">'
+        + '<div class="stats-barre">'
+        + (pctM > 0 ? '<div class="stats-seg stats-maitrise" style="width:' + pctM + '%"></div>' : '')
+        + (pctC > 0 ? '<div class="stats-seg stats-encours" style="width:' + pctC + '%"></div>' : '')
+        + (pctR > 0 ? '<div class="stats-seg stats-retravailler" style="width:' + pctR + '%"></div>' : '')
+        + '</div>'
+        + '<div class="stats-legende">'
+        + '<span class="stats-item"><span class="stats-puce stats-maitrise"></span> Maîtrisé ' + maitrise + '/' + total + '</span>'
+        + '<span class="stats-item"><span class="stats-puce stats-encours"></span> En cours ' + enCours + '</span>'
+        + '<span class="stats-item"><span class="stats-puce stats-retravailler"></span> À retravailler ' + aretravailler + '</span>'
+        + '</div>'
+        + (duesTotal > 0
+            ? '<div class="stats-due">📅 ' + duesTotal + ' ' + unite + ' à réviser aujourd\'hui</div>'
+            : '<div class="stats-due" style="color:#34C759;">✅ Rien à réviser aujourd\'hui !</div>')
+        + '</div>';
+}
+
+function actualiserResumeBoitesImage() {
+    const counts = [0, 0, 0, 0, 0];
+    let total = 0, duesTotal = 0;
+    if (!supportActif || !supportActif.pages) return;
+    supportActif.pages.forEach((page, pi) => {
+        page.zones.forEach((z, zi) => {
+            const cle = pi + '_' + zi;
+            const e = etatRevision && etatRevision[cle];
+            if (!e) return;
+            const b = Math.max(1, Math.min(5, e.box || 1));
+            counts[b - 1]++;
+            total++;
+            if (estDue(cle)) duesTotal++;
+        });
+    });
+    const el = document.getElementById('resumeBoites');
+    if (el) el.innerHTML = htmlStatsVisuelles(counts, total, duesTotal, 'zone(s)');
+}
+
+function actualiserResumeBoites() { actualiserResumeBoitesImage(); }
+
 function majCompteurRevision() {
     const total = document.querySelectorAll('#conteneurImage .masque').length;
     const bonnes = document.querySelectorAll('#conteneurImage .masque.correcte').length;
     const mauvaises = document.querySelectorAll('#conteneurImage .masque.incorrecte').length;
     const suffixe = supportActif.pages.length > 1 ? ' zones, cette page)' : ' zones, cette session)';
     document.getElementById('compteurRevision').textContent = '✅ ' + bonnes + '   ❌ ' + mauvaises + '   (sur ' + total + suffixe;
-}
-
-function actualiserResumeBoites() {
-    const counts = [0, 0, 0, 0, 0], duesParBoite = [0, 0, 0, 0, 0];
-    let total = 0, duesTotal = 0;
-    supportActif.pages.forEach((page, pi) => {
-        page.zones.forEach((z, zi) => {
-            const cle = pi + '_' + zi;
-            const b = etatRevision[cle].box;
-            counts[b - 1]++;
-            total++;
-            if (estDue(cle)) { duesParBoite[b - 1]++; duesTotal++; }
-        });
-    });
-    document.getElementById('resumeBoites').innerHTML = htmlStatsVisuelles(counts, total, duesTotal, 'zone(s)');
 }
 
 function remasquerToutRevision() {
@@ -3730,14 +3760,32 @@ function lancerSessionAujourdhui() {
 }
 
 // Fermer exercices
-function quitterExerciceTexte() {
-    if (supportActif) {
-        afficherVue('revisionCarte');
-        construireVueRevisionCarte(supportActif.cartes.map((c, i) => ({ support: supportActif, idx: i })));
-    } else {
-        retourAccueil();
-    }
+/* ================================================================
+   SHEET AJOUTER UN SUPPORT
+   ================================================================ */
+
+function ouvrirSheetAjouter() {
+    const sheet = document.getElementById('sheetAjouter');
+    if (sheet) sheet.style.display = '';
 }
+
+function fermerSheetAjouter(ev) {
+    if (ev && ev.target !== document.getElementById('sheetAjouter')) return;
+    const sheet = document.getElementById('sheetAjouter');
+    if (sheet) sheet.style.display = 'none';
+}
+
+// Connecter l'import flash à la feuille
+document.addEventListener('DOMContentLoaded', () => {
+    const inp = document.getElementById('inputImportFlash');
+    if (inp) {
+        inp.onchange = (e) => {
+            if (document.getElementById('inputImport') && document.getElementById('inputImport').onchange) {
+                document.getElementById('inputImport').onchange(e);
+            }
+        };
+    }
+});
 
 /* ================================================================
    ONBOARDING
