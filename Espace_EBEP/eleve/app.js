@@ -544,13 +544,17 @@ let ongletActif = 'reviser'; // 'reviser' | 'agenda' | 'reglages'
 
 function goTab(tab) {
     ongletActif = tab;
-    ['tabReviser','tabAgenda','tabReglages'].forEach(id => {
+    ['tabReviser','tabSupports','tabAgenda','tabReglages'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('actif');
     });
     if (tab === 'reviser') {
         document.getElementById('tabReviser').classList.add('actif');
         afficherAccueil();
+    } else if (tab === 'supports') {
+        document.getElementById('tabSupports').classList.add('actif');
+        afficherVue('supports');
+        afficherBibliotheque();
     } else if (tab === 'agenda') {
         document.getElementById('tabAgenda').classList.add('actif');
         afficherVue('agenda');
@@ -564,7 +568,7 @@ function goTab(tab) {
 
 function afficherVue(nom) {
     const TOUTES = ['vueAccueil','vueEdition','vueRevision','vueRecadrage','vueEditionTexte',
-        'vueRevisionCarte','vueQCMTexte','vueEcrireTexte','vueAgenda','vueReglages'];
+        'vueRevisionCarte','vueQCMTexte','vueEcrireTexte','vueAgenda','vueReglages','vueSupports'];
     TOUTES.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -575,6 +579,7 @@ function afficherVue(nom) {
     // Titre du header selon la vue
     const titres = {
         accueil: 'Mes révisions',
+        supports: 'Mes supports',
         edition: supportActif ? supportActif.nom : '',
         revision: supportActif ? supportActif.nom : '',
         recadrage: 'Recadrage',
@@ -758,93 +763,95 @@ function afficherAccueil() {
     afficherTableauBord();
     const liste = document.getElementById('listeSupports');
     if (supports.length === 0) {
-        liste.innerHTML = '<div class="vide">Tu n\u2019as pas encore de support. Crée-en un pour commencer à réviser !</div>';
-    } else {
-        const parMatiere = {};
-        supports.forEach(s => {
-            const m = s.matiere || 'Autre';
-            if (!parMatiere[m]) parMatiere[m] = [];
-            parMatiere[m].push(s);
-        });
-        const matieresPresentes = ORDRE_MATIERES.filter(m => parMatiere[m]);
-        Object.keys(parMatiere).forEach(m => { if (!matieresPresentes.includes(m)) matieresPresentes.push(m); });
-
-        liste.innerHTML = matieresPresentes.map(m => `
-            <div class="titre-matiere">${ICONES_MATIERES[m] || '📦'} ${m}</div>
-            ${parMatiere[m].slice().reverse().map(s => {
-                const { maitrisees, total, difficiles } = calculerProgression(s);
-                const pct = total > 0 ? Math.round((maitrisees / total) * 100) : 0;
-                const r = 14, circonf = 2 * Math.PI * r;
-                const dash = (pct / 100) * circonf;
-                const couleurAnneau = pct >= 80 ? '#34C759' : pct >= 40 ? '#FF9500' : '#007AFF';
-                const unite = s.type === 'texte' ? 'cartes' : 'zones';
-                const metaText = total === 0 ? 'Pas encore de contenu'
-                    : maitrisees + '/' + total + ' ' + unite + ' maîtrisées'
-                    + (difficiles > 0 ? ' · ⚠️ ' + difficiles : '');
-                return `
-                <div class="carte-support" data-id="${s.id}" style="cursor:pointer;">
-                    ${vignetteSupport(s)
-                        ? `<img src="${vignetteSupport(s)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:10px;flex-shrink:0;">`
-                        : `<div style="width:44px;height:44px;border-radius:10px;background:#EAF3FF;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>`
-                    }
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-weight:600;font-size:14px;color:var(--texte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${echapperHtml(s.nom)}</div>
-                        <div style="font-size:11px;color:var(--gris-texte);margin-top:2px;">${metaText}</div>
-                    </div>
-                    <div style="position:relative;width:36px;height:36px;flex-shrink:0;">
-                        <svg viewBox="0 0 32 32" width="36" height="36" style="display:block;">
-                            <circle cx="16" cy="16" r="${r}" fill="none" stroke="#E5E5EA" stroke-width="3"/>
-                            <circle cx="16" cy="16" r="${r}" fill="none" stroke="${couleurAnneau}" stroke-width="3"
-                                stroke-dasharray="${dash.toFixed(1)} ${(circonf - dash).toFixed(1)}"
-                                stroke-linecap="round" transform="rotate(-90 16 16)"/>
-                        </svg>
-                        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:${couleurAnneau};">${pct}%</div>
-                    </div>
-                    <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
-                        <button data-modifier="${s.id}" style="background:none;border:none;font-size:14px;cursor:pointer;padding:3px;" title="Modifier">✏️</button>
-                        <button data-suppr="${s.id}" style="background:none;border:none;font-size:14px;cursor:pointer;padding:3px;" title="Supprimer">🗑</button>
-                        <button data-exporter="${s.id}" style="background:none;border:none;font-size:14px;cursor:pointer;padding:3px;" title="Exporter">📤</button>
-                    </div>
-                </div>`;
-            }).join('')}
-        `).join('');
-
-        liste.querySelectorAll('.carte-support').forEach(carte => {
-            const id = carte.getAttribute('data-id');
-            carte.addEventListener('click', (ev) => {
-                if (ev.target.closest('[data-suppr]') || ev.target.closest('[data-modifier]') || ev.target.closest('[data-exporter]')) return;
-                ouvrirRevision(id);
-            });
-        });
-        liste.querySelectorAll('[data-suppr]').forEach(btn => {
-            btn.addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                const id = btn.getAttribute('data-suppr');
-                const s = supports.find(x => x.id === id);
-                if (!confirm('Supprimer définitivement « ' + (s ? s.nom : '') + ' » ?')) return;
-                supports = supports.filter(x => x.id !== id);
-                sauvegarderSupports();
-                afficherAccueil();
-            });
-        });
-        liste.querySelectorAll('[data-modifier]').forEach(btn => {
-            btn.addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                ouvrirModifierSupport(btn.getAttribute('data-modifier'));
-            });
-        });
-        liste.querySelectorAll('[data-exporter]').forEach(btn => {
-            btn.addEventListener('click', async (ev) => {
-                ev.stopPropagation();
-                const id = btn.getAttribute('data-exporter');
-                const s = supports.find(x => x.id === id);
-                if (!s) return;
-                supportActif = s;
-                await partagerSupport();
-                supportActif = null;
-            });
-        });
+        liste.innerHTML = '<div class="vide">Tu n\'as pas encore de support. Tape le + pour commencer !</div>';
+        return;
     }
+
+    // Séparer supports avec révisions dues vs à jour
+    const aujourd = todayStr();
+    const supportsDus = supports.filter(s => {
+        if (s.type === 'texte') {
+            return (s.cartes || []).some((c, i) => {
+                const e = s.etat && s.etat[i];
+                return !e || !e.nextDue || e.nextDue <= aujourd;
+            });
+        } else {
+            return (s.pages || []).some((p, pi) =>
+                (p.zones || []).some((z, zi) => {
+                    const e = s.etat && s.etat[pi + '_' + zi];
+                    return !e || !e.nextDue || e.nextDue <= aujourd;
+                })
+            );
+        }
+    });
+    const supportsAJour = supports.filter(s => !supportsDus.includes(s));
+
+    if (supportsDus.length === 0) {
+        liste.innerHTML = `<div style="text-align:center;padding:20px;color:var(--gris-texte);font-size:13px;">
+            ✅ Tous tes supports sont à jour !<br>
+            <button onclick="goTab('supports')" style="margin-top:10px;background:none;border:none;color:var(--bleu);font-size:13px;cursor:pointer;">Voir tous mes supports →</button>
+        </div>`;
+        return;
+    }
+
+    const renderSupport = (s) => {
+        const { maitrisees, total } = calculerProgression(s);
+        const pct = total > 0 ? Math.round(maitrisees / total * 100) : 0;
+        const r = 13, circonf = 2 * Math.PI * r;
+        const dash = (pct / 100) * circonf;
+        const couleur = pct >= 80 ? '#34C759' : pct >= 40 ? '#FF9500' : '#007AFF';
+        const dues = s.type === 'texte'
+            ? (s.cartes || []).filter((c, i) => { const e = s.etat && s.etat[i]; return !e || !e.nextDue || e.nextDue <= aujourd; }).length
+            : (s.pages || []).reduce((a, p, pi) => a + (p.zones || []).filter((z, zi) => { const e = s.etat && s.etat[pi + '_' + zi]; return !e || !e.nextDue || e.nextDue <= aujourd; }).length, 0);
+        const unite = s.type === 'texte' ? 'carte' : 'zone';
+        return `<div class="carte-support" data-id="${s.id}" style="cursor:pointer;">
+            ${vignetteSupport(s)
+                ? `<img src="${vignetteSupport(s)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:10px;flex-shrink:0;">`
+                : `<div style="width:44px;height:44px;border-radius:10px;background:#EAF3FF;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>`
+            }
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:600;font-size:14px;color:var(--texte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${echapperHtml(s.nom)}</div>
+                <div style="font-size:11px;color:var(--rouge);margin-top:2px;font-weight:500;">${dues} ${unite}${dues > 1 ? 's' : ''} à réviser</div>
+            </div>
+            <div style="position:relative;width:34px;height:34px;flex-shrink:0;">
+                <svg viewBox="0 0 30 30" width="34" height="34" style="display:block;">
+                    <circle cx="15" cy="15" r="${r}" fill="none" stroke="#E5E5EA" stroke-width="3"/>
+                    <circle cx="15" cy="15" r="${r}" fill="none" stroke="${couleur}" stroke-width="3"
+                        stroke-dasharray="${dash.toFixed(1)} ${(circonf - dash).toFixed(1)}"
+                        stroke-linecap="round" transform="rotate(-90 15 15)"/>
+                </svg>
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:${couleur};">${pct}%</div>
+            </div>
+        </div>`;
+    };
+
+    // Grouper les supports dus par matière
+    const parMatiere = {};
+    supportsDus.forEach(s => {
+        const m = s.matiere || 'Autre';
+        if (!parMatiere[m]) parMatiere[m] = [];
+        parMatiere[m].push(s);
+    });
+    const matieresPresentes = ORDRE_MATIERES.filter(m => parMatiere[m]);
+    Object.keys(parMatiere).forEach(m => { if (!matieresPresentes.includes(m)) matieresPresentes.push(m); });
+
+    let html = matieresPresentes.map(m => `
+        <div class="titre-matiere">${ICONES_MATIERES[m] || '📦'} ${m}</div>
+        ${parMatiere[m].map(s => renderSupport(s)).join('')}
+    `).join('');
+
+    if (supportsAJour.length > 0) {
+        html += `<button onclick="goTab('supports')" style="width:100%;text-align:center;padding:12px;background:none;border:1px dashed var(--bord-fort);border-radius:12px;color:var(--gris-texte);font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px;">
+            ✅ ${supportsAJour.length} support${supportsAJour.length > 1 ? 's' : ''} à jour · Voir tous mes supports →
+        </button>`;
+    }
+
+    liste.innerHTML = html;
+
+    liste.querySelectorAll('.carte-support').forEach(carte => {
+        const id = carte.getAttribute('data-id');
+        carte.addEventListener('click', () => ouvrirRevision(id));
+    });
     afficherEspaceStockage();
 }
 
@@ -892,6 +899,7 @@ function creerNouveauSupport(typePrefill) {
     definirTexte('titreModalSupport', 'Nouveau support');
     definirTexte('btnValiderSupport', 'Créer');
     document.getElementById('champNomSupport').value = '';
+    document.getElementById('champChapitreSupport').value = '';
     document.getElementById('champMatiereSupport').value = 'Français';
     document.getElementById('champTypeSupport').value = typePrefill || 'image';
     document.getElementById('ligneTypeSupport').style.display = '';
@@ -906,6 +914,7 @@ function ouvrirModifierSupport(id) {
     definirTexte('titreModalSupport', 'Modifier le support');
     definirTexte('btnValiderSupport', 'Enregistrer');
     document.getElementById('champNomSupport').value = s.nom;
+    document.getElementById('champChapitreSupport').value = s.chapitre || '';
     document.getElementById('champMatiereSupport').value = s.matiere || 'Autre';
     document.getElementById('ligneTypeSupport').style.display = 'none';
     document.getElementById('modalNouveauSupport').classList.add('ouverte');
@@ -920,12 +929,14 @@ function fermerModalNouveauSupport() {
 function validerNouveauSupport() {
     const nom = document.getElementById('champNomSupport').value.trim() || 'Sans titre';
     const matiere = document.getElementById('champMatiereSupport').value;
+    const chapitre = document.getElementById('champChapitreSupport').value.trim();
 
     if (idSupportEnEdition) {
         const s = supports.find(x => x.id === idSupportEnEdition);
         if (s) {
             s.nom = nom;
             s.matiere = matiere;
+            s.chapitre = chapitre;
             sauvegarderSupports();
             if (supportActif && supportActif.id === s.id) {
                 document.getElementById('titreHeader').textContent = s.nom;
@@ -942,6 +953,7 @@ function validerNouveauSupport() {
         id: genererId(),
         nom: nom,
         matiere: matiere,
+        chapitre: chapitre,
         type: type,
         etat: {},
         mode: 'simple',
@@ -3982,6 +3994,91 @@ function toggleOptionsAccueil() {
     const visible = panneau.style.display !== 'none' && panneau.style.display !== '';
     panneau.style.display = visible ? 'none' : 'flex';
     if (btn) btn.textContent = visible ? '⚙️ Plus d\'options' : '⚙️ Moins d\'options';
+}
+
+function afficherBibliotheque(filtre) {
+    const liste = document.getElementById('listeBibliotheque');
+    if (!liste) return;
+    const recherche = (filtre || '').toLowerCase().trim();
+
+    // Trier les supports par matière puis chapitre
+    const parMatiere = {};
+    supports.forEach(s => {
+        const m = s.matiere || 'Autre';
+        if (!parMatiere[m]) parMatiere[m] = {};
+        const ch = s.chapitre || '—';
+        if (!parMatiere[m][ch]) parMatiere[m][ch] = [];
+        parMatiere[m][ch].push(s);
+    });
+
+    const html = Object.keys(parMatiere).sort().map(matiere => {
+        const chapitres = parMatiere[matiere];
+        const supportsMatiere = Object.values(chapitres).flat();
+
+        // Filtre recherche
+        const supportsFiltres = recherche
+            ? supportsMatiere.filter(s =>
+                (s.nom || '').toLowerCase().includes(recherche) ||
+                (s.chapitre || '').toLowerCase().includes(recherche) ||
+                (s.matiere || '').toLowerCase().includes(recherche))
+            : supportsMatiere;
+        if (supportsFiltres.length === 0) return '';
+
+        const chapHtml = Object.keys(chapitres).sort().map(chap => {
+            const supChap = chapitres[chap].filter(s =>
+                recherche
+                    ? (s.nom || '').toLowerCase().includes(recherche) ||
+                      (s.chapitre || '').toLowerCase().includes(recherche)
+                    : true
+            );
+            if (supChap.length === 0) return '';
+
+            const duesChap = supChap.reduce((n, s) => n + (s.type === 'texte'
+                ? (s.cartes || []).filter((c, i) => { const e = s.etat[i]; return !e || estDueDate(e.nextDue); }).length
+                : (s.pages || []).reduce((a, p, pi) => a + (p.zones || []).filter((z, zi) => { const e = s.etat[pi + '_' + zi]; return !e || estDueDate(e.nextDue); }).length, 0)
+            ), 0);
+
+            const supHtml = supChap.map(s => {
+                const { maitrisees, total } = calculerProgression(s);
+                const pct = total > 0 ? Math.round(maitrisees / total * 100) : 0;
+                const archive = pct === 100 && total > 0;
+                const couleur = pct >= 80 ? '#34C759' : pct >= 40 ? '#FF9500' : '#007AFF';
+                return `<div class="bib-support-row" onclick="ouvrirRevision('${s.id}')">
+                    <div class="bib-support-ic">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>
+                    <div class="bib-support-nom">${echapperHtml(s.nom)}${archive ? '<span class="tag-archive">Archivé ✓</span>' : ''}</div>
+                    <span class="bib-support-pct" style="color:${couleur};">${pct}%</span>
+                    <button onclick="event.stopPropagation();ouvrirModifierSupport('${s.id}')" style="background:none;border:none;font-size:14px;cursor:pointer;padding:2px 4px;">✏️</button>
+                </div>`;
+            }).join('');
+
+            const badgeHtml = duesChap > 0
+                ? `<span class="bib-chap-badge due">${duesChap}</span>`
+                : `<span class="bib-chap-badge ok">✓</span>`;
+
+            const chapLabel = chap === '—' ? 'Sans chapitre' : echapperHtml(chap);
+            return `<div class="bib-chap-bloc">
+                <div class="bib-chap-header">
+                    <div><div class="bib-chap-nom">${chapLabel}</div><div class="bib-chap-meta">${supChap.length} support${supChap.length > 1 ? 's' : ''}</div></div>
+                    ${badgeHtml}
+                </div>
+                ${supHtml}
+            </div>`;
+        }).join('');
+
+        return `<div class="bib-mat-section">
+            <div class="bib-mat-titre">${ICONES_MATIERES[matiere] || '📦'} ${matiere}</div>
+            ${chapHtml}
+        </div>`;
+    }).join('');
+
+    liste.innerHTML = html || '<div class="vide">Aucun support trouvé.</div>';
+}
+
+function filtrerBibliotheque(val) { afficherBibliotheque(val); }
+
+function estDueDate(dateStr) {
+    if (!dateStr) return true;
+    return dateStr <= todayStr();
 }
 
 function migrerVersPagesEtType(liste) {

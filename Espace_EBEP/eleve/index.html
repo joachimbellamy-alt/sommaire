@@ -534,6 +534,27 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
         background:rgba(240,240,240,0.95);
         transform:scale(0.96);
     }
+
+    /* ── Bibliothèque des supports ── */
+    .bib-search-wrap{background:var(--surface);border-radius:12px;padding:9px 12px;display:flex;align-items:center;gap:8px;box-shadow:var(--ombre);}
+    .bib-search-input{border:none;outline:none;font-size:14px;flex:1;color:var(--texte);background:transparent;font-family:inherit;}
+    .bib-mat-section{margin-top:10px;}
+    .bib-mat-titre{font-size:11px;font-weight:700;color:var(--gris-texte);text-transform:uppercase;letter-spacing:0.5px;padding:4px 2px 6px;}
+    .bib-chap-bloc{background:var(--surface);border-radius:14px;margin-bottom:6px;overflow:hidden;box-shadow:var(--ombre);}
+    .bib-chap-header{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;cursor:pointer;}
+    .bib-chap-header:active{background:var(--gris-fond);}
+    .bib-chap-nom{font-size:14px;font-weight:600;color:var(--texte);}
+    .bib-chap-meta{font-size:11px;color:var(--gris-texte);}
+    .bib-chap-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;flex-shrink:0;}
+    .bib-chap-badge.due{background:#FF3B30;color:#fff;}
+    .bib-chap-badge.ok{background:var(--vert-clair);color:var(--vert);}
+    .bib-support-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-top:0.5px solid var(--bord);cursor:pointer;}
+    .bib-support-row:active{background:var(--gris-fond);}
+    .bib-support-ic{width:32px;height:32px;border-radius:8px;background:var(--bleu-clair);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+    .bib-support-nom{flex:1;font-size:13px;font-weight:500;color:var(--texte);}
+    .bib-support-pct{font-size:11px;font-weight:700;}
+    .tag-archive{font-size:9px;color:var(--gris-texte);background:var(--gris-fond);border-radius:999px;padding:2px 7px;margin-left:4px;font-weight:500;}
+    .bib-sans-chapitre-titre{font-size:11px;font-weight:600;color:var(--gris-texte);padding:4px 2px 6px;text-transform:uppercase;letter-spacing:0.5px;}
 </style>
 </head>
 <body>
@@ -809,6 +830,17 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
 </div>
 
 <!-- ===================== VUE AGENDA ===================== -->
+<!-- ===================== VUE BIBLIOTHÈQUE ===================== -->
+<div id="vueSupports" style="display:none;">
+    <div style="padding:8px 0 10px;position:relative;">
+        <div class="bib-search-wrap">
+            <span style="color:var(--gris-texte);font-size:15px;">🔍</span>
+            <input type="text" id="bibSearchInput" class="bib-search-input" placeholder="Rechercher un support…" oninput="filtrerBibliotheque(this.value)">
+        </div>
+    </div>
+    <div id="listeBibliotheque"></div>
+</div>
+
 <div id="vueAgenda" style="display:none;">
     <div class="agenda-nav">
         <button class="icon-btn" onclick="agendaNaviguer(-1)">‹</button>
@@ -876,7 +908,7 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v60</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v61</span> · Données stockées sur cet appareil
     </div>
 </div>
 
@@ -890,6 +922,10 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
     <button class="tab-item actif" id="tabReviser" onclick="goTab('reviser')">
         <span class="ti" style="font-size:22px;">🏠</span>
         <span class="tab-label">Réviser</span>
+    </button>
+    <button class="tab-item" id="tabSupports" onclick="goTab('supports')">
+        <span class="ti" style="font-size:22px;">📚</span>
+        <span class="tab-label">Supports</span>
     </button>
     <button class="tab-item" id="tabAgenda" onclick="goTab('agenda')">
         <span class="ti" style="font-size:22px;">📅</span>
@@ -911,11 +947,13 @@ body.stats-cachees .boite-niveau,.stats-cachees .boite-card{display:none!importa
         <h3 id="titreModalSupport">Nouveau support</h3>
         <span class="label-modale">Nom</span>
         <input type="text" id="champNomSupport" class="champ-modale" placeholder="Ex : Vocabulaire anglais Ch.3">
+        <span class="label-modale">Chapitre / Thème <span style="color:var(--gris-texte);font-weight:400;">(facultatif)</span></span>
+        <input type="text" id="champChapitreSupport" class="champ-modale" placeholder="Ex : Ch. 3 — L'Empire romain">
         <div id="ligneTypeSupport">
             <span class="label-modale">Type</span>
             <select id="champTypeSupport" class="champ-modale">
                 <option value="texte">🗒️ Flashcards (questions / réponses)</option>
-                <option value="image">🖼️ Image (zones à mémoriser)</option>
+                <option value="image">🖼️ Support de cours masqué</option>
             </select>
         </div>
         <span class="label-modale">Matière</span>
