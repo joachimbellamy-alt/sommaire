@@ -487,7 +487,7 @@ async function partagerSupport() {
                 await navigator.share({
                     files: [fichier],
                     title: supportActif.nom,
-                    text: 'Support de révision : ' + supportActif.nom
+                    text: 'Fiche de révision : ' + supportActif.nom
                 });
                 return;
             }
@@ -608,7 +608,7 @@ function afficherVue(nom) {
     // Titre du header selon la vue
     const titres = {
         accueil: 'Mes révisions',
-        supports: 'Mes supports',
+        supports: 'Mes fiches',
         edition: supportActif ? supportActif.nom : '',
         revision: supportActif ? supportActif.nom : '',
         recadrage: 'Recadrage',
@@ -925,7 +925,7 @@ let idSupportEnEdition = null;
 
 function creerNouveauSupport(typePrefill) {
     idSupportEnEdition = null;
-    definirTexte('titreModalSupport', 'Nouveau support');
+    definirTexte('titreModalSupport', 'Nouvelle fiche');
     definirTexte('btnValiderSupport', 'Créer');
     document.getElementById('champNomSupport').value = '';
     document.getElementById('champChapitreSupport').value = '';
@@ -940,7 +940,7 @@ function ouvrirModifierSupport(id) {
     const s = supports.find(x => x.id === id);
     if (!s) return;
     idSupportEnEdition = id;
-    definirTexte('titreModalSupport', 'Modifier le support');
+    definirTexte('titreModalSupport', 'Modifier la fiche');
     definirTexte('btnValiderSupport', 'Enregistrer');
     document.getElementById('champNomSupport').value = s.nom;
     document.getElementById('champChapitreSupport').value = s.chapitre || '';
@@ -1020,7 +1020,7 @@ function ouvrirRevision(id) {
     pageActuelle = 0;
     if (supportActif.type === 'texte') {
         if (!supportActif.cartes || supportActif.cartes.length === 0) {
-            alert("Ce support n'a pas encore de carte. Ajoute-en d'abord.");
+            alert("Cette fiche n'a pas encore de carte. Ajoute-en d'abord.");
             ouvrirEdition(id);
             return;
         }
@@ -1030,7 +1030,7 @@ function ouvrirRevision(id) {
     }
     const totalZones = (supportActif.pages || []).reduce((acc, p) => acc + p.zones.length, 0);
     if (!supportActif.pages || supportActif.pages.length === 0 || totalZones === 0) {
-        alert("Ce support n'a pas encore d'image ou de zones. Ajoute-les d'abord.");
+        alert("Cette fiche n'a pas encore d'image ou de zones. Ajoute-les d'abord.");
         ouvrirEdition(id);
         return;
     }
@@ -3801,6 +3801,35 @@ function lancerSessionAujourdhui() {
    SHEET AJOUTER UN SUPPORT
    ================================================================ */
 
+let ficheContexte = null;
+
+function ouvrirSheetActions(id, nom) {
+    ficheContexte = id;
+    const titre = document.getElementById('sheetActionsTitre');
+    if (titre) titre.textContent = nom || 'Actions';
+    document.getElementById('sheetActionsFiche').style.display = '';
+}
+
+function fermerSheetActions(ev) {
+    if (ev && ev.target !== document.getElementById('sheetActionsFiche')) return;
+    document.getElementById('sheetActionsFiche').style.display = 'none';
+    ficheContexte = null;
+}
+
+function fermerSheetExportImport(ev) {
+    if (ev && ev.target !== document.getElementById('sheetExportImport')) return;
+    document.getElementById('sheetExportImport').style.display = 'none';
+}
+
+function supprimerFiche(id) {
+    const s = supports.find(x => x.id === id);
+    if (!s) return;
+    if (!confirm('Supprimer définitivement « ' + s.nom + ' » ?')) return;
+    supports = supports.filter(x => x.id !== id);
+    sauvegarderSupports();
+    afficherBibliotheque();
+}
+
 function ouvrirSheetAjouter() {
     const sheet = document.getElementById('sheetAjouter');
     if (sheet) sheet.style.display = '';
@@ -3814,14 +3843,14 @@ function fermerSheetAjouter(ev) {
 
 // Connecter l'import flash à la feuille
 document.addEventListener('DOMContentLoaded', () => {
-    const inp = document.getElementById('inputImportFlash');
-    if (inp) {
-        inp.onchange = (e) => {
-            if (document.getElementById('inputImport') && document.getElementById('inputImport').onchange) {
-                document.getElementById('inputImport').onchange(e);
-            }
+    // inputImportFlash et inputImportTotal partagent le même handler que inputImport
+    ['inputImportFlash', 'inputImportTotal'].forEach(id => {
+        const inp = document.getElementById(id);
+        if (inp) inp.onchange = (e) => {
+            const main = document.getElementById('inputImport');
+            if (main && main.onchange) main.onchange(e);
         };
-    }
+    });
 });
 
 /* ================================================================
@@ -4066,8 +4095,7 @@ function afficherBibliotheque(filtre) {
                     <div class="bib-support-ic">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>
                     <div class="bib-support-nom">${echapperHtml(s.nom)}${archive ? '<span class="tag-archive">Archivé ✓</span>' : ''}</div>
                     <span class="bib-support-pct" style="color:${couleur};">${pct}%</span>
-                    <button onclick="event.stopPropagation();ouvrirModifierSupport('${s.id}')" style="background:none;border:none;font-size:14px;cursor:pointer;padding:2px 4px;" title="Modifier">✏️</button>
-                    <button onclick="event.stopPropagation();exporterSupportId('${s.id}')" style="background:none;border:none;font-size:14px;cursor:pointer;padding:2px 4px;" title="Exporter">📤</button>
+                    <button onclick="event.stopPropagation();ouvrirSheetActions('${s.id}','${echapperHtml(s.nom).replace(/'/g,'\\\'')}')" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 8px;color:var(--gris-texte);">⋯</button>
                 </div>`;
             }).join('');
 

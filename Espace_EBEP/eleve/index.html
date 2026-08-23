@@ -589,9 +589,9 @@ body.filtre-actif .masque:not(.due){display:none;}
     <!-- Streak semaine -->
     <div id="streakSemaine" class="streak-semaine-bar" style="display:none;"></div>
 
-    <!-- Mes supports -->
+    <!-- Mes fiches -->
     <div class="section-header" style="margin-top:4px;">
-        <span class="section-titre">Mes supports</span>
+        <span class="section-titre">Mes fiches</span>
         <button class="btn-plus-section" onclick="ouvrirSheetAjouter()" title="Ajouter un support">+</button>
     </div>
     <div id="listeSupports"></div>
@@ -600,6 +600,8 @@ body.filtre-actif .masque:not(.due){display:none;}
     <div style="margin-top:8px;">
         <button class="btn-plus-options" onclick="toggleOptionsAccueil()" id="btnPlusOptions">⚙️ Plus d'options</button>
         <div id="panneauOptions" style="display:none;margin-top:10px;display:flex;flex-direction:column;gap:8px;">
+            <button class="icon-btn" onclick="toggleOptionsAccueil();ouvrirSessionMelangee()" style="width:100%;justify-content:center;">🔀 Tout réviser maintenant</button>
+            <button class="icon-btn" onclick="document.getElementById('sheetExportImport').style.display=''" style="width:100%;justify-content:center;">💾 Sauvegarder / Restaurer</button>
             <div id="espaceStockage"></div>
         </div>
     </div>
@@ -899,7 +901,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v63</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v64</span> · Données stockées sur cet appareil
     </div>
 </div>
 
@@ -916,7 +918,7 @@ body.filtre-actif .masque:not(.due){display:none;}
     </button>
     <button class="tab-item" id="tabSupports" onclick="goTab('supports')">
         <span class="ti" style="font-size:22px;">📚</span>
-        <span class="tab-label">Supports</span>
+        <span class="tab-label">Mes fiches</span>
     </button>
     <button class="tab-item" id="tabAgenda" onclick="goTab('agenda')">
         <span class="ti" style="font-size:22px;">📅</span>
@@ -935,10 +937,10 @@ body.filtre-actif .masque:not(.due){display:none;}
 
 <div class="modale-fond" id="modalNouveauSupport">
     <div class="modale-boite">
-        <h3 id="titreModalSupport">Nouveau support</h3>
+        <h3 id="titreModalSupport">Nouvelle fiche</h3>
         <span class="label-modale">Nom</span>
         <input type="text" id="champNomSupport" class="champ-modale" placeholder="Ex : Vocabulaire anglais Ch.3">
-        <span class="label-modale">Chapitre / Thème <span style="color:var(--gris-texte);font-weight:400;">(facultatif)</span></span>
+        <span class="label-modale">Chapitre ou thème <span style="color:var(--gris-texte);font-weight:400;">(facultatif)</span></span>
         <input type="text" id="champChapitreSupport" class="champ-modale" placeholder="Ex : Ch. 3 — L'Empire romain">
         <div id="ligneTypeSupport">
             <span class="label-modale">Type</span>
@@ -1113,7 +1115,7 @@ body.filtre-actif .masque:not(.due){display:none;}
             <div class="sheet-tuile" onclick="fermerSheetAjouter();creerNouveauSupport('image')">
                 <div class="sheet-tuile-ic">🖼️</div>
                 <div class="sheet-tuile-texte">
-                    <div class="sheet-tuile-titre">Créer un support de cours masqué</div>
+                    <div class="sheet-tuile-titre">Créer un cours masqué</div>
                     <div class="sheet-tuile-sous">Carte, texte, frise chronologique…</div>
                 </div>
                 <i class="ti ti-chevron-right sheet-tuile-chevron" aria-hidden="true"></i>
@@ -1129,7 +1131,7 @@ body.filtre-actif .masque:not(.due){display:none;}
             <div class="sheet-tuile" onclick="fermerSheetAjouter();document.getElementById('inputImport').click()">
                 <div class="sheet-tuile-ic">📂</div>
                 <div class="sheet-tuile-texte">
-                    <div class="sheet-tuile-titre">Importer un support masqué</div>
+                    <div class="sheet-tuile-titre">Importer un cours masqué</div>
                     <div class="sheet-tuile-sous">Fichier envoyé par le prof ou un camarade</div>
                 </div>
                 <i class="ti ti-chevron-right sheet-tuile-chevron" aria-hidden="true"></i>
@@ -1139,6 +1141,78 @@ body.filtre-actif .masque:not(.due){display:none;}
     </div>
 </div>
 <input type="file" id="inputImportFlash" accept=".json" style="display:none;">
+
+<!-- Sheet actions fiche -->
+<div id="sheetActionsFiche" style="display:none;position:fixed;inset:0;z-index:8100;background:rgba(0,0,0,0.4);" onclick="fermerSheetActions(event)">
+    <div class="sheet-ajouter-boite" id="sheetActionsBoite">
+        <div class="sheet-handle-bar"></div>
+        <div class="sheet-ajouter-titre" id="sheetActionsTitre">Actions</div>
+        <div class="sheet-tuiles">
+            <div class="sheet-tuile" onclick="fermerSheetActions();ouvrirRevision(ficheContexte)">
+                <div class="sheet-tuile-ic">🧠</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre">Réviser</div>
+                    <div class="sheet-tuile-sous">Lancer une session de révision</div>
+                </div>
+            </div>
+            <div class="sheet-tuile" onclick="fermerSheetActions();ouvrirEdition(ficheContexte)">
+                <div class="sheet-tuile-ic">✏️</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre">Modifier le contenu</div>
+                    <div class="sheet-tuile-sous">Ajouter ou changer les cartes et zones</div>
+                </div>
+            </div>
+            <div class="sheet-tuile" onclick="fermerSheetActions();ouvrirModifierSupport(ficheContexte)">
+                <div class="sheet-tuile-ic">🏷️</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre">Renommer / Changer le chapitre</div>
+                    <div class="sheet-tuile-sous">Nom, matière, chapitre</div>
+                </div>
+            </div>
+            <div class="sheet-tuile" onclick="fermerSheetActions();exporterSupportId(ficheContexte)">
+                <div class="sheet-tuile-ic">📤</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre">Exporter cette fiche</div>
+                    <div class="sheet-tuile-sous">Partager avec le prof ou un camarade</div>
+                </div>
+            </div>
+            <div class="sheet-tuile" onclick="fermerSheetActions();supprimerFiche(ficheContexte)" style="color:var(--rouge);">
+                <div class="sheet-tuile-ic">🗑</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre" style="color:var(--rouge);">Supprimer</div>
+                    <div class="sheet-tuile-sous">Suppression définitive</div>
+                </div>
+            </div>
+        </div>
+        <button class="sheet-annuler" onclick="fermerSheetActions()">Annuler</button>
+    </div>
+</div>
+
+<!-- Sheet export/import global -->
+<div id="sheetExportImport" style="display:none;position:fixed;inset:0;z-index:8100;background:rgba(0,0,0,0.4);" onclick="fermerSheetExportImport(event)">
+    <div class="sheet-ajouter-boite">
+        <div class="sheet-handle-bar"></div>
+        <div class="sheet-ajouter-titre">Sauvegarder / Restaurer</div>
+        <div class="sheet-tuiles">
+            <div class="sheet-tuile" onclick="fermerSheetExportImport();exporterDonnees()">
+                <div class="sheet-tuile-ic">💾</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre">Sauvegarder toutes mes fiches</div>
+                    <div class="sheet-tuile-sous">Export complet — à conserver précieusement</div>
+                </div>
+            </div>
+            <div class="sheet-tuile" onclick="fermerSheetExportImport();document.getElementById('inputImportTotal').click()">
+                <div class="sheet-tuile-ic">📥</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre">Restaurer une sauvegarde</div>
+                    <div class="sheet-tuile-sous">Importer un export complet précédent</div>
+                </div>
+            </div>
+        </div>
+        <button class="sheet-annuler" onclick="fermerSheetExportImport()">Annuler</button>
+    </div>
+</div>
+<input type="file" id="inputImportTotal" accept=".json" style="display:none;">
 
 <!-- ===================== ONBOARDING ===================== -->
 <div id="overlayOnboarding" style="display:none;position:fixed;inset:0;z-index:9000;background:#F2F2F7;flex-direction:column;">
