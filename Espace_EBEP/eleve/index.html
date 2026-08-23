@@ -869,15 +869,6 @@ body.filtre-actif .masque:not(.due){display:none;}
 <!-- ===================== VUE RÉGLAGES ===================== -->
 <div id="vueReglages" style="display:none;">
     <div class="settings-group">
-
-        <div class="settings-row">
-            <span class="settings-icon">📅</span>
-            <span class="settings-label">Mon agenda de révision</span>
-            <button class="toggle-switch" id="toggleAgenda" onclick="basculerModule('agenda')"><div class="toggle-knob"></div></button>
-        </div>
-    </div>
-
-    <div class="settings-group">
         <div class="settings-row" onclick="ouvrirModalDys()">
             <span class="settings-icon">Aa</span>
             <span class="settings-label">Affichage et accessibilité</span>
@@ -901,7 +892,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v64</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v66</span> · Données stockées sur cet appareil
     </div>
 </div>
 
@@ -1148,35 +1139,35 @@ body.filtre-actif .masque:not(.due){display:none;}
         <div class="sheet-handle-bar"></div>
         <div class="sheet-ajouter-titre" id="sheetActionsTitre">Actions</div>
         <div class="sheet-tuiles">
-            <div class="sheet-tuile" onclick="fermerSheetActions();ouvrirRevision(ficheContexte)">
+            <div class="sheet-tuile" onclick="actionFiche('reviser')">
                 <div class="sheet-tuile-ic">🧠</div>
                 <div class="sheet-tuile-texte">
                     <div class="sheet-tuile-titre">Réviser</div>
                     <div class="sheet-tuile-sous">Lancer une session de révision</div>
                 </div>
             </div>
-            <div class="sheet-tuile" onclick="fermerSheetActions();ouvrirEdition(ficheContexte)">
+            <div class="sheet-tuile" onclick="actionFiche('modifier')">
                 <div class="sheet-tuile-ic">✏️</div>
                 <div class="sheet-tuile-texte">
                     <div class="sheet-tuile-titre">Modifier le contenu</div>
                     <div class="sheet-tuile-sous">Ajouter ou changer les cartes et zones</div>
                 </div>
             </div>
-            <div class="sheet-tuile" onclick="fermerSheetActions();ouvrirModifierSupport(ficheContexte)">
+            <div class="sheet-tuile" onclick="actionFiche('renommer')">
                 <div class="sheet-tuile-ic">🏷️</div>
                 <div class="sheet-tuile-texte">
                     <div class="sheet-tuile-titre">Renommer / Changer le chapitre</div>
                     <div class="sheet-tuile-sous">Nom, matière, chapitre</div>
                 </div>
             </div>
-            <div class="sheet-tuile" onclick="fermerSheetActions();exporterSupportId(ficheContexte)">
+            <div class="sheet-tuile" onclick="actionFiche('exporter')">
                 <div class="sheet-tuile-ic">📤</div>
                 <div class="sheet-tuile-texte">
                     <div class="sheet-tuile-titre">Exporter cette fiche</div>
                     <div class="sheet-tuile-sous">Partager avec le prof ou un camarade</div>
                 </div>
             </div>
-            <div class="sheet-tuile" onclick="fermerSheetActions();supprimerFiche(ficheContexte)" style="color:var(--rouge);">
+            <div class="sheet-tuile" onclick="actionFiche('supprimer')" style="color:var(--rouge);">
                 <div class="sheet-tuile-ic">🗑</div>
                 <div class="sheet-tuile-texte">
                     <div class="sheet-tuile-titre" style="color:var(--rouge);">Supprimer</div>
