@@ -1983,11 +1983,19 @@ function actualiserAffichageRevision() {
     document.querySelectorAll('#conteneurImage .masque').forEach(m => {
         const cle = m.dataset.cle;
         const e = etatRevision[cle];
+        if (!e) return;
         const niveau = m.querySelector('.boite-niveau');
-        niveau.textContent = e.box;
-        niveau.className = 'boite-niveau niveau-' + e.box;
+        if (niveau) { niveau.textContent = e.box; niveau.className = 'boite-niveau niveau-' + e.box; }
         m.classList.toggle('due', estDue(cle));
         m.classList.toggle('difficile', !!e.difficile);
+
+        // ✓ sur le bouton 💡 si la zone est maîtrisée (boîte 4 ou 5)
+        const btnIndice = m.querySelector('.indice-btn, button[title]');
+        if (btnIndice) {
+            const maitrisee = e.box >= 4;
+            btnIndice.textContent = maitrisee ? '💡✓' : '💡';
+            btnIndice.style.opacity = maitrisee ? '0.6' : '1';
+        }
     });
     majCompteurRevision();
     actualiserResumeBoites();
@@ -2047,8 +2055,11 @@ function majCompteurRevision() {
 }
 
 function remasquerToutRevision() {
-    document.querySelectorAll('#conteneurImage .masque').forEach(m => m.classList.remove('revele', 'correcte', 'incorrecte'));
+    document.querySelectorAll('#conteneurImage .masque').forEach(m => {
+        m.classList.remove('revele', 'correcte', 'incorrecte', 'moyenne');
+    });
     majCompteurRevision();
+    actualiserAffichageRevision();
 }
 
 function basculerFiltre() {
