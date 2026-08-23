@@ -273,6 +273,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 .btn-eval{flex:1;padding:13px 6px;border:none;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}
 .btn-eval:active{transform:scale(0.97);}
 .btn-eval-non{background:var(--rouge-clair);color:var(--rouge);}
+.btn-eval-moyen{background:var(--jaune-clair);color:var(--jaune);}
 .btn-eval-oui{background:var(--vert-clair);color:var(--vert);}
 
 /* Bloc indice */
@@ -776,6 +777,7 @@ body.filtre-actif .masque:not(.due){display:none;}
             <div id="texteConfirmation" class="texte-confirmation"></div>
             <div class="btns-evaluation" id="btnsEvaluation">
                 <button class="btn-eval btn-eval-non" onclick="evaluerFlash('non')">✗ Non</button>
+                <button class="btn-eval btn-eval-moyen" onclick="evaluerFlash('moyen')">〜 Moyen</button>
                 <button class="btn-eval btn-eval-oui" onclick="evaluerFlash('oui')">✓ Oui</button>
             </div>
         </div>
@@ -892,7 +894,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v68</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v69</span> · Données stockées sur cet appareil
     </div>
 </div>
 
