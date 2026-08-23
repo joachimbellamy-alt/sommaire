@@ -1066,11 +1066,24 @@ function pageEnCours() {
 function majNavigateurPages(prefixeId) {
     const total = supportActif.pages.length;
     const el = document.getElementById(prefixeId + 'IndicateurPage');
-    if (el) el.textContent = 'Page ' + (pageActuelle + 1) + '/' + total;
+    if (el) {
+        el.textContent = 'Page ' + (pageActuelle + 1) + '/' + total;
+    }
     const btnPrec = document.getElementById(prefixeId + 'PagePrecedente');
     const btnSuiv = document.getElementById(prefixeId + 'PageSuivante');
     if (btnPrec) btnPrec.disabled = (pageActuelle === 0);
     if (btnSuiv) btnSuiv.disabled = (pageActuelle === total - 1);
+
+    // Masquer le navigateur si une seule page, le mettre en valeur sinon
+    const nav = btnPrec && btnPrec.closest('.segment-group');
+    if (nav) {
+        nav.style.display = total > 1 ? '' : 'none';
+        if (total > 1 && prefixeId === 'revision') {
+            nav.style.background = 'var(--bleu-clair)';
+            nav.style.borderRadius = '12px';
+            nav.style.padding = '4px 8px';
+        }
+    }
 }
 
 function pagePrecedenteEdition() {
@@ -1129,6 +1142,25 @@ function ajouterPageDepuisImage(dataUrlFinal) {
     chargerCanvasEdition();
 }
 
+document.getElementById('inputPhotoNouvellePage').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        // Toujours ajouter une NOUVELLE page
+        const lancer = (dataUrl) => {
+            supportActif.pages.push({ image: dataUrl, zones: [] });
+            pageActuelle = supportActif.pages.length - 1;
+            sauvegarderSupports();
+            chargerCanvasEdition();
+            afficherToastMsg('📷 Page ' + supportActif.pages.length + ' ajoutée');
+        };
+        ouvrirRecadrageAvecCallback(ev.target.result, lancer);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+};
+
 document.getElementById('inputPhoto').onchange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1181,7 +1213,8 @@ document.getElementById('inputPdf').onchange = async (e) => {
     reader.onload = async (ev) => {
         try {
             const pdf = await window.pdfjsLib.getDocument({ data: ev.target.result }).promise;
-            for (let n = 1; n <= pdf.numPages; n++) {
+            const nPages = pdf.numPages;
+            for (let n = 1; n <= nPages; n++) {
                 const page = await pdf.getPage(n);
                 const viewport = page.getViewport({ scale: 2 });
                 const canvasPage = document.createElement('canvas');
@@ -1189,8 +1222,20 @@ document.getElementById('inputPdf').onchange = async (e) => {
                 canvasPage.height = viewport.height;
                 await page.render({ canvasContext: canvasPage.getContext('2d'), viewport: viewport }).promise;
                 const finalCanvas = redimensionnerCanvas(canvasPage, 1280);
-                ajouterPageDepuisImage(finalCanvas.toDataURL('image/jpeg', 0.85));
+                const dataUrl = finalCanvas.toDataURL('image/jpeg', 0.85);
+                // Ajouter la page sans rafraîchir le canvas à chaque fois
+                const derniere = supportActif.pages[supportActif.pages.length - 1];
+                if (supportActif.pages.length === 1 && derniere && derniere.image === '' && derniere.zones.length === 0) {
+                    derniere.image = dataUrl;
+                } else {
+                    supportActif.pages.push({ image: dataUrl, zones: [] });
+                }
             }
+            // Aller à la première page et rafraîchir une seule fois
+            pageActuelle = 0;
+            sauvegarderSupports();
+            chargerCanvasEdition();
+            afficherToastMsg('✅ ' + nPages + ' page' + (nPages > 1 ? 's' : '') + ' importée' + (nPages > 1 ? 's' : '') + ' avec succès');
         } catch (err) {
             alert('Erreur lors de la lecture du PDF : ' + err.message);
         }
@@ -1331,10 +1376,23 @@ function appliquerCadrageEtStocker(callback) {
     }
 }
 
+let _recadrageCallback = null;
+
+function ouvrirRecadrageAvecCallback(dataUrlOriginal, callback) {
+    _recadrageCallback = callback;
+    ouvrirRecadrage(dataUrlOriginal);
+}
+
 function validerCadrage() {
+    const cb = _recadrageCallback;
+    _recadrageCallback = null;
     appliquerCadrageEtStocker((dataUrlFinal) => {
         afficherVue('edition');
-        ajouterPageDepuisImage(dataUrlFinal);
+        if (cb) {
+            cb(dataUrlFinal);
+        } else {
+            ajouterPageDepuisImage(dataUrlFinal);
+        }
     });
 }
 
@@ -1954,6 +2012,15 @@ function chargerPageRevision() {
 }
 
 function toggleRevele(masque) { masque.classList.toggle('revele'); }
+
+function afficherToastMsg(msg, duree) {
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
+    if (!toast || !toastMsg) return;
+    toastMsg.textContent = msg;
+    toast.classList.add('visible');
+    setTimeout(() => toast.classList.remove('visible'), duree || 3000);
+}
 
 function afficherToast(bon, total) {
     const bonnes = document.querySelectorAll('#conteneurImage .masque.correcte').length;
