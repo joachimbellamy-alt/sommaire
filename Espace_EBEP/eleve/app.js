@@ -4104,11 +4104,11 @@ function afficherBibliotheque(filtre) {
                 const pct = total > 0 ? Math.round(maitrisees / total * 100) : 0;
                 const archive = pct === 100 && total > 0;
                 const couleur = pct >= 80 ? '#34C759' : pct >= 40 ? '#FF9500' : '#007AFF';
-                return `<div class="bib-support-row" data-id="${s.id}">
+                return `<div class="bib-support-row" data-id="${s.id}" onclick="" style="cursor:pointer;">
                     <div class="bib-support-ic">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>
                     <div class="bib-support-nom">${echapperHtml(s.nom)}${archive ? '<span class="tag-archive">Archivé ✓</span>' : ''}</div>
                     <span class="bib-support-pct" style="color:${couleur};">${pct}%</span>
-                    <button class="btn-actions-fiche" data-fiche-id="${s.id}" data-fiche-nom="${echapperHtml(s.nom).replace(/"/g,'&quot;')}" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 10px;color:var(--gris-texte);">⋯</button>
+                    <button class="btn-actions-fiche" data-fiche-id="${s.id}" data-fiche-nom="${echapperHtml(s.nom).replace(/"/g,'&quot;')}" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 10px;color:var(--gris-texte);" type="button">⋯</button>
                 </div>`;
             }).join('');
 
