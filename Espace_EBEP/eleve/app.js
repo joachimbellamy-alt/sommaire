@@ -464,6 +464,14 @@ function exporterDonnees() {
     a.click();
 }
 
+function exporterSupportId(id) {
+    const s = supports.find(x => x.id === id);
+    if (!s) return;
+    const ancienSupport = supportActif;
+    supportActif = s;
+    partagerSupport().then(() => { supportActif = ancienSupport; });
+}
+
 async function partagerSupport() {
     if (!supportActif) return;
     const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: [supportActif] };
@@ -471,22 +479,43 @@ async function partagerSupport() {
     const nomFichier = 'support-' + supportActif.nom.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.json';
     const blob = new Blob([texte], { type: 'application/json' });
 
-    if (navigator.share && navigator.canShare && window.File) {
+    // iOS Safari : Web Share API avec fichier → "Enregistrer dans Fichiers" dans la feuille
+    if (navigator.share && navigator.canShare) {
         try {
             const fichier = new File([blob], nomFichier, { type: 'application/json' });
             if (navigator.canShare({ files: [fichier] })) {
-                await navigator.share({ files: [fichier], title: supportActif.nom, text: 'Support de révision : ' + supportActif.nom });
+                await navigator.share({
+                    files: [fichier],
+                    title: supportActif.nom,
+                    text: 'Support de révision : ' + supportActif.nom
+                });
                 return;
             }
         } catch (e) {
-            if (e.name === 'AbortError') return; // l'élève a annulé le partage, on ne fait rien de plus
-            // sinon : on retombe sur le téléchargement classique ci-dessous
+            if (e.name === 'AbortError') return;
+            // Continuer avec la méthode de secours
         }
     }
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = nomFichier;
-    a.click();
+
+    // Fallback universel : ouvre le JSON dans un nouvel onglet avec instruction claire
+    const url = URL.createObjectURL(blob);
+    // Sur iOS Safari, on ne peut pas forcer le téléchargement — on ouvre dans un nouvel onglet
+    // et on demande à l'élève d'utiliser le bouton Partager du navigateur
+    if (/iP(hone|ad|od)/.test(navigator.userAgent)) {
+        window.open(url, '_blank');
+        setTimeout(() => {
+            alert('Le fichier est ouvert dans un nouvel onglet.\n\nPour l\'enregistrer : appuie sur le bouton Partager (☐↑) de Safari, puis "Enregistrer dans Fichiers".');
+        }, 500);
+    } else {
+        // Sur Mac/Android : téléchargement direct
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nomFichier;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
 }
 
 document.getElementById('inputImport').onchange = (e) => {
@@ -2884,17 +2913,7 @@ async function sauvegarderModules() {
 }
 
 function appliquerModules() {
-    // Statistiques détaillées — contrôle uniquement la visibilité
-    const stats = !!modulesActifs.stats;
-    document.body.classList.toggle('stats-cachees', !stats);
-
-    // Toggle stats dans les Réglages
-    const tS = document.getElementById('toggleStats');
-    if (tS) tS.className = 'toggle-switch ' + (stats ? 'on' : 'off');
-
-    // L'agenda est toujours visible — plus de toggle
-    const tG = document.getElementById('toggleAgenda');
-    if (tG) tG.parentElement.style.display = 'none'; // Cacher la ligne agenda dans réglages
+    // Plus de modules configurables — stats toujours visibles, agenda toujours actif
 }
 
 async function basculerModule(nom) {
@@ -4047,7 +4066,8 @@ function afficherBibliotheque(filtre) {
                     <div class="bib-support-ic">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>
                     <div class="bib-support-nom">${echapperHtml(s.nom)}${archive ? '<span class="tag-archive">Archivé ✓</span>' : ''}</div>
                     <span class="bib-support-pct" style="color:${couleur};">${pct}%</span>
-                    <button onclick="event.stopPropagation();ouvrirModifierSupport('${s.id}')" style="background:none;border:none;font-size:14px;cursor:pointer;padding:2px 4px;">✏️</button>
+                    <button onclick="event.stopPropagation();ouvrirModifierSupport('${s.id}')" style="background:none;border:none;font-size:14px;cursor:pointer;padding:2px 4px;" title="Modifier">✏️</button>
+                    <button onclick="event.stopPropagation();exporterSupportId('${s.id}')" style="background:none;border:none;font-size:14px;cursor:pointer;padding:2px 4px;" title="Exporter">📤</button>
                 </div>`;
             }).join('');
 
