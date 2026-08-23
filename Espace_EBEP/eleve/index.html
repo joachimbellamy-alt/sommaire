@@ -882,7 +882,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v73</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v74</span> · Données stockées sur cet appareil
     </div>
 </div>
 
@@ -921,6 +921,8 @@ body.filtre-actif .masque:not(.due){display:none;}
         <h3 id="titreModalSupport">Nouvelle fiche</h3>
         <span class="label-modale">Nom</span>
         <input type="text" id="champNomSupport" class="champ-modale" placeholder="Ex : Vocabulaire anglais Ch.3">
+        <span class="label-modale">Date d'évaluation <span style="color:var(--gris-texte);font-weight:400;">(facultatif)</span></span>
+        <input type="date" id="champDateEval" class="champ-modale">
         <span class="label-modale">Chapitre ou thème <span style="color:var(--gris-texte);font-weight:400;">(facultatif)</span></span>
         <input type="text" id="champChapitreSupport" class="champ-modale" placeholder="Ex : Ch. 3 — L'Empire romain">
         <div id="ligneTypeSupport">
@@ -946,8 +948,6 @@ body.filtre-actif .masque:not(.due){display:none;}
             <option value="Arts plastiques">🎨 Arts plastiques</option>
             <option value="Autre">📦 Autre</option>
         </select>
-        <span class="label-modale">Date d'évaluation <span style="color:var(--gris-texte);font-weight:400;">(facultatif — s'inscrira dans l'agenda)</span></span>
-        <input type="date" id="champDateEval" class="champ-modale">
         <div style="margin-top:6px;text-align:right;">
             <button class="btn-modal annuler" onclick="fermerModalNouveauSupport()">Annuler</button>
             <button class="btn-modal enregistrer" id="btnValiderSupport" onclick="validerNouveauSupport()">Créer</button>
