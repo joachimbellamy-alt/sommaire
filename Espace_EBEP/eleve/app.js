@@ -1929,7 +1929,7 @@ function chargerPageRevision() {
     majNavigateurPages('revision');
     actualiserAffichageRevision();
     } catch(e) {
-        alert('Erreur révision image : ' + e.message + '\n\npage=' + pageActuelle + ' pages=' + (supportActif && supportActif.pages ? supportActif.pages.length : '?'));
+        console.error('Erreur révision image:', e.message);
     }
 }
 
@@ -3813,7 +3813,20 @@ function ouvrirSheetActions(id, nom) {
 function fermerSheetActions(ev) {
     if (ev && ev.target !== document.getElementById('sheetActionsFiche')) return;
     document.getElementById('sheetActionsFiche').style.display = 'none';
+    // NE PAS remettre ficheContexte à null ici — les actions l'utilisent après la fermeture
+}
+
+function actionFiche(action) {
+    // Capture l'ID avant fermeture
+    const id = ficheContexte;
     ficheContexte = null;
+    document.getElementById('sheetActionsFiche').style.display = 'none';
+    if (!id) return;
+    if (action === 'reviser') ouvrirRevision(id);
+    else if (action === 'modifier') ouvrirEdition(id);
+    else if (action === 'renommer') ouvrirModifierSupport(id);
+    else if (action === 'exporter') exporterSupportId(id);
+    else if (action === 'supprimer') supprimerFiche(id);
 }
 
 function fermerSheetExportImport(ev) {
@@ -4091,11 +4104,11 @@ function afficherBibliotheque(filtre) {
                 const pct = total > 0 ? Math.round(maitrisees / total * 100) : 0;
                 const archive = pct === 100 && total > 0;
                 const couleur = pct >= 80 ? '#34C759' : pct >= 40 ? '#FF9500' : '#007AFF';
-                return `<div class="bib-support-row" onclick="ouvrirRevision('${s.id}')">
+                return `<div class="bib-support-row" data-id="${s.id}">
                     <div class="bib-support-ic">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>
                     <div class="bib-support-nom">${echapperHtml(s.nom)}${archive ? '<span class="tag-archive">Archivé ✓</span>' : ''}</div>
                     <span class="bib-support-pct" style="color:${couleur};">${pct}%</span>
-                    <button onclick="event.stopPropagation();ouvrirSheetActions('${s.id}','${echapperHtml(s.nom).replace(/'/g,'\\\'')}')" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 8px;color:var(--gris-texte);">⋯</button>
+                    <button class="btn-actions-fiche" data-fiche-id="${s.id}" data-fiche-nom="${echapperHtml(s.nom).replace(/"/g,'&quot;')}" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 10px;color:var(--gris-texte);">⋯</button>
                 </div>`;
             }).join('');
 
@@ -4119,7 +4132,25 @@ function afficherBibliotheque(filtre) {
         </div>`;
     }).join('');
 
-    liste.innerHTML = html || '<div class="vide">Aucun support trouvé.</div>';
+    liste.innerHTML = html || '<div class="vide">Aucune fiche trouvée.</div>';
+
+    // Délégation événements : bouton ⋯ et tap sur la ligne
+    // Écouteur unique — ne pas en ajouter un nouveau à chaque appel
+    if (!liste.dataset.listenerInit) {
+        liste.dataset.listenerInit = '1';
+        liste.addEventListener('click', function(ev) {
+            const btnActions = ev.target.closest('.btn-actions-fiche');
+            if (btnActions) {
+                ev.stopPropagation();
+                ouvrirSheetActions(btnActions.dataset.ficheId, btnActions.dataset.ficheNom);
+                return;
+            }
+            const row = ev.target.closest('.bib-support-row[data-id]');
+            if (row && !ev.target.closest('.btn-actions-fiche')) {
+                ouvrirRevision(row.dataset.id);
+            }
+        });
+    }
 }
 
 function filtrerBibliotheque(val) { afficherBibliotheque(val); }
