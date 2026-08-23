@@ -1909,12 +1909,18 @@ function chargerPageRevision() {
         const btnOk = document.createElement('button');
         btnOk.className = 'btn-ok';
         btnOk.textContent = '✓';
-        btnOk.addEventListener('click', (ev) => { ev.stopPropagation(); declarer(masque, true); });
+        btnOk.addEventListener('click', (ev) => { ev.stopPropagation(); declarer(masque, 'oui'); });
+        const btnMoyen = document.createElement('button');
+        btnMoyen.className = 'btn-moyen';
+        btnMoyen.textContent = '〜';
+        btnMoyen.style.cssText = 'background:#FF9500;color:#fff;';
+        btnMoyen.addEventListener('click', (ev) => { ev.stopPropagation(); declarer(masque, 'moyen'); });
         const btnNon = document.createElement('button');
         btnNon.className = 'btn-non';
         btnNon.textContent = '✗';
-        btnNon.addEventListener('click', (ev) => { ev.stopPropagation(); declarer(masque, false); });
+        btnNon.addEventListener('click', (ev) => { ev.stopPropagation(); declarer(masque, 'non'); });
         declare.appendChild(btnOk);
+        declare.appendChild(btnMoyen);
         declare.appendChild(btnNon);
         masque.appendChild(declare);
 
@@ -1948,20 +1954,20 @@ function afficherToast(bon, total) {
     toastTimer = setTimeout(() => toast.classList.remove('show'), 1500);
 }
 
-function declarer(masque, bon) {
-    masque.classList.remove('correcte', 'incorrecte');
-    masque.classList.add(bon ? 'correcte' : 'incorrecte');
+function declarer(masque, resultat) {
+    const bon = resultat === 'oui' || resultat === true;
+    const moyen = resultat === 'moyen';
+    masque.classList.remove('correcte', 'incorrecte', 'moyenne');
+    masque.classList.add(bon ? 'correcte' : moyen ? 'moyenne' : 'incorrecte');
     const cle = masque.dataset.cle;
-    majEchecsConsecutifs(etatRevision[cle], bon);
-    // SM-2 toujours actif
-    const qualiteZone = bon ? 5 : 0;
+    majEchecsConsecutifs(etatRevision[cle], bon || moyen);
+    const qualiteZone = bon ? 5 : moyen ? 4 : 0;
     appliquerSM2(etatRevision[cle], qualiteZone);
     sauvegarderSupports();
     majCompteurRevision();
-    haptic(bon ? 'success' : 'error');
+    haptic(bon ? 'success' : moyen ? 'light' : 'error');
     afficherToast(bon, document.querySelectorAll('#conteneurImage .masque').length);
     actualiserAffichageRevision();
-    // En mode focus, passer automatiquement à la zone suivante
     if (modeFocusActif) {
         setTimeout(() => {
             const masques = document.querySelectorAll('#conteneurImage .masque');
