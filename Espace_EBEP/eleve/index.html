@@ -157,10 +157,6 @@ main{padding:14px 16px;max-width:800px;margin:0 auto;}
 
 /* ── Révision image (zones) ── */
 .controles-revision{margin-bottom:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
-    .nav-zone-focus{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface);border-radius:14px;padding:10px 14px;margin-bottom:10px;box-shadow:var(--ombre);}
-    #btnModeFocus.actif{background:var(--bleu);color:#fff;}
-    .masque.dimme{opacity:.18!important;}
-    .masque.active-focus .fond{border-color:var(--bleu);border-width:3px;box-shadow:0 0 0 4px rgba(0,122,255,.2);}
 #resumeBoites{margin-bottom:14px;}
 .boites-titre{font-size:14px;color:#555;margin-bottom:8px;font-weight:bold;text-align:center;}
 .boites-rangee{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;}
@@ -177,11 +173,9 @@ main{padding:14px 16px;max-width:800px;margin:0 auto;}
 .masque{position:absolute;cursor:pointer;transition:opacity .25s ease;-webkit-tap-highlight-color:transparent;border-radius:8px;}
 .masque .fond{position:absolute;inset:0;background:#ffffff;border:2px solid #007AFF;pointer-events:none;transition:all .25s;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;}
     .masque .fond::after{content:"👁";font-size:clamp(14px,3%,22px);opacity:.55;pointer-events:none;}
-    .masque.active-focus{animation:pulseZone 1.5s ease infinite;}
     .masque.revele .fond{animation:revealZone .3s ease forwards;}
     .masque:not(.revele):not(.due){animation:none;}
 .masque:not(.due):not(.revele){opacity:1;}
-.masque.active-focus{animation:pulseZone 1.5s ease infinite;}
     .masque.revele .fond{background:transparent;border-color:transparent;}
 .masque.revele{opacity:1;}
 body.filtre-actif .masque:not(.due){display:none;}
@@ -665,7 +659,6 @@ body.filtre-actif .masque:not(.due){display:none;}
     <div class="controles-revision">
         <button class="icon-btn primary" onclick="remasquerToutRevision()">🔄 Recommencer</button>
         <button id="btnFiltre" class="icon-btn" onclick="basculerFiltre()">📅 Zones dues</button>
-        <button id="btnModeFocus" class="icon-btn" onclick="toggleModeFocus()">🎯 Zone par zone</button>
         <button class="icon-btn danger" onclick="reinitialiserProgression()">🗑 Réinitialiser</button>
     </div>
     <div class="segment-group" style="margin:0 auto 14px;display:inline-flex;">
@@ -676,12 +669,6 @@ body.filtre-actif .masque:not(.due){display:none;}
     <div id="resumeBoites"></div>
     <div id="compteurRevision"></div>
     <div id="instructionsRevision">Tape sur une zone pour la révéler, puis déclare honnêtement si tu savais la réponse.</div>
-    <!-- Barre navigation zone par zone (mode focus) -->
-    <div id="navZoneFocus" style="display:none;" class="nav-zone-focus">
-        <button class="icon-btn" onclick="zoneParZoneNav(-1)">‹ Précédente</button>
-        <span id="compteurZoneFocus" style="font-size:13px;font-weight:600;color:var(--gris-texte);"></span>
-        <button class="icon-btn primary" onclick="zoneParZoneNav(1)">Suivante ›</button>
-    </div>
     <div id="conteneurImage"></div>
 </div>
 
@@ -895,7 +882,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v71</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v73</span> · Données stockées sur cet appareil
     </div>
 </div>
 
@@ -959,6 +946,8 @@ body.filtre-actif .masque:not(.due){display:none;}
             <option value="Arts plastiques">🎨 Arts plastiques</option>
             <option value="Autre">📦 Autre</option>
         </select>
+        <span class="label-modale">Date d'évaluation <span style="color:var(--gris-texte);font-weight:400;">(facultatif — s'inscrira dans l'agenda)</span></span>
+        <input type="date" id="champDateEval" class="champ-modale">
         <div style="margin-top:6px;text-align:right;">
             <button class="btn-modal annuler" onclick="fermerModalNouveauSupport()">Annuler</button>
             <button class="btn-modal enregistrer" id="btnValiderSupport" onclick="validerNouveauSupport()">Créer</button>

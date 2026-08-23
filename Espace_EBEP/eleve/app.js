@@ -929,6 +929,7 @@ function creerNouveauSupport(typePrefill) {
     definirTexte('btnValiderSupport', 'Créer');
     document.getElementById('champNomSupport').value = '';
     document.getElementById('champChapitreSupport').value = '';
+    document.getElementById('champDateEval').value = '';
     document.getElementById('champMatiereSupport').value = 'Français';
     document.getElementById('champTypeSupport').value = typePrefill || 'image';
     document.getElementById('ligneTypeSupport').style.display = '';
@@ -959,6 +960,7 @@ function validerNouveauSupport() {
     const nom = document.getElementById('champNomSupport').value.trim() || 'Sans titre';
     const matiere = document.getElementById('champMatiereSupport').value;
     const chapitre = document.getElementById('champChapitreSupport').value.trim();
+    const dateEval = document.getElementById('champDateEval').value;
 
     if (idSupportEnEdition) {
         const s = supports.find(x => x.id === idSupportEnEdition);
@@ -995,6 +997,23 @@ function validerNouveauSupport() {
     }
     supports.push(support);
     sauvegarderSupports();
+
+    // Ajouter dans l'agenda si une date d'évaluation est renseignée
+    if (dateEval) {
+        const objectif = {
+            id: genererId(),
+            titre: nom + (matiere ? ' — ' + matiere : ''),
+            dateEval: dateEval,
+            joursNbr: [1, 3, 7],
+            joursPlanning: calculerJoursPlanning(dateEval, [1, 3, 7]),
+            faite: false,
+            supportId: support.id
+        };
+        objectifs.push(objectif);
+        sauvegarderObjectifs();
+    }
+
+    document.getElementById('champDateEval').value = '';
     fermerModalNouveauSupport();
     ouvrirEdition(support.id);
 }
@@ -1927,11 +1946,6 @@ function chargerPageRevision() {
         conteneur.appendChild(masque);
     });
 
-    if (modeFocusActif) {
-        indexZoneFocus = 0;
-        // Appliquer le focus après le rendu (léger délai)
-        setTimeout(() => appliquerFocusZone(), 100);
-    }
     majNavigateurPages('revision');
     actualiserAffichageRevision();
     } catch(e) {
@@ -1968,15 +1982,6 @@ function declarer(masque, resultat) {
     haptic(bon ? 'success' : moyen ? 'light' : 'error');
     afficherToast(bon, document.querySelectorAll('#conteneurImage .masque').length);
     actualiserAffichageRevision();
-    if (modeFocusActif) {
-        setTimeout(() => {
-            const masques = document.querySelectorAll('#conteneurImage .masque');
-            if (indexZoneFocus < masques.length - 1) {
-                indexZoneFocus++;
-                appliquerFocusZone();
-            }
-        }, 700);
-    }
 }
 
 function actualiserAffichageRevision() {
@@ -2050,8 +2055,14 @@ function majCompteurRevision() {
     const total = document.querySelectorAll('#conteneurImage .masque').length;
     const bonnes = document.querySelectorAll('#conteneurImage .masque.correcte').length;
     const mauvaises = document.querySelectorAll('#conteneurImage .masque.incorrecte').length;
+    const fragiles = document.querySelectorAll('#conteneurImage .masque.moyenne').length;
     const suffixe = supportActif.pages.length > 1 ? ' zones, cette page)' : ' zones, cette session)';
-    document.getElementById('compteurRevision').textContent = '✅ ' + bonnes + '   ❌ ' + mauvaises + '   (sur ' + total + suffixe;
+    const el = document.getElementById('compteurRevision');
+    if (!el) return;
+    let txt = '✅ ' + bonnes + '   ❌ ' + mauvaises;
+    if (fragiles > 0) txt += '   <span style="color:#FF9500;font-weight:600;">〜 ' + fragiles + ' fragile' + (fragiles > 1 ? 's' : '') + '</span>';
+    txt += '   (sur ' + total + suffixe;
+    el.innerHTML = txt;
 }
 
 function remasquerToutRevision() {
@@ -4027,44 +4038,6 @@ function animerEntree(el, cls) {
 }
 
 /* ── Mode zone par zone ── */
-let modeFocusActif = false;
-let indexZoneFocus = 0;
-
-function toggleModeFocus() {
-    modeFocusActif = !modeFocusActif;
-    const btn = document.getElementById('btnModeFocus');
-    const nav = document.getElementById('navZoneFocus');
-    if (btn) btn.classList.toggle('actif', modeFocusActif);
-    if (nav) nav.style.display = modeFocusActif ? '' : 'none';
-    if (modeFocusActif) {
-        indexZoneFocus = 0;
-        appliquerFocusZone();
-    } else {
-        document.querySelectorAll('#conteneurImage .masque').forEach(m => {
-            m.classList.remove('dimme', 'active-focus');
-        });
-    }
-}
-
-function appliquerFocusZone() {
-    const masques = Array.from(document.querySelectorAll('#conteneurImage .masque'));
-    if (!masques.length) return;
-    indexZoneFocus = Math.max(0, Math.min(indexZoneFocus, masques.length - 1));
-    masques.forEach((m, i) => {
-        m.classList.toggle('dimme', i !== indexZoneFocus);
-        m.classList.toggle('active-focus', i === indexZoneFocus);
-    });
-    const cpt = document.getElementById('compteurZoneFocus');
-    if (cpt) cpt.textContent = 'Zone ' + (indexZoneFocus + 1) + ' / ' + masques.length;
-    haptic('light');
-}
-
-function zoneParZoneNav(delta) {
-    const masques = Array.from(document.querySelectorAll('#conteneurImage .masque'));
-    indexZoneFocus = (indexZoneFocus + delta + masques.length) % masques.length;
-    appliquerFocusZone();
-}
-
 function toggleOptionsAccueil() {
     const panneau = document.getElementById('panneauOptions');
     const btn = document.getElementById('btnPlusOptions');
