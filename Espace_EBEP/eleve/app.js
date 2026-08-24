@@ -4357,7 +4357,41 @@ async function traiterImportDepuisLien() {
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('service-worker.js').catch(() => { /* mode hors-ligne indisponible, l'app reste utilisable en ligne */ });
+            // updateViaCache: 'none' empêche le navigateur de servir une copie
+            // périmée de service-worker.js lui-même depuis le cache HTTP —
+            // sans ça, une mise à jour peut ne jamais être détectée.
+            navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' }).then((registration) => {
+                // Force une vérification immédiate d'une nouvelle version.
+                registration.update();
+
+                // Si une nouvelle version est déjà installée et en attente,
+                // on lui demande de prendre la main tout de suite.
+                if (registration.waiting) {
+                    registration.waiting.postMessage('skipWaiting');
+                }
+
+                // Dès qu'une mise à jour est détectée, on l'active sans attendre
+                // la fermeture de tous les onglets.
+                registration.addEventListener('updatefound', () => {
+                    const nouveauSW = registration.installing;
+                    if (!nouveauSW) return;
+                    nouveauSW.addEventListener('statechange', () => {
+                        if (nouveauSW.state === 'installed' && navigator.serviceWorker.controller) {
+                            nouveauSW.postMessage('skipWaiting');
+                        }
+                    });
+                });
+            }).catch(() => { /* mode hors-ligne indisponible, l'app reste utilisable en ligne */ });
+
+            // Une fois que le nouveau SW a pris le contrôle, on recharge la page
+            // une seule fois pour que l'élève obtienne bien le code à jour
+            // (app.js déjà chargé en mémoire ne se met pas à jour tout seul).
+            let dejaRecharge = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (dejaRecharge) return;
+                dejaRecharge = true;
+                window.location.reload();
+            });
         });
     }
 })();
