@@ -44,20 +44,58 @@ function initialiserSM2(etat) {
 
 function appliquerSM2(etat, qualite) {
     initialiserSM2(etat);
-    if (qualite < 3) {
-        etat.repetitions = 0;
-        etat.intervalle = 1;
+    const today = todayStr();
+    const bonneReponse = qualite >= 4; // satisfaisant ou très bonne maîtrise
+
+    // ── Phase d'apprentissage ──────────────────────────────────────────
+    // La carte reste en apprentissage tant qu'elle n'a pas été correctement
+    // rappelée sur au moins 2 JOURS CALENDAIRES DIFFÉRENTS.
+    // Ceci garantit qu'une information a survécu au sommeil au moins une fois.
+    if (!etat.joursReussis) etat.joursReussis = [];
+
+    if (bonneReponse) {
+        // Ajouter le jour courant s'il est nouveau
+        if (!etat.joursReussis.includes(today)) {
+            etat.joursReussis.push(today);
+            // Garder seulement les 10 derniers (éviter accumulation)
+            if (etat.joursReussis.length > 10) etat.joursReussis.shift();
+        }
     } else {
-        if (etat.repetitions === 0) etat.intervalle = 1;
-        else if (etat.repetitions === 1) etat.intervalle = 6;
-        else etat.intervalle = Math.round(etat.intervalle * etat.easeFactor);
-        etat.repetitions += 1;
+        // Mauvaise réponse : réinitialiser le compteur de jours
+        etat.joursReussis = [];
+        etat.repetitions = 0;
     }
-    etat.easeFactor = etat.easeFactor + (0.1 - (5 - qualite) * (0.08 + (5 - qualite) * 0.02));
-    if (etat.easeFactor < 1.3) etat.easeFactor = 1.3;
-    etat.nextDue = addDays(todayStr(), etat.intervalle);
-    // "box" reste mis à jour en parallèle (palier visuel 1-5, dérivé de l'intervalle réel) pour l'affichage/les couleurs.
+
+    const joursDistincts = etat.joursReussis.length;
+    const diplome = joursDistincts >= 2; // a survécu au sommeil au moins une fois
+
+    if (!diplome) {
+        // ── Phase 1 : apprentissage — intervalles courts bridés ──
+        if (!bonneReponse) {
+            etat.intervalle = 1;          // Insuffisant/Fragile → demain
+        } else if (qualite === 4) {
+            etat.intervalle = 2;          // Satisfaisant → dans 2 jours
+        } else {
+            etat.intervalle = 3;          // Très bonne maîtrise → dans 3 jours max
+        }
+    } else {
+        // ── Phase 2 : SM-2 normal ────────────────────────────────────
+        if (qualite < 3) {
+            etat.repetitions = 0;
+            etat.intervalle = 1;
+        } else {
+            if (etat.repetitions === 0) etat.intervalle = 1;
+            else if (etat.repetitions === 1) etat.intervalle = 6;
+            else etat.intervalle = Math.round(etat.intervalle * etat.easeFactor);
+            etat.repetitions += 1;
+        }
+        etat.easeFactor = etat.easeFactor + (0.1 - (5 - qualite) * (0.08 + (5 - qualite) * 0.02));
+        if (etat.easeFactor < 1.3) etat.easeFactor = 1.3;
+    }
+
+    etat.nextDue = addDays(today, etat.intervalle);
     etat.box = paletVisuelDepuisIntervalle(etat.intervalle);
+    etat.diplome = diplome; // utile pour l'affichage éventuel
 }
 
 function paletVisuelDepuisIntervalle(intervalle) {
