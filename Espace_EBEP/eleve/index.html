@@ -749,10 +749,10 @@ body.filtre-actif .masque:not(.due){display:none;}
         <div id="zoneConfirmation" class="zone-confirmation" style="display:none;">
             <div id="texteConfirmation" class="texte-confirmation"></div>
             <div class="btns-evaluation" id="btnsEvaluation">
-                <button class="btn-eval btn-eval-insuffisant" onclick="evaluerFlash('insuffisant')">✗ Aucune idée</button>
-                <button class="btn-eval btn-eval-fragile" onclick="evaluerFlash('fragile')">〜 Réponse incomplète ou inexacte</button>
-                <button class="btn-eval btn-eval-satisfaisant" onclick="evaluerFlash('satisfaisant')">● Réponse correcte après réflexion</button>
-                <button class="btn-eval btn-eval-maitrise" onclick="evaluerFlash('maitrise')">✓ Réponse immédiate</button>
+                <button class="btn-eval" onclick="evaluerFlash('insuffisant')" style="-webkit-appearance:none;appearance:none;background:#FF3B30;color:#fff;border:none;border-radius:14px;padding:13px 6px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;">✗ Aucune idée</button>
+                <button class="btn-eval" onclick="evaluerFlash('fragile')" style="-webkit-appearance:none;appearance:none;background:#FF9500;color:#fff;border:none;border-radius:14px;padding:13px 6px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;">〜 Réponse incomplète ou inexacte</button>
+                <button class="btn-eval" onclick="evaluerFlash('satisfaisant')" style="-webkit-appearance:none;appearance:none;background:#007AFF;color:#fff;border:none;border-radius:14px;padding:13px 6px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;">● Réponse correcte après réflexion</button>
+                <button class="btn-eval" onclick="evaluerFlash('maitrise')" style="-webkit-appearance:none;appearance:none;background:#34C759;color:#fff;border:none;border-radius:14px;padding:13px 6px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;">✓ Réponse immédiate</button>
             </div>
         </div>
     </div>
@@ -870,7 +870,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v84</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v85</span> · Données stockées sur cet appareil
     </div>
 </div>
 
