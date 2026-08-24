@@ -527,27 +527,72 @@ document.getElementById('inputImport').onchange = (e) => {
         try {
             paquet = JSON.parse(ev.target.result);
         } catch (err) {
-            alert("Ce fichier n'est pas une sauvegarde valide.");
+            alert('Ce fichier n\'est pas un JSON valide.\n\nVérifie qu\'il n\'y a pas d\'erreur de syntaxe.');
             return;
         }
-        const importes = Array.isArray(paquet) ? paquet : paquet.supports;
-        if (!Array.isArray(importes)) {
-            alert("Ce fichier n'est pas une sauvegarde valide.");
+
+        let importes = [];
+
+        // Format 1 : tableau direct de supports
+        if (Array.isArray(paquet)) {
+            if (paquet.length > 0 && paquet[0].cartes !== undefined) {
+                importes = paquet; // tableau de supports complets
+            } else if (paquet.length > 0 && (paquet[0].question !== undefined || paquet[0].recto !== undefined)) {
+                // Tableau de cartes brutes → un seul support
+                importes = [creerSupportDepuisCartesBrutes(paquet, file.name.replace('.json',''))];
+            }
+        }
+        // Format 2 : objet avec clé "supports"
+        else if (paquet.supports && Array.isArray(paquet.supports)) {
+            importes = paquet.supports;
+        }
+        // Format 3 : objet avec clé "cartes" (format IA courant)
+        else if (paquet.cartes && Array.isArray(paquet.cartes)) {
+            importes = [creerSupportDepuisCartesBrutes(paquet.cartes, paquet.nom || paquet.titre || file.name.replace('.json',''))];
+        }
+        // Format 4 : objet avec clé "flashcards"
+        else if (paquet.flashcards && Array.isArray(paquet.flashcards)) {
+            importes = [creerSupportDepuisCartesBrutes(paquet.flashcards, paquet.nom || paquet.titre || file.name.replace('.json',''))];
+        }
+        // Format 5 : support unique (objet avec cartes)
+        else if (paquet.nom && paquet.type) {
+            importes = [paquet];
+        }
+
+        if (!importes.length) {
+            alert('Format non reconnu.\n\nL\'app accepte ces formats :\n\n• {"supports": [{...}]}\n• {"cartes": [{"recto":"...", "verso":"..."}]}\n• [{"question":"...", "reponse":"..."}]\n\nDemande à l\'IA de générer les cartes au format :\n{"cartes": [{"recto": "Question", "verso": "Réponse"}]}');
             return;
         }
-        // On ajoute les supports importés sans jamais toucher à ceux déjà présents,
-        // et avec de nouveaux identifiants pour éviter tout conflit.
+
         importes.forEach((s) => {
             supports.push(Object.assign({}, s, { id: genererId() }));
         });
         migrerVersPagesEtType(supports);
         await sauvegarderSupports();
         afficherAccueil();
-        alert(importes.length + ' support(s) importé(s) avec succès.');
+        alert('✅ ' + importes.length + ' fiche(s) importée(s) avec succès.');
     };
     reader.readAsText(file);
     e.target.value = '';
 };
+
+function creerSupportDepuisCartesBrutes(cartesBrutes, nom) {
+    const cartes = cartesBrutes.map(c => ({
+        id: genererId(),
+        recto: c.recto || c.question || c.front || c.terme || c.mot || String(Object.values(c)[0] || ''),
+        verso: c.verso || c.reponse || c.back || c.definition || c.traduction || String(Object.values(c)[1] || ''),
+        audio: ''
+    })).filter(c => c.recto && c.verso);
+    return {
+        id: genererId(),
+        nom: nom || 'Fiche importée',
+        matiere: 'Autre',
+        type: 'texte',
+        cartes: cartes,
+        etat: {},
+        creeLe: Date.now()
+    };
+}
 
 /* ---------------- Bannière "Ajouter à l'écran d'accueil" ---------------- */
 
@@ -887,7 +932,6 @@ function afficherAccueil() {
 async function afficherEspaceStockage() {
     const el = document.getElementById('espaceStockage');
     if (!el) return;
-    // Afficher la version du cache actif
     if ('caches' in window) {
         try {
             const keys = await caches.keys();
@@ -897,21 +941,19 @@ async function afficherEspaceStockage() {
             }
         } catch(e) { /* tant pis */ }
     }
-    if (navigator.storage && navigator.storage.estimate) {
-        try {
-            const estim = await navigator.storage.estimate();
-            const usageMo = (estim.usage / (1024 * 1024)).toFixed(1);
-            if (estim.quota) {
-                const quotaMo = Math.round(estim.quota / (1024 * 1024));
-                const pct = Math.min(100, Math.round((estim.usage / estim.quota) * 100));
-                el.textContent = '💾 Espace utilisé : ' + usageMo + ' Mo / ~' + quotaMo + ' Mo (' + pct + '%)';
-            } else {
-                el.textContent = '💾 Espace utilisé : ' + usageMo + ' Mo';
-            }
-        } catch (e) {
-            el.textContent = '';
-        }
-    } else {
+
+    // Calculer la taille réelle des données de l'app (plus fiable que l'estimate Safari)
+    try {
+        const json = JSON.stringify({ supports, objectifs });
+        const octets = new Blob([json]).size;
+        const affichage = octets < 1024 * 1024
+            ? Math.round(octets / 1024) + ' Ko'
+            : (octets / (1024 * 1024)).toFixed(1) + ' Mo';
+        el.innerHTML = '💾 Données : <strong>' + affichage + '</strong>'
+            + '<span style="color:var(--gris-texte);font-size:11px;display:block;margin-top:2px;">'
+            + supports.length + ' fiche' + (supports.length > 1 ? 's' : '')
+            + ' · Stockage local sur cet appareil</span>';
+    } catch(e) {
         el.textContent = '';
     }
 }
@@ -4105,15 +4147,6 @@ function animerEntree(el, cls) {
 }
 
 /* ── Mode zone par zone ── */
-function toggleOptionsAccueil() {
-    const panneau = document.getElementById('panneauOptions');
-    const btn = document.getElementById('btnPlusOptions');
-    if (!panneau) return;
-    const visible = panneau.style.display !== 'none' && panneau.style.display !== '';
-    panneau.style.display = visible ? 'none' : 'flex';
-    if (btn) btn.textContent = visible ? '⚙️ Plus d\'options' : '⚙️ Moins d\'options';
-}
-
 function afficherBibliotheque(filtre) {
     const liste = document.getElementById('listeBibliotheque');
     if (!liste) return;
@@ -4162,7 +4195,10 @@ function afficherBibliotheque(filtre) {
                 const archive = pct === 100 && total > 0;
                 const couleur = pct >= 80 ? '#34C759' : pct >= 40 ? '#FF9500' : '#007AFF';
                 return `<div class="bib-support-row" data-id="${s.id}" onclick="" style="cursor:pointer;">
-                    <div class="bib-support-ic">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>
+                    ${vignetteSupport(s)
+                        ? `<img src="${vignetteSupport(s)}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex-shrink:0;">`
+                        : `<div class="bib-support-ic">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>`
+                    }
                     <div class="bib-support-nom">${echapperHtml(s.nom)}${archive ? '<span class="tag-archive">Archivé ✓</span>' : ''}</div>
                     <span class="bib-support-pct" style="color:${couleur};">${pct}%</span>
                     <button class="btn-actions-fiche" data-fiche-id="${s.id}" data-fiche-nom="${echapperHtml(s.nom).replace(/"/g,'&quot;')}" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 10px;color:var(--gris-texte);" type="button">⋯</button>

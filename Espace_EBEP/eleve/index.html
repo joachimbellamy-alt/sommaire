@@ -592,14 +592,10 @@ body.filtre-actif .masque:not(.due){display:none;}
     </div>
     <div id="listeSupports"></div>
 
-    <!-- Options cachées -->
+    <!-- Options -->
     <div style="margin-top:8px;">
-        <button class="btn-plus-options" onclick="toggleOptionsAccueil()" id="btnPlusOptions">⚙️ Plus d'options</button>
-        <div id="panneauOptions" style="display:none;margin-top:10px;display:flex;flex-direction:column;gap:8px;">
-            <button class="icon-btn" onclick="toggleOptionsAccueil();ouvrirSessionMelangee()" style="width:100%;justify-content:center;">🔀 Tout réviser maintenant</button>
-            <button class="icon-btn" onclick="document.getElementById('sheetExportImport').style.display=''" style="width:100%;justify-content:center;">💾 Sauvegarder / Restaurer</button>
-            <div id="espaceStockage"></div>
-        </div>
+        <button class="btn-plus-options" onclick="ouvrirSessionMelangee()">🔀 Tout réviser maintenant</button>
+        <div id="espaceStockage"></div>
     </div>
 </div>
 
@@ -783,9 +779,7 @@ body.filtre-actif .masque:not(.due){display:none;}
         <button class="fin-btn-sec" onclick="retourAccueil()">← Retour à mes supports</button>
     </div>
 
-    <div style="display:flex;justify-content:center;margin-top:10px;" id="controlesFlahs">
-        <button class="icon-btn" onclick="ouvrirMenuContextuel()" style="padding:8px 20px;">⋯ Options</button>
-    </div>
+    <div id="controlesFlahs" style="display:none;">
     </div>
 </div>
 
@@ -824,10 +818,14 @@ body.filtre-actif .masque:not(.due){display:none;}
     <div style="padding:8px 0 10px;position:relative;">
         <div class="bib-search-wrap">
             <span style="color:var(--gris-texte);font-size:15px;">🔍</span>
-            <input type="text" id="bibSearchInput" class="bib-search-input" placeholder="Rechercher un support…" oninput="filtrerBibliotheque(this.value)">
+            <input type="text" id="bibSearchInput" class="bib-search-input" placeholder="Rechercher une fiche…" oninput="filtrerBibliotheque(this.value)">
         </div>
     </div>
     <div id="listeBibliotheque"></div>
+    <div style="margin-top:12px;padding-bottom:8px;display:flex;gap:8px;">
+        <button class="icon-btn" onclick="exporterDonnees()" style="flex:1;justify-content:center;">💾 Sauvegarder tout</button>
+        <button class="icon-btn" onclick="document.getElementById('inputImport').click()" style="flex:1;justify-content:center;">📂 Restaurer</button>
+    </div>
 </div>
 
 <div id="vueAgenda" style="display:none;">
@@ -879,19 +877,16 @@ body.filtre-actif .masque:not(.due){display:none;}
             <span class="settings-label">Importer une sauvegarde</span>
             <span class="settings-arrow">›</span>
         </div>
-        <input type="file" id="inputImport" accept=".json" style="display:none;">
+        <input type="file" id="inputImport" accept=".json,application/json,text/plain,text/*" style="display:none;">
     </div>
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v75</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v78</span> · Données stockées sur cet appareil
     </div>
 </div>
 
 </main>
-
-<!-- Pilule accessibilité permanente -->
-<button id="piluleAa" onclick="ouvrirModalDys()" aria-label="Accessibilité et affichage">Aa</button>
 
 <!-- Barre d'onglets fixe -->
 <nav class="tab-bar" id="tabBar">
@@ -908,7 +903,7 @@ body.filtre-actif .masque:not(.due){display:none;}
         <span class="tab-label">Agenda</span>
     </button>
     <button class="tab-item" id="tabReglages" onclick="goTab('reglages')">
-        <span class="ti" style="font-size:22px;">⚙️</span>
+        <span class="ti" style="font-size:18px;font-weight:700;letter-spacing:-0.5px;">Aa</span>
         <span class="tab-label">Réglages</span>
     </button>
 </nav>
@@ -1125,7 +1120,7 @@ body.filtre-actif .masque:not(.due){display:none;}
         <button class="sheet-annuler" onclick="fermerSheetAjouter()">Annuler</button>
     </div>
 </div>
-<input type="file" id="inputImportFlash" accept=".json" style="display:none;">
+<input type="file" id="inputImportFlash" accept=".json,application/json,text/plain,text/*" style="display:none;">
 
 <!-- Sheet actions fiche -->
 <div id="sheetActionsFiche" style="display:none;position:fixed;inset:0;z-index:8100;background:rgba(0,0,0,0.4);" onclick="fermerSheetActions(event)">
@@ -1197,7 +1192,7 @@ body.filtre-actif .masque:not(.due){display:none;}
         <button class="sheet-annuler" onclick="fermerSheetExportImport()">Annuler</button>
     </div>
 </div>
-<input type="file" id="inputImportTotal" accept=".json" style="display:none;">
+<input type="file" id="inputImportTotal" accept=".json,application/json,text/plain,text/*" style="display:none;">
 
 <!-- ===================== ONBOARDING ===================== -->
 <div id="overlayOnboarding" style="display:none;position:fixed;inset:0;z-index:9000;background:#F2F2F7;flex-direction:column;">
