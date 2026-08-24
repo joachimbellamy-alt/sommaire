@@ -3871,18 +3871,18 @@ function evaluerFlash(resultat) {
     appliquerSM2(etat, qualite);
     sauvegarderSupports();
     if (resultat === 'maitrise') { flashResultats.maitrise++; haptic('success'); }
-    else if (resultat === 'satisfaisant') { flashResultats.satisfaisant++; haptic('select'); }
-    else if (resultat === 'fragile') { flashResultats.fragile++; haptic('light'); }
+    else if (resultat === 'satisfaisant' || resultat === 'oui') { flashResultats.satisfaisant++; haptic('select'); }
+    else if (resultat === 'fragile' || resultat === 'moyen') { flashResultats.fragile++; haptic('light'); }
     else { flashResultats.insuffisant++; haptic('error'); }
     const bandeau = document.getElementById('bandeauFeedback');
     const prochainJours = etat.intervalle || INTERVALLES[etat.box - 1];
     if (resultat === 'maitrise') {
         bandeau.className = 'bandeau-feedback bon';
         bandeau.textContent = '✅ Très bien ! Prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : '');
-    } else if (resultat === 'satisfaisant') {
+    } else if (resultat === 'satisfaisant' || resultat === 'oui') {
         bandeau.className = 'bandeau-feedback bon';
         bandeau.textContent = '✓ Bien ! Prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : '');
-    } else if (resultat === 'fragile') {
+    } else if (resultat === 'fragile' || resultat === 'moyen') {
         bandeau.className = 'bandeau-feedback moyen';
         bandeau.textContent = '〜 Fragile — prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : '');
     } else {
