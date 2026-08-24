@@ -265,12 +265,12 @@ body.filtre-actif .masque:not(.due){display:none;}
 .texte-confirmation{font-size:13px;color:var(--gris-texte);text-align:center;margin-bottom:12px;font-weight:400;}
 .texte-confirmation strong{color:var(--texte);font-weight:600;}
 .btns-evaluation{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.btn-eval{flex:1;padding:13px 6px;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;text-align:center;}
+.btn-eval{flex:1;padding:13px 6px;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;text-align:center;-webkit-appearance:none;appearance:none;}
 .btn-eval:active{transform:scale(0.97);}
-.btn-eval-insuffisant{background:#FFE5E5;color:#CC0000;border:2px solid #CC0000;}
-.btn-eval-fragile{background:#FFF0E0;color:#CC6600;border:2px solid #CC6600;}
-.btn-eval-satisfaisant{background:#E5EEFF;color:#0044CC;border:2px solid #0044CC;}
-.btn-eval-maitrise{background:#E0F5E0;color:#007700;border:2px solid #007700;}
+.btn-eval-insuffisant{background:#FF3B30 !important;color:#fff !important;border:none !important;}
+.btn-eval-fragile{background:#FF9500 !important;color:#fff !important;border:none !important;}
+.btn-eval-satisfaisant{background:#007AFF !important;color:#fff !important;border:none !important;}
+.btn-eval-maitrise{background:#34C759 !important;color:#fff !important;border:none !important;}
 .btn-eval-insuffisant:active,.btn-eval-fragile:active,.btn-eval-satisfaisant:active,.btn-eval-maitrise:active{opacity:0.8;}
 
 /* Bloc indice */
@@ -870,7 +870,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v83</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v84</span> · Données stockées sur cet appareil
     </div>
 </div>
 
