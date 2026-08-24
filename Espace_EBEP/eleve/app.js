@@ -3657,7 +3657,7 @@ let lettresDecoilees = 0;
 let lettresTimer = null;
 let flashRevele = false;
 let flashConfianceChoisie = null; // 'ne-sais-pas' | 'pas-sur' | 'sur'
-let flashResultats = { oui: 0, moyen: 0, non: 0 };
+let flashResultats = { maitrise: 0, satisfaisant: 0, fragile: 0, insuffisant: 0 };
 
 function construireVueRevisionCarte(paires) {
     paires.forEach(item => {
@@ -3670,7 +3670,7 @@ function construireVueRevisionCarte(paires) {
     flashIndex = 0;
     flashRevele = false;
     flashConfianceChoisie = null;
-    flashResultats = { oui: 0, moyen: 0, non: 0 };
+    flashResultats = { maitrise: 0, satisfaisant: 0, fragile: 0, insuffisant: 0 };
     document.getElementById('bandeauFeedback').style.display = 'none';
     document.getElementById('carteFlashcard').style.display = '';
     document.getElementById('finSession').style.display = 'none';
@@ -3870,9 +3870,10 @@ function evaluerFlash(resultat) {
     // SM-2 tourne toujours — "Statistiques" contrôle seulement ce qui est affiché
     appliquerSM2(etat, qualite);
     sauvegarderSupports();
-    if (bon) { flashResultats.oui++; haptic(resultat === 'maitrise' ? 'success' : 'select'); }
-    else if (moyen) { flashResultats.oui++; haptic('light'); }
-    else { flashResultats.non++; haptic('error'); }
+    if (resultat === 'maitrise') { flashResultats.maitrise++; haptic('success'); }
+    else if (resultat === 'satisfaisant') { flashResultats.satisfaisant++; haptic('select'); }
+    else if (resultat === 'fragile') { flashResultats.fragile++; haptic('light'); }
+    else { flashResultats.insuffisant++; haptic('error'); }
     const bandeau = document.getElementById('bandeauFeedback');
     const prochainJours = etat.intervalle || INTERVALLES[etat.box - 1];
     if (resultat === 'maitrise') {
@@ -3927,10 +3928,11 @@ function afficherFinSessionFlash() {
     const fin = document.getElementById('finSession');
     fin.style.display = '';
     document.getElementById('finStats').innerHTML =
-        '<div class="fin-stat"><div class="fin-stat-n" style="color:#2ecc71;">' + flashResultats.oui + '</div><div class="fin-stat-l">Je savais</div></div>' +
-        '<div class="fin-stat"><div class="fin-stat-n" style="color:#e67e22;">' + flashResultats.moyen + '</div><div class="fin-stat-l">Pas sûr·e</div></div>' +
-        '<div class="fin-stat"><div class="fin-stat-n" style="color:#e74c3c;">' + flashResultats.non + '</div><div class="fin-stat-l">À revoir</div></div>';
-    document.getElementById('finHint').textContent = flashResultats.non > 0
+        '<div class="fin-stat"><div class="fin-stat-n" style="color:#34C759;">' + flashResultats.maitrise + '</div><div class="fin-stat-l">Réponse immédiate</div></div>' +
+        '<div class="fin-stat"><div class="fin-stat-n" style="color:#007AFF;">' + flashResultats.satisfaisant + '</div><div class="fin-stat-l">Après réflexion</div></div>' +
+        '<div class="fin-stat"><div class="fin-stat-n" style="color:#FF9500;">' + flashResultats.fragile + '</div><div class="fin-stat-l">Fragile</div></div>' +
+        '<div class="fin-stat"><div class="fin-stat-n" style="color:#FF3B30;">' + flashResultats.insuffisant + '</div><div class="fin-stat-l">À retravailler</div></div>';
+    document.getElementById('finHint').textContent = (flashResultats.insuffisant + flashResultats.fragile) > 0
         ? 'Reviens demain pour consolider les cartes à retravailler.'
         : 'Excellent ! Continue comme ça.';
 }
