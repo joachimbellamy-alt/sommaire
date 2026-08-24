@@ -94,7 +94,26 @@ main{padding:14px 16px;max-width:800px;margin:0 auto;}
 .zoom-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid #d1d1d6;box-shadow:0 1px 3px rgba(0,0,0,0.25);cursor:pointer;}
 .section-header{display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px;}
 .section-titre{font-size:11px;font-weight:700;color:var(--gris-texte);text-transform:uppercase;letter-spacing:0.5px;}
-.btn-plus-section{background:var(--bleu);border:none;border-radius:999px;color:#fff;font-size:16px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1;flex-shrink:0;}
+/* ── Bouton flottant "Ajouter" (FAB) ── */
+.fab-ajouter{
+    position:fixed;
+    right:18px;
+    bottom:calc(var(--tab-h) + env(safe-area-inset-bottom) + 18px);
+    width:56px;height:56px;
+    border-radius:50%;
+    border:none;
+    background:var(--bleu);
+    color:#fff;
+    font-size:30px;
+    font-weight:400;
+    line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 14px rgba(0,122,255,0.4),0 2px 4px rgba(0,0,0,0.15);
+    cursor:pointer;
+    z-index:120;
+    -webkit-tap-highlight-color:transparent;
+}
+.fab-ajouter:active{transform:scale(0.94);background:#0066d6;}
 
 /* ── Gélules de modules ── */
 .modules-gelules{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
@@ -590,7 +609,6 @@ body.filtre-actif .masque:not(.due){display:none;}
     <!-- Mes fiches -->
     <div class="section-header" style="margin-top:4px;">
         <span class="section-titre">Mes fiches</span>
-        <button class="btn-plus-section" onclick="ouvrirSheetAjouter()" title="Ajouter un support">+</button>
     </div>
     <div id="listeSupports"></div>
 
@@ -870,9 +888,13 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v88</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v91</span> · Données stockées sur cet appareil
     </div>
 </div>
+
+
+<!-- Bouton flottant "Ajouter" (accessible au pouce, reste visible même quand la liste défile) -->
+<button id="fabAjouter" class="fab-ajouter" onclick="ouvrirSheetAjouter()" title="Ajouter un support" style="display:none;">+</button>
 
 </main>
 

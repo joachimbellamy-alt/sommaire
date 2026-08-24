@@ -517,42 +517,26 @@ async function partagerSupport() {
     const nomFichier = 'support-' + supportActif.nom.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.json';
     const blob = new Blob([texte], { type: 'application/json' });
 
-    // iOS Safari : Web Share API avec fichier → "Enregistrer dans Fichiers" dans la feuille
-    if (navigator.share && navigator.canShare) {
-        try {
-            const fichier = new File([blob], nomFichier, { type: 'application/json' });
-            if (navigator.canShare({ files: [fichier] })) {
-                await navigator.share({
-                    files: [fichier],
-                    title: supportActif.nom,
-                    text: 'Fiche de révision : ' + supportActif.nom
-                });
-                return;
-            }
-        } catch (e) {
-            if (e.name === 'AbortError') return;
-            // Continuer avec la méthode de secours
-        }
-    }
-
-    // Fallback universel : ouvre le JSON dans un nouvel onglet avec instruction claire
+    // On utilise partout le téléchargement natif du navigateur (<a download>).
+    // C'est fiable sur Mac, Android ET iOS/iPadOS Safari (depuis iOS 13) : le
+    // fichier part directement dans Fichiers > Téléchargements, sans dépendre
+    // d'une feuille de partage — sur Mac, cette feuille n'a pas d'option
+    // "Enregistrer", et sur iOS, elle refuse de partager certains types de
+    // fichiers (dont le JSON), ce qui empêchait "Enregistrer dans Fichiers"
+    // d'apparaître.
     const url = URL.createObjectURL(blob);
-    // Sur iOS Safari, on ne peut pas forcer le téléchargement — on ouvre dans un nouvel onglet
-    // et on demande à l'élève d'utiliser le bouton Partager du navigateur
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nomFichier;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
     if (/iP(hone|ad|od)/.test(navigator.userAgent)) {
-        window.open(url, '_blank');
         setTimeout(() => {
-            alert('Le fichier est ouvert dans un nouvel onglet.\n\nPour l\'enregistrer : appuie sur le bouton Partager (☐↑) de Safari, puis "Enregistrer dans Fichiers".');
-        }, 500);
-    } else {
-        // Sur Mac/Android : téléchargement direct
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = nomFichier;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+            alert('Fichier téléchargé.\n\nTu le retrouves dans l\'app Fichiers, dossier "Téléchargements" (ou via l\'icône de téléchargement ⬇️ dans Safari).');
+        }, 400);
     }
 }
 
@@ -705,6 +689,10 @@ function afficherVue(nom) {
     const titreEl = document.getElementById('titreHeader');
     if (titreEl) titreEl.textContent = titres[nom] || 'Mes révisions';
     vueActuelle = nom;
+
+    // Le bouton flottant "+" n'a de sens que là où on gère la liste de fiches
+    const fab = document.getElementById('fabAjouter');
+    if (fab) fab.style.display = (nom === 'accueil' || nom === 'supports') ? 'flex' : 'none';
 }
 
 function retourAccueil() {
