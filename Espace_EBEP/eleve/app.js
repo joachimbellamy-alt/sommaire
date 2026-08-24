@@ -3736,16 +3736,14 @@ function afficherCarteFlash() {
     }
 }
 
+function voirReponseFlash() {
+    haptic('select');
+    finirRevelationFlash();
+}
+
+// Gardé pour compatibilité avec les modes lettres/saisie
 function choisirConfiance(valeur, bouton) {
-    try {
-        haptic('select');
-        flashConfianceChoisie = valeur;
-        document.querySelectorAll('.conf-btn').forEach(b => b.classList.remove('selected'));
-        bouton.classList.add('selected');
-        finirRevelationFlash();
-    } catch(e) {
-        alert('Erreur : ' + e.message + ' | session=' + flashSession.length + ' idx=' + flashIndex + ' revele=' + flashRevele);
-    }
+    voirReponseFlash();
 }
 
 function revelerCarteFlash() {
@@ -3791,14 +3789,7 @@ function finirRevelationFlash() {
     document.getElementById('btnAudioReponse').style.display = '';
     if (c.reponseAudio) jouerAudioFlash(c.reponseAudio);
 
-    const libelles = {
-        'ne-sais-pas': "Tu avais dit ✗ <strong>Je ne sais pas</strong> — c'était juste ?",
-        'pas-sur': "Tu avais dit 〜 <strong>Pas sûr·e</strong> — c'était juste ?",
-        'sur': "Tu avais dit ✓ <strong>Sûr·e de moi</strong> — c'était juste ?",
-    };
-    document.getElementById('texteConfirmation').innerHTML = flashConfianceChoisie
-        ? libelles[flashConfianceChoisie]
-        : "C'était juste ?";
+    document.getElementById('texteConfirmation').textContent = "Tu savais ?";
     document.getElementById('zoneConfirmation').style.display = '';
 }
 
@@ -3830,27 +3821,34 @@ function evaluerFlash(resultat) {
     etat.indicePerso = document.getElementById('indicePersoFlash').value;
     // Arrêter un enregistrement en cours si l'élève valide sans avoir arrêté
     if (indiceEnregistrement) arreterEnrIndicePerso();
-    const bon = resultat === 'oui';
-    const moyen = resultat === 'moyen';
-    majEchecsConsecutifs(etat, bon);
-    let qualite;
-    if (!bon) { qualite = 0; }
-    else if (flashConfianceChoisie === 'ne-sais-pas') { qualite = 3; }
-    else if (flashConfianceChoisie === 'pas-sur' || moyen) { qualite = 4; }
-    else { qualite = 5; }
+    const bon = resultat === 'satisfaisant' || resultat === 'maitrise' || resultat === 'oui';
+    const moyen = resultat === 'fragile' || resultat === 'moyen';
+    majEchecsConsecutifs(etat, bon || moyen);
+    // Qualité SM-2 : maîtrise=5, satisfaisant=4, fragile=2, insuffisant=0
+    const qualite = (resultat === 'maitrise') ? 5
+                  : (resultat === 'satisfaisant' || resultat === 'oui') ? 4
+                  : (resultat === 'fragile' || resultat === 'moyen') ? 2
+                  : 0;
     // SM-2 tourne toujours — "Statistiques" contrôle seulement ce qui est affiché
     appliquerSM2(etat, qualite);
     sauvegarderSupports();
-    if (bon) { flashResultats.oui++; haptic('success'); }
+    if (bon) { flashResultats.oui++; haptic(resultat === 'maitrise' ? 'success' : 'select'); }
+    else if (moyen) { flashResultats.oui++; haptic('light'); }
     else { flashResultats.non++; haptic('error'); }
     const bandeau = document.getElementById('bandeauFeedback');
     const prochainJours = etat.intervalle || INTERVALLES[etat.box - 1];
-    if (bon) {
+    if (resultat === 'maitrise') {
         bandeau.className = 'bandeau-feedback bon';
-        bandeau.textContent = '\u2705 Bien joué ! Prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : '');
+        bandeau.textContent = '✅ Très bien ! Prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : '');
+    } else if (resultat === 'satisfaisant') {
+        bandeau.className = 'bandeau-feedback bon';
+        bandeau.textContent = '✓ Bien ! Prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : '');
+    } else if (resultat === 'fragile') {
+        bandeau.className = 'bandeau-feedback moyen';
+        bandeau.textContent = '〜 Fragile — prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : '');
     } else {
         bandeau.className = 'bandeau-feedback mauvais';
-        bandeau.textContent = '\u274C À retravailler — réponse : ' + (item.support.cartes[item.idx].reponse || '');
+        bandeau.textContent = '❌ À retravailler — réponse : ' + (item.support.cartes[item.idx].reponse || '');
     }
     bandeau.style.display = '';
     flashIndex++;

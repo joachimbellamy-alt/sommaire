@@ -264,7 +264,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 .zone-confirmation{background:var(--gris-fond);border-radius:14px;padding:14px;}
 .texte-confirmation{font-size:13px;color:var(--gris-texte);text-align:center;margin-bottom:12px;font-weight:400;}
 .texte-confirmation strong{color:var(--texte);font-weight:600;}
-.btns-evaluation{display:flex;gap:10px;}
+.btns-evaluation{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .btn-eval{flex:1;padding:13px 6px;border:none;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}
 .btn-eval:active{transform:scale(0.97);}
 .btn-eval-non{background:var(--rouge-clair);color:var(--rouge);}
@@ -732,22 +732,7 @@ body.filtre-actif .masque:not(.due){display:none;}
     </div>
 
     <div id="zoneConfiance" class="carte-confiance">
-        <div class="confiance-titre">Avant de vérifier, comment évalues-tu ta réponse ?</div>
-        <div class="confiance-btns">
-            <button class="conf-btn conf-ne-sais-pas" onclick="choisirConfiance('ne-sais-pas', this)">
-                <span class="conf-icone">✗</span>
-                <span class="conf-label">Je ne sais pas</span>
-            </button>
-            <button class="conf-btn conf-pas-sur" onclick="choisirConfiance('pas-sur', this)">
-                <span class="conf-icone">〜</span>
-                <span class="conf-label">Pas sûr·e</span>
-            </button>
-            <button class="conf-btn conf-sur" onclick="choisirConfiance('sur', this)">
-                <span class="conf-icone">✓</span>
-                <span class="conf-label">Sûr·e</span>
-            </button>
-        </div>
-        <div class="confiance-hint">Choisis, la réponse apparaît</div>
+        <button class="btn-voir-reponse" onclick="voirReponseFlash()">Voir la réponse</button>
     </div>
 
     <div id="zoneReponseFlash" class="carte-reponse" style="display:none;">
@@ -762,9 +747,10 @@ body.filtre-actif .masque:not(.due){display:none;}
         <div id="zoneConfirmation" class="zone-confirmation" style="display:none;">
             <div id="texteConfirmation" class="texte-confirmation"></div>
             <div class="btns-evaluation" id="btnsEvaluation">
-                <button class="btn-eval btn-eval-non" onclick="evaluerFlash('non')">✗ Non</button>
-                <button class="btn-eval btn-eval-moyen" onclick="evaluerFlash('moyen')">〜 Moyen</button>
-                <button class="btn-eval btn-eval-oui" onclick="evaluerFlash('oui')">✓ Oui</button>
+                <button class="btn-eval btn-eval-insuffisant" onclick="evaluerFlash('insuffisant')">✗ Insuffisant</button>
+                <button class="btn-eval btn-eval-fragile" onclick="evaluerFlash('fragile')">〜 Fragile</button>
+                <button class="btn-eval btn-eval-satisfaisant" onclick="evaluerFlash('satisfaisant')">● Satisfaisant</button>
+                <button class="btn-eval btn-eval-maitrise" onclick="evaluerFlash('maitrise')">✓ Très bonne maîtrise</button>
             </div>
         </div>
     </div>
@@ -882,7 +868,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v78</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v80</span> · Données stockées sur cet appareil
     </div>
 </div>
 
