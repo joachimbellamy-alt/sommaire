@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "eleve-pwa",
-      "url": "http://localhost:8765",
-      "port": 8765
+      "url": "http://localhost:8080",
+      "port": 8080
     }
   ]
 }
