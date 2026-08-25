@@ -649,6 +649,24 @@ function fermerBanniereEcranAccueil() {
     try { sessionStorage.setItem('banniere_masquee', '1'); } catch (e) { /* tant pis */ }
 }
 
+/* ---------------- Bannière de mise à jour du service worker ---------------- */
+let swMiseAJourEnAttente = null;
+
+function afficherBanniereMiseAJour(worker) {
+    swMiseAJourEnAttente = worker;
+    const banniere = document.getElementById('banniereMiseAJour');
+    if (banniere) banniere.style.display = 'flex';
+}
+
+function appliquerMiseAJourDisponible() {
+    const banniere = document.getElementById('banniereMiseAJour');
+    if (banniere) banniere.style.display = 'none';
+    if (swMiseAJourEnAttente) swMiseAJourEnAttente.postMessage('skipWaiting');
+    // Filet de sécurité : si l'activation du nouveau SW ne déclenche pas
+    // "controllerchange" (cas rare), on recharge quand même après un court délai.
+    setTimeout(() => window.location.reload(), 1200);
+}
+
 /* ---------------- Navigation entre vues ---------------- */
 
 let ongletActif = 'reviser'; // 'reviser' | 'agenda' | 'reglages'
@@ -4670,28 +4688,29 @@ async function traiterImportDepuisLien() {
                 // Force une vérification immédiate d'une nouvelle version.
                 registration.update();
 
-                // Si une nouvelle version est déjà installée et en attente,
-                // on lui demande de prendre la main tout de suite.
+                // Une mise à jour déjà téléchargée attend d'être activée (l'app a
+                // été rouverte après coup) : on prévient l'élève tout de suite.
                 if (registration.waiting) {
-                    registration.waiting.postMessage('skipWaiting');
+                    afficherBanniereMiseAJour(registration.waiting);
                 }
 
-                // Dès qu'une mise à jour est détectée, on l'active sans attendre
-                // la fermeture de tous les onglets.
+                // Dès qu'une mise à jour est détectée et prête, on affiche la
+                // bannière — c'est l'élève qui choisit quand recharger, pour ne
+                // pas l'interrompre en pleine révision.
                 registration.addEventListener('updatefound', () => {
                     const nouveauSW = registration.installing;
                     if (!nouveauSW) return;
                     nouveauSW.addEventListener('statechange', () => {
                         if (nouveauSW.state === 'installed' && navigator.serviceWorker.controller) {
-                            nouveauSW.postMessage('skipWaiting');
+                            afficherBanniereMiseAJour(nouveauSW);
                         }
                     });
                 });
             }).catch(() => { /* mode hors-ligne indisponible, l'app reste utilisable en ligne */ });
 
-            // Une fois que le nouveau SW a pris le contrôle, on recharge la page
-            // une seule fois pour que l'élève obtienne bien le code à jour
-            // (app.js déjà chargé en mémoire ne se met pas à jour tout seul).
+            // Une fois que le nouveau SW a pris le contrôle (après le clic sur
+            // "Mettre à jour"), on recharge la page une seule fois pour que
+            // l'élève obtienne bien le code à jour.
             let dejaRecharge = false;
             navigator.serviceWorker.addEventListener('controllerchange', () => {
                 if (dejaRecharge) return;

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'memo-eleve-v105';
+const CACHE_NAME = 'memo-eleve-v106';
 const FICHIERS_A_METTRE_EN_CACHE = [
     './',
     './index.html',
@@ -24,7 +24,11 @@ self.addEventListener('install', (event) => {
             )
         )
     );
-    self.skipWaiting();
+    // Pas de self.skipWaiting() automatique ici : une mise à jour doit rester
+    // "en attente" jusqu'à ce que l'élève clique sur "Mettre à jour" dans la
+    // bannière (voir appliquerMiseAJourDisponible() dans app.js). Pour une
+    // toute première installation (aucun SW existant), l'activation se fait
+    // normalement sans avoir besoin de skipWaiting.
 });
 
 self.addEventListener('activate', (event) => {

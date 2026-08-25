@@ -607,6 +607,12 @@ body.filtre-actif .masque:not(.due){display:none;}
     <button class="banniere-fermer" onclick="fermerBanniereEcranAccueil()">✕</button>
 </div>
 
+<div id="banniereMiseAJour" style="display:none;align-items:center;gap:10px;background:#EAF3FF;color:#003D80;padding:10px 14px;font-size:13px;line-height:1.4;border-bottom:1px solid #B8DCFF;">
+    <span class="banniere-icone">🚀</span>
+    <span class="banniere-texte">Une nouvelle version de l'app est disponible.</span>
+    <button onclick="appliquerMiseAJourDisponible()" style="-webkit-appearance:none;appearance:none;background:#007AFF;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0;">Mettre à jour</button>
+</div>
+
 <header>
     <h1 id="titreHeader">Mes révisions</h1>
 </header>
@@ -944,7 +950,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;">
-        Mes révisions · <span id="versionApp">v105</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v106</span> · Données stockées sur cet appareil
     </div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);padding-bottom:4px;">
         Application conçue par M. Bellamy, professeur de français et latin
