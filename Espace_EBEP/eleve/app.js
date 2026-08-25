@@ -1235,6 +1235,24 @@ function chargerCanvasEdition() {
     }
     majCompteurZonesEdition();
     majNavigateurPages('edition');
+    majOnboardingZone();
+}
+
+/* ── Micro-onboarding : première zone à tracer ── */
+const CLE_ONBOARDING_ZONE = 'memo_onboarding_zone_vu';
+
+function majOnboardingZone() {
+    const el = document.getElementById('onboardingZone');
+    if (!el) return;
+    const page = pageEnCours();
+    const aMontrer = page && page.zones.length === 0 && !localStorage.getItem(CLE_ONBOARDING_ZONE);
+    el.style.display = aMontrer ? '' : 'none';
+}
+
+function masquerOnboardingZone() {
+    localStorage.setItem(CLE_ONBOARDING_ZONE, '1');
+    const el = document.getElementById('onboardingZone');
+    if (el) el.style.display = 'none';
 }
 
 function ajouterPageDepuisImage(dataUrlFinal) {
@@ -1646,6 +1664,7 @@ function handleEnd(e) {
         cheminLibre = [];
         redessinerZonesEdition();
         majCompteurZonesEdition();
+        masquerOnboardingZone();
         sauvegarderSupports();
         return;
     }
@@ -1672,6 +1691,7 @@ function handleEnd(e) {
     currentRect.remove(); currentRect = null;
     redessinerZonesEdition();
     majCompteurZonesEdition();
+    masquerOnboardingZone();
     sauvegarderSupports();
 }
 
