@@ -202,3 +202,49 @@ Matières valides : `Français`, `Maths`, `Histoire-Géo-EMC`, `Anglais`, `Espag
 ## Version actuelle
 
 **v88** — août 2026
+
+---
+
+## Améliorations ergonomiques à implémenter (prochaine session)
+
+### Flashcards
+1. **Tap sur la carte = révéler** — en plus du bouton "Voir la réponse", un tap n'importe où sur le bloc question/réponse doit révéler la réponse (comme Anki). Le bouton reste pour ceux qui le cherchent.
+2. **Libellés des 4 boutons à raccourcir** — les libellés longs ("Réponse correcte après réflexion") sont compressés sur petit écran. Proposer une version courte sur une ligne + sous-titre grisé :
+   - "Aucune idée" → titre + rien (déjà court)
+   - "〜 Réponse incomplète" + sous-titre grisé "ou inexacte"
+   - "● Correcte après réflexion" (raccourci)
+   - "✓ Réponse immédiate" → déjà court
+
+### Zones masquées
+3. **Micro-onboarding création de zone** — à la première ouverture d'un support image vide (0 zones), afficher une animation ou tooltip discret : "👆 Appuie et glisse pour créer une zone à mémoriser". Disparaît après la première zone tracée. Stocker en localStorage qu'il a été vu.
+4. **Écran de fin de page zones** — quand toutes les zones d'une page ont été évaluées (✓/〜/✗), afficher un message discret en bas : "✅ Toutes les zones évaluées — " + boutons "🔄 Recommencer" et "→ Page suivante" si multi-pages.
+
+### Tuiles par matière dans "Mes fiches" (refonte bibliothèque)
+5. **Vue 1 : grille de tuiles colorées** — une tuile par matière, grille 2×2, avec icône + nom + "X fiches · Y dues" + barre de progression blanche. Couleurs par matière (voir COULEURS_MATIERES ci-dessous).
+6. **Vue 2 : détail d'une matière** — tap sur une tuile → en-tête coloré + liste des chapitres en accordéon (repliés par défaut) + badge rouge/orange/vert selon les révisions dues. Fiches visibles seulement dans le chapitre déplié. Bouton ⋯ sur chaque fiche.
+7. **Bouton retour** "‹ Toutes les matières" pour revenir à la grille.
+
+```javascript
+const COULEURS_MATIERES_TUILES = {
+    'Français':          'linear-gradient(140deg,#007AFF,#0040CC)',
+    'Maths':             'linear-gradient(140deg,#FF9500,#CC6600)',
+    'Histoire-Géo-EMC':  'linear-gradient(140deg,#34C759,#1A7A35)',
+    'Anglais':           'linear-gradient(140deg,#FF3B30,#AA0000)',
+    'Espagnol':          'linear-gradient(140deg,#FF6B35,#CC4400)',
+    'Latin':             'linear-gradient(140deg,#AF52DE,#6A1A9A)',
+    'SVT':               'linear-gradient(140deg,#5AC8FA,#0077AA)',
+    'Sciences physiques':'linear-gradient(140deg,#5856D6,#2A28A0)',
+    'EMI':               'linear-gradient(140deg,#FF2D55,#AA0033)',
+    'Éducation musicale':'linear-gradient(140deg,#FF9500,#6B4200)',
+    'Arts plastiques':   'linear-gradient(140deg,#FF6CAE,#CC0066)',
+    'Autre':             'linear-gradient(140deg,#8E8E93,#48484A)',
+};
+```
+
+### Autres
+- Mise à jour automatique du service worker (afficher une bannière quand une nouvelle version est disponible, bouton "Mettre à jour")
+- Reconnaissance vocale sur les champs de saisie des flashcards et des indices de zones
+
+---
+
+## Version actuelle : v89 (août 2026)
