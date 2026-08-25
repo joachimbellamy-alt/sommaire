@@ -1059,7 +1059,23 @@ function afficherAccueil() {
     afficherEspaceStockage();
 }
 
+const CLE_REJOUER_RATEES = 'memo_rejouer_ratees';
+
+function rejouerRateesActif() {
+    return localStorage.getItem(CLE_REJOUER_RATEES) === '1';
+}
+
+function changerRejouerRatees(actif) {
+    localStorage.setItem(CLE_REJOUER_RATEES, actif ? '1' : '0');
+}
+
+function chargerPreferenceRejouerRatees() {
+    const champ = document.getElementById('champRejouerRatees');
+    if (champ) champ.checked = rejouerRateesActif();
+}
+
 async function afficherEspaceStockage() {
+    chargerPreferenceRejouerRatees();
     const el = document.getElementById('espaceStockage');
     if (!el) return;
     if ('caches' in window) {
@@ -4123,6 +4139,12 @@ function evaluerFlash(resultat) {
     } else {
         bandeau.className = 'bandeau-feedback mauvais';
         bandeau.textContent = '❌ À retravailler — réponse : ' + (item.support.cartes[item.idx].reponse || '');
+        // Option Réglages : la carte ratée revient plus tard dans cette même
+        // session (en plus de son intervalle SM-2 normal, inchangé).
+        if (rejouerRateesActif()) {
+            flashSession.push(item);
+            bandeau.textContent += ' (elle revient plus tard dans cette session)';
+        }
     }
     bandeau.style.display = '';
     flashIndex++;

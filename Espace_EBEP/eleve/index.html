@@ -478,6 +478,12 @@ body.filtre-actif .masque:not(.due){display:none;}
 .settings-row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:0.5px solid var(--gris-fond);cursor:pointer;}
 .settings-row:last-child{border-bottom:none;}
 .settings-row:hover{background:var(--gris-fond);}
+.switch-ios{position:relative;display:inline-block;width:44px;height:26px;flex-shrink:0;margin-left:auto;}
+.switch-ios input{opacity:0;width:0;height:0;}
+.switch-ios-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#E5E5EA;transition:.2s;border-radius:999px;}
+.switch-ios-slider:before{position:absolute;content:"";height:22px;width:22px;left:2px;bottom:2px;background-color:#fff;transition:.2s;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.3);}
+.switch-ios input:checked + .switch-ios-slider{background-color:#34C759;}
+.switch-ios input:checked + .switch-ios-slider:before{transform:translateX(18px);}
 .settings-icon{font-size:20px;width:26px;text-align:center;flex-shrink:0;}
 .settings-label{flex:1;font-size:14px;color:var(--texte);}
 .settings-value{font-size:13px;color:var(--gris-texte);}
@@ -937,6 +943,17 @@ body.filtre-actif .masque:not(.due){display:none;}
     </div>
 
     <div class="settings-group">
+        <div class="settings-row" style="cursor:default;">
+            <span class="settings-icon">🔁</span>
+            <span class="settings-label">Représenter les cartes ratées dans la même session</span>
+            <label class="switch-ios">
+                <input type="checkbox" id="champRejouerRatees" onchange="changerRejouerRatees(this.checked)">
+                <span class="switch-ios-slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <div class="settings-group">
         <div class="settings-row" onclick="exporterDonnees()">
             <span class="settings-icon">💾</span>
             <span class="settings-label">Exporter une sauvegarde</span>
@@ -952,7 +969,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;">
-        Mes révisions · <span id="versionApp">v108</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v109</span> · Données stockées sur cet appareil
     </div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);padding-bottom:4px;">
         Application conçue par M. Bellamy, professeur de français et latin
