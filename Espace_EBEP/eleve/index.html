@@ -569,6 +569,26 @@ body.filtre-actif .masque:not(.due){display:none;}
     .bib-support-pct{font-size:11px;font-weight:700;}
     .tag-archive{font-size:9px;color:var(--gris-texte);background:var(--gris-fond);border-radius:999px;padding:2px 7px;margin-left:4px;font-weight:500;}
     .bib-sans-chapitre-titre{font-size:11px;font-weight:600;color:var(--gris-texte);padding:4px 2px 6px;text-transform:uppercase;letter-spacing:0.5px;}
+
+    /* ── Grille de tuiles par matière ── */
+    .bib-tuiles-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;}
+    .bib-tuile{border-radius:18px;padding:15px 13px;display:flex;flex-direction:column;gap:5px;cursor:pointer;position:relative;min-height:110px;}
+    .bib-tuile:active{opacity:0.85;transform:scale(0.97);}
+    .bib-tuile-ic{font-size:26px;margin-bottom:2px;}
+    .bib-tuile-nom{font-size:14px;font-weight:700;color:#fff;line-height:1.2;}
+    .bib-tuile-meta{font-size:11px;color:rgba(255,255,255,0.8);}
+    .bib-tuile-barre{height:3px;border-radius:2px;background:rgba(255,255,255,0.25);margin-top:6px;}
+    .bib-tuile-fill{height:100%;border-radius:2px;background:rgba(255,255,255,0.85);}
+    .bib-tuile-badge{position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.25);border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;color:#fff;}
+
+    /* ── Vue détail d'une matière ── */
+    .bib-back{display:flex;align-items:center;gap:4px;color:var(--bleu);font-size:14px;cursor:pointer;padding:6px 2px;}
+    .bib-mat-header{border-radius:16px;padding:14px;display:flex;align-items:center;gap:12px;margin:6px 0 10px;}
+    .bib-mat-header .h-ic{font-size:30px;}
+    .bib-mat-header .h-nom{font-size:17px;font-weight:700;color:#fff;}
+    .bib-mat-header .h-meta{font-size:12px;color:rgba(255,255,255,.8);margin-top:2px;}
+    .bib-chap-chevron{font-size:14px;color:var(--gris-texte2);flex-shrink:0;margin-left:8px;transition:transform .15s;display:inline-block;}
+    .bib-chap-chevron.ouvert{transform:rotate(90deg);}
 </style>
 </head>
 <body>
@@ -899,7 +919,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v95</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v96</span> · Données stockées sur cet appareil
     </div>
 </div>
 

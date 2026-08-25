@@ -725,6 +725,26 @@ const ICONES_MATIERES = {
     'EMI': '📰', 'Sciences': '🧪', 'SVT': '🔬', 'Sciences physiques': '⚛️', 'Latin': '🏛️',
     'Éducation musicale': '🎵', 'Arts plastiques': '🎨', 'Autre': '📦'
 };
+// Dégradé de couleur par matière — tuiles de la bibliothèque
+const GRADIENTS_MATIERES = {
+    'Français': ['#007AFF', '#0040CC'],
+    'Maths': ['#FF9500', '#CC6600'],
+    'Histoire-Géo-EMC': ['#34C759', '#1A7A35'],
+    'Anglais': ['#FF3B30', '#AA0000'],
+    'Espagnol': ['#FFCC00', '#B38600'],
+    'EMI': ['#5856D6', '#34328C'],
+    'Sciences': ['#00C7BE', '#007A73'],
+    'SVT': ['#5AC8FA', '#0077AA'],
+    'Sciences physiques': ['#AF52DE', '#6A1A9A'],
+    'Latin': ['#A2845E', '#5C4A2E'],
+    'Éducation musicale': ['#FF2D55', '#99102F'],
+    'Arts plastiques': ['#DA5AA6', '#8C2E68'],
+    'Autre': ['#8E8E93', '#48484A'],
+};
+function gradientMatiere(nom) {
+    const g = GRADIENTS_MATIERES[nom] || GRADIENTS_MATIERES['Autre'];
+    return `linear-gradient(140deg, ${g[0]}, ${g[1]})`;
+}
 
 function calculerProgression(s) {
     let total = 0, maitrisees = 0, difficiles = 0;
@@ -4296,7 +4316,32 @@ function animerEntree(el, cls) {
     el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
 }
 
-/* ── Mode zone par zone ── */
+/* ── Bibliothèque : grille de matières + détail par matière (chapitres en accordéon) ── */
+let bibliothequeMatiereActive = null; // null = grille des matières ; sinon nom de la matière en cours de détail
+let bibliothequeChapitresOuverts = new Set(); // clés "matiere::chapitre" actuellement dépliées
+
+function duesSupport(s) {
+    return s.type === 'texte'
+        ? (s.cartes || []).filter((c, i) => { const e = s.etat[i]; return !e || estDueDate(e.nextDue); }).length
+        : (s.pages || []).reduce((a, p, pi) => a + (p.zones || []).filter((z, zi) => { const e = s.etat[pi + '_' + zi]; return !e || estDueDate(e.nextDue); }).length, 0);
+}
+
+function htmlLigneFicheBib(s) {
+    const { maitrisees, total } = calculerProgression(s);
+    const pct = total > 0 ? Math.round(maitrisees / total * 100) : 0;
+    const archive = pct === 100 && total > 0;
+    const couleur = pct >= 80 ? '#34C759' : pct >= 40 ? '#FF9500' : '#007AFF';
+    return `<div class="bib-support-row" data-id="${s.id}" style="cursor:pointer;">
+        ${vignetteSupport(s)
+            ? `<img src="${vignetteSupport(s)}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex-shrink:0;">`
+            : `<div class="bib-support-ic">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>`
+        }
+        <div class="bib-support-nom">${echapperHtml(s.nom)}${archive ? '<span class="tag-archive">Archivé ✓</span>' : ''}</div>
+        <span class="bib-support-pct" style="color:${couleur};">${pct}%</span>
+        <button class="btn-actions-fiche" data-fiche-id="${s.id}" data-fiche-nom="${echapperHtml(s.nom).replace(/"/g,'&quot;')}" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 10px;color:var(--gris-texte);" type="button">⋯</button>
+    </div>`;
+}
+
 function afficherBibliotheque(filtre) {
     const liste = document.getElementById('listeBibliotheque');
     if (!liste) return;
@@ -4312,73 +4357,114 @@ function afficherBibliotheque(filtre) {
         parMatiere[m][ch].push(s);
     });
 
-    const html = Object.keys(parMatiere).sort().map(matiere => {
-        const chapitres = parMatiere[matiere];
-        const supportsMatiere = Object.values(chapitres).flat();
+    let html;
 
-        // Filtre recherche
-        const supportsFiltres = recherche
-            ? supportsMatiere.filter(s =>
-                (s.nom || '').toLowerCase().includes(recherche) ||
-                (s.chapitre || '').toLowerCase().includes(recherche) ||
-                (s.matiere || '').toLowerCase().includes(recherche))
-            : supportsMatiere;
-        if (supportsFiltres.length === 0) return '';
-
-        const chapHtml = Object.keys(chapitres).sort().map(chap => {
-            const supChap = chapitres[chap].filter(s =>
-                recherche
-                    ? (s.nom || '').toLowerCase().includes(recherche) ||
-                      (s.chapitre || '').toLowerCase().includes(recherche)
-                    : true
-            );
-            if (supChap.length === 0) return '';
-
-            const duesChap = supChap.reduce((n, s) => n + (s.type === 'texte'
-                ? (s.cartes || []).filter((c, i) => { const e = s.etat[i]; return !e || estDueDate(e.nextDue); }).length
-                : (s.pages || []).reduce((a, p, pi) => a + (p.zones || []).filter((z, zi) => { const e = s.etat[pi + '_' + zi]; return !e || estDueDate(e.nextDue); }).length, 0)
-            ), 0);
-
-            const supHtml = supChap.map(s => {
-                const { maitrisees, total } = calculerProgression(s);
-                const pct = total > 0 ? Math.round(maitrisees / total * 100) : 0;
-                const archive = pct === 100 && total > 0;
-                const couleur = pct >= 80 ? '#34C759' : pct >= 40 ? '#FF9500' : '#007AFF';
-                return `<div class="bib-support-row" data-id="${s.id}" onclick="" style="cursor:pointer;">
-                    ${vignetteSupport(s)
-                        ? `<img src="${vignetteSupport(s)}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex-shrink:0;">`
-                        : `<div class="bib-support-ic">${s.type === 'texte' ? '🗒️' : '🖼️'}</div>`
-                    }
-                    <div class="bib-support-nom">${echapperHtml(s.nom)}${archive ? '<span class="tag-archive">Archivé ✓</span>' : ''}</div>
-                    <span class="bib-support-pct" style="color:${couleur};">${pct}%</span>
-                    <button class="btn-actions-fiche" data-fiche-id="${s.id}" data-fiche-nom="${echapperHtml(s.nom).replace(/"/g,'&quot;')}" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 10px;color:var(--gris-texte);" type="button">⋯</button>
+    if (recherche) {
+        // Recherche active : liste plate groupée matière → chapitre, tout déplié,
+        // pour retrouver une fiche sans avoir à naviguer dans les tuiles.
+        html = Object.keys(parMatiere).sort().map(matiere => {
+            const chapitres = parMatiere[matiere];
+            const chapHtml = Object.keys(chapitres).sort().map(chap => {
+                const supChap = chapitres[chap].filter(s =>
+                    (s.nom || '').toLowerCase().includes(recherche) ||
+                    (s.chapitre || '').toLowerCase().includes(recherche) ||
+                    (s.matiere || '').toLowerCase().includes(recherche)
+                );
+                if (supChap.length === 0) return '';
+                const duesChap = supChap.reduce((n, s) => n + duesSupport(s), 0);
+                const badgeHtml = duesChap > 0 ? `<span class="bib-chap-badge due">${duesChap}</span>` : `<span class="bib-chap-badge ok">✓</span>`;
+                const chapLabel = chap === '—' ? 'Sans chapitre' : echapperHtml(chap);
+                return `<div class="bib-chap-bloc">
+                    <div class="bib-chap-header">
+                        <div><div class="bib-chap-nom">${chapLabel}</div><div class="bib-chap-meta">${supChap.length} support${supChap.length > 1 ? 's' : ''}</div></div>
+                        ${badgeHtml}
+                    </div>
+                    ${supChap.map(htmlLigneFicheBib).join('')}
                 </div>`;
             }).join('');
+            if (!chapHtml.trim()) return '';
+            return `<div class="bib-mat-section">
+                <div class="bib-mat-titre">${ICONES_MATIERES[matiere] || '📦'} ${matiere}</div>
+                ${chapHtml}
+            </div>`;
+        }).join('');
+        html = html || '<div class="vide">Aucune fiche trouvée.</div>';
 
-            const badgeHtml = duesChap > 0
-                ? `<span class="bib-chap-badge due">${duesChap}</span>`
-                : `<span class="bib-chap-badge ok">✓</span>`;
+    } else if (bibliothequeMatiereActive && parMatiere[bibliothequeMatiereActive]) {
+        // Vue détail d'une matière : en-tête coloré + chapitres en accordéon
+        const matiere = bibliothequeMatiereActive;
+        const chapitres = parMatiere[matiere];
+        const supportsMatiere = Object.values(chapitres).flat();
+        const duesMatiere = supportsMatiere.reduce((n, s) => n + duesSupport(s), 0);
+        const progMatiere = supportsMatiere.reduce((acc, s) => {
+            const { maitrisees, total } = calculerProgression(s);
+            acc.mait += maitrisees; acc.total += total; return acc;
+        }, { mait: 0, total: 0 });
+        const pctMatiere = progMatiere.total > 0 ? Math.round(progMatiere.mait / progMatiere.total * 100) : 0;
+        const nomsChap = Object.keys(chapitres).sort();
 
+        const chapHtml = nomsChap.map(chap => {
+            const supChap = chapitres[chap];
+            const duesChap = supChap.reduce((n, s) => n + duesSupport(s), 0);
+            const badgeHtml = duesChap > 0 ? `<span class="bib-chap-badge due">${duesChap}</span>` : `<span class="bib-chap-badge ok">✓</span>`;
             const chapLabel = chap === '—' ? 'Sans chapitre' : echapperHtml(chap);
+            const cle = matiere + '::' + chap;
+            // Un seul chapitre : pas d'intérêt à le replier.
+            const ouvert = nomsChap.length === 1 || bibliothequeChapitresOuverts.has(cle);
             return `<div class="bib-chap-bloc">
-                <div class="bib-chap-header">
+                <div class="bib-chap-header" data-chap-key="${echapperHtml(cle)}">
                     <div><div class="bib-chap-nom">${chapLabel}</div><div class="bib-chap-meta">${supChap.length} support${supChap.length > 1 ? 's' : ''}</div></div>
-                    ${badgeHtml}
+                    <div style="display:flex;align-items:center;">
+                        ${badgeHtml}
+                        <span class="bib-chap-chevron${ouvert ? ' ouvert' : ''}">›</span>
+                    </div>
                 </div>
-                ${supHtml}
+                ${ouvert ? supChap.map(htmlLigneFicheBib).join('') : ''}
             </div>`;
         }).join('');
 
-        return `<div class="bib-mat-section">
-            <div class="bib-mat-titre">${ICONES_MATIERES[matiere] || '📦'} ${matiere}</div>
-            ${chapHtml}
-        </div>`;
-    }).join('');
+        html = `<div class="bib-back" data-bib-retour="1">‹ Toutes les matières</div>
+            <div class="bib-mat-header" style="background:${gradientMatiere(matiere)};">
+                <div class="h-ic">${ICONES_MATIERES[matiere] || '📦'}</div>
+                <div>
+                    <div class="h-nom">${echapperHtml(matiere)}</div>
+                    <div class="h-meta">${supportsMatiere.length} fiche${supportsMatiere.length > 1 ? 's' : ''} · ${duesMatiere} due${duesMatiere > 1 ? 's' : ''} · ${pctMatiere}% maîtrisé</div>
+                </div>
+            </div>
+            ${chapHtml}`;
 
-    liste.innerHTML = html || '<div class="vide">Aucune fiche trouvée.</div>';
+    } else {
+        // Grille des matières (vue par défaut)
+        bibliothequeMatiereActive = null;
+        const matieresTriees = Object.keys(parMatiere).sort((a, b) => {
+            const ia = ORDRE_MATIERES.indexOf(a), ib = ORDRE_MATIERES.indexOf(b);
+            return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+        });
+        const tuiles = matieresTriees.map(matiere => {
+            const supportsMatiere = Object.values(parMatiere[matiere]).flat();
+            const duesMatiere = supportsMatiere.reduce((n, s) => n + duesSupport(s), 0);
+            const prog = supportsMatiere.reduce((acc, s) => {
+                const { maitrisees, total } = calculerProgression(s);
+                acc.mait += maitrisees; acc.total += total; return acc;
+            }, { mait: 0, total: 0 });
+            const pct = prog.total > 0 ? Math.round(prog.mait / prog.total * 100) : 0;
+            const badge = duesMatiere > 0
+                ? `<div class="bib-tuile-badge">${duesMatiere} due${duesMatiere > 1 ? 's' : ''}</div>`
+                : `<div class="bib-tuile-badge" style="background:rgba(255,255,255,0.3);">✓ À jour</div>`;
+            return `<div class="bib-tuile" data-matiere="${echapperHtml(matiere)}" style="background:${gradientMatiere(matiere)};">
+                ${badge}
+                <div class="bib-tuile-ic">${ICONES_MATIERES[matiere] || '📦'}</div>
+                <div class="bib-tuile-nom">${echapperHtml(matiere)}</div>
+                <div class="bib-tuile-meta">${supportsMatiere.length} fiche${supportsMatiere.length > 1 ? 's' : ''}</div>
+                <div class="bib-tuile-barre"><div class="bib-tuile-fill" style="width:${pct}%"></div></div>
+            </div>`;
+        }).join('');
+        html = tuiles ? `<div class="bib-tuiles-grid">${tuiles}</div>` : '<div class="vide">Tu n\'as pas encore de fiche. Tape le + pour commencer !</div>';
+    }
 
-    // Délégation événements : bouton ⋯ et tap sur la ligne
-    // Écouteur unique — ne pas en ajouter un nouveau à chaque appel
+    liste.innerHTML = html;
+
+    // Délégation événements — écouteur unique — ne pas en ajouter un nouveau à chaque appel
     if (!liste.dataset.listenerInit) {
         liste.dataset.listenerInit = '1';
         liste.addEventListener('click', function(ev) {
@@ -4389,8 +4475,31 @@ function afficherBibliotheque(filtre) {
                 return;
             }
             const row = ev.target.closest('.bib-support-row[data-id]');
-            if (row && !ev.target.closest('.btn-actions-fiche')) {
+            if (row) {
                 ouvrirRevision(row.dataset.id);
+                return;
+            }
+            const tuile = ev.target.closest('.bib-tuile[data-matiere]');
+            if (tuile) {
+                bibliothequeMatiereActive = tuile.dataset.matiere;
+                bibliothequeChapitresOuverts.clear();
+                afficherBibliotheque(document.getElementById('bibSearchInput') ? document.getElementById('bibSearchInput').value : '');
+                return;
+            }
+            const retour = ev.target.closest('[data-bib-retour]');
+            if (retour) {
+                bibliothequeMatiereActive = null;
+                afficherBibliotheque('');
+                const champ = document.getElementById('bibSearchInput');
+                if (champ) champ.value = '';
+                return;
+            }
+            const chapHdr = ev.target.closest('.bib-chap-header[data-chap-key]');
+            if (chapHdr) {
+                const cle = chapHdr.dataset.chapKey;
+                if (bibliothequeChapitresOuverts.has(cle)) bibliothequeChapitresOuverts.delete(cle);
+                else bibliothequeChapitresOuverts.add(cle);
+                afficherBibliotheque(document.getElementById('bibSearchInput') ? document.getElementById('bibSearchInput').value : '');
             }
         });
     }
