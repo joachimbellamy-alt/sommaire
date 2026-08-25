@@ -563,8 +563,13 @@ document.getElementById('inputImport').onchange = (e) => {
 function lireFichierTexte(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = (ev) => resolve(ev.target.result);
-        reader.onerror = () => reject(reader.error);
+        // Filet de sécurité : sur iOS, la lecture d'un fichier reçu par
+        // AirDrop/iCloud peut parfois rester bloquée sans jamais déclencher
+        // ni onload ni onerror. Sans ce délai, l'import restait alors
+        // silencieusement figé, sans aucun message pour l'élève.
+        const delaiSecurite = setTimeout(() => reject(new Error('La lecture du fichier a expiré (délai dépassé).')), 15000);
+        reader.onload = (ev) => { clearTimeout(delaiSecurite); resolve(ev.target.result); };
+        reader.onerror = () => { clearTimeout(delaiSecurite); reject(reader.error); };
         reader.readAsText(file);
     });
 }
@@ -572,7 +577,19 @@ function lireFichierTexte(file) {
 // Importe un ou plusieurs fichiers JSON sélectionnés d'un coup (multi-sélection).
 // Chaque fichier est traité indépendamment ; les fiches déjà présentes (même id)
 // sont ignorées pour éviter les doublons si le même paquet est réimporté.
+// Petit filet de sécurité : sans lui, une erreur inattendue au milieu de
+// l'import (fichier corrompu, structure imprévue...) plantait la fonction
+// en silence — aucune alerte, aucun toast, rien de visible pour l'élève.
 async function traiterFichiersImport(fileList) {
+    try {
+        await traiterFichiersImportInterne(fileList);
+    } catch (err) {
+        console.error('Erreur import :', err);
+        alert("Une erreur inattendue a empêché l'import.\n\n" + (err && err.message ? err.message : err) + "\n\nEssaie de réexporter le fichier, ou vérifie qu'il n'est pas corrompu/incomplet.");
+    }
+}
+
+async function traiterFichiersImportInterne(fileList) {
     const fichiers = Array.from(fileList || []);
     if (!fichiers.length) return;
 
