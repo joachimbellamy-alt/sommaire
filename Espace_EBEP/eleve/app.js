@@ -3852,7 +3852,7 @@ function afficherCarteFlash() {
     document.getElementById('lettresFlash').style.display = 'none';
     document.getElementById('saisieFLashWrap').style.display = 'none';
     document.getElementById('exempleFlash').style.display = 'none';
-    document.getElementById('exempleFlash').textContent = c.exemple ? '« ' + c.exemple + ' »' : '';
+    afficherTexteOuAudio('exempleFlash', c.exemple ? '« ' + c.exemple + ' »' : '', c.exempleAudio);
     document.getElementById('zoneConfirmation').style.display = 'none';
 
     // Réponse audio
@@ -3863,8 +3863,7 @@ function afficherCarteFlash() {
         : () => lireTexte(c.reponse || '', langue, support.voixNom || '');
 
     // Indice (celui saisi à la création de la fiche)
-    const indiceProf = document.getElementById('indiceProfFlash');
-    indiceProf.innerHTML = c.indice ? '💡 ' + echapperHtml(c.indice) : '';
+    afficherTexteOuAudio('indiceProfFlash', c.indice ? '💡 ' + c.indice : (c.indiceAudio ? '💡' : ''), c.indiceAudio);
     document.getElementById('indicePersoFlash').value = etat ? (etat.indicePerso || '') : '';
     document.getElementById('carteFlashcard').classList.remove('indice-ouvert', 'correcte', 'incorrecte');
     // Charger l'audio de l'indice perso si existant
@@ -3920,6 +3919,23 @@ function jouerAudioFlash(src) {
     audio.play().catch(() => {});
 }
 
+// Affiche un texte, et/ou un petit bouton 🔊 si un clip audio a été enregistré
+// pour ce champ (ex./indice enregistrés à la voix sans avoir été tapés).
+// Sans ça, un exemple ou un indice uniquement enregistré en audio semblait
+// "ne pas apparaître" pendant la révision.
+function afficherTexteOuAudio(idEl, texte, audioSrc) {
+    const el = document.getElementById(idEl);
+    el.textContent = texte;
+    if (audioSrc) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-audio-inline';
+        btn.textContent = '🔊';
+        btn.onclick = (ev) => { ev.stopPropagation(); jouerAudioFlash(audioSrc); };
+        el.appendChild(btn);
+    }
+}
+
 function finirRevelationFlash() {
     flashRevele = true;
     const item = flashSession[flashIndex % flashSession.length];
@@ -3933,7 +3949,7 @@ function finirRevelationFlash() {
     repEl.textContent = c.reponse || '';
     repEl.style.display = '';
 
-    if (c.exemple) document.getElementById('exempleFlash').style.display = '';
+    if (c.exemple || c.exempleAudio) document.getElementById('exempleFlash').style.display = '';
     document.getElementById('btnAudioReponse').style.display = '';
     if (c.reponseAudio) jouerAudioFlash(c.reponseAudio);
 
