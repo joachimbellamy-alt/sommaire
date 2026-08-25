@@ -1896,96 +1896,51 @@ function echapperHtml(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-/* Bulle d'édition d'indice, ancrée près de la zone tapée plutôt qu'une grosse modale */
-let bulleIndiceEl = null;
+/* Feuille d'édition d'indice — fixée en bas d'écran, toujours au-dessus du
+   clavier (comme les panneaux natifs iOS), sans aucun calcul de position. */
+let indiceZoneIdxActuelle = null;
+
+function ouvrirBulleIndice(labelEl, idxZone) {
+    const z = pageEnCours().zones[idxZone];
+    indiceZoneIdxActuelle = idxZone;
+
+    document.getElementById('feuilleIndiceTitre').textContent = '💡 Indice — zone ' + (idxZone + 1);
+    const champ = document.getElementById('feuilleIndiceChamp');
+    champ.value = z.indice || '';
+
+    const feuille = document.getElementById('feuilleIndiceZone');
+    const boite = feuille.querySelector('.feuille-indice-boite');
+    feuille.style.display = 'flex';
+    // Relance l'animation de montée à chaque ouverture.
+    boite.style.animation = 'none';
+    void boite.offsetWidth;
+    boite.style.animation = '';
+
+    champ.focus();
+}
 
 function fermerBulleIndice() {
     arreterDicteeEnCours();
-    if (bulleIndiceEl) {
-        if (bulleIndiceEl._repositionner && window.visualViewport) {
-            window.visualViewport.removeEventListener('resize', bulleIndiceEl._repositionner);
-            window.visualViewport.removeEventListener('scroll', bulleIndiceEl._repositionner);
-        }
-        bulleIndiceEl.remove();
-        bulleIndiceEl = null;
-    }
-    document.removeEventListener('click', fermerBulleIndiceSiExterieur, true);
+    document.getElementById('feuilleIndiceZone').style.display = 'none';
+    indiceZoneIdxActuelle = null;
 }
 
-function fermerBulleIndiceSiExterieur(ev) {
-    if (bulleIndiceEl && !bulleIndiceEl.contains(ev.target)) fermerBulleIndice();
+// Tap sur le fond semi-transparent : ferme sans enregistrer.
+function fermerFeuilleIndiceZoneSiExterieur(ev) {
+    if (ev.target.id === 'feuilleIndiceZone') fermerBulleIndice();
 }
 
-function ouvrirBulleIndice(labelEl, idxZone) {
+function validerFeuilleIndiceZone() {
+    if (indiceZoneIdxActuelle === null) return;
+    pageEnCours().zones[indiceZoneIdxActuelle].indice = document.getElementById('feuilleIndiceChamp').value.trim();
+    sauvegarderSupports();
+    redessinerZonesEdition();
     fermerBulleIndice();
-    const z = pageEnCours().zones[idxZone];
-    const rectLabel = labelEl.getBoundingClientRect();
+}
 
-    bulleIndiceEl = document.createElement('div');
-    bulleIndiceEl.className = 'bulle-indice-edition';
-    bulleIndiceEl.innerHTML = `
-        <div class="titre">💡 Indice — zone ${idxZone + 1}</div>
-        <div style="display:flex;gap:6px;align-items:center;">
-            <input type="text" id="champBulleIndice" placeholder="Ex : verbe, commence par É..." style="flex:1;width:auto;">
-            <button type="button" class="btn-media btn-dictee" id="btnDicteeBulleIndice" title="Dicter au micro">🎤</button>
-        </div>
-        <div class="actions">
-            <button class="btn-modal annuler" id="btnSupprBulleIndice">Effacer</button>
-            <button class="btn-modal enregistrer" id="btnOkBulleIndice">OK</button>
-        </div>`;
-    document.body.appendChild(bulleIndiceEl);
-
-    // Positionnement : sous le badge par défaut, au-dessus si pas assez de place,
-    // recalculé en continu selon la zone réellement visible (le clavier réduit cette zone sur iPad).
-    const largeurBulle = 240;
-    function repositionnerBulleIndice() {
-        if (!bulleIndiceEl) return;
-        const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
-        const vw = (window.visualViewport ? window.visualViewport.width : window.innerWidth);
-        const hauteurBulle = bulleIndiceEl.offsetHeight || 130;
-        let left = rectLabel.left;
-        let top = rectLabel.bottom + 8;
-        if (left + largeurBulle > vw - 10) left = vw - largeurBulle - 10;
-        if (left < 10) left = 10;
-        if (top + hauteurBulle > vh - 10) top = rectLabel.top - hauteurBulle - 8;
-        if (top < 10) top = 10; // si même au-dessus ça ne rentre pas, on colle en haut de la zone visible
-        if (top + hauteurBulle > vh - 10) top = Math.max(10, vh - hauteurBulle - 10);
-        bulleIndiceEl.style.left = left + 'px';
-        bulleIndiceEl.style.top = top + 'px';
-    }
-    repositionnerBulleIndice();
-    if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', repositionnerBulleIndice);
-        window.visualViewport.addEventListener('scroll', repositionnerBulleIndice);
-    }
-    bulleIndiceEl._repositionner = repositionnerBulleIndice;
-
-    const champ = document.getElementById('champBulleIndice');
-    champ.value = z.indice || '';
-    champ.focus();
-    // Après l'ouverture du clavier (animation ~300ms sur iOS), on recale une dernière fois.
-    setTimeout(repositionnerBulleIndice, 350);
-
-    function valider() {
-        pageEnCours().zones[idxZone].indice = champ.value.trim();
-        sauvegarderSupports();
-        redessinerZonesEdition();
-        fermerBulleIndice();
-    }
-    document.getElementById('btnDicteeBulleIndice').addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        demarrerDictee(champ, ev.currentTarget);
-    });
-    document.getElementById('btnOkBulleIndice').addEventListener('click', (ev) => { ev.stopPropagation(); valider(); });
-    document.getElementById('btnSupprBulleIndice').addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        champ.value = '';
-        valider();
-    });
-    champ.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') valider(); });
-    bulleIndiceEl.addEventListener('click', (ev) => ev.stopPropagation());
-
-    setTimeout(() => document.addEventListener('click', fermerBulleIndiceSiExterieur, true), 0);
+function effacerFeuilleIndiceZone() {
+    document.getElementById('feuilleIndiceChamp').value = '';
+    validerFeuilleIndiceZone();
 }
 
 /* ---------------- Révision (Leitner) — agrégée sur toutes les pages d'un support image ---------------- */
