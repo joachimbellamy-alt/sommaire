@@ -185,6 +185,18 @@ async function sauvegarderSupports() {
     }
 }
 
+// Version "différée" pour les champs texte : évite d'écrire tout le tableau
+// `supports` (toutes les fiches, toutes matières confondues) en base à
+// chaque frappe au clavier. Avec une bibliothèque de fiches qui grossit
+// (une centaine de fiches, images incluses), sauvegarder à chaque lettre
+// tapée peut créer une sensation de saccade. On regroupe donc les frappes
+// rapprochées et on n'écrit qu'une fois la pause dépassée.
+let _timerSauvegardeDifferee = null;
+function sauvegarderSupportsDifferee(delaiMs = 400) {
+    clearTimeout(_timerSauvegardeDifferee);
+    _timerSauvegardeDifferee = setTimeout(sauvegarderSupports, delaiMs);
+}
+
 function genererId() {
     return 'sup_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
@@ -520,42 +532,26 @@ async function partagerSupport() {
     const nomFichier = 'support-' + supportActif.nom.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.json';
     const blob = new Blob([texte], { type: 'application/json' });
 
-    // iOS Safari : Web Share API avec fichier → "Enregistrer dans Fichiers" dans la feuille
-    if (navigator.share && navigator.canShare) {
-        try {
-            const fichier = new File([blob], nomFichier, { type: 'application/json' });
-            if (navigator.canShare({ files: [fichier] })) {
-                await navigator.share({
-                    files: [fichier],
-                    title: supportActif.nom,
-                    text: 'Fiche de révision : ' + supportActif.nom
-                });
-                return;
-            }
-        } catch (e) {
-            if (e.name === 'AbortError') return;
-            // Continuer avec la méthode de secours
-        }
-    }
-
-    // Fallback universel : ouvre le JSON dans un nouvel onglet avec instruction claire
+    // On utilise partout le téléchargement natif du navigateur (<a download>).
+    // C'est fiable sur Mac, Android ET iOS/iPadOS Safari (depuis iOS 13) : le
+    // fichier part directement dans Fichiers > Téléchargements, sans dépendre
+    // d'une feuille de partage — sur Mac, cette feuille n'a pas d'option
+    // "Enregistrer", et sur iOS, elle refuse de partager certains types de
+    // fichiers (dont le JSON), ce qui empêchait "Enregistrer dans Fichiers"
+    // d'apparaître.
     const url = URL.createObjectURL(blob);
-    // Sur iOS Safari, on ne peut pas forcer le téléchargement — on ouvre dans un nouvel onglet
-    // et on demande à l'élève d'utiliser le bouton Partager du navigateur
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nomFichier;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
     if (/iP(hone|ad|od)/.test(navigator.userAgent)) {
-        window.open(url, '_blank');
         setTimeout(() => {
-            alert('Le fichier est ouvert dans un nouvel onglet.\n\nPour l\'enregistrer : appuie sur le bouton Partager (☐↑) de Safari, puis "Enregistrer dans Fichiers".');
-        }, 500);
-    } else {
-        // Sur Mac/Android : téléchargement direct
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = nomFichier;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+            alert('Fichier téléchargé.\n\nTu le retrouves dans l\'app Fichiers, dossier "Téléchargements" (ou via l\'icône de téléchargement ⬇️ dans Safari).');
+        }, 400);
     }
 }
 
@@ -708,6 +704,10 @@ function afficherVue(nom) {
     const titreEl = document.getElementById('titreHeader');
     if (titreEl) titreEl.textContent = titres[nom] || 'Mes révisions';
     vueActuelle = nom;
+
+    // Le bouton flottant "+" n'a de sens que là où on gère la liste de fiches
+    const fab = document.getElementById('fabAjouter');
+    if (fab) fab.style.display = (nom === 'accueil' || nom === 'supports') ? 'flex' : 'none';
 }
 
 function retourAccueil() {
@@ -1800,7 +1800,10 @@ function ouvrirBulleIndice(labelEl, idxZone) {
     bulleIndiceEl.className = 'bulle-indice-edition';
     bulleIndiceEl.innerHTML = `
         <div class="titre">💡 Indice — zone ${idxZone + 1}</div>
-        <input type="text" id="champBulleIndice" placeholder="Ex : verbe, commence par É...">
+        <div style="display:flex;gap:6px;align-items:center;">
+            <input type="text" id="champBulleIndice" placeholder="Ex : verbe, commence par É..." style="flex:1;width:auto;">
+            <button type="button" class="btn-media btn-dictee" id="btnDicteeBulleIndice" title="Dicter au micro">🎤</button>
+        </div>
         <div class="actions">
             <button class="btn-modal annuler" id="btnSupprBulleIndice">Effacer</button>
             <button class="btn-modal enregistrer" id="btnOkBulleIndice">OK</button>
@@ -1844,6 +1847,10 @@ function ouvrirBulleIndice(labelEl, idxZone) {
         redessinerZonesEdition();
         fermerBulleIndice();
     }
+    document.getElementById('btnDicteeBulleIndice').addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        demarrerDictee(champ, ev.currentTarget);
+    });
     document.getElementById('btnOkBulleIndice').addEventListener('click', (ev) => { ev.stopPropagation(); valider(); });
     document.getElementById('btnSupprBulleIndice').addEventListener('click', (ev) => {
         ev.stopPropagation();
@@ -1966,10 +1973,10 @@ function chargerPageRevision() {
         panel.className = 'indice-panel' + (z.yPct < 12 ? ' dessous' : '');
         panel.addEventListener('click', (ev) => ev.stopPropagation());
         if (z.indice) {
-            const prof = document.createElement('div');
-            prof.className = 'indice-prof';
-            prof.textContent = '👩\u200d🏫 ' + z.indice;
-            panel.appendChild(prof);
+            const indiceFiche = document.createElement('div');
+            indiceFiche.className = 'indice-prof';
+            indiceFiche.textContent = '💡 ' + z.indice;
+            panel.appendChild(indiceFiche);
         }
         const labelPerso = document.createElement('span');
         labelPerso.className = 'indice-perso-label';
@@ -1980,7 +1987,7 @@ function chargerPageRevision() {
         inputPerso.className = 'indice-perso-input';
         inputPerso.placeholder = 'Ex : ça me fait penser à...';
         inputPerso.value = etatRevision[cle].indicePerso || '';
-        inputPerso.addEventListener('input', () => { etatRevision[cle].indicePerso = inputPerso.value; sauvegarderSupports(); });
+        inputPerso.addEventListener('input', () => { etatRevision[cle].indicePerso = inputPerso.value; sauvegarderSupportsDifferee(); });
         panel.appendChild(inputPerso);
 
         // Bouton enregistrement vocal
@@ -2342,6 +2349,7 @@ function htmlChampMedia(c, i, champ, labelTexte, placeholder) {
                 📷
                 <input type="file" accept="image/*" class="input-image-champ" data-idx="${i}" data-champ="${champ}" style="display:none;">
             </label>
+            <button class="btn-media btn-dictee" data-idx="${i}" data-champ="${champ}" onclick="demarrerDicteeChamp(this)" title="Dicter au micro">🎤</button>
             <button class="btn-media btn-audio-rec" data-idx="${i}" data-champ="${champ}" onclick="demarrerEnregistrement(${i},'${champ}',this)">🎙️</button>
         </div>
         <input type="text" class="champ-modale input-champ-texte" data-idx="${i}" data-champ="${champ}" value="${echapperHtml(c[champ] || '')}" placeholder="${placeholder}" style="margin-bottom:4px;">
@@ -2356,6 +2364,68 @@ function htmlChampMedia(c, i, champ, labelTexte, placeholder) {
     </div>`;
 }
 
+/* ── Dictée vocale (reconnaissance vocale → remplit un champ texte) ── */
+let reconnaissanceEnCours = null;
+
+function langueDicteeSupport() {
+    // La reconnaissance vocale ne connaît pas "la" (latin) : on retombe sur le français.
+    const l = supportActif && supportActif.langue;
+    return (l && l !== 'la') ? l : 'fr-FR';
+}
+
+function demarrerDictee(inputEl, btnEl) {
+    if (!inputEl) return;
+    // Un appui pendant que ça écoute déjà arrête la dictée en cours.
+    if (reconnaissanceEnCours) {
+        reconnaissanceEnCours.stop();
+        return;
+    }
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) {
+        alert("La dictée vocale n'est pas disponible sur ce navigateur.");
+        return;
+    }
+    const reco = new SpeechRecognitionAPI();
+    reco.lang = langueDicteeSupport();
+    reco.interimResults = false;
+    reco.maxAlternatives = 1;
+
+    const valeurDepart = inputEl.value || '';
+    const prefixe = valeurDepart && !/\s$/.test(valeurDepart) ? valeurDepart + ' ' : valeurDepart;
+
+    reco.onresult = (ev) => {
+        let transcription = '';
+        for (let i = 0; i < ev.results.length; i++) transcription += ev.results[i][0].transcript;
+        inputEl.value = prefixe + transcription;
+        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    reco.onerror = (ev) => {
+        if (ev.error !== 'aborted' && ev.error !== 'no-speech') {
+            alert("La dictée vocale n'a pas pu démarrer (micro refusé ou indisponible).");
+        }
+    };
+    reco.onend = () => {
+        reconnaissanceEnCours = null;
+        if (btnEl) btnEl.classList.remove('enregistrement');
+    };
+
+    try {
+        reco.start();
+        reconnaissanceEnCours = reco;
+        if (btnEl) btnEl.classList.add('enregistrement');
+    } catch (e) {
+        alert("La dictée vocale n'a pas pu démarrer.");
+    }
+}
+
+// Utilisé par les champs de carte (question/réponse/exemple/indice) :
+// retrouve le champ texte voisin du bouton 🎤 dans sa carte.
+function demarrerDicteeChamp(btnEl) {
+    const conteneur = btnEl.closest('.champ-carte');
+    const inputEl = conteneur ? conteneur.querySelector('.input-champ-texte') : null;
+    demarrerDictee(inputEl, btnEl);
+}
+
 /* ── Édition des cartes ── */
 function chargerEditionTexte() {
     document.getElementById('titreHeader').textContent = supportActif.nom;
@@ -2368,11 +2438,12 @@ function chargerEditionTexte() {
     } else {
         conteneur.innerHTML = supportActif.cartes.map((c, i) => `
             <div class="ligne-carte-texte">
+                <div class="carte-texte-bandeau" style="background:${COULEURS_ZONES[i % COULEURS_ZONES.length].bord};">Carte ${i + 1}</div>
                 <div class="champs-carte-empiles">
                     ${htmlChampMedia(c, i, 'question', 'Question', "Ex : Capitale de l'Espagne")}
                     ${htmlChampMedia(c, i, 'reponse', 'Réponse', 'Ex : Madrid')}
                     ${htmlChampMedia(c, i, 'exemple', 'Phrase d\'exemple (facultatif)', 'Ex : Madrid es la capital de España.')}
-                    ${htmlChampMedia(c, i, 'indice', '💡 Indice prof (facultatif)', 'Ex : commence par M...')}
+                    ${htmlChampMedia(c, i, 'indice', '💡 Indice (facultatif)', 'Ex : commence par M...')}
                 </div>
                 <button class="icon-btn danger" data-suppr-carte="${i}">🗑</button>
             </div>
@@ -2381,7 +2452,7 @@ function chargerEditionTexte() {
         // Textes
         conteneur.querySelectorAll('.input-champ-texte').forEach(inp => inp.addEventListener('input', () => {
             supportActif.cartes[parseInt(inp.dataset.idx, 10)][inp.dataset.champ] = inp.value;
-            sauvegarderSupports();
+            sauvegarderSupportsDifferee();
         }));
         // Images par champ
         conteneur.querySelectorAll('.input-image-champ').forEach(inp => inp.addEventListener('change', (e) => {
@@ -2634,7 +2705,7 @@ function creerElementCarte(support, idx) {
     inputPerso.className = 'indice-perso-input';
     inputPerso.placeholder = 'Ex : ça me fait penser à...';
     inputPerso.value = etat.indicePerso || '';
-    inputPerso.addEventListener('input', () => { etat.indicePerso = inputPerso.value; sauvegarderSupports(); });
+    inputPerso.addEventListener('input', () => { etat.indicePerso = inputPerso.value; sauvegarderSupportsDifferee(); });
     panel.appendChild(inputPerso);
     reponseWrap.appendChild(panel);
 
@@ -2666,7 +2737,7 @@ function creerElementCarte(support, idx) {
     inputExplication.placeholder = 'Ex : ça ressemble au mot français...';
     inputExplication.value = etat.autoExplication || '';
     inputExplication.addEventListener('click', (ev) => ev.stopPropagation());
-    inputExplication.addEventListener('input', () => { etat.autoExplication = inputExplication.value; sauvegarderSupports(); });
+    inputExplication.addEventListener('input', () => { etat.autoExplication = inputExplication.value; sauvegarderSupportsDifferee(); });
     explicationWrap.appendChild(inputExplication);
     carte.appendChild(explicationWrap);
 
@@ -3756,9 +3827,9 @@ function afficherCarteFlash() {
         ? () => jouerAudioFlash(c.reponseAudio)
         : () => lireTexte(c.reponse || '', langue, support.voixNom || '');
 
-    // Indice prof
+    // Indice (celui saisi à la création de la fiche)
     const indiceProf = document.getElementById('indiceProfFlash');
-    indiceProf.innerHTML = c.indice ? '👩‍🏫 ' + echapperHtml(c.indice) : '';
+    indiceProf.innerHTML = c.indice ? '💡 ' + echapperHtml(c.indice) : '';
     document.getElementById('indicePersoFlash').value = etat ? (etat.indicePerso || '') : '';
     document.getElementById('carteFlashcard').classList.remove('indice-ouvert', 'correcte', 'incorrecte');
     // Charger l'audio de l'indice perso si existant
@@ -4410,7 +4481,41 @@ async function traiterImportDepuisLien() {
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('service-worker.js').catch(() => { /* mode hors-ligne indisponible, l'app reste utilisable en ligne */ });
+            // updateViaCache: 'none' empêche le navigateur de servir une copie
+            // périmée de service-worker.js lui-même depuis le cache HTTP —
+            // sans ça, une mise à jour peut ne jamais être détectée.
+            navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' }).then((registration) => {
+                // Force une vérification immédiate d'une nouvelle version.
+                registration.update();
+
+                // Si une nouvelle version est déjà installée et en attente,
+                // on lui demande de prendre la main tout de suite.
+                if (registration.waiting) {
+                    registration.waiting.postMessage('skipWaiting');
+                }
+
+                // Dès qu'une mise à jour est détectée, on l'active sans attendre
+                // la fermeture de tous les onglets.
+                registration.addEventListener('updatefound', () => {
+                    const nouveauSW = registration.installing;
+                    if (!nouveauSW) return;
+                    nouveauSW.addEventListener('statechange', () => {
+                        if (nouveauSW.state === 'installed' && navigator.serviceWorker.controller) {
+                            nouveauSW.postMessage('skipWaiting');
+                        }
+                    });
+                });
+            }).catch(() => { /* mode hors-ligne indisponible, l'app reste utilisable en ligne */ });
+
+            // Une fois que le nouveau SW a pris le contrôle, on recharge la page
+            // une seule fois pour que l'élève obtienne bien le code à jour
+            // (app.js déjà chargé en mémoire ne se met pas à jour tout seul).
+            let dejaRecharge = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (dejaRecharge) return;
+                dejaRecharge = true;
+                window.location.reload();
+            });
         });
     }
 })();
