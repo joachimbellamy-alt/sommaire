@@ -189,6 +189,7 @@ main{padding:14px 16px;max-width:800px;margin:0 auto;}
 .boite-fleche{font-size:16px;color:#bbb;}.boites-legende{margin-top:6px;font-size:11px;color:#999;text-align:center;}.boites-resume-txt{margin-top:8px;font-size:13px;color:#555;text-align:center;}
 #compteurRevision{margin-bottom:6px;font-size:17px;color:#444;font-weight:bold;text-align:center;}
 #instructionsRevision{margin-bottom:16px;font-size:13px;color:#777;text-align:center;}
+.fin-page-revision{margin-top:14px;padding:12px 14px;background:var(--vert-clair);border:1px solid var(--vert-bord);border-radius:14px;font-size:13px;font-weight:600;color:#1a6e30;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;}
 #conteneurImage{position:relative;display:inline-block;max-width:100%;text-align:center;}
 #conteneurImage img{display:block;max-width:100%;}
 .masque{position:absolute;cursor:pointer;transition:opacity .25s ease;-webkit-tap-highlight-color:transparent;border-radius:8px;}
@@ -729,6 +730,11 @@ body.filtre-actif .masque:not(.due){display:none;}
     <div id="compteurRevision"></div>
     <div id="instructionsRevision">Tape sur une zone pour la révéler, puis déclare honnêtement si tu savais la réponse.</div>
     <div id="conteneurImage"></div>
+    <div id="finPageRevision" class="fin-page-revision" style="display:none;">
+        <span>✅ Toutes les zones évaluées</span>
+        <button class="icon-btn" onclick="remasquerToutRevision()">🔄 Recommencer</button>
+        <button class="icon-btn primary" id="btnPageSuivanteFin" onclick="pageSuivanteRevision()" style="display:none;">→ Page suivante</button>
+    </div>
 </div>
 
 <!-- ===================== VUE ÉDITION FLASHCARDS ===================== -->
@@ -938,7 +944,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;">
-        Mes révisions · <span id="versionApp">v104</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v105</span> · Données stockées sur cet appareil
     </div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);padding-bottom:4px;">
         Application conçue par M. Bellamy, professeur de français et latin

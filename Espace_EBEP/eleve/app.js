@@ -2266,6 +2266,18 @@ function majCompteurRevision() {
     if (fragiles > 0) txt += '   <span style="color:#FF9500;font-weight:600;">〜 ' + fragiles + ' fragile' + (fragiles > 1 ? 's' : '') + '</span>';
     txt += '   (sur ' + total + suffixe;
     el.innerHTML = txt;
+
+    // Écran de fin de page : toutes les zones de cette page ont été évaluées
+    const finPage = document.getElementById('finPageRevision');
+    if (finPage) {
+        const toutesEvaluees = total > 0 && (bonnes + mauvaises + fragiles) === total;
+        finPage.style.display = toutesEvaluees ? '' : 'none';
+        const btnSuivante = document.getElementById('btnPageSuivanteFin');
+        if (btnSuivante) {
+            const aUnePageSuivante = supportActif.pages.length > 1 && pageActuelle < supportActif.pages.length - 1;
+            btnSuivante.style.display = aUnePageSuivante ? '' : 'none';
+        }
+    }
 }
 
 function remasquerToutRevision() {
