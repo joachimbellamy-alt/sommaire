@@ -2903,10 +2903,11 @@ function construireVueRevisionTexte() {
     actualiserAffichageRevisionTexte();
 }
 
-function ouvrirSessionMelangee() {
+function ouvrirSessionMelangee(matiere) {
     const paires = [];
     supports.forEach(s => {
         if (s.type !== 'texte') return;
+        if (matiere && (s.matiere || 'Autre') !== matiere) return;
         const etat = s.etat || (s.etat = {});
         (s.cartes || []).forEach((c, i) => {
             if (!etat[i]) etat[i] = { box: 1, nextDue: todayStr(), indicePerso: '', autoExplication: '' };
@@ -2914,7 +2915,9 @@ function ouvrirSessionMelangee() {
         });
     });
     if (paires.length === 0) {
-        alert("Aucune carte à réviser aujourd'hui parmi tes Flashcards. Reviens plus tard, ou ouvre un support en particulier pour réviser par anticipation.");
+        alert(matiere
+            ? "Aucune fiche due aujourd'hui dans « " + matiere + " »."
+            : "Aucune carte à réviser aujourd'hui parmi tes Flashcards. Reviens plus tard, ou ouvre un support en particulier pour réviser par anticipation.");
         return;
     }
     // Les plus en retard (date d'échéance la plus ancienne) passent en priorité.
@@ -2931,7 +2934,7 @@ function ouvrirSessionMelangee() {
     supportActif = null;
     modeSessionMelangee = true;
     afficherVue('revisionCarte');
-    document.getElementById('titreHeader').textContent = '🔀 Session mélangée';
+    document.getElementById('titreHeader').textContent = matiere ? '🔀 ' + matiere : '🔀 Session mélangée';
     if (nbReportees > 0) {
         const note = document.createElement('div');
         note.style.cssText = 'font-size:13px;color:var(--gris-texte);text-align:center;margin-bottom:10px;';
@@ -4236,6 +4239,51 @@ function actionFiche(action) {
     else if (action === 'supprimer') supprimerFiche(id);
 }
 
+/* ---------------- Sheet actions matière (grille de tuiles) ---------------- */
+let matiereContexte = null;
+
+function ouvrirSheetActionsMatiere(matiere) {
+    matiereContexte = matiere;
+    const titre = document.getElementById('sheetActionsMatiereTitre');
+    if (titre) titre.textContent = matiere;
+    const sousReviser = document.getElementById('sheetActionsMatiereSousReviser');
+    if (sousReviser) sousReviser.textContent = 'de ' + matiere;
+    const sousExporter = document.getElementById('sheetActionsMatiereSousExporter');
+    if (sousExporter) sousExporter.textContent = 'de ' + matiere;
+    document.getElementById('sheetActionsMatiere').style.display = '';
+}
+
+function fermerSheetActionsMatiere(ev) {
+    if (ev && ev.target !== document.getElementById('sheetActionsMatiere')) return;
+    document.getElementById('sheetActionsMatiere').style.display = 'none';
+}
+
+function actionMatiere(action) {
+    const matiere = matiereContexte;
+    matiereContexte = null;
+    document.getElementById('sheetActionsMatiere').style.display = 'none';
+    if (!matiere) return;
+    if (action === 'exporter') exporterMatiere(matiere);
+    else if (action === 'reviser') ouvrirSessionMelangee(matiere);
+}
+
+function exporterMatiere(matiere) {
+    const supportsMatiere = supports.filter(s => (s.matiere || 'Autre') === matiere);
+    if (supportsMatiere.length === 0) { alert("Aucune fiche dans « " + matiere + " » à exporter."); return; }
+    const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: supportsMatiere };
+    const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: 'application/json' });
+    const nomMatiereFichier = matiere.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'export-' + nomMatiereFichier + '-' + dateStr + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function fermerSheetExportImport(ev) {
     if (ev && ev.target !== document.getElementById('sheetExportImport')) return;
     document.getElementById('sheetExportImport').style.display = 'none';
@@ -4589,6 +4637,7 @@ function afficherBibliotheque(filtre) {
                 ? `<div class="bib-tuile-badge">${duesMatiere} due${duesMatiere > 1 ? 's' : ''}</div>`
                 : `<div class="bib-tuile-badge" style="background:rgba(255,255,255,0.3);">✓ À jour</div>`;
             return `<div class="bib-tuile" data-matiere="${echapperHtml(matiere)}" style="background:${gradientMatiere(matiere)};">
+                <button type="button" class="bib-tuile-menu" data-menu-matiere="${echapperHtml(matiere)}">⋯</button>
                 ${badge}
                 <div class="bib-tuile-ic">${ICONES_MATIERES[matiere] || '📦'}</div>
                 <div class="bib-tuile-nom">${echapperHtml(matiere)}</div>
@@ -4614,6 +4663,12 @@ function afficherBibliotheque(filtre) {
             const row = ev.target.closest('.bib-support-row[data-id]');
             if (row) {
                 ouvrirRevision(row.dataset.id);
+                return;
+            }
+            const menuMatiere = ev.target.closest('.bib-tuile-menu[data-menu-matiere]');
+            if (menuMatiere) {
+                ev.stopPropagation();
+                ouvrirSheetActionsMatiere(menuMatiere.dataset.menuMatiere);
                 return;
             }
             const tuile = ev.target.closest('.bib-tuile[data-matiere]');
