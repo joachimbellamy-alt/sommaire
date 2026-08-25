@@ -678,6 +678,10 @@ function goTab(tab) {
 }
 
 function afficherVue(nom) {
+    // Changer de vue peut faire disparaître le bouton 🎤 qui a démarré une
+    // dictée (ex. sortir de l'édition d'une fiche) : on l'arrête pour ne pas
+    // laisser le micro actif sans bouton pour l'éteindre.
+    arreterDicteeEnCours();
     const TOUTES = ['vueAccueil','vueEdition','vueRevision','vueRecadrage','vueEditionTexte',
         'vueRevisionCarte','vueQCMTexte','vueEcrireTexte','vueAgenda','vueReglages','vueSupports'];
     TOUTES.forEach(id => {
@@ -1796,6 +1800,7 @@ function echapperHtml(s) {
 let bulleIndiceEl = null;
 
 function fermerBulleIndice() {
+    arreterDicteeEnCours();
     if (bulleIndiceEl) {
         if (bulleIndiceEl._repositionner && window.visualViewport) {
             window.visualViewport.removeEventListener('resize', bulleIndiceEl._repositionner);
@@ -2435,6 +2440,16 @@ function demarrerDictee(inputEl, btnEl) {
         if (btnEl) btnEl.classList.add('enregistrement');
     } catch (e) {
         alert("La dictée vocale n'a pas pu démarrer.");
+    }
+}
+
+// À appeler chaque fois que le bouton 🎤 qui a démarré la dictée risque de
+// disparaître (fermeture de la bulle d'indice, changement de vue...) : sans
+// ça, le micro continue d'écouter sans qu'aucun bouton visible ne permette
+// de l'arrêter.
+function arreterDicteeEnCours() {
+    if (reconnaissanceEnCours) {
+        try { reconnaissanceEnCours.abort(); } catch (e) { /* déjà arrêtée */ }
     }
 }
 
