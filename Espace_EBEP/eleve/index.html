@@ -243,7 +243,9 @@ body.filtre-actif .masque:not(.due){display:none;}
     .carte-confiance.anim-entree{animation:slideInUp .25s cubic-bezier(.34,1.56,.64,1);}
     .carte-reponse.anim-entree{animation:slideInUp .28s cubic-bezier(.34,1.56,.64,1);}
 
-    .carte-flashcard{background:var(--surface);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--ombre-forte);margin-bottom:10px;}
+    .carte-flashcard{background:var(--surface);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--ombre-forte);margin-bottom:10px;cursor:pointer;}
+    .carte-flashcard.revelee{cursor:default;}
+    .carte-flashcard:active:not(.revelee){opacity:0.96;}
 .carte-flashcard-header{display:flex;align-items:center;justify-content:space-between;}
 .badge-matiere-flash{font-size:11px;font-weight:600;padding:4px 12px;border-radius:999px;letter-spacing:0.1px;}
 .btn-indice-flash{background:var(--jaune-clair);border:1px solid var(--jaune-bord);border-radius:999px;color:#7a5500;font-size:12px;padding:6px 13px;cursor:pointer;font-weight:500;font-family:inherit;display:flex;align-items:center;gap:4px;}
@@ -757,7 +759,7 @@ body.filtre-actif .masque:not(.due){display:none;}
     <!-- Bandeau feedback inter-cartes -->
     <div id="bandeauFeedback" class="bandeau-feedback" style="display:none;"></div>
 
-    <div class="carte-flashcard" id="carteFlashcard">
+    <div class="carte-flashcard" id="carteFlashcard" onclick="tapCarteFlash(event)">
         <div class="carte-flashcard-header">
             <span class="badge-matiere-flash" id="badgeMatiereFlash"></span>
             <button class="btn-indice-flash" id="btnIndiceFlash" onclick="toggleIndiceFlash()">💡 Indice</button>
@@ -920,7 +922,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;">
-        Mes révisions · <span id="versionApp">v101</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v102</span> · Données stockées sur cet appareil
     </div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);padding-bottom:4px;">
         Application conçue par M. Bellamy, professeur de français et latin

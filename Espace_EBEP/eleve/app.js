@@ -3865,7 +3865,7 @@ function afficherCarteFlash() {
     // Indice (celui saisi à la création de la fiche)
     afficherTexteOuAudio('indiceProfFlash', c.indice ? '💡 ' + c.indice : (c.indiceAudio ? '💡' : ''), c.indiceAudio);
     document.getElementById('indicePersoFlash').value = etat ? (etat.indicePerso || '') : '';
-    document.getElementById('carteFlashcard').classList.remove('indice-ouvert', 'correcte', 'incorrecte');
+    document.getElementById('carteFlashcard').classList.remove('indice-ouvert', 'correcte', 'incorrecte', 'revelee');
     // Charger l'audio de l'indice perso si existant
     majUIIndiceAudio(etat && etat.indicePersoAudio ? etat.indicePersoAudio : null);
 
@@ -3886,6 +3886,15 @@ function afficherCarteFlash() {
 function voirReponseFlash() {
     haptic('select');
     finirRevelationFlash();
+}
+
+// Tap n'importe où sur la carte question = révéler la réponse (comme Anki),
+// en plus du bouton "Voir la réponse" qui reste disponible.
+function tapCarteFlash(ev) {
+    // Ignore les taps sur les contrôles internes (indice, audio, champ perso...)
+    if (ev.target.closest('#btnIndiceFlash, #btnAudioQuestion, .bloc-indice-flash')) return;
+    if (flashRevele || modeRevisionFlash === 'saisie') return;
+    voirReponseFlash();
 }
 
 // Gardé pour compatibilité avec les modes lettres/saisie
@@ -3938,6 +3947,7 @@ function afficherTexteOuAudio(idEl, texte, audioSrc) {
 
 function finirRevelationFlash() {
     flashRevele = true;
+    document.getElementById('carteFlashcard').classList.add('revelee');
     const item = flashSession[flashIndex % flashSession.length];
     const c = item.support.cartes[item.idx];
 
