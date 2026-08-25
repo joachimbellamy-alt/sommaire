@@ -556,16 +556,38 @@ async function partagerSupport() {
 }
 
 document.getElementById('inputImport').onchange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
+    traiterFichiersImport(e.target.files);
+    e.target.value = '';
+};
+
+function lireFichierTexte(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsText(file);
+    });
+}
+
+// Importe un ou plusieurs fichiers JSON sélectionnés d'un coup (multi-sélection).
+// Chaque fichier est traité indépendamment ; les fiches déjà présentes (même id)
+// sont ignorées pour éviter les doublons si le même paquet est réimporté.
+async function traiterFichiersImport(fileList) {
+    const fichiers = Array.from(fileList || []);
+    if (!fichiers.length) return;
+
+    let paquetsImportes = 0;
+    let fichesAjoutees = 0;
+    let enErreur = 0;
+
+    for (const file of fichiers) {
         let paquet;
         try {
-            paquet = JSON.parse(ev.target.result);
+            const texte = await lireFichierTexte(file);
+            paquet = JSON.parse(texte);
         } catch (err) {
-            alert('Ce fichier n\'est pas un JSON valide.\n\nVérifie qu\'il n\'y a pas d\'erreur de syntaxe.');
-            return;
+            enErreur++;
+            continue;
         }
 
         let importes = [];
@@ -576,7 +598,7 @@ document.getElementById('inputImport').onchange = (e) => {
                 importes = paquet; // tableau de supports complets
             } else if (paquet.length > 0 && (paquet[0].question !== undefined || paquet[0].recto !== undefined)) {
                 // Tableau de cartes brutes → un seul support
-                importes = [creerSupportDepuisCartesBrutes(paquet, file.name.replace('.json',''))];
+                importes = [creerSupportDepuisCartesBrutes(paquet, file.name.replace('.json', ''))];
             }
         }
         // Format 2 : objet avec clé "supports"
@@ -585,11 +607,11 @@ document.getElementById('inputImport').onchange = (e) => {
         }
         // Format 3 : objet avec clé "cartes" (format IA courant)
         else if (paquet.cartes && Array.isArray(paquet.cartes)) {
-            importes = [creerSupportDepuisCartesBrutes(paquet.cartes, paquet.nom || paquet.titre || file.name.replace('.json',''))];
+            importes = [creerSupportDepuisCartesBrutes(paquet.cartes, paquet.nom || paquet.titre || file.name.replace('.json', ''))];
         }
         // Format 4 : objet avec clé "flashcards"
         else if (paquet.flashcards && Array.isArray(paquet.flashcards)) {
-            importes = [creerSupportDepuisCartesBrutes(paquet.flashcards, paquet.nom || paquet.titre || file.name.replace('.json',''))];
+            importes = [creerSupportDepuisCartesBrutes(paquet.flashcards, paquet.nom || paquet.titre || file.name.replace('.json', ''))];
         }
         // Format 5 : support unique (objet avec cartes)
         else if (paquet.nom && paquet.type) {
@@ -597,21 +619,45 @@ document.getElementById('inputImport').onchange = (e) => {
         }
 
         if (!importes.length) {
-            alert('Format non reconnu.\n\nL\'app accepte ces formats :\n\n• {"supports": [{...}]}\n• {"cartes": [{"recto":"...", "verso":"..."}]}\n• [{"question":"...", "reponse":"..."}]\n\nDemande à l\'IA de générer les cartes au format :\n{"cartes": [{"recto": "Question", "verso": "Réponse"}]}');
-            return;
+            enErreur++;
+            continue;
         }
 
+        let ajouteesPourCeFichier = 0;
         importes.forEach((s) => {
-            supports.push(Object.assign({}, s, { id: genererId() }));
+            // Dédupliquer par id : une fiche déjà présente dans la bibliothèque
+            // (même id d'origine, ex. paquet réimporté par erreur) n'est pas rajoutée.
+            if (s.id && supports.some(x => x.id === s.id)) return;
+            supports.push(Object.assign({}, s, { id: s.id || genererId() }));
+            ajouteesPourCeFichier++;
         });
+
+        if (ajouteesPourCeFichier > 0) {
+            paquetsImportes++;
+            fichesAjoutees += ajouteesPourCeFichier;
+        }
+    }
+
+    if (fichesAjoutees > 0) {
         migrerVersPagesEtType(supports);
         await sauvegarderSupports();
         afficherAccueil();
-        alert('✅ ' + importes.length + ' fiche(s) importée(s) avec succès.');
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-};
+    }
+
+    if (paquetsImportes === 0) {
+        if (fichiers.length === 1) {
+            alert('Format non reconnu ou fichier invalide.\n\nL\'app accepte ces formats :\n\n• {"supports": [{...}]}\n• {"cartes": [{"recto":"...", "verso":"..."}]}\n• [{"question":"...", "reponse":"..."}]\n\nDemande à l\'IA de générer les cartes au format :\n{"cartes": [{"recto": "Question", "verso": "Réponse"}]}');
+        } else {
+            alert("Aucune fiche n'a pu être importée (fichiers invalides, ou déjà toutes présentes dans ta bibliothèque).");
+        }
+        return;
+    }
+
+    let msg = '✅ ' + paquetsImportes + ' paquet' + (paquetsImportes > 1 ? 's' : '') + ' importé' + (paquetsImportes > 1 ? 's' : '')
+        + ' — ' + fichesAjoutees + ' fiche' + (fichesAjoutees > 1 ? 's' : '') + ' ajoutée' + (fichesAjoutees > 1 ? 's' : '');
+    if (enErreur > 0) msg += ' (' + enErreur + ' ignoré' + (enErreur > 1 ? 's' : '') + ')';
+    afficherToastMsg(msg, 3500);
+}
 
 function creerSupportDepuisCartesBrutes(cartesBrutes, nom) {
     const cartes = cartesBrutes.map(c => ({

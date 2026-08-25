@@ -945,12 +945,12 @@ body.filtre-actif .masque:not(.due){display:none;}
             <span class="settings-label">Importer une sauvegarde</span>
             <span class="settings-arrow">›</span>
         </div>
-        <input type="file" id="inputImport" accept=".json,application/json,text/plain,text/*" style="display:none;">
+        <input type="file" id="inputImport" accept=".json,application/json,text/plain,text/*" multiple style="display:none;">
     </div>
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;">
-        Mes révisions · <span id="versionApp">v106</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v107</span> · Données stockées sur cet appareil
     </div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);padding-bottom:4px;">
         Application conçue par M. Bellamy, professeur de français et latin
@@ -1195,7 +1195,7 @@ body.filtre-actif .masque:not(.due){display:none;}
         <button class="sheet-annuler" onclick="fermerSheetAjouter()">Annuler</button>
     </div>
 </div>
-<input type="file" id="inputImportFlash" accept=".json,application/json,text/plain,text/*" style="display:none;">
+<input type="file" id="inputImportFlash" accept=".json,application/json,text/plain,text/*" multiple style="display:none;">
 
 <!-- Sheet actions fiche -->
 <div id="sheetActionsFiche" style="display:none;position:fixed;inset:0;z-index:8100;background:rgba(0,0,0,0.4);" onclick="fermerSheetActions(event)">
@@ -1267,7 +1267,7 @@ body.filtre-actif .masque:not(.due){display:none;}
         <button class="sheet-annuler" onclick="fermerSheetExportImport()">Annuler</button>
     </div>
 </div>
-<input type="file" id="inputImportTotal" accept=".json,application/json,text/plain,text/*" style="display:none;">
+<input type="file" id="inputImportTotal" accept=".json,application/json,text/plain,text/*" multiple style="display:none;">
 
 <!-- ===================== ONBOARDING ===================== -->
 <div id="overlayOnboarding" style="display:none;position:fixed;inset:0;z-index:9000;background:#F2F2F7;flex-direction:column;">
