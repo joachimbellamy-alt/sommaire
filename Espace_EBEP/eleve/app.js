@@ -1957,10 +1957,10 @@ function chargerPageRevision() {
         panel.className = 'indice-panel' + (z.yPct < 12 ? ' dessous' : '');
         panel.addEventListener('click', (ev) => ev.stopPropagation());
         if (z.indice) {
-            const prof = document.createElement('div');
-            prof.className = 'indice-prof';
-            prof.textContent = '👩\u200d🏫 ' + z.indice;
-            panel.appendChild(prof);
+            const indiceFiche = document.createElement('div');
+            indiceFiche.className = 'indice-prof';
+            indiceFiche.textContent = '💡 ' + z.indice;
+            panel.appendChild(indiceFiche);
         }
         const labelPerso = document.createElement('span');
         labelPerso.className = 'indice-perso-label';
@@ -2426,7 +2426,7 @@ function chargerEditionTexte() {
                     ${htmlChampMedia(c, i, 'question', 'Question', "Ex : Capitale de l'Espagne")}
                     ${htmlChampMedia(c, i, 'reponse', 'Réponse', 'Ex : Madrid')}
                     ${htmlChampMedia(c, i, 'exemple', 'Phrase d\'exemple (facultatif)', 'Ex : Madrid es la capital de España.')}
-                    ${htmlChampMedia(c, i, 'indice', '💡 Indice prof (facultatif)', 'Ex : commence par M...')}
+                    ${htmlChampMedia(c, i, 'indice', '💡 Indice (facultatif)', 'Ex : commence par M...')}
                 </div>
                 <button class="icon-btn danger" data-suppr-carte="${i}">🗑</button>
             </div>
@@ -3810,9 +3810,9 @@ function afficherCarteFlash() {
         ? () => jouerAudioFlash(c.reponseAudio)
         : () => lireTexte(c.reponse || '', langue, support.voixNom || '');
 
-    // Indice prof
+    // Indice (celui saisi à la création de la fiche)
     const indiceProf = document.getElementById('indiceProfFlash');
-    indiceProf.innerHTML = c.indice ? '👩‍🏫 ' + echapperHtml(c.indice) : '';
+    indiceProf.innerHTML = c.indice ? '💡 ' + echapperHtml(c.indice) : '';
     document.getElementById('indicePersoFlash').value = etat ? (etat.indicePerso || '') : '';
     document.getElementById('carteFlashcard').classList.remove('indice-ouvert', 'correcte', 'incorrecte');
     // Charger l'audio de l'indice perso si existant
