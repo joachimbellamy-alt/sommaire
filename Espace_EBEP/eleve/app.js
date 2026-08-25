@@ -492,7 +492,7 @@ function telechargerRappels() {
 /* ---------------- Sauvegarde / restauration manuelle (fichier .json) ---------------- */
 
 function exporterDonnees() {
-    if (supports.length === 0) { alert("Tu n'as encore aucun support à exporter."); return; }
+    if (supports.length === 0) { alert("Tu n'as encore aucune fiche à exporter."); return; }
     const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: supports };
     const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
@@ -500,6 +500,9 @@ function exporterDonnees() {
     const dateStr = new Date().toISOString().slice(0, 10);
     a.download = 'sauvegarde-revisions-' + dateStr + '.json';
     a.click();
+    // Mémoriser la date de sauvegarde
+    localStorage.setItem('memo_derniere_sauvegarde', Date.now().toString());
+    cacherBannieresSauvegarde();
 }
 
 function exporterSupportId(id) {
@@ -517,26 +520,42 @@ async function partagerSupport() {
     const nomFichier = 'support-' + supportActif.nom.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.json';
     const blob = new Blob([texte], { type: 'application/json' });
 
-    // On utilise partout le téléchargement natif du navigateur (<a download>).
-    // C'est fiable sur Mac, Android ET iOS/iPadOS Safari (depuis iOS 13) : le
-    // fichier part directement dans Fichiers > Téléchargements, sans dépendre
-    // d'une feuille de partage — sur Mac, cette feuille n'a pas d'option
-    // "Enregistrer", et sur iOS, elle refuse de partager certains types de
-    // fichiers (dont le JSON), ce qui empêchait "Enregistrer dans Fichiers"
-    // d'apparaître.
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = nomFichier;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    // iOS Safari : Web Share API avec fichier → "Enregistrer dans Fichiers" dans la feuille
+    if (navigator.share && navigator.canShare) {
+        try {
+            const fichier = new File([blob], nomFichier, { type: 'application/json' });
+            if (navigator.canShare({ files: [fichier] })) {
+                await navigator.share({
+                    files: [fichier],
+                    title: supportActif.nom,
+                    text: 'Fiche de révision : ' + supportActif.nom
+                });
+                return;
+            }
+        } catch (e) {
+            if (e.name === 'AbortError') return;
+            // Continuer avec la méthode de secours
+        }
+    }
 
+    // Fallback universel : ouvre le JSON dans un nouvel onglet avec instruction claire
+    const url = URL.createObjectURL(blob);
+    // Sur iOS Safari, on ne peut pas forcer le téléchargement — on ouvre dans un nouvel onglet
+    // et on demande à l'élève d'utiliser le bouton Partager du navigateur
     if (/iP(hone|ad|od)/.test(navigator.userAgent)) {
+        window.open(url, '_blank');
         setTimeout(() => {
-            alert('Fichier téléchargé.\n\nTu le retrouves dans l\'app Fichiers, dossier "Téléchargements" (ou via l\'icône de téléchargement ⬇️ dans Safari).');
-        }, 400);
+            alert('Le fichier est ouvert dans un nouvel onglet.\n\nPour l\'enregistrer : appuie sur le bouton Partager (☐↑) de Safari, puis "Enregistrer dans Fichiers".');
+        }, 500);
+    } else {
+        // Sur Mac/Android : téléchargement direct
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nomFichier;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 }
 
@@ -689,10 +708,6 @@ function afficherVue(nom) {
     const titreEl = document.getElementById('titreHeader');
     if (titreEl) titreEl.textContent = titres[nom] || 'Mes révisions';
     vueActuelle = nom;
-
-    // Le bouton flottant "+" n'a de sens que là où on gère la liste de fiches
-    const fab = document.getElementById('fabAjouter');
-    if (fab) fab.style.display = (nom === 'accueil' || nom === 'supports') ? 'flex' : 'none';
 }
 
 function retourAccueil() {
@@ -861,6 +876,7 @@ function afficherTableauBord() {
 function afficherAccueil() {
     afficherVue('accueil');
     afficherTableauBord();
+    verifierRappelSauvegarde();
     const liste = document.getElementById('listeSupports');
     if (supports.length === 0) {
         liste.innerHTML = '<div class="vide">Tu n\'as pas encore de support. Tape le + pour commencer !</div>';
@@ -1784,10 +1800,7 @@ function ouvrirBulleIndice(labelEl, idxZone) {
     bulleIndiceEl.className = 'bulle-indice-edition';
     bulleIndiceEl.innerHTML = `
         <div class="titre">💡 Indice — zone ${idxZone + 1}</div>
-        <div style="display:flex;gap:6px;align-items:center;">
-            <input type="text" id="champBulleIndice" placeholder="Ex : verbe, commence par É..." style="flex:1;width:auto;">
-            <button type="button" class="btn-media btn-dictee" id="btnDicteeBulleIndice" title="Dicter au micro">🎤</button>
-        </div>
+        <input type="text" id="champBulleIndice" placeholder="Ex : verbe, commence par É...">
         <div class="actions">
             <button class="btn-modal annuler" id="btnSupprBulleIndice">Effacer</button>
             <button class="btn-modal enregistrer" id="btnOkBulleIndice">OK</button>
@@ -1831,10 +1844,6 @@ function ouvrirBulleIndice(labelEl, idxZone) {
         redessinerZonesEdition();
         fermerBulleIndice();
     }
-    document.getElementById('btnDicteeBulleIndice').addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        demarrerDictee(champ, ev.currentTarget);
-    });
     document.getElementById('btnOkBulleIndice').addEventListener('click', (ev) => { ev.stopPropagation(); valider(); });
     document.getElementById('btnSupprBulleIndice').addEventListener('click', (ev) => {
         ev.stopPropagation();
@@ -1957,10 +1966,10 @@ function chargerPageRevision() {
         panel.className = 'indice-panel' + (z.yPct < 12 ? ' dessous' : '');
         panel.addEventListener('click', (ev) => ev.stopPropagation());
         if (z.indice) {
-            const indiceFiche = document.createElement('div');
-            indiceFiche.className = 'indice-prof';
-            indiceFiche.textContent = '💡 ' + z.indice;
-            panel.appendChild(indiceFiche);
+            const prof = document.createElement('div');
+            prof.className = 'indice-prof';
+            prof.textContent = '👩\u200d🏫 ' + z.indice;
+            panel.appendChild(prof);
         }
         const labelPerso = document.createElement('span');
         labelPerso.className = 'indice-perso-label';
@@ -2333,7 +2342,6 @@ function htmlChampMedia(c, i, champ, labelTexte, placeholder) {
                 📷
                 <input type="file" accept="image/*" class="input-image-champ" data-idx="${i}" data-champ="${champ}" style="display:none;">
             </label>
-            <button class="btn-media btn-dictee" data-idx="${i}" data-champ="${champ}" onclick="demarrerDicteeChamp(this)" title="Dicter au micro">🎤</button>
             <button class="btn-media btn-audio-rec" data-idx="${i}" data-champ="${champ}" onclick="demarrerEnregistrement(${i},'${champ}',this)">🎙️</button>
         </div>
         <input type="text" class="champ-modale input-champ-texte" data-idx="${i}" data-champ="${champ}" value="${echapperHtml(c[champ] || '')}" placeholder="${placeholder}" style="margin-bottom:4px;">
@@ -2346,68 +2354,6 @@ function htmlChampMedia(c, i, champ, labelTexte, placeholder) {
             <button class="icon-btn danger" style="font-size:11px;" onclick="supprimerAudio(${i},'${champ}')">🗑</button>
         </div>` : ''}
     </div>`;
-}
-
-/* ── Dictée vocale (reconnaissance vocale → remplit un champ texte) ── */
-let reconnaissanceEnCours = null;
-
-function langueDicteeSupport() {
-    // La reconnaissance vocale ne connaît pas "la" (latin) : on retombe sur le français.
-    const l = supportActif && supportActif.langue;
-    return (l && l !== 'la') ? l : 'fr-FR';
-}
-
-function demarrerDictee(inputEl, btnEl) {
-    if (!inputEl) return;
-    // Un appui pendant que ça écoute déjà arrête la dictée en cours.
-    if (reconnaissanceEnCours) {
-        reconnaissanceEnCours.stop();
-        return;
-    }
-    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognitionAPI) {
-        alert("La dictée vocale n'est pas disponible sur ce navigateur.");
-        return;
-    }
-    const reco = new SpeechRecognitionAPI();
-    reco.lang = langueDicteeSupport();
-    reco.interimResults = false;
-    reco.maxAlternatives = 1;
-
-    const valeurDepart = inputEl.value || '';
-    const prefixe = valeurDepart && !/\s$/.test(valeurDepart) ? valeurDepart + ' ' : valeurDepart;
-
-    reco.onresult = (ev) => {
-        let transcription = '';
-        for (let i = 0; i < ev.results.length; i++) transcription += ev.results[i][0].transcript;
-        inputEl.value = prefixe + transcription;
-        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-    };
-    reco.onerror = (ev) => {
-        if (ev.error !== 'aborted' && ev.error !== 'no-speech') {
-            alert("La dictée vocale n'a pas pu démarrer (micro refusé ou indisponible).");
-        }
-    };
-    reco.onend = () => {
-        reconnaissanceEnCours = null;
-        if (btnEl) btnEl.classList.remove('enregistrement');
-    };
-
-    try {
-        reco.start();
-        reconnaissanceEnCours = reco;
-        if (btnEl) btnEl.classList.add('enregistrement');
-    } catch (e) {
-        alert("La dictée vocale n'a pas pu démarrer.");
-    }
-}
-
-// Utilisé par les champs de carte (question/réponse/exemple/indice) :
-// retrouve le champ texte voisin du bouton 🎤 dans sa carte.
-function demarrerDicteeChamp(btnEl) {
-    const conteneur = btnEl.closest('.champ-carte');
-    const inputEl = conteneur ? conteneur.querySelector('.input-champ-texte') : null;
-    demarrerDictee(inputEl, btnEl);
 }
 
 /* ── Édition des cartes ── */
@@ -2426,7 +2372,7 @@ function chargerEditionTexte() {
                     ${htmlChampMedia(c, i, 'question', 'Question', "Ex : Capitale de l'Espagne")}
                     ${htmlChampMedia(c, i, 'reponse', 'Réponse', 'Ex : Madrid')}
                     ${htmlChampMedia(c, i, 'exemple', 'Phrase d\'exemple (facultatif)', 'Ex : Madrid es la capital de España.')}
-                    ${htmlChampMedia(c, i, 'indice', '💡 Indice (facultatif)', 'Ex : commence par M...')}
+                    ${htmlChampMedia(c, i, 'indice', '💡 Indice prof (facultatif)', 'Ex : commence par M...')}
                 </div>
                 <button class="icon-btn danger" data-suppr-carte="${i}">🗑</button>
             </div>
@@ -3810,9 +3756,9 @@ function afficherCarteFlash() {
         ? () => jouerAudioFlash(c.reponseAudio)
         : () => lireTexte(c.reponse || '', langue, support.voixNom || '');
 
-    // Indice (celui saisi à la création de la fiche)
+    // Indice prof
     const indiceProf = document.getElementById('indiceProfFlash');
-    indiceProf.innerHTML = c.indice ? '💡 ' + echapperHtml(c.indice) : '';
+    indiceProf.innerHTML = c.indice ? '👩‍🏫 ' + echapperHtml(c.indice) : '';
     document.getElementById('indicePersoFlash').value = etat ? (etat.indicePerso || '') : '';
     document.getElementById('carteFlashcard').classList.remove('indice-ouvert', 'correcte', 'incorrecte');
     // Charger l'audio de l'indice perso si existant
@@ -4105,6 +4051,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let obSlideActuel = 1;
 let obTypeChoisi = 'texte';
+
+function cacherBannieresSauvegarde() {
+    const el = document.getElementById('banniereSauvegarde');
+    if (el) el.style.display = 'none';
+    // Ne pas re-montrer avant 7 jours même sans sauvegarder
+    localStorage.setItem('memo_banniere_ignoree', Date.now().toString());
+}
+
+function verifierRappelSauvegarde() {
+    if (supports.length === 0) return; // Rien à sauvegarder
+    const banniere = document.getElementById('banniereSauvegarde');
+    if (!banniere) return;
+
+    const DELAI_SAUVEGARDE = 14 * 24 * 60 * 60 * 1000; // 14 jours
+    const DELAI_IGNORE = 7 * 24 * 60 * 60 * 1000;       // 7 jours si ignorée
+
+    const derniereSauvegarde = parseInt(localStorage.getItem('memo_derniere_sauvegarde') || '0');
+    const derniereIgnoree = parseInt(localStorage.getItem('memo_banniere_ignoree') || '0');
+    const maintenant = Date.now();
+
+    // Ne pas afficher si ignorée il y a moins de 7 jours
+    if (derniereIgnoree && maintenant - derniereIgnoree < DELAI_IGNORE) return;
+
+    // Afficher si jamais sauvegardé ou si ça fait plus de 14 jours
+    if (!derniereSauvegarde || maintenant - derniereSauvegarde > DELAI_SAUVEGARDE) {
+        const texteEl = document.getElementById('texteBanniereSauvegarde');
+        if (texteEl) {
+            if (!derniereSauvegarde) {
+                texteEl.textContent = 'Tu n\'as jamais sauvegardé tes fiches. En cas de problème, tu pourrais tout perdre.';
+            } else {
+                const joursDepuis = Math.round((maintenant - derniereSauvegarde) / (24 * 60 * 60 * 1000));
+                texteEl.textContent = 'Dernière sauvegarde il y a ' + joursDepuis + ' jours — pense à exporter tes fiches.';
+            }
+        }
+        banniere.style.display = 'flex';
+    }
+}
 
 function verifierOnboarding() {
     const deja = localStorage.getItem('memo_onboarding_v1');
@@ -4427,41 +4410,7 @@ async function traiterImportDepuisLien() {
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            // updateViaCache: 'none' empêche le navigateur de servir une copie
-            // périmée de service-worker.js lui-même depuis le cache HTTP —
-            // sans ça, une mise à jour peut ne jamais être détectée.
-            navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' }).then((registration) => {
-                // Force une vérification immédiate d'une nouvelle version.
-                registration.update();
-
-                // Si une nouvelle version est déjà installée et en attente,
-                // on lui demande de prendre la main tout de suite.
-                if (registration.waiting) {
-                    registration.waiting.postMessage('skipWaiting');
-                }
-
-                // Dès qu'une mise à jour est détectée, on l'active sans attendre
-                // la fermeture de tous les onglets.
-                registration.addEventListener('updatefound', () => {
-                    const nouveauSW = registration.installing;
-                    if (!nouveauSW) return;
-                    nouveauSW.addEventListener('statechange', () => {
-                        if (nouveauSW.state === 'installed' && navigator.serviceWorker.controller) {
-                            nouveauSW.postMessage('skipWaiting');
-                        }
-                    });
-                });
-            }).catch(() => { /* mode hors-ligne indisponible, l'app reste utilisable en ligne */ });
-
-            // Une fois que le nouveau SW a pris le contrôle, on recharge la page
-            // une seule fois pour que l'élève obtienne bien le code à jour
-            // (app.js déjà chargé en mémoire ne se met pas à jour tout seul).
-            let dejaRecharge = false;
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                if (dejaRecharge) return;
-                dejaRecharge = true;
-                window.location.reload();
-            });
+            navigator.serviceWorker.register('service-worker.js').catch(() => { /* mode hors-ligne indisponible, l'app reste utilisable en ligne */ });
         });
     }
 })();

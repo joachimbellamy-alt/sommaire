@@ -94,26 +94,7 @@ main{padding:14px 16px;max-width:800px;margin:0 auto;}
 .zoom-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid #d1d1d6;box-shadow:0 1px 3px rgba(0,0,0,0.25);cursor:pointer;}
 .section-header{display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px;}
 .section-titre{font-size:11px;font-weight:700;color:var(--gris-texte);text-transform:uppercase;letter-spacing:0.5px;}
-/* ── Bouton flottant "Ajouter" (FAB) ── */
-.fab-ajouter{
-    position:fixed;
-    right:18px;
-    bottom:calc(var(--tab-h) + env(safe-area-inset-bottom) + 18px);
-    width:56px;height:56px;
-    border-radius:50%;
-    border:none;
-    background:var(--bleu);
-    color:#fff;
-    font-size:30px;
-    font-weight:400;
-    line-height:1;
-    display:flex;align-items:center;justify-content:center;
-    box-shadow:0 4px 14px rgba(0,122,255,0.4),0 2px 4px rgba(0,0,0,0.15);
-    cursor:pointer;
-    z-index:120;
-    -webkit-tap-highlight-color:transparent;
-}
-.fab-ajouter:active{transform:scale(0.94);background:#0066d6;}
+.btn-plus-section{background:var(--bleu);border:none;border-radius:999px;color:#fff;font-size:16px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1;flex-shrink:0;}
 
 /* ── Gélules de modules ── */
 .modules-gelules{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
@@ -330,7 +311,6 @@ body.filtre-actif .masque:not(.due){display:none;}
     .btn-media{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;border:0.5px solid #e3e3e8;background:#fff;font-size:14px;cursor:pointer;flex-shrink:0;font-family:inherit;}
     .btn-media:hover{background:var(--gris-fond);}
     .btn-audio-rec.enregistrement{background:#fde9e7;animation:pulse-rec 1s ease infinite;}
-    .btn-dictee.enregistrement{background:#fde9e7;color:#FF3B30;animation:pulse-rec 1s ease infinite;}
     @keyframes pulse-rec{0%,100%{opacity:1;}50%{opacity:0.5;}}
 
 /* ── Mode QCM / Écrire ── */
@@ -587,6 +567,15 @@ body.filtre-actif .masque:not(.due){display:none;}
 <!-- ===================== VUE ACCUEIL ===================== -->
 <div id="vueAccueil">
     <!-- Bloc Aujourd'hui enrichi -->
+    <div id="banniereSauvegarde" style="display:none;background:#FFF3CD;border:1px solid #FFD60A;border-radius:12px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;flex-shrink:0;">💾</span>
+        <div style="flex:1;font-size:13px;color:#7A4E00;line-height:1.4;" id="texteBanniereSauvegarde"></div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+            <button onclick="exporterDonnees()" style="-webkit-appearance:none;background:#FF9500;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Sauvegarder</button>
+            <button onclick="cacherBannieresSauvegarde()" style="-webkit-appearance:none;background:none;color:#7A4E00;border:none;font-size:11px;cursor:pointer;font-family:inherit;">Plus tard</button>
+        </div>
+    </div>
+
     <div id="blocAujourdhui">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
             <div>
@@ -610,6 +599,7 @@ body.filtre-actif .masque:not(.due){display:none;}
     <!-- Mes fiches -->
     <div class="section-header" style="margin-top:4px;">
         <span class="section-titre">Mes fiches</span>
+        <button class="btn-plus-section" onclick="ouvrirSheetAjouter()" title="Ajouter un support">+</button>
     </div>
     <div id="listeSupports"></div>
 
@@ -889,13 +879,9 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;padding-bottom:4px;">
-        Mes révisions · <span id="versionApp">v94</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v89</span> · Données stockées sur cet appareil
     </div>
 </div>
-
-
-<!-- Bouton flottant "Ajouter" (accessible au pouce, reste visible même quand la liste défile) -->
-<button id="fabAjouter" class="fab-ajouter" onclick="ouvrirSheetAjouter()" title="Ajouter un support" style="display:none;">+</button>
 
 </main>
 
