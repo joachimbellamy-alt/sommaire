@@ -1784,7 +1784,10 @@ function ouvrirBulleIndice(labelEl, idxZone) {
     bulleIndiceEl.className = 'bulle-indice-edition';
     bulleIndiceEl.innerHTML = `
         <div class="titre">💡 Indice — zone ${idxZone + 1}</div>
-        <input type="text" id="champBulleIndice" placeholder="Ex : verbe, commence par É...">
+        <div style="display:flex;gap:6px;align-items:center;">
+            <input type="text" id="champBulleIndice" placeholder="Ex : verbe, commence par É..." style="flex:1;width:auto;">
+            <button type="button" class="btn-media btn-dictee" id="btnDicteeBulleIndice" title="Dicter au micro">🎤</button>
+        </div>
         <div class="actions">
             <button class="btn-modal annuler" id="btnSupprBulleIndice">Effacer</button>
             <button class="btn-modal enregistrer" id="btnOkBulleIndice">OK</button>
@@ -1828,6 +1831,10 @@ function ouvrirBulleIndice(labelEl, idxZone) {
         redessinerZonesEdition();
         fermerBulleIndice();
     }
+    document.getElementById('btnDicteeBulleIndice').addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        demarrerDictee(champ, ev.currentTarget);
+    });
     document.getElementById('btnOkBulleIndice').addEventListener('click', (ev) => { ev.stopPropagation(); valider(); });
     document.getElementById('btnSupprBulleIndice').addEventListener('click', (ev) => {
         ev.stopPropagation();
@@ -2326,6 +2333,7 @@ function htmlChampMedia(c, i, champ, labelTexte, placeholder) {
                 📷
                 <input type="file" accept="image/*" class="input-image-champ" data-idx="${i}" data-champ="${champ}" style="display:none;">
             </label>
+            <button class="btn-media btn-dictee" data-idx="${i}" data-champ="${champ}" onclick="demarrerDicteeChamp(this)" title="Dicter au micro">🎤</button>
             <button class="btn-media btn-audio-rec" data-idx="${i}" data-champ="${champ}" onclick="demarrerEnregistrement(${i},'${champ}',this)">🎙️</button>
         </div>
         <input type="text" class="champ-modale input-champ-texte" data-idx="${i}" data-champ="${champ}" value="${echapperHtml(c[champ] || '')}" placeholder="${placeholder}" style="margin-bottom:4px;">
@@ -2338,6 +2346,68 @@ function htmlChampMedia(c, i, champ, labelTexte, placeholder) {
             <button class="icon-btn danger" style="font-size:11px;" onclick="supprimerAudio(${i},'${champ}')">🗑</button>
         </div>` : ''}
     </div>`;
+}
+
+/* ── Dictée vocale (reconnaissance vocale → remplit un champ texte) ── */
+let reconnaissanceEnCours = null;
+
+function langueDicteeSupport() {
+    // La reconnaissance vocale ne connaît pas "la" (latin) : on retombe sur le français.
+    const l = supportActif && supportActif.langue;
+    return (l && l !== 'la') ? l : 'fr-FR';
+}
+
+function demarrerDictee(inputEl, btnEl) {
+    if (!inputEl) return;
+    // Un appui pendant que ça écoute déjà arrête la dictée en cours.
+    if (reconnaissanceEnCours) {
+        reconnaissanceEnCours.stop();
+        return;
+    }
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) {
+        alert("La dictée vocale n'est pas disponible sur ce navigateur.");
+        return;
+    }
+    const reco = new SpeechRecognitionAPI();
+    reco.lang = langueDicteeSupport();
+    reco.interimResults = false;
+    reco.maxAlternatives = 1;
+
+    const valeurDepart = inputEl.value || '';
+    const prefixe = valeurDepart && !/\s$/.test(valeurDepart) ? valeurDepart + ' ' : valeurDepart;
+
+    reco.onresult = (ev) => {
+        let transcription = '';
+        for (let i = 0; i < ev.results.length; i++) transcription += ev.results[i][0].transcript;
+        inputEl.value = prefixe + transcription;
+        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    reco.onerror = (ev) => {
+        if (ev.error !== 'aborted' && ev.error !== 'no-speech') {
+            alert("La dictée vocale n'a pas pu démarrer (micro refusé ou indisponible).");
+        }
+    };
+    reco.onend = () => {
+        reconnaissanceEnCours = null;
+        if (btnEl) btnEl.classList.remove('enregistrement');
+    };
+
+    try {
+        reco.start();
+        reconnaissanceEnCours = reco;
+        if (btnEl) btnEl.classList.add('enregistrement');
+    } catch (e) {
+        alert("La dictée vocale n'a pas pu démarrer.");
+    }
+}
+
+// Utilisé par les champs de carte (question/réponse/exemple/indice) :
+// retrouve le champ texte voisin du bouton 🎤 dans sa carte.
+function demarrerDicteeChamp(btnEl) {
+    const conteneur = btnEl.closest('.champ-carte');
+    const inputEl = conteneur ? conteneur.querySelector('.input-champ-texte') : null;
+    demarrerDictee(inputEl, btnEl);
 }
 
 /* ── Édition des cartes ── */
