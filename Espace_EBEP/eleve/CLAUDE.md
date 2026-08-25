@@ -248,3 +248,38 @@ const COULEURS_MATIERES_TUILES = {
 ---
 
 ## Version actuelle : v89 (août 2026)
+
+---
+
+## Améliorations supplémentaires à implémenter
+
+### Import multiple
+8. **Sélection de plusieurs JSON simultanément** — ajouter `multiple` sur tous les `<input type="file" accept=".json">`. Adapter le handler pour itérer sur `e.target.files` (boucle sur tous les fichiers). Toast final : "✅ X paquets importés — Y fiches ajoutées". Dédupliquer par ID pour éviter les doublons.
+
+### Export par matière
+9. **Exporter une matière entière** — dans la future vue tuiles matières (amélioration n°5-7), ajouter un bouton ⋯ sur chaque tuile matière qui ouvre un petit menu :
+   - "📤 Exporter toutes les fiches de [Matière]"
+   - "🧠 Réviser toutes les fiches dues de [Matière]"
+   
+   La fonction d'export filtre `supports.filter(s => s.matiere === matiere)` et génère un fichier `export-[matiere]-[date].json`.
+
+### Cartes ratées représentées dans la session (optionnel)
+10. **Option dans les Réglages** — "Représenter les cartes ratées dans la même session" (oui/non, désactivé par défaut). Si activé : quand `evaluerFlash('insuffisant')` est appelé, la carte est réinjectée à la fin de `flashSession` plutôt que de simplement recevoir un intervalle de 1 jour.
+
+---
+
+## Contexte des 3 dernières décisions (résumé pour Claude Code)
+
+### Couleurs des zones masquées — clarification
+Les zones masquées ont deux systèmes de couleurs qui coexistent :
+1. **Couleur d'identification** (par défaut) : chaque zone a sa couleur fixe par index (`COULEURS_ZONES[i % 8]`) — bleue, verte, orange, violette… Sert d'ancre mémorielle spatiale.
+2. **Couleur d'évaluation** (après révélation) : vert si ✓, orange si 〜, rouge si ✗. Remplace visuellement la couleur d'identification après le tap.
+
+→ Ce comportement est intentionnel et correct. Le micro-onboarding (amélioration n°3) devrait l'expliquer brièvement à la première utilisation.
+
+### Cartes ratées — comportement actuel
+Une carte évaluée "Aucune idée" reçoit un intervalle de 1 jour et n'est PAS réinjectée dans la session en cours. Elle revient le lendemain. C'est un choix délibéré pour éviter la frustration des collégiens. L'amélioration n°10 propose d'en faire une option dans les Réglages.
+
+### Import multi-fichiers et export par matière
+- **Import multiple** (amélioration n°8) : sélectionner plusieurs JSON d'un coup, itérer sur `e.target.files`, toast de confirmation "X paquets importés — Y fiches ajoutées", dédupliquer par ID.
+- **Export par matière** (amélioration n°9) : bouton ⋯ sur chaque tuile matière → "Exporter toutes les fiches de [Matière]" → `supports.filter(s => s.matiere === matiere)` → fichier `export-[matiere]-[date].json`.
