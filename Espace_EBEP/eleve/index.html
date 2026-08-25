@@ -976,7 +976,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;">
-        Mes révisions · <span id="versionApp">v110</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v111</span> · Données stockées sur cet appareil
     </div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);padding-bottom:4px;">
         Application conçue par M. Bellamy, professeur de français et latin
@@ -1306,6 +1306,28 @@ body.filtre-actif .masque:not(.due){display:none;}
         <div class="feuille-indice-actions">
             <button type="button" class="feuille-indice-btn effacer" onclick="effacerFeuilleIndiceZone()">🗑 Effacer</button>
             <button type="button" class="feuille-indice-btn enregistrer" onclick="validerFeuilleIndiceZone()">✓ Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- Feuille "mon indice personnel" pendant la révision d'une zone masquée -->
+<div id="feuilleIndicePerso" class="feuille-indice-zone" style="display:none;" onclick="fermerFeuilleIndicePersoSiExterieur(event)">
+    <div class="feuille-indice-boite">
+        <div class="sheet-handle-bar"></div>
+        <div class="indice-prof" id="feuilleIndicePersoProf" style="display:none;text-align:center;"></div>
+        <div class="feuille-indice-titre">✏️ Mon indice personnel</div>
+        <div class="feuille-indice-ligne">
+            <input type="text" id="feuilleIndicePersoChamp" class="feuille-indice-input" placeholder="Ex : ça me fait penser à…" onkeydown="if(event.key==='Enter'){this.blur();fermerFeuilleIndicePerso();}">
+            <button type="button" class="btn-media btn-dictee" title="Dicter au micro" onclick="demarrerDictee(document.getElementById('feuilleIndicePersoChamp'), this)">🎤</button>
+        </div>
+        <div class="indice-audio-row" style="margin-bottom:14px;">
+            <button type="button" class="indice-audio-btn" id="feuilleIndicePersoBtnEnr" onclick="toggleEnrIndicePersoZone()">🎙️ Enregistrer ma voix</button>
+            <audio id="feuilleIndicePersoLecteur" style="display:none;height:28px;width:100%;" controls></audio>
+            <button type="button" class="indice-audio-del" id="feuilleIndicePersoBtnSuppAudio" style="display:none;" onclick="supprimerFeuilleIndicePersoAudio()">🗑</button>
+        </div>
+        <div class="feuille-indice-actions">
+            <button type="button" class="feuille-indice-btn effacer" onclick="effacerFeuilleIndicePerso()">🗑 Effacer</button>
+            <button type="button" class="feuille-indice-btn enregistrer" onclick="fermerFeuilleIndicePerso()">✓ Terminé</button>
         </div>
     </div>
 </div>
