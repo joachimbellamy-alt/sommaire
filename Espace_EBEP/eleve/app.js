@@ -1763,6 +1763,8 @@ function handleEnd(e) {
         majCompteurZonesEdition();
         masquerOnboardingZone();
         sauvegarderSupports();
+        // Propose tout de suite d'ajouter un indice à la zone qui vient d'être tracée.
+        ouvrirBulleIndice(null, pageEnCours().zones.length - 1);
         return;
     }
 
@@ -1790,6 +1792,8 @@ function handleEnd(e) {
     majCompteurZonesEdition();
     masquerOnboardingZone();
     sauvegarderSupports();
+    // Propose tout de suite d'ajouter un indice à la zone qui vient d'être tracée.
+    ouvrirBulleIndice(null, pageEnCours().zones.length - 1);
 }
 
 canvasEl.addEventListener('mousedown', handleStart);
