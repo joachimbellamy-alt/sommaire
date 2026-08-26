@@ -881,6 +881,21 @@ function calculerResumeAujourdhui() {
     return { dueImage, dueTexte, total: dueImage + dueTexte, supports: supportsConcernes.size };
 }
 
+// Prochaine évaluation à venir (date >= aujourd'hui), la plus proche.
+// Retourne l'objectif enrichi de `date` (Date) et `diffJ` (jours restants), ou null.
+function trouverProchaineEvaluation() {
+    if (!objectifs || !objectifs.length) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const prochaine = objectifs
+        .filter(o => o.dateEval)
+        .map(o => ({ ...o, date: new Date(o.dateEval + 'T00:00:00') }))
+        .filter(o => o.date >= today)
+        .sort((a, b) => a.date - b.date)[0];
+    if (!prochaine) return null;
+    prochaine.diffJ = Math.round((prochaine.date - today) / 86400000);
+    return prochaine;
+}
+
 function afficherTableauBord() {
     const r = calculerResumeAujourdhui();
     const nb = Math.min(r.total, PLAFOND_PAR_JOUR);
@@ -948,14 +963,9 @@ function afficherTableauBord() {
     // Alerte contrôle si agenda actif et évaluation proche (< 7 jours)
     const alerteEl = document.getElementById('alerteControle');
     if (alerteEl && objectifs.length > 0) {
-        const today = new Date(); today.setHours(0,0,0,0);
-        const prochaine = objectifs
-            .filter(o => o.dateEval)
-            .map(o => ({ ...o, date: new Date(o.dateEval + 'T00:00:00') }))
-            .filter(o => o.date >= today)
-            .sort((a, b) => a.date - b.date)[0];
+        const prochaine = trouverProchaineEvaluation();
         if (prochaine) {
-            const diffJ = Math.round((prochaine.date - today) / 86400000);
+            const diffJ = prochaine.diffJ;
             if (diffJ <= 7) {
                 const msg = diffJ === 0 ? '⚠️ Contrôle aujourd\'hui : ' + prochaine.titre
                           : diffJ === 1 ? '📅 Contrôle demain : ' + prochaine.titre
@@ -4209,6 +4219,36 @@ function verifierSaisieFlash() {
     }
 }
 
+// Point 2 — message contextualisé de fin de session, basé sur le taux de
+// maîtrise global des fiches liées au prochain contrôle (≤ 7 jours).
+function calculerMessageFinSession() {
+    const prochaine = trouverProchaineEvaluation();
+    if (!prochaine || prochaine.diffJ > 7) return null;
+
+    const supportsLies = (prochaine.supportIds && prochaine.supportIds.length)
+        ? supports.filter(s => prochaine.supportIds.includes(s.id))
+        : [];
+    if (!supportsLies.length) return null;
+
+    let maitrisees = 0, total = 0;
+    supportsLies.forEach(s => {
+        const p = calculerProgression(s);
+        maitrisees += p.maitrisees;
+        total += p.total;
+    });
+    if (total === 0) return null;
+    const taux = maitrisees / total;
+
+    if (prochaine.diffJ <= 2) {
+        return taux < 0.7
+            ? { classe: 'urgent', texte: '⚠️ Ton contrôle est demain — reviens ce soir pour consolider les zones fragiles' }
+            : { classe: 'bien-prepare', texte: '✅ Bien préparé — une dernière révision demain matin suffira' };
+    }
+    return taux < 0.5
+        ? { classe: 'a-consolider', texte: "💪 Continue — reviens demain, tu as encore le temps de bien préparer ce contrôle" }
+        : { classe: 'bonne-progression', texte: '🎯 Bonne progression — maintiens le rythme jusqu\'au contrôle' };
+}
+
 function afficherFinSessionFlash() {
     document.getElementById('barreProgressionFlash').style.width = '100%';
     document.getElementById('compteurFlash').textContent = flashSession.length + ' cartes révisées';
@@ -4217,6 +4257,17 @@ function afficherFinSessionFlash() {
     document.getElementById('controlesFlahs').style.display = 'none';
     const fin = document.getElementById('finSession');
     fin.style.display = '';
+
+    const msgContexte = document.getElementById('finMessageContexte');
+    const msg = calculerMessageFinSession();
+    if (msg) {
+        msgContexte.textContent = msg.texte;
+        msgContexte.className = 'fin-message-contexte ' + msg.classe;
+        msgContexte.style.display = '';
+    } else {
+        msgContexte.style.display = 'none';
+    }
+
     document.getElementById('finStats').innerHTML =
         '<div class="fin-stat"><div class="fin-stat-n" style="color:#34C759;">' + flashResultats.maitrise + '</div><div class="fin-stat-l">Réponse immédiate</div></div>' +
         '<div class="fin-stat"><div class="fin-stat-n" style="color:#007AFF;">' + flashResultats.satisfaisant + '</div><div class="fin-stat-l">Après réflexion</div></div>' +

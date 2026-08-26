@@ -320,6 +320,11 @@ body.filtre-actif .masque:not(.due){display:none;}
 .fin-session{display:flex;flex-direction:column;align-items:center;gap:16px;padding:24px 16px;text-align:center;}
 .fin-emoji{font-size:56px;line-height:1;}
 .fin-titre{font-size:22px;font-weight:700;color:var(--texte);letter-spacing:-0.4px;}
+.fin-message-contexte{font-size:13px;font-weight:600;padding:10px 16px;border-radius:12px;line-height:1.4;margin:0 16px;}
+.fin-message-contexte.urgent{background:#FFF3CD;color:#7A4E00;}
+.fin-message-contexte.bien-prepare{background:var(--vert-clair);color:#1a6e30;}
+.fin-message-contexte.a-consolider{background:#FFE8E6;color:#a02010;}
+.fin-message-contexte.bonne-progression{background:var(--bleu-clair);color:#0040aa;}
 .fin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;}
 .fin-stat{background:var(--surface);border-radius:16px;padding:14px 6px;box-shadow:var(--ombre);}
 .fin-stat-n{font-size:26px;font-weight:700;letter-spacing:-0.5px;}
@@ -859,6 +864,7 @@ body.filtre-actif .masque:not(.due){display:none;}
     <div id="finSession" class="fin-session" style="display:none;">
         <div class="fin-emoji">🎉</div>
         <div class="fin-titre">Session terminée !</div>
+        <div class="fin-message-contexte" id="finMessageContexte" style="display:none;"></div>
         <div class="fin-stats" id="finStats"></div>
         <div class="fin-hint" id="finHint"></div>
         <button class="fin-btn" onclick="recommencerSession()">🔄 Recommencer</button>
@@ -979,7 +985,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;">
-        Mes révisions · <span id="versionApp">v116</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v117</span> · Données stockées sur cet appareil
     </div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);padding-bottom:4px;">
         Application conçue par M. Bellamy, professeur de français et latin
