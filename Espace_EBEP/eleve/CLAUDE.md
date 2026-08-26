@@ -467,3 +467,84 @@ Le bouton "💾 Sauvegarder tout" dans Mes fiches et Réglages reste intact — 
 - Dans `actionFiche` : remplacer l'action `'exporter'` par une sheet intermédiaire selon `s.type`
 - Supprimer le bouton "Exporter" seul s'il existe ailleurs dans l'interface
 - Le libellé dans le menu ⋯ devient "📤 Partager / Exporter"
+
+---
+
+## Tutoriel interactif intégré dans l'app
+
+### Accès
+Dans l'onglet Aa (Réglages), ajouter une ligne :
+```
+📖 Comment utiliser l'app  ›
+```
+Tap → ouvre la vue tutoriel (`vueTutoriel`) en plein écran.
+
+### Structure générale
+Vue plein écran avec :
+- Bouton "‹ Retour" en haut à gauche
+- Titre "Comment utiliser l'app"
+- Barre d'onglets horizontale scrollable en haut : 
+  🚀 Démarrer · 🗒️ Flashcards · 🖼️ Cours masqué · 📅 Agenda · 💾 Sauvegarder
+- Contenu de l'onglet actif en dessous
+
+### Contenu de chaque onglet
+
+**🚀 Démarrer**
+1. Tap sur + → choisir ce que tu veux créer ou importer
+2. Importer un fichier de ton prof → tap sur "Importer des flashcards" ou "Importer un cours masqué"
+3. Après import → la fiche apparaît dans "Mes fiches"
+4. Tape sur "Réviser" dans le menu ⋯ pour commencer
+
+**🗒️ Flashcards — Réviser**
+1. La question s'affiche — essaie de te souvenir de la réponse
+2. Tap "Voir la réponse" pour révéler
+3. Évalue honnêtement avec les 4 boutons colorés :
+   - 🔴 Aucune idée → la carte revient demain
+   - 🟠 Réponse incomplète → revient dans 2-3 jours
+   - 🔵 Correcte après réflexion → revient dans ~1 semaine
+   - 🟢 Réponse immédiate → bien espacée
+4. L'app calcule automatiquement quand revoir chaque carte
+
+**🖼️ Cours masqué — Créer**
+1. Crée un nouveau support → choisis "Cours masqué"
+2. Tape 📷 Photo pour photographier ton cours, ou 📄 PDF pour importer
+3. Appuie et glisse sur l'image pour créer une zone à mémoriser
+4. Tap sur le 💡 d'une zone pour ajouter un indice
+5. Tape "🧠 Réviser maintenant" quand tu as fini
+
+**🖼️ Cours masqué — Réviser**
+1. Les zones sont masquées — tap sur une zone pour la révéler
+2. Évalue avec ✓ / 〜 / ✗
+3. La couleur de la bordure indique ton niveau :
+   - 🟢 Vert → tu savais
+   - 🟠 Orange → approximatif
+   - 🔴 Rouge → à retravailler
+4. Les chiffres sur les zones = niveau de maîtrise (1 = débutant → 5 = maîtrisé)
+5. Tap "🔄 Recommencer" pour remasquer toutes les zones
+
+**📅 Agenda**
+1. Lors de la création d'une fiche, tu peux indiquer une date d'évaluation
+2. L'app planifie automatiquement des révisions à J-7, J-3 et J-1
+3. L'onglet Agenda affiche ton planning de révision
+4. Une alerte apparaît sur l'accueil si un contrôle est dans moins de 7 jours
+
+**💾 Sauvegarder**
+1. Vas dans "Mes fiches" → bouton "💾 Sauvegarder tout" en bas
+2. Un fichier .json est créé — enregistre-le dans Fichiers ou iCloud
+3. Si tu changes d'iPad ou vides le cache → importe ce fichier pour tout récupérer
+4. L'app te rappelle de sauvegarder si tu ne l'as pas fait depuis 14 jours
+⚠️ Sans sauvegarde, tu risques de perdre tes fiches si Safari vide son cache.
+
+### Design
+- Même palette de couleurs que l'app (variables CSS existantes)
+- Chaque étape numérotée avec un cercle coloré (comme la slide "Démarrer en 4 étapes")
+- Icônes emoji pour illustrer chaque concept
+- Texte court, une action par étape, langage adapté aux collégiens
+- Pas d'images externes — uniquement du CSS et du texte
+- Fonctionne 100% hors connexion
+
+### Implémentation
+- Ajouter `<div id="vueTutoriel" style="display:none;">` dans le HTML
+- Ajouter `'vueTutoriel'` dans le tableau `TOUTES` de `afficherVue()`
+- Ajouter `goTab('tutoriel')` ou une fonction `ouvrirTutoriel()` appelée depuis les Réglages
+- Le contenu des onglets peut être généré en JS ou écrit directement en HTML statique
