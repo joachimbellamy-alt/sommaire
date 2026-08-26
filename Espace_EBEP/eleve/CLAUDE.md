@@ -283,3 +283,65 @@ Une carte évaluée "Aucune idée" reçoit un intervalle de 1 jour et n'est PAS 
 ### Import multi-fichiers et export par matière
 - **Import multiple** (amélioration n°8) : sélectionner plusieurs JSON d'un coup, itérer sur `e.target.files`, toast de confirmation "X paquets importés — Y fiches ajoutées", dédupliquer par ID.
 - **Export par matière** (amélioration n°9) : bouton ⋯ sur chaque tuile matière → "Exporter toutes les fiches de [Matière]" → `supports.filter(s => s.matiere === matiere)` → fichier `export-[matiere]-[date].json`.
+
+---
+
+## Mise à jour v90 — août 2026
+
+### Feuille d'indice refaite (v90)
+La bulle flottante `.bulle-indice-edition` a été remplacée par une feuille fixe en bas d'écran (pattern iOS sheet). Elle remonte au-dessus du clavier automatiquement grâce à `position:fixed;bottom:0`. Un fond `.bulle-indice-fond` semi-transparent permet de fermer en tapant à l'extérieur. Deux boutons pleine largeur : 🗑 Effacer (rouge) et ✓ Enregistrer (bleu). Plus aucun calcul de position `visualViewport`.
+
+### Version actuelle : v90
+Les 10 améliorations du backlog (ergonomie 1-4, bibliothèque 5-7, import/export 8-9, cartes ratées 10) restent à implémenter.
+
+---
+
+## Améliorations pédagogiques prioritaires (points 1, 2, 4)
+
+### Point 1 — Plan de révision ancré dans l'évaluation
+
+Quand une fiche a une date d'évaluation dans l'agenda, l'accueil affiche un plan automatique.
+
+**Logique :**
+- Récupérer les fiches liées à une évaluation dans les 7 prochains jours
+- Calculer combien de zones/cartes restent fragiles ou non maîtrisées
+- Afficher sous le bloc "Aujourd'hui" une bannière contextuelle : "📅 Contrôle de SVT dans 3 jours — 8 zones à consolider" + bouton "Réviser maintenant" qui lance directement ces fiches
+- Si plusieurs évaluations proches, prioriser par date croissante
+
+**Ce qui existe déjà :** l'alerte contrôle dans `afficherTableauBord`. La rendre actionnable avec un bouton qui filtre la session sur les fiches liées à cette évaluation (via `objectif.supportId` ou correspondance par matière/nom).
+
+---
+
+### Point 2 — Feedback de fin de session contextualisé
+
+Ajouter un message intelligent entre "Session terminée !" et les compteurs, basé sur le taux de maîtrise global des fiches liées au prochain contrôle.
+
+**4 cas à gérer :**
+
+| Situation | Message |
+|---|---|
+| Contrôle dans ≤ 2 jours, maîtrise < 70% | ⚠️ "Ton contrôle est demain — reviens ce soir pour consolider les zones fragiles" |
+| Contrôle dans ≤ 2 jours, maîtrise ≥ 70% | ✅ "Bien préparé — une dernière révision demain matin suffira" |
+| Contrôle dans 3-7 jours, maîtrise < 50% | 💪 "Continue — reviens demain, tu as encore le temps de bien préparer ce contrôle" |
+| Contrôle dans 3-7 jours, maîtrise ≥ 50% | 🎯 "Bonne progression — maintiens le rythme jusqu'au contrôle" |
+| Aucun contrôle proche | Message actuel inchangé |
+
+**Calcul du taux de maîtrise global :** pour toutes les fiches liées à l'évaluation proche, calculer `maitrisees / total` via `calculerProgression(s)`. Boîtes 4-5 = maîtrisé.
+
+---
+
+### Point 4 — Délai de réflexion avant révélation (Option A)
+
+Le bouton "Voir la réponse" est **grisé et inactif pendant 2 secondes** après l'affichage de la question.
+
+**Implémentation :**
+- À l'affichage de chaque carte (`afficherCarteFlash`), désactiver le bouton `.btn-voir-reponse` avec `disabled` + opacité réduite
+- Afficher un texte discret sous la question : *"Essaie de te souvenir…"* (petite taille, couleur grisée)
+- Après 2000ms : activer le bouton, faire disparaître le texte (transition douce)
+- Ne pas bloquer si l'élève revient sur une carte déjà vue dans la session (`flashRevele` déjà true)
+
+---
+
+### Instruction pour Claude Code
+
+Implémente ces 3 améliorations une par une avec validation entre chaque. Commence par le point 4 (le plus simple), puis le point 2, puis le point 1. Bumpe le service worker à chaque étape.
