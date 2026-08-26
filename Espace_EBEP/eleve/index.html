@@ -268,6 +268,8 @@ body.filtre-actif .masque:not(.due){display:none;}
 
 /* Carte confiance AVANT révélation */
 .carte-confiance{background:var(--surface);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--ombre-forte);margin-bottom:10px;}
+.texte-reflexion{font-size:12px;color:var(--gris-texte);text-align:center;transition:opacity .3s ease;}
+.btn-voir-reponse:disabled{opacity:0.45;cursor:default;}
 .confiance-titre{font-size:12px;font-weight:600;color:var(--gris-texte);text-transform:uppercase;letter-spacing:0.5px;}
 .confiance-btns{display:flex;gap:8px;}
 .conf-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border-radius:14px;border:1.5px solid transparent;cursor:pointer;font-family:inherit;transition:all .15s;}
@@ -820,6 +822,7 @@ body.filtre-actif .masque:not(.due){display:none;}
     </div>
 
     <div id="zoneConfiance" class="carte-confiance">
+        <div id="texteReflexion" class="texte-reflexion" style="display:none;">Essaie de te souvenir…</div>
         <button class="btn-voir-reponse" onclick="voirReponseFlash()">Voir la réponse</button>
     </div>
 
@@ -976,7 +979,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;">
-        Mes révisions · <span id="versionApp">v115</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v116</span> · Données stockées sur cet appareil
     </div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);padding-bottom:4px;">
         Application conçue par M. Bellamy, professeur de français et latin

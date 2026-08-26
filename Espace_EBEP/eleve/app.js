@@ -3879,6 +3879,10 @@ let lettresTimer = null;
 let flashRevele = false;
 let flashConfianceChoisie = null; // 'ne-sais-pas' | 'pas-sur' | 'sur'
 let flashResultats = { maitrise: 0, satisfaisant: 0, fragile: 0, insuffisant: 0 };
+// Point 4 — délai de réflexion avant de pouvoir révéler la réponse.
+let flashItemsDejaVus = new WeakSet(); // items déjà affichés cette session (ex. carte ratée réinjectée)
+let revelationBloquee = false;
+let delaiReflexionTimer = null;
 
 function construireVueRevisionCarte(paires) {
     paires.forEach(item => {
@@ -3892,6 +3896,7 @@ function construireVueRevisionCarte(paires) {
     flashRevele = false;
     flashConfianceChoisie = null;
     flashResultats = { maitrise: 0, satisfaisant: 0, fragile: 0, insuffisant: 0 };
+    flashItemsDejaVus = new WeakSet();
     document.getElementById('bandeauFeedback').style.display = 'none';
     document.getElementById('carteFlashcard').style.display = '';
     document.getElementById('finSession').style.display = 'none';
@@ -3923,6 +3928,13 @@ function afficherCarteFlash() {
     const c = support.cartes[item.idx];
     const etat = support.etat[item.idx];
     const langue = support.langue || 'fr-FR';
+
+    // Point 4 — délai de réflexion de 2s avant de pouvoir révéler, sauf si
+    // cette carte a déjà été vue plus tôt dans la session (ex. carte ratée
+    // réinjectée par l'option "Représenter les cartes ratées").
+    const dejaVueCetteSession = flashItemsDejaVus.has(item);
+    flashItemsDejaVus.add(item);
+    gererDelaiReflexion(!dejaVueCetteSession);
 
     // Badge matière
     const couleursMat = {
@@ -3994,7 +4006,32 @@ function afficherCarteFlash() {
     }
 }
 
+// Point 4 — active/désactive le délai de réflexion avant révélation.
+function gererDelaiReflexion(appliquerDelai) {
+    clearTimeout(delaiReflexionTimer);
+    const btn = document.querySelector('.btn-voir-reponse');
+    const texte = document.getElementById('texteReflexion');
+    if (appliquerDelai) {
+        revelationBloquee = true;
+        if (btn) btn.disabled = true;
+        if (texte) { texte.style.display = ''; texte.style.opacity = '1'; }
+        delaiReflexionTimer = setTimeout(() => {
+            revelationBloquee = false;
+            if (btn) btn.disabled = false;
+            if (texte) {
+                texte.style.opacity = '0';
+                setTimeout(() => { texte.style.display = 'none'; }, 300);
+            }
+        }, 2000);
+    } else {
+        revelationBloquee = false;
+        if (btn) btn.disabled = false;
+        if (texte) { texte.style.display = 'none'; texte.style.opacity = '0'; }
+    }
+}
+
 function voirReponseFlash() {
+    if (revelationBloquee) return;
     haptic('select');
     finirRevelationFlash();
 }
