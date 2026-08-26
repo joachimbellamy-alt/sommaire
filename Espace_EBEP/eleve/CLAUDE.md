@@ -345,3 +345,125 @@ Le bouton "Voir la réponse" est **grisé et inactif pendant 2 secondes** après
 ### Instruction pour Claude Code
 
 Implémente ces 3 améliorations une par une avec validation entre chaque. Commence par le point 4 (le plus simple), puis le point 2, puis le point 1. Bumpe le service worker à chaque étape.
+
+---
+
+## QR Code de partage par fiche
+
+### Objectif
+Permettre à un élève de partager une fiche avec un camarade en lui faisant scanner un QR code — sans mail, sans fichier, sans infrastructure serveur.
+
+### Comment ça fonctionne
+1. L'élève ouvre le menu ⋯ d'une fiche dans "Mes fiches"
+2. Il tape "Partager via QR code"
+3. Un QR code s'affiche en plein écran
+4. Le camarade scanne avec son iPad → l'app s'ouvre directement avec la fiche prête à importer
+
+### Implémentation technique
+
+**Bibliothèque QR :** utiliser `qrcode.js` depuis cdnjs (chargé à la demande, comme PDF.js) :
+```
+https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js
+```
+
+**Contenu du QR code :** une data URL encodée en base64 contenant le JSON de la fiche.
+```javascript
+const paquet = {
+    type: 'sauvegarde-memo-revisions',
+    version: 1,
+    exporteLe: new Date().toISOString(),
+    supports: [supportCible]
+};
+const json = JSON.stringify(paquet);
+const base64 = btoa(unescape(encodeURIComponent(json)));
+const urlQR = window.location.origin + window.location.pathname + '?import=' + base64;
+```
+
+**Limitation :** les fiches avec images (cours masqué) peuvent produire un QR code trop dense si l'image est volumineuse. Dans ce cas, proposer l'export JSON classique à la place et afficher un message explicatif. Vérifier la taille : si `json.length > 2000` caractères, basculer automatiquement sur l'export fichier.
+
+**Réception :** au chargement de l'app, vérifier si l'URL contient `?import=`. Si oui, décoder le base64, parser le JSON, et déclencher l'import automatiquement avec une confirmation ("Tu vas importer la fiche X de ton camarade — OK ?").
+
+**UI :**
+- Ajouter "🔗 Partager via QR code" dans le menu ⋯ de chaque fiche (dans `actionFiche`)
+- Modale plein écran avec le QR code centré, titre "Fais scanner ce code à ton camarade", bouton "Fermer"
+- Le QR code doit être grand (minimum 256×256px) pour être facilement scannable
+
+### Ordre d'implémentation
+1. Ajouter la détection `?import=` au démarrage de l'app
+2. Ajouter l'action "Partager via QR code" dans le menu ⋯
+3. Générer et afficher le QR code dans une modale
+4. Tester avec une fiche flashcard légère d'abord, puis vérifier le cas des fiches image
+
+---
+
+## Partage AirDrop pour les fiches avec images (cours masqués)
+
+### Contexte
+Le QR code ne peut pas encoder les fiches avec images (trop volumineuses). AirDrop est la solution naturelle sur iPad pour partager des fichiers entre appareils proches — même réseau wifi ou Bluetooth.
+
+### Comment ça fonctionne
+Techniquement, AirDrop est déclenché par le même `navigator.share({ files: [fichier] })` que l'export normal. Sur iOS, quand deux iPads sont proches et qu'AirDrop est activé, l'option AirDrop apparaît automatiquement dans la feuille de partage native.
+
+Il n'y a donc **rien de spécial à coder** — c'est le même bouton d'export, mais l'UX doit être clarifiée pour que l'élève comprenne qu'il peut choisir AirDrop dans la feuille qui s'ouvre.
+
+### Ce qu'il faut changer
+
+Dans le menu ⋯ d'une fiche image (type === 'image'), remplacer le libellé :
+- Avant : "📤 Exporter cette fiche"  
+- Après : "📤 Partager (AirDrop, mail…)"
+
+Et ajouter une ligne explicative sous le bouton :
+> "Sur iPad : choisis AirDrop pour partager instantanément avec un camarade proche."
+
+### Logique de décision selon le type de fiche
+
+```javascript
+// Dans actionFiche('exporter') :
+if (s.type === 'texte') {
+    // Proposer QR code en premier + export en second
+    ouvrirSheetPartageFlashcard(s);
+} else {
+    // Fiche image → partage natif iOS directement (AirDrop dans la feuille)
+    exporterSupportId(s.id);
+    // + message toast : "Choisis AirDrop dans la feuille pour partager avec un camarade"
+}
+```
+
+### Sheet de partage pour les flashcards
+
+Quand l'élève tape "Partager" sur une fiche flashcard, afficher une petite sheet avec deux options :
+- **🔗 QR Code** — "Fais scanner à ton camarade" (rapide, sans contact)
+- **📤 Fichier** — "Par mail, AirDrop ou EcoleDirecte" (pour les paquets plus grands)
+
+### Résumé du flux complet
+
+| Type de fiche | Action | Méthode |
+|---|---|---|
+| Flashcards légères (< 2000 car.) | Partager | QR Code |
+| Flashcards lourdes (> 2000 car.) | Partager | Fichier JSON (mail/AirDrop) |
+| Cours masqué (image) | Partager | AirDrop via feuille iOS native |
+| Prof → élèves | Distribuer | Fichier JSON via EcoleDirecte/mail |
+
+---
+
+## Clarification — Exporter vs Partager (pas de doublon)
+
+### Décision
+Supprimer le doublon "Exporter" / "Partager" dans le menu ⋯. Un seul bouton : **"📤 Partager / Exporter"**.
+
+Ce bouton ouvre une sheet contextuelle selon le type de fiche :
+
+**Fiche flashcard :**
+- 🔗 QR Code — "Partage instantané avec un camarade"
+- 📨 Fichier — "Par mail, AirDrop ou EcoleDirecte"
+
+**Cours masqué (image) :**
+- 📨 Fichier — "Par AirDrop, mail ou EcoleDirecte" (QR code impossible, image trop lourde)
+
+### Sauvegarde complète — pas concernée
+Le bouton "💾 Sauvegarder tout" dans Mes fiches et Réglages reste intact — c'est une action différente (sauvegarde de toutes les fiches, pas d'une seule). Pas de doublon ici.
+
+### Ce qu'il faut modifier dans le code
+- Dans `actionFiche` : remplacer l'action `'exporter'` par une sheet intermédiaire selon `s.type`
+- Supprimer le bouton "Exporter" seul s'il existe ailleurs dans l'interface
+- Le libellé dans le menu ⋯ devient "📤 Partager / Exporter"
