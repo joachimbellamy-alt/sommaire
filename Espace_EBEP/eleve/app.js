@@ -2174,10 +2174,6 @@ function chargerPageRevision() {
         }
         masque.appendChild(fond);
 
-        const niveau = document.createElement('div');
-        niveau.className = 'boite-niveau';
-        masque.appendChild(niveau);
-
         const indiceBtn = document.createElement('div');
         indiceBtn.className = 'indice-btn';
         indiceBtn.textContent = '💡';
@@ -2263,8 +2259,6 @@ function actualiserAffichageRevision() {
         const cle = m.dataset.cle;
         const e = etatRevision[cle];
         if (!e) return;
-        const niveau = m.querySelector('.boite-niveau');
-        if (niveau) { niveau.textContent = e.box; niveau.className = 'boite-niveau niveau-' + e.box; }
         m.classList.toggle('due', estDue(cle));
         m.classList.toggle('difficile', !!e.difficile);
 
