@@ -180,7 +180,7 @@ async function sauvegarderSupports() {
         try {
             localStorage.setItem(ANCIENNE_CLE_LOCALSTORAGE, JSON.stringify(supports));
         } catch (e2) {
-            alert("Espace de stockage insuffisant ou indisponible sur cet appareil. Essaie de supprimer un ancien support, ou exporte tes données en sauvegarde avant qu'il ne soit trop tard.");
+            alert("Espace de stockage insuffisant ou indisponible sur cet appareil. Essaie de supprimer une ancienne fiche, ou exporte tes données en sauvegarde avant qu'il ne soit trop tard.");
         }
     }
 }
@@ -288,40 +288,41 @@ const TUTORIEL_ONGLETS = [
 const TUTORIEL_CONTENU = {
     demarrer: [
         { section: null, etapes: [
-            'Tap sur <strong>+</strong> → choisis ce que tu veux créer ou importer',
-            'Importer un fichier de ton prof → tap sur "Importer des flashcards" ou "Importer un cours masqué"',
+            'Tape sur <strong>+</strong> → choisis ce que tu veux créer ou importer',
+            'Importer un fichier de ton prof → tape sur "Importer des flashcards" ou "Importer un cours masqué"',
             'Après import → la fiche apparaît dans "Mes fiches"',
-            'Tape sur "Réviser" dans le menu ⋯ pour commencer',
+            'Tape "Réviser" dans le menu ⋯ pour commencer',
         ] },
     ],
     flashcards: [
         { section: 'Réviser', etapes: [
             "La question s'affiche — essaie de te souvenir de la réponse",
-            'Tap "Voir la réponse" pour révéler',
+            'Tape "Voir la réponse" pour révéler',
             'Évalue honnêtement avec les 4 boutons colorés :<br>'
-                + '🔴 Aucune idée → la carte revient demain<br>'
-                + '🟠 Réponse incomplète → revient dans 2-3 jours<br>'
-                + '🔵 Correcte après réflexion → revient dans ~1 semaine<br>'
-                + '🟢 Réponse immédiate → bien espacée',
-            "L'app calcule automatiquement quand revoir chaque carte",
+                + '🔴 Aucune idée → revient dès le lendemain<br>'
+                + '🟠 Réponse incomplète → revient dès le lendemain aussi<br>'
+                + '🔵 Correcte après réflexion → revient dans 2 jours<br>'
+                + '🟢 Réponse immédiate → revient dans 3 jours',
+            "Tant qu'une carte est nouvelle, elle revient vite (1 à 3 jours) pour bien s'ancrer. Une fois apprise sur plusieurs jours différents, les intervalles s'allongent progressivement (jusqu'à plusieurs semaines).",
+            "L'app calcule tout ça automatiquement pour chaque carte",
         ] },
     ],
     masque: [
         { section: 'Créer', etapes: [
-            'Crée un nouveau support → choisis "Cours masqué"',
-            'Tape 📷 Photo pour photographier ton cours, ou 📄 PDF pour importer',
+            'Crée une nouvelle fiche → choisis "Cours masqué"',
+            'Tape 📷 Photo pour prendre une photo de ton cours ou en importer une depuis tes photos, ou 📄 PDF pour importer un PDF',
             'Appuie et glisse sur l\'image pour créer une zone à mémoriser',
-            'Tap sur le 💡 d\'une zone pour ajouter un indice',
+            'Tape sur le 💡 d\'une zone pour ajouter un indice',
             'Tape "🧠 Réviser maintenant" quand tu as fini',
         ] },
         { section: 'Réviser', etapes: [
-            'Les zones sont masquées — tap sur une zone pour la révéler',
+            'Les zones sont masquées — tape sur une zone pour la révéler',
             'Évalue avec ✓ / 〜 / ✗',
             'La couleur de la bordure indique ton niveau :<br>'
                 + '🟢 Vert → tu savais<br>'
                 + '🟠 Orange → approximatif<br>'
                 + '🔴 Rouge → à retravailler',
-            'Tap "🔄 Recommencer" pour remasquer toutes les zones',
+            'Tape "🔄 Recommencer" pour remasquer toutes les zones',
         ] },
     ],
     agenda: [
@@ -576,7 +577,7 @@ function construireVEVENT(entree, nomSupport, supportId, index) {
     if (rrule) lignes.push(rrule);
     lignes.push(
         'SUMMARY:🧠 Réviser : ' + nomSupport,
-        'DESCRIPTION:Ouvre l\'app Mes révisions et reprends le support « ' + nomSupport + ' ».',
+        'DESCRIPTION:Ouvre l\'app Mes révisions et reprends la fiche « ' + nomSupport + ' ».',
         'END:VEVENT'
     );
     return lignes;
@@ -1123,7 +1124,7 @@ function afficherAccueil() {
     verifierRappelSauvegarde();
     const liste = document.getElementById('listeSupports');
     if (supports.length === 0) {
-        liste.innerHTML = '<div class="vide">Tu n\'as pas encore de support. Tape le + pour commencer !</div>';
+        liste.innerHTML = '<div class="vide">Tu n\'as pas encore de fiche. Tape le + pour commencer !</div>';
         return;
     }
 
@@ -1438,7 +1439,7 @@ function pageSuivanteEdition() {
 }
 
 function supprimerPageActuelle() {
-    if (supportActif.pages.length <= 1) { alert("Impossible de supprimer la dernière page d'un support — supprime plutôt le support entier depuis l'accueil."); return; }
+    if (supportActif.pages.length <= 1) { alert("Impossible de supprimer la dernière page d'une fiche — supprime plutôt la fiche entière depuis l'accueil."); return; }
     if (!confirm('Supprimer cette page et ses zones ?')) return;
     supportActif.pages.splice(pageActuelle, 1);
     // Recalage des clés d'état Leitner : celles des pages après la page supprimée décalent d'un index.
@@ -2285,7 +2286,7 @@ function chargerPageRevision() {
     img.style.display = 'block';
     img.style.maxWidth = '100%';
     if (!page.image) {
-        conteneur.innerHTML = '<div style="padding:40px;color:#999;text-align:center;">⚠️ Image absente — essaie de réimporter ce support.</div>';
+        conteneur.innerHTML = '<div style="padding:40px;color:#999;text-align:center;">⚠️ Image absente — essaie de réimporter cette fiche.</div>';
         majNavigateurPages('revision');
         return;
     }
@@ -2510,7 +2511,7 @@ function basculerFiltre() {
 }
 
 function reinitialiserProgression() {
-    if (!confirm('Effacer toute ta progression sur ce support (y compris tes indices personnels) ? Cette action est irréversible.')) return;
+    if (!confirm('Effacer toute ta progression sur cette fiche (y compris tes indices personnels) ? Cette action est irréversible.')) return;
     supportActif.etat = {};
     supportActif.pages.forEach((page, pi) => {
         page.zones.forEach((z, zi) => {
@@ -3102,7 +3103,7 @@ function ouvrirSessionMelangee(matiere) {
     if (paires.length === 0) {
         alert(matiere
             ? "Aucune fiche due aujourd'hui dans « " + matiere + " »."
-            : "Aucune carte à réviser aujourd'hui parmi tes Flashcards. Reviens plus tard, ou ouvre un support en particulier pour réviser par anticipation.");
+            : "Aucune carte à réviser aujourd'hui parmi tes Flashcards. Reviens plus tard, ou ouvre une fiche en particulier pour réviser par anticipation.");
         return;
     }
     // Les plus en retard (date d'échéance la plus ancienne) passent en priorité.
@@ -3221,8 +3222,8 @@ function basculerFiltreTexte() {
 }
 
 function reinitialiserProgressionTexte() {
-    if (modeSessionMelangee) { alert("Ouvre un support en particulier pour réinitialiser sa progression."); return; }
-    if (!confirm('Effacer toute ta progression sur ce support (y compris tes indices personnels) ? Cette action est irréversible.')) return;
+    if (modeSessionMelangee) { alert("Ouvre une fiche en particulier pour réinitialiser sa progression."); return; }
+    if (!confirm('Effacer toute ta progression sur cette fiche (y compris tes indices personnels) ? Cette action est irréversible.')) return;
     supportActif.etat = {};
     supportActif.cartes.forEach((c, i) => { supportActif.etat[i] = { box: 1, nextDue: todayStr(), indicePerso: '', autoExplication: '' }; });
     etatRevisionTexte = supportActif.etat;
@@ -3934,7 +3935,7 @@ function ouvrirModalObjectif() {
     document.getElementById('apercuJoursObjectif').textContent = '';
     const liste = document.getElementById('listeSupportsObjectif');
     liste.innerHTML = supports.length === 0
-        ? '<div style="font-size:12px;color:var(--gris-texte);">Aucun support disponible.</div>'
+        ? '<div style="font-size:12px;color:var(--gris-texte);">Aucune fiche disponible.</div>'
         : supports.map(s => `
         <div class="case-support-objectif">
             <input type="checkbox" value="${s.id}" id="cb-${s.id}">
@@ -4749,7 +4750,7 @@ function avancerOnboarding() {
         document.getElementById('slide' + obSlideActuel).style.display = '';
         document.querySelectorAll('.ob-dot').forEach((d, i) => d.classList.toggle('on', i === obSlideActuel - 1));
         const btn = document.getElementById('obBtnSuite');
-        const textes = { 1: 'Découvrir →', 2: 'Choisir mon premier support →', 3: "C'est parti 🚀" };
+        const textes = { 1: 'Découvrir →', 2: 'Choisir ma première fiche →', 3: "C'est parti 🚀" };
         btn.textContent = textes[obSlideActuel] || "C'est parti 🚀";
     } else {
         terminerOnboarding(obTypeChoisi);
@@ -4931,7 +4932,7 @@ function afficherBibliotheque(filtre) {
                 const chapLabel = chap === '—' ? 'Sans chapitre' : echapperHtml(chap);
                 return `<div class="bib-chap-bloc">
                     <div class="bib-chap-header">
-                        <div><div class="bib-chap-nom">${chapLabel}</div><div class="bib-chap-meta">${supChap.length} support${supChap.length > 1 ? 's' : ''}</div></div>
+                        <div><div class="bib-chap-nom">${chapLabel}</div><div class="bib-chap-meta">${supChap.length} fiche${supChap.length > 1 ? 's' : ''}</div></div>
                         ${badgeHtml}
                     </div>
                     ${supChap.map(htmlLigneFicheBib).join('')}
@@ -4968,7 +4969,7 @@ function afficherBibliotheque(filtre) {
             const ouvert = nomsChap.length === 1 || bibliothequeChapitresOuverts.has(cle);
             return `<div class="bib-chap-bloc">
                 <div class="bib-chap-header" data-chap-key="${echapperHtml(cle)}">
-                    <div><div class="bib-chap-nom">${chapLabel}</div><div class="bib-chap-meta">${supChap.length} support${supChap.length > 1 ? 's' : ''}</div></div>
+                    <div><div class="bib-chap-nom">${chapLabel}</div><div class="bib-chap-meta">${supChap.length} fiche${supChap.length > 1 ? 's' : ''}</div></div>
                     <div style="display:flex;align-items:center;">
                         ${badgeHtml}
                         <span class="bib-chap-chevron${ouvert ? ' ouvert' : ''}">›</span>
