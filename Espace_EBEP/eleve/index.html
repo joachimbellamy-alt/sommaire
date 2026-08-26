@@ -503,6 +503,20 @@ body.filtre-actif .masque:not(.due){display:none;}
 .settings-label{flex:1;font-size:14px;color:var(--texte);}
 .settings-value{font-size:13px;color:var(--gris-texte);}
 .settings-arrow{color:#c7c7cc;font-size:16px;}
+
+/* ── Tutoriel ── */
+.tuto-header{display:flex;align-items:center;gap:10px;padding:4px 0 14px;position:relative;}
+.tuto-retour{-webkit-appearance:none;appearance:none;background:none;border:none;color:var(--bleu);font-size:16px;cursor:pointer;font-family:inherit;padding:4px 0;flex-shrink:0;}
+.tuto-titre{font-size:17px;font-weight:700;color:var(--texte);position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;}
+.tuto-onglets{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:14px;-webkit-overflow-scrolling:touch;}
+.tuto-onglet{-webkit-appearance:none;appearance:none;flex-shrink:0;background:var(--surface);border:1px solid var(--bord);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--gris-texte);cursor:pointer;font-family:inherit;white-space:nowrap;}
+.tuto-onglet.actif{background:var(--bleu);border-color:var(--bleu);color:#fff;}
+.tuto-section-titre{font-size:15px;font-weight:700;color:var(--texte);margin:18px 0 10px;}
+.tuto-section-titre:first-child{margin-top:0;}
+.tuto-etape{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--ombre);}
+.tuto-etape-n{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--bleu);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.tuto-etape-texte{font-size:14px;color:var(--texte);line-height:1.5;}
+.tuto-avertissement{background:#FFF3CD;color:#7A4E00;border-radius:12px;padding:10px 14px;font-size:13px;margin-top:10px;line-height:1.4;}
 .toggle-switch{width:44px;height:26px;border-radius:13px;position:relative;cursor:pointer;border:none;transition:background .2s;flex-shrink:0;}
 .toggle-switch.on{background:var(--vert);}
 .toggle-switch.off{background:#e3e3e8;}
@@ -960,6 +974,11 @@ body.filtre-actif .masque:not(.due){display:none;}
             <span class="settings-label">Affichage et accessibilité</span>
             <span class="settings-arrow">›</span>
         </div>
+        <div class="settings-row" onclick="ouvrirTutoriel()">
+            <span class="settings-icon">📖</span>
+            <span class="settings-label">Comment utiliser l'app</span>
+            <span class="settings-arrow">›</span>
+        </div>
     </div>
 
     <div class="settings-group">
@@ -989,11 +1008,20 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;">
-        Mes révisions · <span id="versionApp">v119</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v120</span> · Données stockées sur cet appareil
     </div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);padding-bottom:4px;">
         Application conçue par M. Bellamy, professeur de français et latin
     </div>
+</div>
+
+<!-- ===================== VUE TUTORIEL ===================== -->
+<div id="vueTutoriel" style="display:none;">
+    <div class="tuto-header">
+        <button type="button" class="tuto-retour" onclick="fermerTutoriel()">‹ Retour</button>
+    </div>
+    <div class="tuto-onglets" id="tutoOnglets"></div>
+    <div class="tuto-contenu" id="tutoContenu"></div>
 </div>
 
 

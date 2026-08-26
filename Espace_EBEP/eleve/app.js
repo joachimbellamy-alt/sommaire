@@ -273,6 +273,106 @@ function fermerModalDys() {
     document.getElementById('modalDys').classList.remove('ouverte');
 }
 
+/* ================================================================
+   TUTORIEL INTERACTIF
+   ================================================================ */
+
+const TUTORIEL_ONGLETS = [
+    { cle: 'demarrer', icone: '🚀', label: 'Démarrer' },
+    { cle: 'flashcards', icone: '🗒️', label: 'Flashcards' },
+    { cle: 'masque', icone: '🖼️', label: 'Cours masqué' },
+    { cle: 'agenda', icone: '📅', label: 'Agenda' },
+    { cle: 'sauvegarder', icone: '💾', label: 'Sauvegarder' },
+];
+
+const TUTORIEL_CONTENU = {
+    demarrer: [
+        { section: null, etapes: [
+            'Tap sur <strong>+</strong> → choisis ce que tu veux créer ou importer',
+            'Importer un fichier de ton prof → tap sur "Importer des flashcards" ou "Importer un cours masqué"',
+            'Après import → la fiche apparaît dans "Mes fiches"',
+            'Tape sur "Réviser" dans le menu ⋯ pour commencer',
+        ] },
+    ],
+    flashcards: [
+        { section: 'Réviser', etapes: [
+            "La question s'affiche — essaie de te souvenir de la réponse",
+            'Tap "Voir la réponse" pour révéler',
+            'Évalue honnêtement avec les 4 boutons colorés :<br>'
+                + '🔴 Aucune idée → la carte revient demain<br>'
+                + '🟠 Réponse incomplète → revient dans 2-3 jours<br>'
+                + '🔵 Correcte après réflexion → revient dans ~1 semaine<br>'
+                + '🟢 Réponse immédiate → bien espacée',
+            "L'app calcule automatiquement quand revoir chaque carte",
+        ] },
+    ],
+    masque: [
+        { section: 'Créer', etapes: [
+            'Crée un nouveau support → choisis "Cours masqué"',
+            'Tape 📷 Photo pour photographier ton cours, ou 📄 PDF pour importer',
+            'Appuie et glisse sur l\'image pour créer une zone à mémoriser',
+            'Tap sur le 💡 d\'une zone pour ajouter un indice',
+            'Tape "🧠 Réviser maintenant" quand tu as fini',
+        ] },
+        { section: 'Réviser', etapes: [
+            'Les zones sont masquées — tap sur une zone pour la révéler',
+            'Évalue avec ✓ / 〜 / ✗',
+            'La couleur de la bordure indique ton niveau :<br>'
+                + '🟢 Vert → tu savais<br>'
+                + '🟠 Orange → approximatif<br>'
+                + '🔴 Rouge → à retravailler',
+            'Tap "🔄 Recommencer" pour remasquer toutes les zones',
+        ] },
+    ],
+    agenda: [
+        { section: null, etapes: [
+            "Lors de la création d'une fiche, tu peux indiquer une date d'évaluation",
+            "L'app planifie automatiquement des révisions à J-7, J-3 et J-1",
+            "L'onglet Agenda affiche ton planning de révision",
+            "Une alerte apparaît sur l'accueil si un contrôle est dans moins de 7 jours",
+        ] },
+    ],
+    sauvegarder: [
+        { section: null, etapes: [
+            'Vas dans "Mes fiches" → bouton "💾 Sauvegarder tout" en bas',
+            'Un fichier .json est créé — enregistre-le dans Fichiers ou iCloud',
+            "Si tu changes d'iPad ou vides le cache → importe ce fichier pour tout récupérer",
+            "L'app te rappelle de sauvegarder si tu ne l'as pas fait depuis 14 jours",
+        ], avertissement: '⚠️ Sans sauvegarde, tu risques de perdre tes fiches si Safari vide son cache.' },
+    ],
+};
+
+let tutorielOngletActuel = 'demarrer';
+
+function ouvrirTutoriel() {
+    afficherVue('tutoriel');
+    const barre = document.getElementById('tutoOnglets');
+    barre.innerHTML = TUTORIEL_ONGLETS.map(o =>
+        `<button type="button" class="tuto-onglet" data-onglet="${o.cle}" onclick="afficherOngletTutoriel('${o.cle}')">${o.icone} ${o.label}</button>`
+    ).join('');
+    afficherOngletTutoriel('demarrer');
+}
+
+function fermerTutoriel() {
+    goTab('reglages');
+}
+
+function afficherOngletTutoriel(cle) {
+    tutorielOngletActuel = cle;
+    document.querySelectorAll('#tutoOnglets .tuto-onglet').forEach(btn => {
+        btn.classList.toggle('actif', btn.dataset.onglet === cle);
+    });
+    const blocs = TUTORIEL_CONTENU[cle] || [];
+    document.getElementById('tutoContenu').innerHTML = blocs.map(bloc => {
+        const titreHtml = bloc.section ? `<div class="tuto-section-titre">${bloc.section}</div>` : '';
+        const etapesHtml = bloc.etapes.map((texte, i) =>
+            `<div class="tuto-etape"><div class="tuto-etape-n">${i + 1}</div><div class="tuto-etape-texte">${texte}</div></div>`
+        ).join('');
+        const avertHtml = bloc.avertissement ? `<div class="tuto-avertissement">${bloc.avertissement}</div>` : '';
+        return titreHtml + etapesHtml + avertHtml;
+    }).join('');
+}
+
 function majAffichageReglagesDys() {
     document.getElementById('valeurDysTaille').textContent = preferencesDys.taille + '%';
     document.getElementById('valeurDysLettres').textContent = (preferencesDys.lettres / 100).toFixed(2) + 'em';
@@ -764,7 +864,7 @@ function afficherVue(nom) {
     // laisser le micro actif sans bouton pour l'éteindre.
     arreterDicteeEnCours();
     const TOUTES = ['vueAccueil','vueEdition','vueRevision','vueRecadrage','vueEditionTexte',
-        'vueRevisionCarte','vueQCMTexte','vueEcrireTexte','vueAgenda','vueReglages','vueSupports'];
+        'vueRevisionCarte','vueQCMTexte','vueEcrireTexte','vueAgenda','vueReglages','vueSupports','vueTutoriel'];
     TOUTES.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -785,6 +885,7 @@ function afficherVue(nom) {
         ecrireTexte: '⌨️ ' + (supportActif ? supportActif.nom : ''),
         agenda: 'Mon agenda de révision',
         reglages: 'Réglages',
+        tutoriel: "Comment utiliser l'app",
     };
     const titreEl = document.getElementById('titreHeader');
     if (titreEl) titreEl.textContent = titres[nom] || 'Mes révisions';
