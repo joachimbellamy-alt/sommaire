@@ -132,6 +132,7 @@ main{padding:14px 16px;max-width:800px;margin:0 auto;}
 #blocAujourdhui .btn-commencer{background:#fff;color:var(--bleu);border:none;border-radius:14px;padding:14px;font-size:17px;font-weight:700;cursor:pointer;letter-spacing:-0.3px;width:100%;margin-top:4px;}
 #blocAujourdhui .btn-commencer:active{transform:scale(0.97);}
     #blocAujourdhui .btn-tout-reviser{background:rgba(255,255,255,0.18);color:#fff;border:1.5px solid rgba(255,255,255,0.4);border-radius:14px;padding:10px;font-size:14px;font-weight:500;cursor:pointer;width:100%;margin-top:6px;font-family:inherit;}
+    .alerte-controle-btn{-webkit-appearance:none;appearance:none;background:#fff;color:var(--bleu);border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;margin-top:7px;font-family:inherit;}
     #blocAujourdhui .btn-tout-reviser:active{background:rgba(255,255,255,0.28);}
 
 /* ── Accueil : cartes supports ── */
@@ -665,7 +666,10 @@ body.filtre-actif .masque:not(.due){display:none;}
                 <div id="dureeEstimee" style="font-size:11px;color:rgba(255,255,255,0.65);display:none;"></div>
             </div>
         </div>
-        <div id="alerteControle" style="display:none;background:rgba(255,255,255,0.18);border-radius:10px;padding:7px 10px;margin:8px 0;font-size:12px;color:#fff;"></div>
+        <div id="alerteControle" style="display:none;background:rgba(255,255,255,0.18);border-radius:10px;padding:9px 10px;margin:8px 0;font-size:12px;color:#fff;">
+            <div id="alerteControleTexte"></div>
+            <button type="button" id="alerteControleBtn" class="alerte-controle-btn" style="display:none;" onclick="reviserPourEvaluation(this.dataset.objectifId)">Réviser maintenant</button>
+        </div>
         <button class="btn-commencer" id="btnCommencer" onclick="lancerSessionAujourdhui()" style="display:none;">▶ Réviser les cartes du jour</button>
         <button class="btn-tout-reviser" id="btnToutReviser" onclick="ouvrirSessionMelangee()" style="display:none;">🔀 Tout réviser maintenant</button>
     </div>
@@ -985,7 +989,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;">
-        Mes révisions · <span id="versionApp">v117</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v118</span> · Données stockées sur cet appareil
     </div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);padding-bottom:4px;">
         Application conçue par M. Bellamy, professeur de français et latin

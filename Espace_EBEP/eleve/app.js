@@ -960,17 +960,45 @@ function afficherTableauBord() {
             + '</div>';
     } else if (swEl) swEl.style.display = 'none';
 
-    // Alerte contrôle si agenda actif et évaluation proche (< 7 jours)
+    // Point 1 — plan de révision ancré dans l'évaluation : alerte contrôle
+    // actionnable si agenda actif et évaluation proche (≤ 7 jours).
     const alerteEl = document.getElementById('alerteControle');
     if (alerteEl && objectifs.length > 0) {
         const prochaine = trouverProchaineEvaluation();
         if (prochaine) {
             const diffJ = prochaine.diffJ;
             if (diffJ <= 7) {
-                const msg = diffJ === 0 ? '⚠️ Contrôle aujourd\'hui : ' + prochaine.titre
-                          : diffJ === 1 ? '📅 Contrôle demain : ' + prochaine.titre
-                          : '📅 Contrôle dans ' + diffJ + ' jours : ' + prochaine.titre;
-                alerteEl.textContent = msg;
+                const sujet = prochaine.matiere || prochaine.titre;
+                const supportsLies = (prochaine.supportIds || []).length
+                    ? supports.filter(s => prochaine.supportIds.includes(s.id))
+                    : [];
+
+                let aConsolider = 0, aConsoliderTexte = 0, aConsoliderImage = 0;
+                supportsLies.forEach(s => {
+                    const p = calculerProgression(s);
+                    const reste = p.total - p.maitrisees;
+                    aConsolider += reste;
+                    if (s.type === 'texte') aConsoliderTexte += reste;
+                    else aConsoliderImage += reste;
+                });
+
+                const quand = diffJ === 0 ? "aujourd'hui" : diffJ === 1 ? 'demain' : 'dans ' + diffJ + ' jours';
+                let msg = '📅 Contrôle de ' + sujet + ' ' + quand;
+                if (supportsLies.length && aConsolider > 0) {
+                    const unite = aConsoliderTexte > 0 && aConsoliderImage > 0 ? 'élément'
+                        : aConsoliderImage > 0 ? 'zone' : 'carte';
+                    msg += ' — ' + aConsolider + ' ' + unite + (aConsolider > 1 ? 's' : '') + ' à consolider';
+                } else if (supportsLies.length) {
+                    msg += ' — tout est déjà maîtrisé 🎉';
+                }
+                document.getElementById('alerteControleTexte').textContent = msg;
+
+                const btn = document.getElementById('alerteControleBtn');
+                if (btn) {
+                    const peutReviser = supportsLies.length > 0 && aConsolider > 0;
+                    btn.style.display = peutReviser ? '' : 'none';
+                    btn.dataset.objectifId = prochaine.id;
+                }
                 alerteEl.style.display = '';
             } else alerteEl.style.display = 'none';
         } else alerteEl.style.display = 'none';
@@ -2923,6 +2951,40 @@ function construireVueRevisionTexte() {
     ordre.forEach(i => conteneur.appendChild(creerElementCarte(supportActif, i)));
 
     actualiserAffichageRevisionTexte();
+}
+
+// Point 1 — lance une session couvrant toutes les fiches liées à une
+// évaluation de l'agenda (pas seulement les cartes dues aujourd'hui : on
+// révise par anticipation avant un contrôle).
+function reviserPourEvaluation(objectifId) {
+    const obj = objectifs.find(o => o.id === objectifId);
+    if (!obj) return;
+    const idsLies = obj.supportIds || [];
+    const supportsLies = supports.filter(s => idsLies.includes(s.id));
+    const supportsTexte = supportsLies.filter(s => s.type === 'texte' && (s.cartes || []).length > 0);
+
+    if (supportsTexte.length > 0) {
+        const paires = [];
+        supportsTexte.forEach(s => {
+            const etat = s.etat || (s.etat = {});
+            (s.cartes || []).forEach((c, i) => {
+                if (!etat[i]) etat[i] = { box: 1, nextDue: todayStr(), indicePerso: '', autoExplication: '' };
+                paires.push({ support: s, idx: i });
+            });
+        });
+        melangerTableau(paires);
+        supportActif = null;
+        modeSessionMelangee = true;
+        afficherVue('revisionCarte');
+        document.getElementById('titreHeader').textContent = '🔀 ' + (obj.matiere || obj.titre);
+        construireVueRevisionCarte(paires);
+        return;
+    }
+
+    const supportImage = supportsLies.find(s => s.type === 'image' && (s.pages || []).some(p => p.zones.length > 0));
+    if (supportImage) { ouvrirRevision(supportImage.id); return; }
+
+    alert("Aucune fiche à réviser pour ce contrôle pour l'instant.");
 }
 
 function ouvrirSessionMelangee(matiere) {
