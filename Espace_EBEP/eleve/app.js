@@ -4403,8 +4403,109 @@ function actionFiche(action) {
     if (action === 'reviser') ouvrirRevision(id);
     else if (action === 'modifier') ouvrirEdition(id);
     else if (action === 'renommer') ouvrirModifierSupport(id);
-    else if (action === 'exporter') exporterSupportId(id);
+    else if (action === 'exporter') ouvrirSheetPartage(id);
     else if (action === 'supprimer') supprimerFiche(id);
+}
+
+/* ---------------- Partager / Exporter une fiche (QR code ou fichier) ---------------- */
+let partageContexteId = null;
+
+function ouvrirSheetPartage(id) {
+    const s = supports.find(x => x.id === id);
+    if (!s) return;
+    partageContexteId = id;
+    document.getElementById('sheetPartageTitre').textContent = s.nom;
+    const tuiles = document.getElementById('sheetPartageTuiles');
+    if (s.type === 'texte') {
+        // Flashcards : QR code (instantané) ou fichier (mail/AirDrop/EcoleDirecte).
+        tuiles.innerHTML = `
+            <button type="button" class="sheet-tuile" onclick="lancerPartageQR()">
+                <div class="sheet-tuile-ic">🔗</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre">QR Code</div>
+                    <div class="sheet-tuile-sous">Partage instantané avec un camarade</div>
+                </div>
+            </button>
+            <button type="button" class="sheet-tuile" onclick="lancerPartageFichier()">
+                <div class="sheet-tuile-ic">📨</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre">Fichier</div>
+                    <div class="sheet-tuile-sous">Par mail, AirDrop ou EcoleDirecte</div>
+                </div>
+            </button>`;
+    } else {
+        // Cours masqué (image) : trop volumineux pour un QR code, fichier uniquement
+        // (AirDrop apparaît automatiquement dans la feuille de partage native iOS).
+        tuiles.innerHTML = `
+            <button type="button" class="sheet-tuile" onclick="lancerPartageFichier()">
+                <div class="sheet-tuile-ic">📨</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre">Fichier</div>
+                    <div class="sheet-tuile-sous">Par AirDrop, mail ou EcoleDirecte</div>
+                </div>
+            </button>`;
+    }
+    document.getElementById('sheetPartage').style.display = '';
+}
+
+function fermerSheetPartage(ev) {
+    if (ev && ev.target !== document.getElementById('sheetPartage')) return;
+    document.getElementById('sheetPartage').style.display = 'none';
+}
+
+function lancerPartageFichier() {
+    const id = partageContexteId;
+    fermerSheetPartage();
+    if (id) exporterSupportId(id);
+}
+
+let qrJsCharge = false;
+function chargerQrJs() {
+    return new Promise((resolve, reject) => {
+        if (window.QRCode) { qrJsCharge = true; resolve(); return; }
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+        script.onload = () => { qrJsCharge = true; resolve(); };
+        script.onerror = () => reject(new Error('chargement impossible'));
+        document.head.appendChild(script);
+    });
+}
+
+async function lancerPartageQR() {
+    const id = partageContexteId;
+    fermerSheetPartage();
+    const s = supports.find(x => x.id === id);
+    if (!s) return;
+
+    const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: [s] };
+    const json = JSON.stringify(paquet);
+
+    // Une fiche trop volumineuse produirait un QR code trop dense pour être scanné.
+    if (json.length > 2000) {
+        alert("Cette fiche est trop volumineuse pour un QR code.\n\nExporte-la plutôt en fichier (mail, AirDrop...).");
+        exporterSupportId(id);
+        return;
+    }
+
+    try {
+        await chargerQrJs();
+    } catch (e) {
+        alert("Impossible de charger le générateur de QR code (connexion internet nécessaire).");
+        return;
+    }
+
+    const base64 = btoa(unescape(encodeURIComponent(json)));
+    const urlQR = window.location.origin + window.location.pathname + '?import=' + base64;
+
+    const conteneur = document.getElementById('qrCodeConteneur');
+    conteneur.innerHTML = '';
+    new window.QRCode(conteneur, { text: urlQR, width: 256, height: 256 });
+    document.getElementById('modalQRTitre').textContent = s.nom;
+    document.getElementById('modalQR').style.display = 'flex';
+}
+
+function fermerModalQR() {
+    document.getElementById('modalQR').style.display = 'none';
 }
 
 /* ---------------- Sheet actions matière (grille de tuiles) ---------------- */
@@ -4897,25 +4998,36 @@ function migrerVersPagesEtType(liste) {
 
 async function traiterImportDepuisLien() {
     const params = new URLSearchParams(window.location.search);
-    const nomFichier = params.get('import');
-    if (!nomFichier) return;
+    const valeur = params.get('import');
+    if (!valeur) return;
 
     // On retire le paramètre de l'URL tout de suite, pour ne pas reproposer l'import à chaque rechargement.
     const urlSansParam = window.location.pathname;
     window.history.replaceState({}, '', urlSansParam);
 
-    let urlFichier;
-    try { urlFichier = new URL(nomFichier, window.location.href).href; }
-    catch (e) { return; }
+    let paquet = null;
+    let viaCamarade = false;
 
-    let paquet;
+    // Cas 1 — QR code : le paramètre contient directement le JSON encodé en base64.
     try {
-        const reponse = await fetch(urlFichier);
-        if (!reponse.ok) throw new Error('introuvable');
-        paquet = await reponse.json();
-    } catch (e) {
-        alert("Impossible de récupérer le paquet à importer (" + nomFichier + "). Vérifie ta connexion ou demande à ton professeur de revérifier le lien.");
-        return;
+        const json = decodeURIComponent(escape(atob(valeur)));
+        paquet = JSON.parse(json);
+        viaCamarade = true;
+    } catch (e) { paquet = null; }
+
+    // Cas 2 — lien classique : le paramètre est le nom d'un fichier JSON à récupérer.
+    if (!paquet) {
+        let urlFichier;
+        try { urlFichier = new URL(valeur, window.location.href).href; }
+        catch (e) { return; }
+        try {
+            const reponse = await fetch(urlFichier);
+            if (!reponse.ok) throw new Error('introuvable');
+            paquet = await reponse.json();
+        } catch (e) {
+            alert("Impossible de récupérer le paquet à importer (" + valeur + "). Vérifie ta connexion ou demande à ton professeur de revérifier le lien.");
+            return;
+        }
     }
 
     const liste = Array.isArray(paquet) ? paquet : paquet.supports;
@@ -4924,13 +5036,16 @@ async function traiterImportDepuisLien() {
         return;
     }
     const nomsAffiches = liste.map(s => s.nom || 'Sans titre').join(', ');
-    if (!confirm('Importer ce paquet proposé par ton professeur : « ' + nomsAffiches + ' » ?')) return;
+    const question = viaCamarade
+        ? 'Tu vas importer la fiche de ton camarade : « ' + nomsAffiches + ' ». OK ?'
+        : 'Importer ce paquet proposé par ton professeur : « ' + nomsAffiches + ' » ?';
+    if (!confirm(question)) return;
 
     liste.forEach((s) => { supports.push(Object.assign({}, s, { id: genererId() })); });
     migrerVersPagesEtType(supports);
     await sauvegarderSupports();
     afficherAccueil();
-    alert('Paquet importé : ' + nomsAffiches);
+    alert('Fiche importée : ' + nomsAffiches);
 }
 
 (async function demarrer() {

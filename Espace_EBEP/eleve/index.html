@@ -989,7 +989,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 
     <div id="espaceStockage"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;">
-        Mes révisions · <span id="versionApp">v118</span> · Données stockées sur cet appareil
+        Mes révisions · <span id="versionApp">v119</span> · Données stockées sur cet appareil
     </div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);padding-bottom:4px;">
         Application conçue par M. Bellamy, professeur de français et latin
@@ -1266,8 +1266,8 @@ body.filtre-actif .masque:not(.due){display:none;}
             <button type="button" class="sheet-tuile" onclick="actionFiche('exporter')">
                 <div class="sheet-tuile-ic">📤</div>
                 <div class="sheet-tuile-texte">
-                    <div class="sheet-tuile-titre">Exporter cette fiche</div>
-                    <div class="sheet-tuile-sous">Partager avec le prof ou un camarade</div>
+                    <div class="sheet-tuile-titre">Partager / Exporter</div>
+                    <div class="sheet-tuile-sous">Avec le prof ou un camarade</div>
                 </div>
             </button>
             <button type="button" class="sheet-tuile" onclick="actionFiche('supprimer')" style="color:var(--rouge);">
@@ -1305,6 +1305,24 @@ body.filtre-actif .masque:not(.due){display:none;}
         </div>
         <button class="sheet-annuler" onclick="fermerSheetActionsMatiere()">Annuler</button>
     </div>
+</div>
+
+<!-- Sheet Partager / Exporter une fiche (contenu selon le type, rempli en JS) -->
+<div id="sheetPartage" style="display:none;position:fixed;inset:0;z-index:8100;background:rgba(0,0,0,0.4);" onclick="fermerSheetPartage(event)">
+    <div class="sheet-ajouter-boite">
+        <div class="sheet-handle-bar"></div>
+        <div class="sheet-ajouter-titre" id="sheetPartageTitre">Partager</div>
+        <div class="sheet-tuiles" id="sheetPartageTuiles"></div>
+        <button class="sheet-annuler" onclick="fermerSheetPartage()">Annuler</button>
+    </div>
+</div>
+
+<!-- Modale plein écran QR code -->
+<div id="modalQR" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.9);flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;">
+    <div style="color:#fff;font-size:18px;font-weight:700;" id="modalQRTitre"></div>
+    <div style="color:rgba(255,255,255,0.75);font-size:14px;">Fais scanner ce code à ton camarade</div>
+    <div id="qrCodeConteneur" style="background:#fff;padding:16px;border-radius:16px;line-height:0;"></div>
+    <button type="button" onclick="fermerModalQR()" style="-webkit-appearance:none;appearance:none;background:#fff;color:#1C1C1E;border:none;border-radius:12px;padding:12px 28px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;">Fermer</button>
 </div>
 
 <!-- Feuille indice de zone masquée — fixée en bas, toujours au-dessus du clavier -->
