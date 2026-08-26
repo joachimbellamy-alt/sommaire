@@ -1997,6 +1997,7 @@ function fermerFeuilleIndicePerso() {
     }
     document.getElementById('feuilleIndicePerso').style.display = 'none';
     zoneIndicePersoCleActuelle = null;
+    actualiserAffichageRevision();
 }
 
 function fermerFeuilleIndicePersoSiExterieur(ev) {
@@ -2268,6 +2269,12 @@ function actualiserAffichageRevision() {
             const maitrisee = e.box >= 4;
             btnIndice.textContent = maitrisee ? '💡✓' : '💡';
             btnIndice.style.opacity = maitrisee ? '0.6' : '1';
+            // Couleur différente dès qu'un indice existe (officiel, personnel ou audio),
+            // pour repérer d'un coup d'œil les zones qui en ont un sans avoir à taper dessus.
+            const idxZone = parseInt(cle.split('_')[1], 10);
+            const z = pageEnCours() && pageEnCours().zones[idxZone];
+            const aUnIndice = !!(z && z.indice) || !!e.indicePerso || !!(e.indicePersoAudio && e.indicePersoAudio.length > 100);
+            btnIndice.classList.toggle('a-un-indice', aUnIndice);
         }
     });
     majCompteurRevision();
