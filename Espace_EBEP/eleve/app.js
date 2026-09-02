@@ -1281,6 +1281,21 @@ async function afficherEspaceStockage() {
     if (!el) return;
     if ('caches' in window) {
         try {
+            // Juste après une toute première installation (ex. onglet privé
+            // fraîchement ouvert), le service worker peut ne pas avoir encore
+            // fini de remplir son cache au moment où cette fonction s'exécute :
+            // caches.keys() renvoie alors un tableau vide et le numéro de
+            // version affiché reste bloqué sur la valeur codée en dur dans le
+            // HTML (potentiellement une ancienne version), ce qui donne
+            // l'impression trompeuse que l'app ne s'est pas mise à jour alors
+            // que le code chargé est bien le bon. On attend donc que le
+            // service worker soit actif avant de lire les clés du cache.
+            if (navigator.serviceWorker) {
+                await Promise.race([
+                    navigator.serviceWorker.ready,
+                    new Promise((resolve) => setTimeout(resolve, 2000))
+                ]);
+            }
             const keys = await caches.keys();
             const versionEl = document.getElementById('versionApp');
             if (versionEl && keys.length > 0) {
