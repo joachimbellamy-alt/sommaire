@@ -1,0 +1,57 @@
+{
+  "type": "sauvegarde-memo-revisions",
+  "version": 1,
+  "exporteLe": "2026-08-25T00:00:00.000Z",
+  "supports": [{
+    "id": "revolution-francaise-001",
+    "nom": "La Révolution française — Dates et événements clés",
+    "matiere": "Histoire-Géo-EMC",
+    "chapitre": "Ch. 2 — La Révolution française",
+    "type": "texte",
+    "etat": {},
+    "mode": "simple",
+    "creeLe": 1724544000000,
+    "cartes": [
+      {
+        "question": "Quelle est la date de prise de la Bastille ?",
+        "reponse": "14 juillet 1789\n\nLa Bastille était une prison royale à Paris. Sa prise symbolise le début de la Révolution française.\n🎉 Célébrée chaque année comme fête nationale."
+      },
+      {
+        "question": "Que sont les États généraux de 1789 ?",
+        "reponse": "Une assemblée convoquée par Louis XVI le 5 mai 1789 pour résoudre la crise financière.\nElle réunit les 3 ordres : clergé, noblesse, tiers état.\nLe tiers état (98% de la population) n'y a qu'1/3 des voix → conflit."
+      },
+      {
+        "question": "Quels sont les 3 ordres de la société sous l'Ancien Régime ?",
+        "reponse": "1. Le Clergé (religieux) — 0,5% de la population\n2. La Noblesse — 1,5% de la population\n3. Le Tiers État — 98% de la population\n\nSeuls le clergé et la noblesse sont exemptés d'impôts."
+      },
+      {
+        "question": "Qu'est-ce que la Déclaration des droits de l'Homme et du Citoyen ?",
+        "reponse": "Texte fondamental adopté le 26 août 1789.\nIl proclame l'égalité des hommes, la liberté, la souveraineté de la nation.\nArticle 1 : « Les hommes naissent et demeurent libres et égaux en droits. »"
+      },
+      {
+        "question": "Que se passe-t-il le 21 janvier 1793 ?",
+        "reponse": "Exécution du roi Louis XVI par guillotine, place de la Révolution à Paris.\nIl est condamné pour trahison envers la nation."
+      },
+      {
+        "question": "Qu'est-ce que la Terreur (1793-1794) ?",
+        "reponse": "Période de violence révolutionnaire sous Robespierre et le Comité de salut public.\nEnviron 17 000 personnes exécutées officiellement.\nFin : arrestation et exécution de Robespierre le 27 juillet 1794 (9 Thermidor)."
+      },
+      {
+        "question": "Qui est Louis XVI ?",
+        "reponse": "Roi de France de 1774 à 1792.\nEpoux de Marie-Antoinette.\nIl convoque les États généraux en 1789, accepte la Constitution de 1791, mais complote avec l'étranger.\nExecuté en janvier 1793."
+      },
+      {
+        "question": "Qu'est-ce que la nuit du 4 août 1789 ?",
+        "reponse": "Nuit pendant laquelle les nobles à l'Assemblée renoncent à leurs privilèges féodaux.\nAbolition du servage, des droits seigneuriaux, des exemptions fiscales.\nFin symbolique de l'Ancien Régime."
+      },
+      {
+        "question": "Quelles sont les 3 valeurs de la République française issues de la Révolution ?",
+        "reponse": "Liberté — Égalité — Fraternité\n\nCes valeurs apparaissent pendant la Révolution et deviennent la devise officielle de la République."
+      },
+      {
+        "question": "Qu'est-ce que le serment du Jeu de Paume ?",
+        "reponse": "20 juin 1789 : les députés du tiers état, exclus de la salle des États généraux, se réunissent dans une salle de jeu de paume et jurent de ne pas se séparer avant d'avoir donné une Constitution à la France."
+      }
+    ]
+  }]
+}

@@ -777,6 +777,50 @@ async function traiterFichiersImportInterne(fileList) {
     afficherToastMsg(msg, 3500);
 }
 
+// Fiches d'exemple prêtes à l'emploi (flashcards Révolution française +
+// cours masqué carte des espaces de faible densité). Chargées à la demande
+// depuis ./exemples/ plutôt qu'embarquées dans app.js, pour ne pas alourdir
+// le chargement de l'app pour les élèves qui n'en ont pas besoin.
+const FICHES_EXEMPLES = [
+    { fichier: './exemples/flashcards-revolution-francaise.json', id: 'revolution-francaise-001' },
+    { fichier: './exemples/carte-espaces-faible-densite.json', id: 'sup_mrcgjfcc4s6jej' }
+];
+
+async function chargerFichesExemples() {
+    const dejaToutes = FICHES_EXEMPLES.every(ex => supports.some(s => s.id === ex.id));
+    if (dejaToutes) {
+        afficherToastMsg('✅ Les fiches d\'exemple sont déjà dans ta bibliothèque.', 3000);
+        return;
+    }
+
+    let ajoutees = 0;
+    for (const ex of FICHES_EXEMPLES) {
+        if (supports.some(s => s.id === ex.id)) continue; // déjà présente
+        try {
+            const reponse = await fetch(ex.fichier);
+            if (!reponse.ok) throw new Error('HTTP ' + reponse.status);
+            const paquet = await reponse.json();
+            const importes = (paquet.supports && Array.isArray(paquet.supports)) ? paquet.supports : [];
+            importes.forEach((s) => {
+                if (s.id && supports.some(x => x.id === s.id)) return;
+                supports.push(Object.assign({}, s, { id: s.id || genererId() }));
+                ajoutees++;
+            });
+        } catch (err) {
+            console.error('Erreur chargement fiche exemple :', ex.fichier, err);
+        }
+    }
+
+    if (ajoutees > 0) {
+        migrerVersPagesEtType(supports);
+        await sauvegarderSupports();
+        afficherAccueil();
+        afficherToastMsg('✅ ' + ajoutees + ' fiche' + (ajoutees > 1 ? 's' : '') + ' d\'exemple ajoutée' + (ajoutees > 1 ? 's' : '') + ' — regarde dans "Mes fiches".', 3500);
+    } else {
+        alert("Impossible de charger les fiches d'exemple pour le moment (connexion nécessaire au premier chargement).");
+    }
+}
+
 function creerSupportDepuisCartesBrutes(cartesBrutes, nom) {
     const cartes = cartesBrutes.map(c => ({
         id: genererId(),
