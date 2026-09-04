@@ -697,6 +697,7 @@ async function traiterFichiersImportInterne(fileList) {
     let paquetsImportes = 0;
     let fichesAjoutees = 0;
     let enErreur = 0;
+    let toutesDejaPresentes = true; // reste vrai seulement si au moins un fichier était lisible ET reconnu
 
     for (const file of fichiers) {
         let paquet;
@@ -705,6 +706,7 @@ async function traiterFichiersImportInterne(fileList) {
             paquet = JSON.parse(texte);
         } catch (err) {
             enErreur++;
+            toutesDejaPresentes = false;
             continue;
         }
 
@@ -738,14 +740,20 @@ async function traiterFichiersImportInterne(fileList) {
 
         if (!importes.length) {
             enErreur++;
+            toutesDejaPresentes = false;
             continue;
         }
 
+        // Le fichier est valide et reconnu : s'il finit par ne rien ajouter,
+        // c'est forcément parce que toutes ses fiches sont des doublons —
+        // pas un problème de format. On distingue ce cas juste en dessous
+        // pour ne pas afficher à tort "Format non reconnu".
         let ajouteesPourCeFichier = 0;
+        let doublonsPourCeFichier = 0;
         importes.forEach((s) => {
             // Dédupliquer par id : une fiche déjà présente dans la bibliothèque
             // (même id d'origine, ex. paquet réimporté par erreur) n'est pas rajoutée.
-            if (s.id && supports.some(x => x.id === s.id)) return;
+            if (s.id && supports.some(x => x.id === s.id)) { doublonsPourCeFichier++; return; }
             supports.push(Object.assign({}, s, { id: s.id || genererId() }));
             ajouteesPourCeFichier++;
         });
@@ -753,6 +761,9 @@ async function traiterFichiersImportInterne(fileList) {
         if (ajouteesPourCeFichier > 0) {
             paquetsImportes++;
             fichesAjoutees += ajouteesPourCeFichier;
+            toutesDejaPresentes = false;
+        } else if (doublonsPourCeFichier === 0) {
+            toutesDejaPresentes = false;
         }
     }
 
@@ -763,7 +774,9 @@ async function traiterFichiersImportInterne(fileList) {
     }
 
     if (paquetsImportes === 0) {
-        if (fichiers.length === 1) {
+        if (toutesDejaPresentes) {
+            alert('✅ Cette fiche est déjà dans ta bibliothèque — rien à importer.\n\nSi tu voulais récupérer une version plus ancienne, supprime d\'abord la fiche actuelle dans "Mes fiches" avant de réimporter.');
+        } else if (fichiers.length === 1) {
             alert('Format non reconnu ou fichier invalide.\n\nL\'app accepte ces formats :\n\n• {"supports": [{...}]}\n• {"cartes": [{"recto":"...", "verso":"..."}]}\n• [{"question":"...", "reponse":"..."}]\n\nDemande à l\'IA de générer les cartes au format :\n{"cartes": [{"recto": "Question", "verso": "Réponse"}]}');
         } else {
             alert("Aucune fiche n'a pu être importée (fichiers invalides, ou déjà toutes présentes dans ta bibliothèque).");
