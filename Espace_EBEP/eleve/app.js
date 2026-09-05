@@ -607,7 +607,12 @@ function telechargerRappels() {
 function exporterDonnees() {
     if (supports.length === 0) { alert("Tu n'as encore aucune fiche à exporter."); return; }
     const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: supports };
-    const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: 'application/json' });
+    // application/octet-stream plutôt que application/json : ce dernier est un
+    // type que le navigateur sait afficher, donc certains (Safari sur Mac en
+    // tête) ouvrent le JSON en texte brut dans un nouvel onglet au lieu de le
+    // télécharger — donnant l'impression trompeuse d'un fichier "de code".
+    // Un type non reconnu force un vrai téléchargement, sans jamais l'afficher.
+    const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: 'application/octet-stream' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     const dateStr = new Date().toISOString().slice(0, 10);
@@ -631,7 +636,9 @@ async function partagerSupport() {
     const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: [supportActif] };
     const texte = JSON.stringify(paquet, null, 2);
     const nomFichier = 'support-' + supportActif.nom.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.json';
-    const blob = new Blob([texte], { type: 'application/json' });
+    // Voir commentaire dans exporterDonnees() : octet-stream force le
+    // téléchargement au lieu d'afficher le JSON brut dans un nouvel onglet.
+    const blob = new Blob([texte], { type: 'application/octet-stream' });
 
     // On utilise partout le téléchargement natif du navigateur (<a download>).
     // C'est fiable sur Mac, Android ET iOS/iPadOS Safari (depuis iOS 13) : le
@@ -4714,7 +4721,9 @@ function exporterMatiere(matiere) {
     const supportsMatiere = supports.filter(s => (s.matiere || 'Autre') === matiere);
     if (supportsMatiere.length === 0) { alert("Aucune fiche dans « " + matiere + " » à exporter."); return; }
     const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: supportsMatiere };
-    const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: 'application/json' });
+    // Voir commentaire dans exporterDonnees() : octet-stream force le
+    // téléchargement au lieu d'afficher le JSON brut dans un nouvel onglet.
+    const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: 'application/octet-stream' });
     const nomMatiereFichier = matiere.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40);
     const dateStr = new Date().toISOString().slice(0, 10);
     const url = URL.createObjectURL(blob);
