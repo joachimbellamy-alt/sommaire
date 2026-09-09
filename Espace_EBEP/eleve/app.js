@@ -1297,8 +1297,15 @@ function chargerPreferenceRejouerRatees() {
 
 async function afficherEspaceStockage() {
     chargerPreferenceRejouerRatees();
-    const el = document.getElementById('espaceStockage');
-    if (!el) return;
+    // "espaceStockage" (accueil) et "espaceStockageReglages" (onglet Aa) sont
+    // deux emplacements distincts pour le même résumé — avant, les deux
+    // portaient le même id "espaceStockage", donc document.getElementById
+    // ne renvoyait que le premier (celui de l'accueil) et le second restait
+    // vide en permanence. On met maintenant à jour les deux séparément.
+    const elements = ['espaceStockage', 'espaceStockageReglages']
+        .map(id => document.getElementById(id))
+        .filter(Boolean);
+
     if ('caches' in window) {
         try {
             // Juste après une toute première installation (ex. onglet privé
@@ -1324,6 +1331,8 @@ async function afficherEspaceStockage() {
         } catch(e) { /* tant pis */ }
     }
 
+    if (!elements.length) return;
+
     // Calculer la taille réelle des données de l'app (plus fiable que l'estimate Safari)
     try {
         const json = JSON.stringify({ supports, objectifs });
@@ -1331,12 +1340,13 @@ async function afficherEspaceStockage() {
         const affichage = octets < 1024 * 1024
             ? Math.round(octets / 1024) + ' Ko'
             : (octets / (1024 * 1024)).toFixed(1) + ' Mo';
-        el.innerHTML = '💾 Données : <strong>' + affichage + '</strong>'
+        const html = '💾 Données : <strong>' + affichage + '</strong>'
             + '<span style="color:var(--gris-texte);font-size:11px;display:block;margin-top:2px;">'
             + supports.length + ' fiche' + (supports.length > 1 ? 's' : '')
             + ' · Stockage local sur cet appareil</span>';
+        elements.forEach(el => { el.innerHTML = html; });
     } catch(e) {
-        el.textContent = '';
+        elements.forEach(el => { el.textContent = ''; });
     }
 }
 
@@ -5302,7 +5312,21 @@ async function traiterImportDepuisLien() {
     await traiterImportDepuisLien();
 
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
+        // BUG CRITIQUE corrigé ici (v127) : ce bloc attendait l'événement
+        // 'load' de la fenêtre avant d'enregistrer le service worker. Or le
+        // code au-dessus (chargerSupports, mettreAJourStreak, etc.) contient
+        // une longue chaîne d'attentes IndexedDB qui prend largement plus de
+        // temps que le chargement de la page elle-même — 'load' se déclenche
+        // presque instantanément (souvent <50ms), bien avant qu'on atteigne
+        // cette ligne. Le listener était donc posé APRÈS que l'événement ait
+        // déjà eu lieu, et ne se déclenchait alors plus jamais : sur un
+        // appareil neuf, le service worker ne s'installait tout simplement
+        // jamais, et sur un appareil ayant déjà un ancien service worker
+        // installé, aucune vérification de mise à jour n'était plus jamais
+        // relancée — l'app restait bloquée indéfiniment sur son ancienne
+        // version, quel que soit le nombre de mises à jour publiées depuis.
+        // On enregistre donc directement, sans attendre 'load'.
+        (() => {
             // updateViaCache: 'none' empêche le navigateur de servir une copie
             // périmée de service-worker.js lui-même depuis le cache HTTP —
             // sans ça, une mise à jour peut ne jamais être détectée.
@@ -5339,6 +5363,6 @@ async function traiterImportDepuisLien() {
                 dejaRecharge = true;
                 window.location.reload();
             });
-        });
+        })();
     }
 })();
