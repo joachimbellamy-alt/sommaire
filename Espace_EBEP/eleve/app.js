@@ -1357,8 +1357,17 @@ function creerNouveauSupport(typePrefill) {
     document.getElementById('champMatiereSupport').value = 'Français';
     document.getElementById('champTypeSupport').value = typePrefill || 'image';
     document.getElementById('ligneTypeSupport').style.display = '';
+    document.getElementById('champReversible').checked = false;
+    majAffichageLigneReversible();
     document.getElementById('modalNouveauSupport').classList.add('ouverte');
     setTimeout(() => document.getElementById('champNomSupport').focus(), 50);
+}
+
+// La réversibilité (question ↔ réponse) n'a de sens que pour des flashcards ;
+// on masque la ligne pour un support de cours masqué (type "image").
+function majAffichageLigneReversible() {
+    const type = document.getElementById('champTypeSupport').value;
+    document.getElementById('ligneReversible').style.display = (type === 'texte') ? '' : 'none';
 }
 
 function ouvrirModifierSupport(id) {
@@ -1371,6 +1380,8 @@ function ouvrirModifierSupport(id) {
     document.getElementById('champChapitreSupport').value = s.chapitre || '';
     document.getElementById('champMatiereSupport').value = s.matiere || 'Autre';
     document.getElementById('ligneTypeSupport').style.display = 'none';
+    document.getElementById('champReversible').checked = !!s.reversible;
+    document.getElementById('ligneReversible').style.display = (s.type === 'texte') ? '' : 'none';
     document.getElementById('modalNouveauSupport').classList.add('ouverte');
     setTimeout(() => document.getElementById('champNomSupport').focus(), 50);
 }
@@ -1392,6 +1403,7 @@ function validerNouveauSupport() {
             s.nom = nom;
             s.matiere = matiere;
             s.chapitre = chapitre;
+            if (s.type === 'texte') s.reversible = document.getElementById('champReversible').checked;
             sauvegarderSupports();
             if (supportActif && supportActif.id === s.id) {
                 document.getElementById('titreHeader').textContent = s.nom;
@@ -1416,6 +1428,7 @@ function validerNouveauSupport() {
     };
     if (type === 'texte') {
         support.cartes = [];
+        support.reversible = document.getElementById('champReversible').checked;
     } else {
         support.pages = [{ image: '', zones: [] }];
     }
@@ -1479,6 +1492,19 @@ function ouvrirRevision(id) {
     }
     afficherVue('revision');
     construireVueRevision();
+}
+
+// Cartes réversibles (fiche.reversible === true) : lance une session où
+// chaque carte est posée réponse → question. Progression SM-2 propre à ce
+// sens (voir cleEtatItem), indépendante du sens normal — un élève peut très
+// bien maîtriser une direction sans l'autre.
+function demarrerRevisionInverse(id) {
+    const s = supports.find(x => x.id === id);
+    if (!s || s.type !== 'texte' || !s.cartes || s.cartes.length === 0) return;
+    supportActif = s;
+    pageActuelle = 0;
+    afficherVue('revisionCarte');
+    construireVueRevisionCarte(s.cartes.map((c, i) => ({ support: s, idx: i, inverse: true })));
 }
 
 /* ---------------- Édition : pages, zoom, zones ---------------- */
@@ -4137,11 +4163,21 @@ let flashItemsDejaVus = new WeakSet(); // items déjà affichés cette session (
 let revelationBloquee = false;
 let delaiReflexionTimer = null;
 
+// Cartes réversibles : la même carte peut être révisée dans les deux sens
+// (question → réponse ET réponse → question). Chaque sens a sa propre
+// progression SM-2, stockée sous une clé distincte dans le même objet
+// `etat` (ex. carte 0 normale = clé "0", carte 0 en sens inverse = "0_inv") —
+// comme les zones masquées utilisent déjà des clés composées ("page_zone").
+function cleEtatItem(item) {
+    return item.inverse ? (item.idx + '_inv') : item.idx;
+}
+
 function construireVueRevisionCarte(paires) {
     paires.forEach(item => {
         if (!item.support.etat) item.support.etat = {};
-        if (!item.support.etat[item.idx]) {
-            item.support.etat[item.idx] = { box: 1, nextDue: todayStr(), indicePerso: '', autoExplication: '' };
+        const cle = cleEtatItem(item);
+        if (!item.support.etat[cle]) {
+            item.support.etat[cle] = { box: 1, nextDue: todayStr(), indicePerso: '', autoExplication: '' };
         }
     });
     flashSession = melangerTableau([...paires]);
@@ -4179,7 +4215,12 @@ function afficherCarteFlash() {
     const item = flashSession[flashIndex % flashSession.length];
     const support = item.support;
     const c = support.cartes[item.idx];
-    const etat = support.etat[item.idx];
+    // En sens inverse, la réponse devient la question posée et inversement —
+    // même carte, même contenu, juste la direction qui change.
+    const qa = item.inverse
+        ? { question: c.reponse, reponse: c.question, questionAudio: c.reponseAudio, reponseAudio: c.questionAudio, questionImage: null }
+        : c;
+    const etat = support.etat[cleEtatItem(item)];
     const langue = support.langue || 'fr-FR';
 
     // Point 4 — délai de réflexion de 2s avant de pouvoir révéler, sauf si
@@ -4198,24 +4239,28 @@ function afficherCarteFlash() {
     };
     const couleur = couleursMat[support.matiere] || { bg:'#e8e8e8', txt:'#555' };
     const badge = document.getElementById('badgeMatiereFlash');
-    badge.textContent = support.matiere || 'Autre';
+    // Rappel visuel discret quand la carte est révisée en sens inverse, pour
+    // que l'élève comprenne pourquoi la question habituelle est devenue la
+    // réponse à trouver.
+    badge.textContent = (item.inverse ? '🔁 ' : '') + (support.matiere || 'Autre');
     badge.style.background = couleur.bg;
     badge.style.color = couleur.txt;
 
     // Question
-    document.getElementById('questionFlash').textContent = c.question || '';
+    document.getElementById('questionFlash').textContent = qa.question || '';
 
-    // Image question
+    // Image question (pas de sens en mode inversé : l'image reste liée à la
+    // question d'origine, pas à la réponse).
     const imgEl = document.getElementById('imageFlash');
-    const imgSrc = c.questionImage || c.image || '';
+    const imgSrc = item.inverse ? '' : (c.questionImage || c.image || '');
     if (imgSrc) { imgEl.src = imgSrc; imgEl.style.display = ''; }
     else imgEl.style.display = 'none';
 
     // Bouton audio central
     const btnAQ = document.getElementById('btnAudioQuestion');
-    btnAQ.onclick = c.questionAudio
-        ? () => jouerAudioFlash(c.questionAudio)
-        : () => lireTexte(c.question || '', langue, support.voixNom || '');
+    btnAQ.onclick = qa.questionAudio
+        ? () => jouerAudioFlash(qa.questionAudio)
+        : () => lireTexte(qa.question || '', langue, support.voixNom || '');
     btnAQ.classList.remove('playing');
 
     document.getElementById('zoneConfiance').style.display = '';
@@ -4224,7 +4269,7 @@ function afficherCarteFlash() {
     // Réinitialiser zone réponse
     document.getElementById('zoneReponseFlash').style.display = 'none';
     document.getElementById('reponseFlash').style.display = 'none';
-    document.getElementById('reponseFlash').textContent = c.reponse || '';
+    document.getElementById('reponseFlash').textContent = qa.reponse || '';
     document.getElementById('lettresFlash').style.display = 'none';
     document.getElementById('saisieFLashWrap').style.display = 'none';
     document.getElementById('exempleFlash').style.display = 'none';
@@ -4234,9 +4279,9 @@ function afficherCarteFlash() {
     // Réponse audio
     const btnAR = document.getElementById('btnAudioReponse');
     btnAR.style.display = 'none';
-    btnAR.onclick = c.reponseAudio
-        ? () => jouerAudioFlash(c.reponseAudio)
-        : () => lireTexte(c.reponse || '', langue, support.voixNom || '');
+    btnAR.onclick = qa.reponseAudio
+        ? () => jouerAudioFlash(qa.reponseAudio)
+        : () => lireTexte(qa.reponse || '', langue, support.voixNom || '');
 
     // Indice (celui saisi à la création de la fiche)
     afficherTexteOuAudio('indiceProfFlash', c.indice ? '💡 ' + c.indice : (c.indiceAudio ? '💡' : ''), c.indiceAudio);
@@ -4309,7 +4354,7 @@ function revelerCarteFlash() {
     const c = item.support.cartes[item.idx];
     if (modeRevisionFlash === 'saisie') return;
     if (modeRevisionFlash === 'lettres') {
-        const reponse = c.reponse || '';
+        const reponse = (item.inverse ? c.question : c.reponse) || '';
         lettresDecoilees++;
         const affichage = reponse.split('').map((ch, i) =>
             i < lettresDecoilees ? ch : (ch === ' ' ? ' ' : '_')
@@ -4389,10 +4434,11 @@ function lireReponseFlash() {
 function evaluerFlash(resultat) {
     if (!flashRevele && modeRevisionFlash !== 'saisie') return;
     const item = flashSession[flashIndex % flashSession.length];
-    if (!item.support.etat[item.idx]) {
-        item.support.etat[item.idx] = { box: 1, nextDue: todayStr(), indicePerso: '', autoExplication: '' };
+    const cleEtat = cleEtatItem(item);
+    if (!item.support.etat[cleEtat]) {
+        item.support.etat[cleEtat] = { box: 1, nextDue: todayStr(), indicePerso: '', autoExplication: '' };
     }
-    const etat = item.support.etat[item.idx];
+    const etat = item.support.etat[cleEtat];
     etat.indicePerso = document.getElementById('indicePersoFlash').value;
     // Arrêter un enregistrement en cours si l'élève valide sans avoir arrêté
     if (indiceEnregistrement) arreterEnrIndicePerso();
@@ -4424,7 +4470,9 @@ function evaluerFlash(resultat) {
         bandeau.textContent = '〜 Fragile — prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : '');
     } else {
         bandeau.className = 'bandeau-feedback mauvais';
-        bandeau.textContent = '❌ À retravailler — réponse : ' + (item.support.cartes[item.idx].reponse || '');
+        const carteItem = item.support.cartes[item.idx];
+        const reponseAttendue = item.inverse ? carteItem.question : carteItem.reponse;
+        bandeau.textContent = '❌ À retravailler — réponse : ' + (reponseAttendue || '');
         // Option Réglages : la carte ratée revient plus tard dans cette même
         // session (en plus de son intervalle SM-2 normal, inchangé).
         if (rejouerRateesActif()) {
@@ -4445,7 +4493,8 @@ function verifierSaisieFlash() {
     const saisie = document.getElementById('saisieFlash');
     const item = flashSession[flashIndex % flashSession.length];
     const c = item.support.cartes[item.idx];
-    const attendue = normaliserTexteComparaison(c.reponse || '');
+    const reponseAttendueTexte = (item.inverse ? c.question : c.reponse) || '';
+    const attendue = normaliserTexteComparaison(reponseAttendueTexte);
     const entree = normaliserTexteComparaison(saisie.value);
     if (!entree) { document.getElementById('feedbackSaisie').textContent = ''; return; }
     const dist = distanceLevenshtein(entree, attendue);
@@ -4455,10 +4504,10 @@ function verifierSaisieFlash() {
         fb.textContent = '\u2705 Exact !'; fb.className = 'feedback-saisie bon';
         setTimeout(() => evaluerFlash('oui'), 700);
     } else if (dist <= seuil) {
-        fb.textContent = '\U0001F7E1 Presque ! (' + c.reponse + ')'; fb.className = 'feedback-saisie moyen';
+        fb.textContent = '\U0001F7E1 Presque ! (' + reponseAttendueTexte + ')'; fb.className = 'feedback-saisie moyen';
         setTimeout(() => evaluerFlash('moyen'), 900);
     } else if (entree.length >= Math.max(3, attendue.length - 2)) {
-        fb.textContent = '\u274C Réponse : ' + c.reponse; fb.className = 'feedback-saisie mauvais';
+        fb.textContent = '\u274C Réponse : ' + reponseAttendueTexte; fb.className = 'feedback-saisie mauvais';
     }
 }
 
@@ -4566,6 +4615,11 @@ function ouvrirSheetActions(id, nom) {
     ficheContexte = id;
     const titre = document.getElementById('sheetActionsTitre');
     if (titre) titre.textContent = nom || 'Actions';
+    const s = supports.find(x => x.id === id);
+    const btnInverse = document.getElementById('btnReviserInverseSheet');
+    if (btnInverse) {
+        btnInverse.style.display = (s && s.type === 'texte' && s.reversible && (s.cartes || []).length > 0) ? '' : 'none';
+    }
     document.getElementById('sheetActionsFiche').style.display = '';
 }
 
@@ -4582,6 +4636,7 @@ function actionFiche(action) {
     document.getElementById('sheetActionsFiche').style.display = 'none';
     if (!id) return;
     if (action === 'reviser') ouvrirRevision(id);
+    else if (action === 'reviser-inverse') demarrerRevisionInverse(id);
     else if (action === 'modifier') ouvrirEdition(id);
     else if (action === 'renommer') ouvrirModifierSupport(id);
     else if (action === 'exporter') ouvrirSheetPartage(id);

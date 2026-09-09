@@ -1066,10 +1066,18 @@ body.filtre-actif .masque:not(.due){display:none;}
         <input type="text" id="champChapitreSupport" class="champ-modale" placeholder="Ex : Ch. 3 — L'Empire romain">
         <div id="ligneTypeSupport">
             <span class="label-modale">Type</span>
-            <select id="champTypeSupport" class="champ-modale">
+            <select id="champTypeSupport" class="champ-modale" onchange="majAffichageLigneReversible()">
                 <option value="texte">🗒️ Flashcards (questions / réponses)</option>
                 <option value="image">🖼️ Support de cours masqué</option>
             </select>
+        </div>
+        <div id="ligneReversible" class="settings-row" style="cursor:default;padding:10px 0;">
+            <span class="settings-icon">🔁</span>
+            <span class="settings-label" style="font-size:14px;">Cartes réversibles (question ↔ réponse)</span>
+            <label class="switch-ios">
+                <input type="checkbox" id="champReversible">
+                <span class="switch-ios-slider"></span>
+            </label>
         </div>
         <span class="label-modale">Matière</span>
         <select id="champMatiereSupport" class="champ-modale">
@@ -1283,6 +1291,13 @@ body.filtre-actif .masque:not(.due){display:none;}
                 <div class="sheet-tuile-texte">
                     <div class="sheet-tuile-titre">Réviser</div>
                     <div class="sheet-tuile-sous">Lancer une session de révision</div>
+                </div>
+            </button>
+            <button type="button" class="sheet-tuile" id="btnReviserInverseSheet" onclick="actionFiche('reviser-inverse')" style="display:none;">
+                <div class="sheet-tuile-ic">🔁</div>
+                <div class="sheet-tuile-texte">
+                    <div class="sheet-tuile-titre">Réviser en sens inverse</div>
+                    <div class="sheet-tuile-sous">La réponse devient la question</div>
                 </div>
             </button>
             <button type="button" class="sheet-tuile" onclick="actionFiche('modifier')">
