@@ -1367,17 +1367,8 @@ function creerNouveauSupport(typePrefill) {
     document.getElementById('champMatiereSupport').value = 'Français';
     document.getElementById('champTypeSupport').value = typePrefill || 'image';
     document.getElementById('ligneTypeSupport').style.display = '';
-    document.getElementById('champReversible').checked = false;
-    majAffichageLigneReversible();
     document.getElementById('modalNouveauSupport').classList.add('ouverte');
     setTimeout(() => document.getElementById('champNomSupport').focus(), 50);
-}
-
-// La réversibilité (question ↔ réponse) n'a de sens que pour des flashcards ;
-// on masque la ligne pour un support de cours masqué (type "image").
-function majAffichageLigneReversible() {
-    const type = document.getElementById('champTypeSupport').value;
-    document.getElementById('ligneReversible').style.display = (type === 'texte') ? '' : 'none';
 }
 
 function ouvrirModifierSupport(id) {
@@ -1390,8 +1381,6 @@ function ouvrirModifierSupport(id) {
     document.getElementById('champChapitreSupport').value = s.chapitre || '';
     document.getElementById('champMatiereSupport').value = s.matiere || 'Autre';
     document.getElementById('ligneTypeSupport').style.display = 'none';
-    document.getElementById('champReversible').checked = !!s.reversible;
-    document.getElementById('ligneReversible').style.display = (s.type === 'texte') ? '' : 'none';
     document.getElementById('modalNouveauSupport').classList.add('ouverte');
     setTimeout(() => document.getElementById('champNomSupport').focus(), 50);
 }
@@ -1413,7 +1402,6 @@ function validerNouveauSupport() {
             s.nom = nom;
             s.matiere = matiere;
             s.chapitre = chapitre;
-            if (s.type === 'texte') s.reversible = document.getElementById('champReversible').checked;
             sauvegarderSupports();
             if (supportActif && supportActif.id === s.id) {
                 document.getElementById('titreHeader').textContent = s.nom;
@@ -1438,7 +1426,7 @@ function validerNouveauSupport() {
     };
     if (type === 'texte') {
         support.cartes = [];
-        support.reversible = document.getElementById('champReversible').checked;
+        support.reversible = false; // réglable ensuite dans "Modifier le contenu", à côté des cartes elles-mêmes
     } else {
         support.pages = [{ image: '', zones: [] }];
     }
@@ -2829,6 +2817,7 @@ function chargerEditionTexte() {
     document.getElementById('titreHeader').textContent = supportActif.nom;
     const conteneur = document.getElementById('listeCartesTexte');
     document.getElementById('champLangueSupport').value = supportActif.langue || 'fr-FR';
+    document.getElementById('champReversibleEdition').checked = !!supportActif.reversible;
     remplirSelecteurVoix();
 
     if (supportActif.cartes.length === 0) {
@@ -2916,6 +2905,15 @@ function changerLangueSupport(valeur) {
     supportActif.voixNom = ''; // la voix précise dépend de la langue, on réinitialise au changement
     sauvegarderSupports();
     remplirSelecteurVoix();
+}
+
+// Réglage à côté des cartes elles-mêmes (comme Anki : le choix "carte
+// réversible" se fait au niveau du contenu, pas dans un menu annexe sans
+// rapport comme "Renommer").
+function changerReversibleEdition(coche) {
+    if (!supportActif) return;
+    supportActif.reversible = coche;
+    sauvegarderSupports();
 }
 
 function changerStyleRevelation(valeur) {

@@ -801,6 +801,14 @@ body.filtre-actif .masque:not(.due){display:none;}
             </select>
             <button class="icon-btn" onclick="testerVoixSupport()" style="padding:6px;">🔊</button>
         </div>
+        <div class="settings-row" style="cursor:default;padding:8px 0 0;">
+            <span class="settings-icon">🔁</span>
+            <span class="settings-label" style="font-size:13px;">Cartes réversibles (question ↔ réponse)</span>
+            <label class="switch-ios">
+                <input type="checkbox" id="champReversibleEdition" onchange="changerReversibleEdition(this.checked)">
+                <span class="switch-ios-slider"></span>
+            </label>
+        </div>
     </div>
     <div style="color:var(--gris-texte);font-size:12px;margin-bottom:10px;text-align:center;">
         <strong id="compteurCartesTexte">0 carte</strong> — tape une carte pour la modifier
@@ -1066,18 +1074,10 @@ body.filtre-actif .masque:not(.due){display:none;}
         <input type="text" id="champChapitreSupport" class="champ-modale" placeholder="Ex : Ch. 3 — L'Empire romain">
         <div id="ligneTypeSupport">
             <span class="label-modale">Type</span>
-            <select id="champTypeSupport" class="champ-modale" onchange="majAffichageLigneReversible()">
+            <select id="champTypeSupport" class="champ-modale">
                 <option value="texte">🗒️ Flashcards (questions / réponses)</option>
                 <option value="image">🖼️ Support de cours masqué</option>
             </select>
-        </div>
-        <div id="ligneReversible" class="settings-row" style="cursor:default;padding:10px 0;">
-            <span class="settings-icon">🔁</span>
-            <span class="settings-label" style="font-size:14px;">Cartes réversibles (question ↔ réponse)</span>
-            <label class="switch-ios">
-                <input type="checkbox" id="champReversible">
-                <span class="switch-ios-slider"></span>
-            </label>
         </div>
         <span class="label-modale">Matière</span>
         <select id="champMatiereSupport" class="champ-modale">
