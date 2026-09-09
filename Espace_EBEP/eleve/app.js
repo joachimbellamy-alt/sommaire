@@ -4180,6 +4180,17 @@ function cleEtatItem(item) {
     return item.inverse ? (item.idx + '_inv') : item.idx;
 }
 
+// Construit la version "à afficher" d'une carte selon le sens de révision.
+// Centralisé ici pour éviter qu'une fonction oublie l'inversion et réaffiche
+// c.question/c.reponse bruts par erreur (bug déjà arrivé une fois : la
+// réponse et la question affichaient alors le même texte en sens inverse).
+function construireQA(item) {
+    const c = item.support.cartes[item.idx];
+    return item.inverse
+        ? { question: c.reponse, reponse: c.question, questionAudio: c.reponseAudio, reponseAudio: c.questionAudio, questionImage: null, exemple: c.exemple, exempleAudio: c.exempleAudio }
+        : c;
+}
+
 function construireVueRevisionCarte(paires) {
     paires.forEach(item => {
         if (!item.support.etat) item.support.etat = {};
@@ -4225,9 +4236,7 @@ function afficherCarteFlash() {
     const c = support.cartes[item.idx];
     // En sens inverse, la réponse devient la question posée et inversement —
     // même carte, même contenu, juste la direction qui change.
-    const qa = item.inverse
-        ? { question: c.reponse, reponse: c.question, questionAudio: c.reponseAudio, reponseAudio: c.questionAudio, questionImage: null }
-        : c;
+    const qa = construireQA(item);
     const etat = support.etat[cleEtatItem(item)];
     const langue = support.langue || 'fr-FR';
 
@@ -4403,19 +4412,22 @@ function finirRevelationFlash() {
     flashRevele = true;
     document.getElementById('carteFlashcard').classList.add('revelee');
     const item = flashSession[flashIndex % flashSession.length];
-    const c = item.support.cartes[item.idx];
+    // qa (et non c) : en sens inverse, la réponse à révéler est la question
+    // d'origine de la carte — sans passer par qa ici, cette fonction
+    // réaffichait par erreur le même texte que la question déjà affichée.
+    const qa = construireQA(item);
 
     document.getElementById('zoneConfiance').style.display = 'none';
     document.getElementById('zoneReponseFlash').style.display = '';
     animerEntree(document.getElementById('zoneReponseFlash'), 'anim-entree');
 
     const repEl = document.getElementById('reponseFlash');
-    repEl.textContent = c.reponse || '';
+    repEl.textContent = qa.reponse || '';
     repEl.style.display = '';
 
-    if (c.exemple || c.exempleAudio) document.getElementById('exempleFlash').style.display = '';
+    if (qa.exemple || qa.exempleAudio) document.getElementById('exempleFlash').style.display = '';
     document.getElementById('btnAudioReponse').style.display = '';
-    if (c.reponseAudio) jouerAudioFlash(c.reponseAudio);
+    if (qa.reponseAudio) jouerAudioFlash(qa.reponseAudio);
 
     document.getElementById('texteConfirmation').textContent = "Tu savais ?";
     document.getElementById('zoneConfirmation').style.display = '';
