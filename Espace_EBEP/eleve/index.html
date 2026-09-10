@@ -787,7 +787,7 @@ body.filtre-actif .masque:not(.due){display:none;}
 <div id="vueEditionTexte" style="display:none;">
     <div class="config-support">
         <div class="config-support-row">
-            <span class="label-modale" style="flex-shrink:0;">🔊 Langue</span>
+            <span class="label-modale" style="flex-shrink:0;">🎙️ Langue (dictée)</span>
             <select id="champLangueSupport" style="flex:1;padding:6px;border:1px solid #e3e3e8;border-radius:8px;font-family:inherit;font-size:13px;" onchange="changerLangueSupport(this.value)">
                 <option value="fr-FR">🇫🇷 Français</option>
                 <option value="en-US">🇬🇧 Anglais</option>
@@ -796,10 +796,6 @@ body.filtre-actif .masque:not(.due){display:none;}
                 <option value="it-IT">🇮🇹 Italien</option>
                 <option value="la">🏛️ Latin</option>
             </select>
-            <select id="champVoixSupport" style="flex:1;padding:6px;border:1px solid #e3e3e8;border-radius:8px;font-family:inherit;font-size:13px;max-width:160px;" onchange="changerVoixSupport(this.value)">
-                <option value="">— Voix auto —</option>
-            </select>
-            <button class="icon-btn" onclick="testerVoixSupport()" style="padding:6px;">🔊</button>
         </div>
     </div>
     <div style="color:var(--gris-texte);font-size:12px;margin-bottom:10px;text-align:center;">
@@ -828,7 +824,7 @@ body.filtre-actif .masque:not(.due){display:none;}
         </div>
         <div class="question-flash" id="questionFlash"></div>
         <img id="imageFlash" class="image-flash" style="display:none;">
-        <button class="btn-audio-central" id="btnAudioQuestion" onclick="lireQuestionFlash()">
+        <button class="btn-audio-central" id="btnAudioQuestion">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
             Écouter la question
         </button>
@@ -860,7 +856,7 @@ body.filtre-actif .masque:not(.due){display:none;}
             <div class="feedback-saisie" id="feedbackSaisie"></div>
         </div>
         <div class="exemple-flash" id="exempleFlash" style="display:none;"></div>
-        <button class="btn-audio-reponse" id="btnAudioReponse" onclick="lireReponseFlash()" style="display:none;">🔊 Écouter la réponse</button>
+        <button class="btn-audio-reponse" id="btnAudioReponse" style="display:none;">🔊 Écouter la réponse</button>
         <div id="zoneConfirmation" class="zone-confirmation" style="display:none;">
             <div id="texteConfirmation" class="texte-confirmation"></div>
             <div class="btns-evaluation" id="btnsEvaluation">

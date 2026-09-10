@@ -2817,7 +2817,6 @@ function chargerEditionTexte() {
     document.getElementById('titreHeader').textContent = supportActif.nom;
     const conteneur = document.getElementById('listeCartesTexte');
     document.getElementById('champLangueSupport').value = supportActif.langue || 'fr-FR';
-    remplirSelecteurVoix();
 
     if (supportActif.cartes.length === 0) {
         conteneur.innerHTML = '<div class="vide" style="padding:20px 10px;">Aucune carte pour l\'instant. Ajoute ta première question/réponse.</div>';
@@ -2870,45 +2869,15 @@ function supprimerImageChamp(idx, champ) {
     chargerEditionTexte();
 }
 
-function remplirSelecteurVoix() {
-    const select = document.getElementById('champVoixSupport');
-    const langue = (supportActif.langue === 'la' ? 'fr-FR' : (supportActif.langue || 'fr-FR'));
-    const prefixe = langue.split('-')[0];
-    if (!voixDisponibles.length) chargerVoixDisponibles();
-    const correspondantes = voixDisponibles.filter(v => v.lang.split('-')[0] === prefixe);
-    select.innerHTML = '<option value="">— Choix automatique —</option>'
-        + correspondantes.map(v => `<option value="${echapperHtml(v.name)}">${echapperHtml(v.name)}${v.localService ? '' : ' (en ligne)'}</option>`).join('');
-    select.value = supportActif.voixNom && correspondantes.some(v => v.name === supportActif.voixNom) ? supportActif.voixNom : '';
-    // Les voix mettent parfois un instant à se charger sur Safari : on retente une fois après un court délai.
-    if (correspondantes.length === 0) {
-        setTimeout(() => {
-            if (document.getElementById('vueEditionTexte').style.display !== 'none') remplirSelecteurVoix();
-        }, 400);
-    }
-}
-
-function changerVoixSupport(valeur) {
-    if (!supportActif) return;
-    supportActif.voixNom = valeur || '';
-    sauvegarderSupports();
-}
-
-function testerVoixSupport() {
-    const texte = (supportActif.cartes[0] && supportActif.cartes[0].question) || 'Ceci est un test de la voix sélectionnée.';
-    lireTexte(texte, supportActif.langue, supportActif.voixNom);
-}
-
+// Langue utilisée pour la reconnaissance vocale (dictée) sur les champs de
+// cette fiche — voir langueDicteeSupport(). Ne sert plus à une voix de
+// lecture (la synthèse vocale a été retirée, jugée de trop mauvaise qualité).
 function changerLangueSupport(valeur) {
     if (!supportActif) return;
     supportActif.langue = valeur;
-    supportActif.voixNom = ''; // la voix précise dépend de la langue, on réinitialise au changement
     sauvegarderSupports();
-    remplirSelecteurVoix();
 }
 
-// Réglage à côté des cartes elles-mêmes (comme Anki : le choix "carte
-// réversible" se fait au niveau du contenu, pas dans un menu annexe sans
-// rapport comme "Renommer").
 function changerStyleRevelation(valeur) {
     if (!supportActif) return;
     supportActif.styleRevelation = valeur;
@@ -2952,34 +2921,9 @@ function getDonneesCarte(carteEl) {
     return s.cartes[carteEl.dataset.idx];
 }
 
-let voixDisponibles = [];
-function chargerVoixDisponibles() { voixDisponibles = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
-if ('speechSynthesis' in window) {
-    chargerVoixDisponibles();
-    window.speechSynthesis.onvoiceschanged = chargerVoixDisponibles;
-}
-
-function lireTexte(texte, langue, voixNom) {
-    if (!texte) return;
-    if (!('speechSynthesis' in window)) { alert("La lecture audio n'est pas disponible sur cet appareil."); return; }
-    window.speechSynthesis.cancel();
-    const langueEffective = (langue === 'la') ? 'fr-FR' : (langue || 'fr-FR');
-    const utter = new SpeechSynthesisUtterance(texte);
-    utter.lang = langueEffective;
-    if (!voixDisponibles.length) chargerVoixDisponibles();
-    let voix = voixNom ? voixDisponibles.find(v => v.name === voixNom) : null;
-    if (!voix) {
-        const prefixe = langueEffective.split('-')[0];
-        voix = voixDisponibles.find(v => v.lang === langueEffective) || voixDisponibles.find(v => v.lang.split('-')[0] === prefixe);
-    }
-    if (voix) utter.voice = voix;
-    window.speechSynthesis.speak(utter);
-}
-
 function creerElementCarte(support, idx) {
     const c = support.cartes[idx];
     const etat = support.etat[idx];
-    const langue = support.langue || 'fr-FR';
     const modeFlip = (support.styleRevelation || 'flou') === 'flip';
 
     const carte = document.createElement('div');
@@ -2992,11 +2936,6 @@ function creerElementCarte(support, idx) {
     const texteQuestion = document.createElement('span');
     texteQuestion.textContent = c.question;
     question.appendChild(texteQuestion);
-    const btnAudioQ = document.createElement('button');
-    btnAudioQ.className = 'btn-audio';
-    btnAudioQ.textContent = '🔊';
-    btnAudioQ.addEventListener('click', (ev) => { ev.stopPropagation(); lireTexte(c.question, langue, support.voixNom); });
-    question.appendChild(btnAudioQ);
     if (modeSessionMelangee) {
         const etiquette = document.createElement('div');
         etiquette.className = 'etiquette-support-melange';
@@ -3050,11 +2989,6 @@ function creerElementCarte(support, idx) {
         exemple.textContent = '« ' + c.exemple + ' »';
         contenuReponse.appendChild(exemple);
     }
-    const btnAudioR = document.createElement('button');
-    btnAudioR.className = 'btn-audio btn-audio-reponse';
-    btnAudioR.textContent = '🔊';
-    btnAudioR.addEventListener('click', (ev) => { ev.stopPropagation(); lireTexte(c.reponse, langue, support.voixNom); });
-    contenuReponse.appendChild(btnAudioR);
 
     if (modeFlip) {
         const inner = document.createElement('div');
@@ -4231,7 +4165,6 @@ function afficherCarteFlash() {
     // même carte, même contenu, juste la direction qui change.
     const qa = construireQA(item);
     const etat = support.etat[cleEtatItem(item)];
-    const langue = support.langue || 'fr-FR';
 
     // Point 4 — délai de réflexion de 2s avant de pouvoir révéler, sauf si
     // cette carte a déjà été vue plus tôt dans la session (ex. carte ratée
@@ -4266,12 +4199,16 @@ function afficherCarteFlash() {
     if (imgSrc) { imgEl.src = imgSrc; imgEl.style.display = ''; }
     else imgEl.style.display = 'none';
 
-    // Bouton audio central
+    // Bouton audio central — uniquement s'il existe un vrai enregistrement
+    // pour cette question (plus de repli sur une voix de synthèse robotique).
     const btnAQ = document.getElementById('btnAudioQuestion');
-    btnAQ.onclick = qa.questionAudio
-        ? () => jouerAudioFlash(qa.questionAudio)
-        : () => lireTexte(qa.question || '', langue, support.voixNom || '');
-    btnAQ.classList.remove('playing');
+    if (qa.questionAudio) {
+        btnAQ.style.display = '';
+        btnAQ.onclick = () => jouerAudioFlash(qa.questionAudio);
+    } else {
+        btnAQ.style.display = 'none';
+        btnAQ.onclick = null;
+    }
 
     document.getElementById('zoneConfiance').style.display = '';
     document.querySelectorAll('.conf-btn').forEach(b => b.classList.remove('selected'));
@@ -4286,12 +4223,11 @@ function afficherCarteFlash() {
     afficherTexteOuAudio('exempleFlash', c.exemple ? '« ' + c.exemple + ' »' : '', c.exempleAudio);
     document.getElementById('zoneConfirmation').style.display = 'none';
 
-    // Réponse audio
+    // Réponse audio — affiché seulement lors de la révélation (voir
+    // finirRevelationFlash), et seulement s'il existe un vrai enregistrement.
     const btnAR = document.getElementById('btnAudioReponse');
     btnAR.style.display = 'none';
-    btnAR.onclick = qa.reponseAudio
-        ? () => jouerAudioFlash(qa.reponseAudio)
-        : () => lireTexte(qa.reponse || '', langue, support.voixNom || '');
+    btnAR.onclick = qa.reponseAudio ? () => jouerAudioFlash(qa.reponseAudio) : null;
 
     // Indice (celui saisi à la création de la fiche)
     afficherTexteOuAudio('indiceProfFlash', c.indice ? '💡 ' + c.indice : (c.indiceAudio ? '💡' : ''), c.indiceAudio);
@@ -4419,29 +4355,13 @@ function finirRevelationFlash() {
     repEl.style.display = '';
 
     if (qa.exemple || qa.exempleAudio) document.getElementById('exempleFlash').style.display = '';
-    document.getElementById('btnAudioReponse').style.display = '';
+    // Bouton "Écouter la réponse" : seulement s'il existe un vrai
+    // enregistrement (plus de repli sur une voix de synthèse).
+    document.getElementById('btnAudioReponse').style.display = qa.reponseAudio ? '' : 'none';
     if (qa.reponseAudio) jouerAudioFlash(qa.reponseAudio);
 
     document.getElementById('texteConfirmation').textContent = "Tu savais ?";
     document.getElementById('zoneConfirmation').style.display = '';
-}
-
-function lireQuestionFlash() {
-    const item = flashSession[flashIndex % flashSession.length];
-    if (!item) return;
-    const c = item.support.cartes[item.idx];
-    const langue = item.support.langue || 'fr-FR';
-    if (c.questionAudio) jouerAudioFlash(c.questionAudio);
-    else lireTexte(c.question || '', langue, item.support.voixNom || '');
-}
-
-function lireReponseFlash() {
-    const item = flashSession[flashIndex % flashSession.length];
-    if (!item) return;
-    const c = item.support.cartes[item.idx];
-    const langue = item.support.langue || 'fr-FR';
-    if (c.reponseAudio) jouerAudioFlash(c.reponseAudio);
-    else lireTexte(c.reponse || '', langue, item.support.voixNom || '');
 }
 
 function evaluerFlash(resultat) {
