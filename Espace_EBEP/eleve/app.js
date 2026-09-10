@@ -4231,7 +4231,27 @@ function afficherCarteFlash() {
 
     // Indice (celui saisi à la création de la fiche)
     afficherTexteOuAudio('indiceProfFlash', c.indice ? '💡 ' + c.indice : (c.indiceAudio ? '💡' : ''), c.indiceAudio);
-    document.getElementById('indicePersoFlash').value = etat ? (etat.indicePerso || '') : '';
+    const champIndicePerso = document.getElementById('indicePersoFlash');
+    champIndicePerso.value = etat ? (etat.indicePerso || '') : '';
+    // Enregistrement immédiat à la saisie : avant ce correctif, l'indice
+    // personnel n'était sauvegardé qu'au moment d'évaluer la carte — si
+    // l'élève quittait la session (ou fermait l'app) juste après avoir tapé
+    // son indice sans aller au bout de l'évaluation, tout était perdu sans
+    // aucun avertissement. Écouteur posé une seule fois (dataset.listenerInit),
+    // il retrouve à chaque frappe la carte réellement affichée à cet instant.
+    if (!champIndicePerso.dataset.listenerInit) {
+        champIndicePerso.dataset.listenerInit = '1';
+        champIndicePerso.addEventListener('input', () => {
+            const itemCourant = flashSession[flashIndex % flashSession.length];
+            if (!itemCourant) return;
+            const cle = cleEtatItem(itemCourant);
+            if (!itemCourant.support.etat[cle]) {
+                itemCourant.support.etat[cle] = { box: 1, nextDue: todayStr(), indicePerso: '', autoExplication: '' };
+            }
+            itemCourant.support.etat[cle].indicePerso = champIndicePerso.value;
+            sauvegarderSupportsDifferee();
+        });
+    }
     document.getElementById('carteFlashcard').classList.remove('indice-ouvert', 'correcte', 'incorrecte', 'revelee');
     // Charger l'audio de l'indice perso si existant
     majUIIndiceAudio(etat && etat.indicePersoAudio ? etat.indicePersoAudio : null);
