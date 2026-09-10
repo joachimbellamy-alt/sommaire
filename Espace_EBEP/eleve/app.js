@@ -4242,19 +4242,26 @@ function afficherCarteFlash() {
     if (!champIndicePerso.dataset.listenerInit) {
         champIndicePerso.dataset.listenerInit = '1';
         champIndicePerso.addEventListener('input', () => {
+            // Ne PAS utiliser la variable "c" fermée par ce bloc : cet écouteur
+            // n'est posé qu'une seule fois (guard listenerInit ci-dessus), donc
+            // sa fermeture garderait à jamais la toute première carte affichée.
+            // On retrouve ici la vraie carte courante à l'instant de la frappe.
             const itemCourant = flashSession[flashIndex % flashSession.length];
             if (!itemCourant) return;
+            const carteCourante = itemCourant.support.cartes[itemCourant.idx];
             const cle = cleEtatItem(itemCourant);
             if (!itemCourant.support.etat[cle]) {
                 itemCourant.support.etat[cle] = { box: 1, nextDue: todayStr(), indicePerso: '', autoExplication: '' };
             }
             itemCourant.support.etat[cle].indicePerso = champIndicePerso.value;
             sauvegarderSupportsDifferee();
+            majBoutonIndiceFlash(carteCourante, itemCourant.support.etat[cle]);
         });
     }
     document.getElementById('carteFlashcard').classList.remove('indice-ouvert', 'correcte', 'incorrecte', 'revelee');
     // Charger l'audio de l'indice perso si existant
     majUIIndiceAudio(etat && etat.indicePersoAudio ? etat.indicePersoAudio : null);
+    majBoutonIndiceFlash(c, etat);
 
     animerEntree(document.getElementById('carteFlashcard'), 'anim-entree');
     animerEntree(document.getElementById('zoneConfiance'), 'anim-entree');
@@ -4532,6 +4539,16 @@ function recommencerSession() {
 function changerModeRevision(mode) {
     modeRevisionFlash = mode;
     afficherCarteFlash();
+}
+
+// Colore le bouton 💡 Indice dès qu'il y a quelque chose à voir dedans —
+// l'indice du prof (texte ou audio) ou l'indice personnel de l'élève
+// (texte ou audio) — même logique que les zones masquées.
+function majBoutonIndiceFlash(carte, etat) {
+    const btn = document.getElementById('btnIndiceFlash');
+    if (!btn) return;
+    const aUnIndice = !!(carte.indice || carte.indiceAudio || (etat && (etat.indicePerso || etat.indicePersoAudio)));
+    btn.classList.toggle('a-un-indice', aUnIndice);
 }
 
 function toggleIndiceFlash() {
@@ -4902,10 +4919,15 @@ function demarrerEnrIndicePerso() {
             reader.onload = ev => {
                 const item = flashSession[flashIndex % flashSession.length];
                 if (!item) return;
-                if (!item.support.etat[item.idx]) return;
-                item.support.etat[item.idx].indicePersoAudio = ev.target.result;
+                // cleEtatItem (pas item.idx) : en sens inversé, l'indice audio
+                // doit se ranger sous la clé '_inv', sinon il était perdu en
+                // silence (etat[item.idx] n'existe pas dans ce sens).
+                const cle = cleEtatItem(item);
+                if (!item.support.etat[cle]) return;
+                item.support.etat[cle].indicePersoAudio = ev.target.result;
                 sauvegarderSupports();
                 majUIIndiceAudio(ev.target.result);
+                majBoutonIndiceFlash(item.support.cartes[item.idx], item.support.etat[cle]);
             };
             reader.readAsDataURL(blob);
             indiceEnregistrement = false;
@@ -4941,10 +4963,13 @@ function majUIIndiceAudio(src) {
 
 function supprimerIndiceAudio() {
     const item = flashSession[flashIndex % flashSession.length];
-    if (!item || !item.support.etat[item.idx]) return;
-    delete item.support.etat[item.idx].indicePersoAudio;
+    if (!item) return;
+    const cle = cleEtatItem(item);
+    if (!item.support.etat[cle]) return;
+    delete item.support.etat[cle].indicePersoAudio;
     sauvegarderSupports();
     majUIIndiceAudio(null);
+    majBoutonIndiceFlash(item.support.cartes[item.idx], item.support.etat[cle]);
 }
 
 /* ── Haptic feedback ── */
