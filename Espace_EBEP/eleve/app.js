@@ -616,7 +616,10 @@ function exporterDonnees() {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     const dateStr = new Date().toISOString().slice(0, 10);
-    a.download = 'sauvegarde-revisions-' + dateStr + '.json';
+    // Extension .memorevisions (pas .json) : voir commentaire dans
+    // partagerSupport() ci-dessous — évite qu'un aperçu iOS (Fichiers,
+    // pièce jointe...) affiche le contenu en texte brut façon "code".
+    a.download = 'sauvegarde-revisions-' + dateStr + '.memorevisions';
     a.click();
     // Mémoriser la date de sauvegarde
     localStorage.setItem('memo_derniere_sauvegarde', Date.now().toString());
@@ -635,7 +638,13 @@ async function partagerSupport() {
     if (!supportActif) return;
     const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: [supportActif] };
     const texte = JSON.stringify(paquet, null, 2);
-    const nomFichier = 'support-' + supportActif.nom.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.json';
+    // Extension .memorevisions plutôt que .json : un aperçu natif iOS
+    // (Fichiers, pièce jointe mail/AirDrop) affiche systématiquement le
+    // contenu texte brut d'un .json — donnant l'impression trompeuse d'un
+    // fichier "de code" compliqué. Une extension non standard n'est pas
+    // reconnue par l'aperçu, qui affiche alors une icône générique au lieu
+    // du contenu. L'import accepte toujours les deux extensions.
+    const nomFichier = 'support-' + supportActif.nom.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.memorevisions';
     // Voir commentaire dans exporterDonnees() : octet-stream force le
     // téléchargement au lieu d'afficher le JSON brut dans un nouvel onglet.
     const blob = new Blob([texte], { type: 'application/octet-stream' });
@@ -4758,7 +4767,7 @@ function exporterMatiere(matiere) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'export-' + nomMatiereFichier + '-' + dateStr + '.json';
+    a.download = 'export-' + nomMatiereFichier + '-' + dateStr + '.memorevisions';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
