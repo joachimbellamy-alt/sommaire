@@ -801,21 +801,16 @@ body.filtre-actif .masque:not(.due){display:none;}
             </select>
             <button class="icon-btn" onclick="testerVoixSupport()" style="padding:6px;">🔊</button>
         </div>
-        <div class="settings-row" style="cursor:default;padding:8px 0 0;">
-            <span class="settings-icon">🔁</span>
-            <span class="settings-label" style="font-size:13px;">Cartes réversibles (question ↔ réponse)</span>
-            <label class="switch-ios">
-                <input type="checkbox" id="champReversibleEdition" onchange="changerReversibleEdition(this.checked)">
-                <span class="switch-ios-slider"></span>
-            </label>
-        </div>
     </div>
     <div style="color:var(--gris-texte);font-size:12px;margin-bottom:10px;text-align:center;">
         <strong id="compteurCartesTexte">0 carte</strong> — tape une carte pour la modifier
     </div>
     <div id="listeCartesTexte"></div>
     <button class="bouton-principal" onclick="ajouterCarteTexte()">+ Ajouter une carte</button>
-    <button class="bouton-principal" id="btnReviserFlash" onclick="ouvrirRevision(supportActif && supportActif.id)" style="display:none;margin-top:8px;background:#34C759;">🧠 Réviser maintenant →</button>
+    <div id="wrapReviserFlash" style="display:none;margin-top:8px;gap:8px;">
+        <button class="bouton-principal" id="btnReviserFlash" onclick="ouvrirRevision(supportActif && supportActif.id)" style="flex:1;background:#34C759;">🧠 Réviser →</button>
+        <button class="bouton-principal" onclick="demarrerRevisionInverse(supportActif && supportActif.id)" style="flex:1;background:#5856D6;">🔁 Sens inversé →</button>
+    </div>
 </div>
 
 <!-- ===================== VUE RÉVISION FLASHCARDS (une carte à la fois) ===================== -->
@@ -1286,18 +1281,18 @@ body.filtre-actif .masque:not(.due){display:none;}
         <div class="sheet-handle-bar"></div>
         <div class="sheet-ajouter-titre" id="sheetActionsTitre">Actions</div>
         <div class="sheet-tuiles">
-            <button type="button" class="sheet-tuile" onclick="actionFiche('reviser')">
+            <button type="button" class="sheet-tuile" id="btnReviserNormalSheet" onclick="actionFiche('reviser')">
                 <div class="sheet-tuile-ic">🧠</div>
                 <div class="sheet-tuile-texte">
-                    <div class="sheet-tuile-titre">Réviser</div>
+                    <div class="sheet-tuile-titre" id="titreReviserNormalSheet">Réviser</div>
                     <div class="sheet-tuile-sous">Lancer une session de révision</div>
                 </div>
             </button>
             <button type="button" class="sheet-tuile" id="btnReviserInverseSheet" onclick="actionFiche('reviser-inverse')" style="display:none;">
                 <div class="sheet-tuile-ic">🔁</div>
                 <div class="sheet-tuile-texte">
-                    <div class="sheet-tuile-titre">Réviser en sens inverse</div>
-                    <div class="sheet-tuile-sous">La réponse devient la question</div>
+                    <div class="sheet-tuile-titre">Réviser en sens inversé</div>
+                    <div class="sheet-tuile-sous">Réponse → Question</div>
                 </div>
             </button>
             <button type="button" class="sheet-tuile" onclick="actionFiche('modifier')">

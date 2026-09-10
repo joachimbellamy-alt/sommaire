@@ -1426,7 +1426,6 @@ function validerNouveauSupport() {
     };
     if (type === 'texte') {
         support.cartes = [];
-        support.reversible = false; // réglable ensuite dans "Modifier le contenu", à côté des cartes elles-mêmes
     } else {
         support.pages = [{ image: '', zones: [] }];
     }
@@ -1492,10 +1491,11 @@ function ouvrirRevision(id) {
     construireVueRevision();
 }
 
-// Cartes réversibles (fiche.reversible === true) : lance une session où
-// chaque carte est posée réponse → question. Progression SM-2 propre à ce
-// sens (voir cleEtatItem), indépendante du sens normal — un élève peut très
-// bien maîtriser une direction sans l'autre.
+// Cartes réversibles : n'importe quelle fiche flashcards non vide peut être
+// révisée dans les deux sens, proposés côte à côte au moment de choisir
+// (menu ⋯ ou écran d'édition) — pas de réglage à activer au préalable.
+// Progression SM-2 propre à ce sens (voir cleEtatItem), indépendante du sens
+// normal : un élève peut très bien maîtriser une direction sans l'autre.
 function demarrerRevisionInverse(id) {
     const s = supports.find(x => x.id === id);
     if (!s || s.type !== 'texte' || !s.cartes || s.cartes.length === 0) return;
@@ -2817,7 +2817,6 @@ function chargerEditionTexte() {
     document.getElementById('titreHeader').textContent = supportActif.nom;
     const conteneur = document.getElementById('listeCartesTexte');
     document.getElementById('champLangueSupport').value = supportActif.langue || 'fr-FR';
-    document.getElementById('champReversibleEdition').checked = !!supportActif.reversible;
     remplirSelecteurVoix();
 
     if (supportActif.cartes.length === 0) {
@@ -2861,8 +2860,8 @@ function chargerEditionTexte() {
         }));
     }
     definirTexte('compteurCartesTexte', supportActif.cartes.length + ' carte' + (supportActif.cartes.length === 1 ? '' : 's'));
-    const btnRevFlash = document.getElementById('btnReviserFlash');
-    if (btnRevFlash) btnRevFlash.style.display = supportActif.cartes.length > 0 ? '' : 'none';
+    const wrapRevFlash = document.getElementById('wrapReviserFlash');
+    if (wrapRevFlash) wrapRevFlash.style.display = supportActif.cartes.length > 0 ? 'flex' : 'none';
 }
 
 function supprimerImageChamp(idx, champ) {
@@ -2910,12 +2909,6 @@ function changerLangueSupport(valeur) {
 // Réglage à côté des cartes elles-mêmes (comme Anki : le choix "carte
 // réversible" se fait au niveau du contenu, pas dans un menu annexe sans
 // rapport comme "Renommer").
-function changerReversibleEdition(coche) {
-    if (!supportActif) return;
-    supportActif.reversible = coche;
-    sauvegarderSupports();
-}
-
 function changerStyleRevelation(valeur) {
     if (!supportActif) return;
     supportActif.styleRevelation = valeur;
@@ -4636,10 +4629,14 @@ function ouvrirSheetActions(id, nom) {
     const titre = document.getElementById('sheetActionsTitre');
     if (titre) titre.textContent = nom || 'Actions';
     const s = supports.find(x => x.id === id);
+    // Toute fiche flashcards non vide peut être révisée dans les deux sens —
+    // les deux tuiles sont proposées côte à côte au moment de choisir,
+    // plutôt que de dépendre d'un réglage activé au préalable ailleurs.
+    const estFlashcardsAvecCartes = !!(s && s.type === 'texte' && (s.cartes || []).length > 0);
     const btnInverse = document.getElementById('btnReviserInverseSheet');
-    if (btnInverse) {
-        btnInverse.style.display = (s && s.type === 'texte' && s.reversible && (s.cartes || []).length > 0) ? '' : 'none';
-    }
+    if (btnInverse) btnInverse.style.display = estFlashcardsAvecCartes ? '' : 'none';
+    const titreNormal = document.getElementById('titreReviserNormalSheet');
+    if (titreNormal) titreNormal.textContent = estFlashcardsAvecCartes ? 'Réviser — Question → Réponse' : 'Réviser';
     document.getElementById('sheetActionsFiche').style.display = '';
 }
 
