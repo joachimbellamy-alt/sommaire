@@ -929,6 +929,7 @@ function goTab(tab) {
         document.getElementById('tabReglages').classList.add('actif');
         afficherVue('reglages');
         afficherEspaceStockage();
+        verifierDeblocageIA();
     }
 }
 
@@ -1302,6 +1303,109 @@ function changerRejouerRatees(actif) {
 function chargerPreferenceRejouerRatees() {
     const champ = document.getElementById('champRejouerRatees');
     if (champ) champ.checked = rejouerRateesActif();
+}
+
+/* ---------------- Fonction cachée : générer des flashcards par IA ----------------
+   Débloquée en tapant 5 fois de suite sur la mention "Application conçue par..."
+   en bas de Réglages, puis en entrant le code. Ne fait AUCUN appel réseau/IA
+   depuis l'app elle-même (ce serait exposer une clé API dans le code public
+   du site, récupérable par n'importe qui) : le bouton copie simplement un
+   prompt tout prêt, à coller dans une IA séparée avec une photo de cours. */
+const CODE_SECRET_IA = 'Otisbellamy5@';
+const CLE_DEBLOCAGE_IA = 'memo_ia_debloquee';
+let tapsFooterSecret = 0;
+let tapsFooterTimer = null;
+
+function tapFooterSecret() {
+    tapsFooterSecret++;
+    clearTimeout(tapsFooterTimer);
+    tapsFooterTimer = setTimeout(() => { tapsFooterSecret = 0; }, 2500);
+    if (tapsFooterSecret >= 5) {
+        tapsFooterSecret = 0;
+        const saisie = prompt('Code ?');
+        if (saisie === null) return;
+        if (saisie === CODE_SECRET_IA) {
+            localStorage.setItem(CLE_DEBLOCAGE_IA, '1');
+            verifierDeblocageIA();
+            afficherToastMsg('🪄 Fonction débloquée sur cet appareil.', 2500);
+        } else {
+            alert('Code incorrect.');
+        }
+    }
+}
+
+function verifierDeblocageIA() {
+    const ligne = document.getElementById('ligneGenerationIA');
+    if (ligne) ligne.style.display = localStorage.getItem(CLE_DEBLOCAGE_IA) === '1' ? '' : 'none';
+}
+
+const PROMPT_GENERATION_IA = `Tu es un assistant qui transforme une photo de cours (manuscrit ou imprimé) en flashcards de révision, au format JSON exact utilisé par l'application "Mémo Révisions".
+
+## Ta tâche
+
+1. Lis attentivement le contenu de la ou des photos fournies.
+2. Extrais les notions clés sous forme de paires question/réponse, adaptées à de la révision par répétition espacée (une notion précise par carte, pas de question fourre-tout).
+3. Génère un fichier JSON strictement conforme au format ci-dessous.
+
+## Règles de rigueur (important)
+
+- N'invente jamais un chiffre, une date ou un fait qui n'est pas clairement lisible sur la photo. Si un passage est illisible ou ambigu, ignore-le plutôt que de deviner — mieux vaut moins de cartes mais fiables.
+- Si l'écriture manuscrite est incertaine sur un mot ou un nombre précis, signale-le à la fin de ta réponse dans une liste séparée ("Points à vérifier"), plutôt que de l'intégrer tel quel dans une carte.
+- Une carte = une seule notion. Découpe les phrases longues ou les énumérations en plusieurs cartes plutôt qu'une carte avec 5 sous-parties.
+- Les réponses peuvent être multi-lignes (utilise \\n dans le JSON) pour structurer une réponse en plusieurs points, mais reste concis — une carte se lit en quelques secondes.
+- Formule les questions de façon autonome (compréhensibles sans avoir le cours sous les yeux).
+- Ne recopie pas mot pour mot de longs passages d'un manuel scolaire (droits d'auteur) — reformule avec tes propres mots à partir des notes.
+
+## Format JSON exact à produire
+
+\`\`\`json
+{
+  "type": "sauvegarde-memo-revisions",
+  "version": 1,
+  "exporteLe": "AAAA-MM-JJTHH:mm:ss.000Z",
+  "supports": [{
+    "id": "identifiant-court-en-minuscules-avec-tirets",
+    "nom": "Titre court de la fiche",
+    "matiere": "Maths",
+    "chapitre": "Ch. X — Nom du chapitre",
+    "type": "texte",
+    "etat": {},
+    "mode": "simple",
+    "creeLe": 1700000000000,
+    "cartes": [
+      { "question": "...", "reponse": "..." }
+    ]
+  }]
+}
+\`\`\`
+
+### Précisions sur les champs
+
+- id : un identifiant unique, en minuscules, mots séparés par des tirets (ex. "ses-pib-croissance-001"). Invente-le à partir du sujet.
+- nom : titre affiché de la fiche dans l'app (ex. "PIB et croissance économique").
+- matiere : une valeur parmi Français, Maths, Histoire-Géo-EMC, Anglais, Espagnol, EMI, Sciences, SVT, Sciences physiques, Latin, Éducation musicale, Arts plastiques, Autre — ou une matière libre si aucune ne convient (ex. "SES" pour un lycéen), l'app l'accepte aussi.
+- chapitre : facultatif mais recommandé, courte étiquette du chapitre concerné.
+- etat : toujours un objet vide {} (l'app initialise elle-même le suivi de progression).
+- mode : toujours "simple".
+- creeLe : un timestamp Unix en millisecondes (une valeur approximative de "maintenant" convient).
+- cartes : la liste des flashcards, chacune avec uniquement question et reponse (pas d'autres champs).
+
+## Ce que tu dois me rendre
+
+1. Le JSON complet, dans un bloc de code, prêt à copier.
+2. En dessous, une liste "Points à vérifier" si certains passages de la photo étaient illisibles ou incertains (sinon, indique "Aucun point d'incertitude").`;
+
+function lancerPromptGenerationIA() {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(PROMPT_GENERATION_IA)
+            .then(() => afficherToastMsg('📋 Prompt copié !', 2500))
+            .catch(() => alert(PROMPT_GENERATION_IA));
+    } else {
+        alert(PROMPT_GENERATION_IA);
+    }
+    setTimeout(() => {
+        alert("Prochaines étapes :\n\n1. Ouvre une IA capable de lire des images (Claude, ChatGPT...)\n2. Colle le prompt (déjà copié) + joins la photo du cours\n3. Récupère le JSON produit, enregistre-le en .json\n4. Dans l'app : bouton + → Importer des flashcards");
+    }, 300);
 }
 
 async function afficherEspaceStockage() {

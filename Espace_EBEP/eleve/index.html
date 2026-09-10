@@ -1006,11 +1006,18 @@ body.filtre-actif .masque:not(.due){display:none;}
         <input type="file" id="inputImport" accept=".memorevisions,.json,application/json,text/plain,text/*" multiple style="display:none;">
     </div>
 
+    <div id="ligneGenerationIA" class="settings-row" onclick="lancerPromptGenerationIA()" style="display:none;">
+        <span class="settings-icon">🪄</span>
+        <span class="settings-label">Générer des flashcards par IA</span>
+        <span class="settings-arrow">›</span>
+    </div>
+
     <div id="espaceStockageReglages"></div>
     <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;">
         Mes révisions · <span id="versionApp">v121</span> · Données stockées sur cet appareil
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--gris-texte);padding-bottom:4px;">
+    <!-- Tape 5 fois de suite sur cette ligne pour débloquer "Générer des flashcards par IA" ci-dessus. -->
+    <div style="text-align:center;font-size:11px;color:var(--gris-texte);padding-bottom:4px;" onclick="tapFooterSecret()">
         Application conçue par M. Bellamy, professeur de français et latin
     </div>
 </div>
