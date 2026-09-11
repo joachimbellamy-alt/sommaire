@@ -602,7 +602,7 @@ function telechargerRappels() {
     fermerModalRappel();
 }
 
-/* ---------------- Sauvegarde / restauration manuelle (fichier .memorevisions) ---------------- */
+/* ---------------- Sauvegarde / restauration manuelle (fichier .json) ---------------- */
 
 // Sur iOS/iPadOS, TOUT téléchargement de fichier texte (quel que soit son
 // type MIME ou son extension) déclenche l'écran de téléchargement natif de
@@ -652,7 +652,7 @@ function exporterDonnees() {
     const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: supports };
     const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: 'application/octet-stream' });
     const dateStr = new Date().toISOString().slice(0, 10);
-    exporterFichierApp(blob, 'sauvegarde-revisions-' + dateStr + '.memorevisions').then((reussi) => {
+    exporterFichierApp(blob, 'sauvegarde-revisions-' + dateStr + '.json').then((reussi) => {
         if (!reussi) return; // annulé par l'élève : ne pas marquer la sauvegarde comme faite
         localStorage.setItem('memo_derniere_sauvegarde', Date.now().toString());
         cacherBannieresSauvegarde();
@@ -671,7 +671,7 @@ async function partagerSupport() {
     if (!supportActif) return;
     const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: [supportActif] };
     const texte = JSON.stringify(paquet, null, 2);
-    const nomFichier = 'support-' + supportActif.nom.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.memorevisions';
+    const nomFichier = 'support-' + supportActif.nom.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.json';
     const blob = new Blob([texte], { type: 'application/octet-stream' });
     await exporterFichierApp(blob, nomFichier);
 }
@@ -4870,7 +4870,7 @@ function exporterMatiere(matiere) {
     const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: 'application/octet-stream' });
     const nomMatiereFichier = matiere.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40);
     const dateStr = new Date().toISOString().slice(0, 10);
-    exporterFichierApp(blob, 'export-' + nomMatiereFichier + '-' + dateStr + '.memorevisions');
+    exporterFichierApp(blob, 'export-' + nomMatiereFichier + '-' + dateStr + '.json');
 }
 
 function fermerSheetExportImport(ev) {
