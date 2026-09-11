@@ -1003,7 +1003,7 @@ body.filtre-actif .masque:not(.due){display:none;}
             <span class="settings-label">Importer une sauvegarde</span>
             <span class="settings-arrow">›</span>
         </div>
-        <input type="file" id="inputImport" accept=".memorevisions,.json,application/json,text/plain,text/*" multiple style="display:none;">
+        <input type="file" id="inputImport" accept=".memorevisions,.json,application/json,text/plain,text/*,*/*" multiple style="display:none;">
     </div>
 
     <div id="ligneGenerationIA" class="settings-row" onclick="lancerPromptGenerationIA()" style="display:none;">
@@ -1277,7 +1277,7 @@ body.filtre-actif .masque:not(.due){display:none;}
         <button class="sheet-annuler" onclick="fermerSheetAjouter()">Annuler</button>
     </div>
 </div>
-<input type="file" id="inputImportFlash" accept=".memorevisions,.json,application/json,text/plain,text/*" multiple style="display:none;">
+<input type="file" id="inputImportFlash" accept=".memorevisions,.json,application/json,text/plain,text/*,*/*" multiple style="display:none;">
 
 <!-- Sheet actions fiche -->
 <div id="sheetActionsFiche" style="display:none;position:fixed;inset:0;z-index:8100;background:rgba(0,0,0,0.4);" onclick="fermerSheetActions(event)">
@@ -1437,7 +1437,7 @@ body.filtre-actif .masque:not(.due){display:none;}
         <button class="sheet-annuler" onclick="fermerSheetExportImport()">Annuler</button>
     </div>
 </div>
-<input type="file" id="inputImportTotal" accept=".memorevisions,.json,application/json,text/plain,text/*" multiple style="display:none;">
+<input type="file" id="inputImportTotal" accept=".memorevisions,.json,application/json,text/plain,text/*,*/*" multiple style="display:none;">
 
 <!-- ===================== ONBOARDING ===================== -->
 <div id="overlayOnboarding" style="display:none;position:fixed;inset:0;z-index:9000;background:#F2F2F7;flex-direction:column;">
