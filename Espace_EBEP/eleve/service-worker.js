@@ -1,4 +1,4 @@
-const CACHE_NAME = 'memo-eleve-v137';
+const CACHE_NAME = 'memo-eleve-v138';
 const FICHIERS_A_METTRE_EN_CACHE = [
     './',
     './index.html',
