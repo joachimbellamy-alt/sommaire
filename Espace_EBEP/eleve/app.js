@@ -602,28 +602,61 @@ function telechargerRappels() {
     fermerModalRappel();
 }
 
-/* ---------------- Sauvegarde / restauration manuelle (fichier .json) ---------------- */
+/* ---------------- Sauvegarde / restauration manuelle (fichier .memorevisions) ---------------- */
+
+// Sur iOS/iPadOS, TOUT téléchargement de fichier texte (quel que soit son
+// type MIME ou son extension) déclenche l'écran de téléchargement natif de
+// Safari, qui affiche un aperçu du contenu — pour un JSON, ça ressemble à
+// des "hiéroglyphes" intimidants. C'est un comportement du système, pas du
+// navigateur ni de notre code : aucun réglage de Blob ne peut l'empêcher.
+// La feuille de partage native (AirDrop, Mail, Enregistrer dans Fichiers...)
+// n'a pas ce défaut : elle affiche juste une icône de fichier générique.
+// On l'utilise donc en priorité sur iOS/iPadOS, avec repli automatique sur
+// le téléchargement classique si le partage échoue ou n'est pas disponible.
+// Sur Mac, on garde le téléchargement classique : c'est là, historiquement,
+// que la feuille de partage posait problème (pas de bouton "Enregistrer").
+// Renvoie true si le fichier a bien été partagé/téléchargé, false si l'élève
+// a fermé la feuille de partage sans rien choisir (annulation délibérée —
+// à ne pas confondre avec un échec, cf. appelants qui n'agissent qu'en cas
+// de succès, ex. mémoriser la date de sauvegarde).
+async function exporterFichierApp(blob, nomFichier) {
+    const estIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+    if (estIOS && navigator.share && navigator.canShare) {
+        try {
+            const fichier = new File([blob], nomFichier, { type: blob.type });
+            if (navigator.canShare({ files: [fichier] })) {
+                await navigator.share({ files: [fichier] });
+                return true;
+            }
+        } catch (err) {
+            // AbortError = l'élève a fermé la feuille de partage sans choisir :
+            // c'est un choix délibéré, pas une erreur.
+            if (err && err.name === 'AbortError') return false;
+            // Autre erreur (type de fichier refusé, API indisponible...) :
+            // on continue vers le téléchargement classique ci-dessous.
+        }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nomFichier;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return true;
+}
 
 function exporterDonnees() {
     if (supports.length === 0) { alert("Tu n'as encore aucune fiche à exporter."); return; }
     const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: supports };
-    // application/octet-stream plutôt que application/json : ce dernier est un
-    // type que le navigateur sait afficher, donc certains (Safari sur Mac en
-    // tête) ouvrent le JSON en texte brut dans un nouvel onglet au lieu de le
-    // télécharger — donnant l'impression trompeuse d'un fichier "de code".
-    // Un type non reconnu force un vrai téléchargement, sans jamais l'afficher.
     const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: 'application/octet-stream' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
     const dateStr = new Date().toISOString().slice(0, 10);
-    // Extension .memorevisions (pas .json) : voir commentaire dans
-    // partagerSupport() ci-dessous — évite qu'un aperçu iOS (Fichiers,
-    // pièce jointe...) affiche le contenu en texte brut façon "code".
-    a.download = 'sauvegarde-revisions-' + dateStr + '.memorevisions';
-    a.click();
-    // Mémoriser la date de sauvegarde
-    localStorage.setItem('memo_derniere_sauvegarde', Date.now().toString());
-    cacherBannieresSauvegarde();
+    exporterFichierApp(blob, 'sauvegarde-revisions-' + dateStr + '.memorevisions').then((reussi) => {
+        if (!reussi) return; // annulé par l'élève : ne pas marquer la sauvegarde comme faite
+        localStorage.setItem('memo_derniere_sauvegarde', Date.now().toString());
+        cacherBannieresSauvegarde();
+    });
 }
 
 function exporterSupportId(id) {
@@ -638,38 +671,9 @@ async function partagerSupport() {
     if (!supportActif) return;
     const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: [supportActif] };
     const texte = JSON.stringify(paquet, null, 2);
-    // Extension .memorevisions plutôt que .json : un aperçu natif iOS
-    // (Fichiers, pièce jointe mail/AirDrop) affiche systématiquement le
-    // contenu texte brut d'un .json — donnant l'impression trompeuse d'un
-    // fichier "de code" compliqué. Une extension non standard n'est pas
-    // reconnue par l'aperçu, qui affiche alors une icône générique au lieu
-    // du contenu. L'import accepte toujours les deux extensions.
     const nomFichier = 'support-' + supportActif.nom.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '.memorevisions';
-    // Voir commentaire dans exporterDonnees() : octet-stream force le
-    // téléchargement au lieu d'afficher le JSON brut dans un nouvel onglet.
     const blob = new Blob([texte], { type: 'application/octet-stream' });
-
-    // On utilise partout le téléchargement natif du navigateur (<a download>).
-    // C'est fiable sur Mac, Android ET iOS/iPadOS Safari (depuis iOS 13) : le
-    // fichier part directement dans Fichiers > Téléchargements, sans dépendre
-    // d'une feuille de partage — sur Mac, cette feuille n'a pas d'option
-    // "Enregistrer", et sur iOS, elle refuse de partager certains types de
-    // fichiers (dont le JSON), ce qui empêchait "Enregistrer dans Fichiers"
-    // d'apparaître.
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = nomFichier;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-    if (/iP(hone|ad|od)/.test(navigator.userAgent)) {
-        setTimeout(() => {
-            alert('Fichier téléchargé.\n\nTu le retrouves dans l\'app Fichiers, dossier "Téléchargements" (ou via l\'icône de téléchargement ⬇️ dans Safari).');
-        }, 400);
-    }
+    await exporterFichierApp(blob, nomFichier);
 }
 
 document.getElementById('inputImport').onchange = (e) => {
@@ -4863,19 +4867,10 @@ function exporterMatiere(matiere) {
     const supportsMatiere = supports.filter(s => (s.matiere || 'Autre') === matiere);
     if (supportsMatiere.length === 0) { alert("Aucune fiche dans « " + matiere + " » à exporter."); return; }
     const paquet = { type: 'sauvegarde-memo-revisions', version: 1, exporteLe: new Date().toISOString(), supports: supportsMatiere };
-    // Voir commentaire dans exporterDonnees() : octet-stream force le
-    // téléchargement au lieu d'afficher le JSON brut dans un nouvel onglet.
     const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: 'application/octet-stream' });
     const nomMatiereFichier = matiere.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40);
     const dateStr = new Date().toISOString().slice(0, 10);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'export-' + nomMatiereFichier + '-' + dateStr + '.memorevisions';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    exporterFichierApp(blob, 'export-' + nomMatiereFichier + '-' + dateStr + '.memorevisions');
 }
 
 function fermerSheetExportImport(ev) {
