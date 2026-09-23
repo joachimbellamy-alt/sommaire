@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le latin dans notre quotidien — Atelier de culture antique</title>
+<style>
+  :root {
+    --bg: #f5f1e8;
+    --card-front: #7b3f3f;
+    --card-back: #fdfaf3;
+    --gold: #b8860b;
+    --ink: #2e2417;
+    --accent: #4a6741;
+    --wrong: #a33d3d;
+    --shadow: rgba(46, 36, 23, 0.25);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Georgia', 'Iowan Old Style', serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(184,134,11,0.06) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(123,63,63,0.06) 0%, transparent 40%);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: env(safe-area-inset-top, 0px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  }
+  header {
+    text-align: center;
+    padding: 28px 8px 16px;
+  }
+  header .eyebrow {
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    color: var(--gold);
+    font-weight: bold;
+  }
+  h1 {
+    margin: 6px 0 4px;
+    font-size: clamp(1.4rem, 5vw, 2.1rem);
+    color: var(--card-front);
+  }
+  header p {
+    margin: 0;
+    color: #6b5d4a;
+    font-size: 0.95rem;
+  }
+
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .mode-switch {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 18px 0;
+  }
+  .mode-switch button {
+    font-family: inherit;
+    border: 2px solid var(--card-front);
+    background: transparent;
+    color: var(--card-front);
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mode-switch button.active {
+    background: var(--card-front);
+    color: white;
+  }
+
+  .progress-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 4px 10px;
+    font-size: 0.85rem;
+    color: #6b5d4a;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 6px;
+    background: rgba(123,63,63,0.15);
+    border-radius: 3px;
+    margin: 0 10px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--gold);
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  /* --- FLASHCARDS --- */
+  .card-stage {
+    perspective: 1400px;
+    height: 320px;
+    margin: 10px 4px 20px;
+  }
+  .card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.5s;
+  }
+  .card.flipped { transform: rotateY(180deg); }
+  .face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 28px;
+    box-shadow: 0 10px 24px var(--shadow);
+  }
+  .face-front {
+    background: linear-gradient(155deg, var(--card-front), #5c2f2f);
+    color: #fdfaf3;
+  }
+  .face-front .tag {
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .face-front .q {
+    font-size: 1.15rem;
+    line-height: 1.4;
+  }
+  .face-front .hint-line {
+    margin-top: 18px;
+    font-size: 0.8rem;
+    color: rgba(253,250,243,0.75);
+    font-style: italic;
+  }
+  .face-back {
+    background: var(--card-back);
+    color: var(--ink);
+    transform: rotateY(180deg);
+    border: 2px solid var(--gold);
+  }
+  .face-back .answer {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .face-back .explain {
+    font-size: 0.9rem;
+    color: #5a4b38;
+    line-height: 1.5;
+  }
+  .tap-hint {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #8a7a63;
+    margin-bottom: 8px;
+  }
+
+  .nav-row {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 30px;
+  }
+  .nav-row button {
+    font-family: inherit;
+    border: none;
+    background: var(--card-front);
+    color: white;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 10px var(--shadow);
+  }
+  .nav-row button:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .nav-row .shuffle-btn {
+    width: auto;
+    padding: 0 18px;
+    border-radius: 999px;
+    background: var(--accent);
+    font-size: 0.85rem;
+  }
+
+  /* --- QUIZ --- */
+  .quiz-box {
+    background: var(--card-back);
+    border: 2px solid var(--gold);
+    border-radius: 18px;
+    padding: 26px 22px;
+    box-shadow: 0 10px 24px var(--shadow);
+    margin: 10px 4px 24px;
+  }
+  .quiz-box .tag {
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    color: var(--gold);
+    font-weight: bold;
+  }
+  .quiz-box .q {
+    font-size: 1.1rem;
+    margin: 10px 0 20px;
+    line-height: 1.4;
+  }
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .opt {
+    font-family: inherit;
+    text-align: left;
+    padding: 13px 16px;
+    border-radius: 12px;
+    border: 2px solid rgba(123,63,63,0.25);
+    background: white;
+    font-size: 0.98rem;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .opt:active { transform: scale(0.99); }
+  .opt.correct { border-color: var(--accent); background: #ecf3ea; color: var(--accent); font-weight: bold; }
+  .opt.wrong { border-color: var(--wrong); background: #f6e9e9; color: var(--wrong); }
+  .opt.disabled { pointer-events: none; }
+
+  .feedback {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.good { background: #ecf3ea; color: #3a5233; }
+  .feedback.bad { background: #f6e9e9; color: var(--wrong); }
+  .feedback b { display: block; margin-bottom: 4px; }
+
+  .next-btn {
+    display: block;
+    margin: 18px auto 0;
+    font-family: inherit;
+    border: none;
+    background: var(--card-front);
+    color: white;
+    padding: 10px 26px;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: none;
+  }
+  .next-btn.show { display: block; }
+
+  .result-box {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .result-box .score {
+    font-size: 2.6rem;
+    color: var(--card-front);
+    font-weight: bold;
+    margin: 10px 0;
+  }
+  .result-box p { color: #6b5d4a; }
+  .restart-btn {
+    font-family: inherit;
+    border: 2px solid var(--card-front);
+    background: var(--card-front);
+    color: white;
+    padding: 10px 24px;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    margin-top: 14px;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #a99a82;
+    padding: 10px 0 20px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Atelier de culture antique</div>
+    <h1>Le latin dans notre quotidien</h1>
+    <p>Révisions — Activités 1 à 4</p>
+  </header>
+
+  <div class="mode-switch">
+    <button id="btnFlash" class="active">🎴 Flashcards</button>
+    <button id="btnQuiz">✅ Quiz</button>
+  </div>
+
+  <div class="progress-row">
+    <span id="progLabel">1 / 18</span>
+    <div class="progress-bar"><div class="progress-bar-fill" id="progFill"></div></div>
+    <span id="scoreLabel"></span>
+  </div>
+
+  <!-- FLASHCARD MODE -->
+  <div id="flashMode">
+    <div class="tap-hint">Touche la carte pour retourner</div>
+    <div class="card-stage">
+      <div class="card" id="card">
+        <div class="face face-front">
+          <div class="tag">Question</div>
+          <div class="q" id="frontQ"></div>
+          <div class="hint-line" id="frontHint"></div>
+        </div>
+        <div class="face face-back">
+          <div class="answer" id="backA"></div>
+          <div class="explain" id="backE"></div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-row">
+      <button id="prevBtn">‹</button>
+      <button class="shuffle-btn" id="shuffleBtn">🔀 Mélanger</button>
+      <button id="nextBtn">›</button>
+    </div>
+  </div>
+
+  <!-- QUIZ MODE -->
+  <div id="quizMode" style="display:none;">
+    <div id="quizArea"></div>
+  </div>
+
+  <footer>Latin • Étymologie • 5ème / 6ème</footer>
+</div>
+
+<script>
+const DATA = [
+  {q:"Quel mot latin a donné le mot français « collier » ?", opts:["collum","oculus","manus","digitum"], a:0, ans:"collum", ex:"Collum signifie « le cou » en latin : un collier se porte autour du cou."},
+  {q:"Quel mot latin a donné l'adjectif « manuel » (fait à la main) ?", opts:["equus","manus","oculus","collum"], a:1, ans:"manus", ex:"Manus signifie « la main » en latin."},
+  {q:"Quel mot latin a donné l'adjectif « digital » (empreinte d'un doigt) ?", opts:["digitum","oculus","equus","manus"], a:0, ans:"digitum", ex:"Digitum signifie « le doigt » en latin."},
+  {q:"Quel mot latin a donné l'adjectif « oculaire » (lié à l'œil) ?", opts:["oculus","equus","digitum","collum"], a:0, ans:"oculus", ex:"Oculus signifie « l'œil » en latin."},
+  {q:"Quel mot latin a donné le mot « équitation » (monter à cheval) ?", opts:["manus","equus","oculus","digitum"], a:1, ans:"equus", ex:"Equus signifie « le cheval » en latin."},
+  {q:"Le mot français « tête » vient de quel mot latin ?", opts:["testa","corpus","caldus","frigidus"], a:0, ans:"testa", ex:"Testa (« la coquille, la carapace ») a donné « tête » en français."},
+  {q:"Le mot français « froid » vient de quel mot latin ?", opts:["caldus","frigidus","lupus","septem"], a:1, ans:"frigidus", ex:"Frigidus a donné « froid » en français."},
+  {q:"Le mot français « loup » vient de quel mot latin ?", opts:["lupus","corpus","viginti","digitus"], a:0, ans:"lupus", ex:"Lupus signifie « loup » en latin."},
+  {q:"Le mot français « vingt » vient de quel mot latin ?", opts:["septem","viginti","testa","corpus"], a:1, ans:"viginti", ex:"Viginti signifie « vingt » en latin."},
+  {q:"Quel dieu romain a donné son nom à « mardi » ?", opts:["Mars","Jupiter","Vénus","Mercure"], a:0, ans:"Mars", ex:"Mardi vient de Martis dies, « jour de Mars », dieu de la guerre."},
+  {q:"Quel dieu romain a donné son nom à « jeudi » ?", opts:["Mercure","Saturne","Jupiter","Mars"], a:2, ans:"Jupiter", ex:"Jeudi vient de Jovis dies, « jour de Jupiter », roi de l'Olympe."},
+  {q:"Quelle déesse a donné son nom à « vendredi » ?", opts:["Vénus","Diane","Junon","Minerve"], a:0, ans:"Vénus", ex:"Vendredi vient de Veneris dies, « jour de Vénus », déesse de l'amour."},
+  {q:"À quel jour de la semaine correspond « Lunae dies » ?", opts:["lundi","samedi","dimanche","mercredi"], a:0, ans:"lundi", ex:"Lunae dies, « jour de la Lune », a donné « lundi »."},
+  {q:"Quel mois tire son nom du dieu Janus, dieu des commencements et des fins ?", opts:["janvier","juillet","octobre","décembre"], a:0, ans:"janvier", ex:"Janvier vient de Janus."},
+  {q:"Quel mois porte le nom de Jules César (Julius Caesar) ?", opts:["octobre","juillet","décembre","janvier"], a:1, ans:"juillet", ex:"Juillet vient de Julius (Caesar)."},
+  {q:"En latin, que signifie la racine « octo », présente dans « octobre » ?", opts:["dix","huit","six","douze"], a:1, ans:"huit", ex:"Octo signifie « huit » (octobre était le 8e mois du calendrier romain)."},
+  {q:"Quel mot latin, aujourd'hui utilisé en français, désigne un lieu de vacances luxueux (Activité 1) ?", opts:["villa","agenda","podium","tandem"], a:0, ans:"villa", ex:"« Villa » est un mot latin utilisé tel quel en français."},
+  {q:"Comment appelle-t-on, en latin, le carnet où l'on note ses rendez-vous ?", opts:["agenda","album","exit","lavabo"], a:0, ans:"agenda", ex:"« Agenda » vient du latin agenda, « les choses à faire »."}
+];
+
+let order = DATA.map((_,i)=>i);
+let idx = 0;
+let flipped = false;
+
+/* ---------- MODE SWITCH ---------- */
+const btnFlash = document.getElementById('btnFlash');
+const btnQuiz = document.getElementById('btnQuiz');
+const flashMode = document.getElementById('flashMode');
+const quizMode = document.getElementById('quizMode');
+const scoreLabel = document.getElementById('scoreLabel');
+
+btnFlash.onclick = () => { setMode('flash'); };
+btnQuiz.onclick = () => { setMode('quiz'); };
+
+function setMode(m){
+  if(m==='flash'){
+    btnFlash.classList.add('active'); btnQuiz.classList.remove('active');
+    flashMode.style.display='block'; quizMode.style.display='none';
+    idx = 0; renderCard(); updateProgress();
+  } else {
+    btnQuiz.classList.add('active'); btnFlash.classList.remove('active');
+    flashMode.style.display='none'; quizMode.style.display='block';
+    startQuiz();
+  }
+}
+
+function updateProgress(total){
+  const t = total || DATA.length;
+  document.getElementById('progLabel').textContent = (idx+1) + ' / ' + t;
+  document.getElementById('progFill').style.width = Math.round(((idx+1)/t)*100) + '%';
+}
+
+/* ---------- FLASHCARDS ---------- */
+const card = document.getElementById('card');
+card.onclick = () => { flipped = !flipped; card.classList.toggle('flipped', flipped); };
+
+function renderCard(){
+  flipped = false;
+  card.classList.remove('flipped');
+  const d = DATA[order[idx]];
+  document.getElementById('frontQ').textContent = d.q;
+  document.getElementById('frontHint').textContent = '';
+  document.getElementById('backA').textContent = d.ans;
+  document.getElementById('backE').textContent = d.ex;
+  document.getElementById('prevBtn').disabled = idx===0;
+  document.getElementById('nextBtn').disabled = idx===order.length-1;
+  scoreLabel.textContent = '';
+  updateProgress(order.length);
+}
+
+document.getElementById('prevBtn').onclick = () => { if(idx>0){ idx--; renderCard(); } };
+document.getElementById('nextBtn').onclick = () => { if(idx<order.length-1){ idx++; renderCard(); } };
+document.getElementById('shuffleBtn').onclick = () => {
+  for(let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
+  idx = 0; renderCard();
+};
+
+/* ---------- QUIZ ---------- */
+let quizOrder = [];
+let quizIdx = 0;
+let quizScore = 0;
+let answered = false;
+
+function startQuiz(){
+  quizOrder = DATA.map((_,i)=>i);
+  for(let i=quizOrder.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [quizOrder[i],quizOrder[j]]=[quizOrder[j],quizOrder[i]]; }
+  quizIdx = 0; quizScore = 0; answered = false;
+  renderQuiz();
+}
+
+function renderQuiz(){
+  if(quizIdx >= quizOrder.length){ renderResult(); return; }
+  answered = false;
+  idx = quizIdx;
+  updateProgress(quizOrder.length);
+  scoreLabel.textContent = '★ ' + quizScore;
+  const d = DATA[quizOrder[quizIdx]];
+  const area = document.getElementById('quizArea');
+  area.innerHTML = `
+    <div class="quiz-box">
+      <div class="tag">Question ${quizIdx+1}</div>
+      <div class="q">${d.q}</div>
+      <div class="options" id="optsWrap"></div>
+      <div class="feedback" id="fb"></div>
+      <button class="next-btn" id="nextQBtn">Suivant →</button>
+    </div>`;
+  const wrap = document.getElementById('optsWrap');
+  d.opts.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.textContent = opt;
+    b.onclick = () => selectOpt(i, d, b);
+    wrap.appendChild(b);
+  });
+  document.getElementById('nextQBtn').onclick = () => { quizIdx++; renderQuiz(); };
+}
+
+function selectOpt(i, d, btnEl){
+  if(answered) return;
+  answered = true;
+  const allBtns = document.querySelectorAll('#optsWrap .opt');
+  allBtns.forEach((b,bi)=>{
+    b.classList.add('disabled');
+    if(bi===d.a) b.classList.add('correct');
+    else if(bi===i) b.classList.add('wrong');
+  });
+  const fb = document.getElementById('fb');
+  fb.classList.add('show');
+  if(i===d.a){
+    quizScore++;
+    fb.classList.add('good');
+    fb.innerHTML = '<b>Exact !</b>' + d.ex;
+  } else {
+    fb.classList.add('bad');
+    fb.innerHTML = '<b>Pas tout à fait.</b>' + d.ex;
+  }
+  scoreLabel.textContent = '★ ' + quizScore;
+  document.getElementById('nextQBtn').classList.add('show');
+}
+
+function renderResult(){
+  const area = document.getElementById('quizArea');
+  const pct = Math.round((quizScore/DATA.length)*100);
+  let msg = "Continue à réviser, tu vas y arriver !";
+  if(pct>=90) msg = "Excellent ! Le latin n'a plus de secrets pour toi.";
+  else if(pct>=70) msg = "Très bon score, encore un petit effort !";
+  else if(pct>=50) msg = "Pas mal, relis les activités et retente !";
+  area.innerHTML = `
+    <div class="quiz-box result-box">
+      <div class="tag">Résultat</div>
+      <div class="score">${quizScore} / ${DATA.length}</div>
+      <p>${msg}</p>
+      <button class="restart-btn" id="restartBtn">Recommencer</button>
+    </div>`;
+  document.getElementById('progLabel').textContent = DATA.length + ' / ' + DATA.length;
+  document.getElementById('progFill').style.width = '100%';
+  document.getElementById('restartBtn').onclick = startQuiz;
+}
+
+/* init */
+renderCard();
+</script>
+</body>
+</html>
