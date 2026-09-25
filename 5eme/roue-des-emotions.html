@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roue des émotions</title>
+<style>
+  :root {
+    --bg: #faf7f2;
+    --panel-bg: #ffffff;
+    --text: #2b2420;
+    --text-soft: #6b5f55;
+    --border: rgba(43,36,32,0.10);
+    --shadow: 0 12px 30px rgba(43,36,32,0.10);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --bg: #1c1a18;
+      --panel-bg: #26231f;
+      --text: #f2ece3;
+      --text-soft: #b8ada0;
+      --border: rgba(255,255,255,0.10);
+      --shadow: 0 12px 30px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1c1a18;
+    --panel-bg: #26231f;
+    --text: #f2ece3;
+    --text-soft: #b8ada0;
+    --border: rgba(255,255,255,0.10);
+    --shadow: 0 12px 30px rgba(0,0,0,0.35);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Georgia", "Iowan Old Style", serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 16px 48px;
+  }
+  h1 {
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    margin: 0 0 4px;
+    text-align: center;
+    letter-spacing: 0.01em;
+  }
+  p.subtitle {
+    color: var(--text-soft);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.95rem;
+    margin: 0 0 24px;
+    text-align: center;
+    max-width: 480px;
+  }
+  .layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 980px;
+  }
+  .wheel-wrap {
+    position: relative;
+    width: min(92vw, 480px);
+    flex-shrink: 0;
+  }
+  svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .wedge {
+    cursor: pointer;
+    stroke: var(--bg);
+    stroke-width: 2;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    transform-origin: 300px 300px;
+  }
+  .wedge:hover, .wedge.active {
+    opacity: 0.92;
+    transform: scale(1.035);
+  }
+  .wedge-label {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-weight: 600;
+    font-size: 17px;
+    fill: #ffffff;
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+  .center-label {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13px;
+    fill: var(--text-soft);
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+  }
+  .panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 22px 24px;
+    width: min(92vw, 340px);
+    min-height: 320px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .panel-emotion {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .panel h2 {
+    font-family: "Georgia", serif;
+    font-size: 1.3rem;
+    margin: 0;
+  }
+  .panel .desc {
+    color: var(--text-soft);
+    font-size: 0.9rem;
+    margin: 0 0 16px;
+    line-height: 1.4;
+  }
+  .panel .section-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-soft);
+    margin: 14px 0 8px;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .chip {
+    padding: 5px 11px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: #fff;
+    white-space: nowrap;
+  }
+  .hint {
+    color: var(--text-soft);
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 40px;
+  }
+  footer {
+    margin-top: 28px;
+    color: var(--text-soft);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.78rem;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <h1>🎭 Roue des émotions</h1>
+  <p class="subtitle">Touchez ou cliquez sur une émotion pour découvrir les sentiments qui lui sont associés, du plus léger au plus intense.</p>
+
+  <div class="layout">
+    <div class="wheel-wrap">
+      <svg id="wheel" viewBox="0 0 600 600"></svg>
+    </div>
+    <div class="panel" id="panel">
+      <div class="hint">👈 Choisissez une émotion sur la roue pour commencer.</div>
+    </div>
+  </div>
+
+  <footer>Roue inspirée des travaux de Robert Plutchik — outil pédagogique</footer>
+
+<script>
+const emotions = [
+  {
+    name: "Joie",
+    color: "#f4b400",
+    desc: "Sentiment de bien-être et de satisfaction.",
+    words: ["Contentement", "Plaisir", "Enthousiasme", "Fierté", "Gratitude", "Optimisme", "Euphorie"]
+  },
+  {
+    name: "Confiance",
+    color: "#7cb342",
+    desc: "Sentiment de sécurité envers soi ou les autres.",
+    words: ["Acceptation", "Admiration", "Sécurité", "Sérénité", "Estime", "Ouverture"]
+  },
+  {
+    name: "Peur",
+    color: "#00897b",
+    desc: "Réaction face à un danger perçu, réel ou imaginé.",
+    words: ["Appréhension", "Inquiétude", "Anxiété", "Angoisse", "Terreur", "Panique"]
+  },
+  {
+    name: "Surprise",
+    color: "#3949ab",
+    desc: "Réaction à un événement inattendu.",
+    words: ["Étonnement", "Confusion", "Stupéfaction", "Émerveillement", "Sidération"]
+  },
+  {
+    name: "Tristesse",
+    color: "#5c6bc0",
+    desc: "Sentiment de peine lié à une perte ou une déception.",
+    words: ["Déception", "Mélancolie", "Chagrin", "Solitude", "Abattement", "Désespoir"]
+  },
+  {
+    name: "Dégoût",
+    color: "#6d4c41",
+    desc: "Rejet face à quelque chose de désagréable ou inacceptable.",
+    words: ["Aversion", "Mépris", "Répulsion", "Dédain", "Écœurement"]
+  },
+  {
+    name: "Colère",
+    color: "#d32f2f",
+    desc: "Réaction à une injustice ou une frustration.",
+    words: ["Agacement", "Irritation", "Frustration", "Indignation", "Rage", "Fureur"]
+  }
+];
+
+const svg = document.getElementById('wheel');
+const cx = 300, cy = 300, rOuter = 270, rInner = 60;
+const n = emotions.length;
+const angleStep = (2 * Math.PI) / n;
+
+function polar(r, angle) {
+  return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
+}
+
+function wedgePath(startAngle, endAngle) {
+  const [x1, y1] = polar(rOuter, startAngle);
+  const [x2, y2] = polar(rOuter, endAngle);
+  const [x3, y3] = polar(rInner, endAngle);
+  const [x4, y4] = polar(rInner, startAngle);
+  return `M ${x1} ${y1} A ${rOuter} ${rOuter} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${rInner} ${rInner} 0 0 0 ${x4} ${y4} Z`;
+}
+
+let html = '';
+emotions.forEach((e, i) => {
+  const start = -Math.PI / 2 + i * angleStep;
+  const end = start + angleStep;
+  const mid = (start + end) / 2;
+  const labelR = (rOuter + rInner) / 2 + 25;
+  const [lx, ly] = polar(labelR, mid);
+  html += `<path class="wedge" id="wedge-${i}" d="${wedgePath(start, end)}" fill="${e.color}" data-idx="${i}"></path>`;
+  html += `<text class="wedge-label" x="${lx}" y="${ly}" transform="rotate(${(mid * 180 / Math.PI) + 90}, ${lx}, ${ly})">${e.name}</text>`;
+});
+html += `<circle cx="${cx}" cy="${cy}" r="${rInner - 4}" fill="var(--bg)" stroke="var(--border)"></circle>`;
+html += `<text class="center-label" x="${cx}" y="${cy}">Touchez<tspan x="${cx}" dy="16">une émotion</tspan></text>`;
+svg.innerHTML = html;
+
+const panel = document.getElementById('panel');
+
+function showEmotion(idx) {
+  document.querySelectorAll('.wedge').forEach(w => w.classList.remove('active'));
+  document.getElementById('wedge-' + idx).classList.add('active');
+  const e = emotions[idx];
+  panel.innerHTML = `
+    <div class="panel-emotion">
+      <span class="dot" style="background:${e.color}"></span>
+      <h2>${e.name}</h2>
+    </div>
+    <p class="desc">${e.desc}</p>
+    <div class="section-title">Sentiments associés</div>
+    <div class="chips">
+      ${e.words.map(w => `<span class="chip" style="background:${e.color}">${w}</span>`).join('')}
+    </div>
+  `;
+}
+
+document.querySelectorAll('.wedge').forEach(w => {
+  w.addEventListener('click', () => showEmotion(parseInt(w.dataset.idx)));
+});
+</script>
+</body>
+</html>
