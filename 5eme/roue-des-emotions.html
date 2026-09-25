@@ -386,7 +386,21 @@ wrap.addEventListener('pointermove', (ev) => {
   rotation = startRotation + delta;
   render();
 });
-function endDrag(ev) { dragging = false; }
+function endDrag(ev) {
+  if (dragging && !moved) {
+    // Pointer capture redirects the native click event to `wrap`, so a plain
+    // tap/click on a band never reaches it — resolve the actual element by
+    // coordinates instead, for both mouse and touch.
+    const el = document.elementFromPoint(ev.clientX, ev.clientY);
+    const band = el && el.closest('.band');
+    if (band) showTier(parseInt(band.dataset.ei), parseInt(band.dataset.t));
+  }
+  dragging = false;
+  moved = false;
+  if (wrap.hasPointerCapture && wrap.hasPointerCapture(ev.pointerId)) {
+    wrap.releasePointerCapture(ev.pointerId);
+  }
+}
 wrap.addEventListener('pointerup', endDrag);
 wrap.addEventListener('pointercancel', endDrag);
 
@@ -442,12 +456,9 @@ function showTier(ei, tierIndex) {
   });
 }
 
-document.querySelectorAll('.band').forEach(b => {
-  b.addEventListener('click', (ev) => {
-    if (moved) { moved = false; return; } // ignore click that ends a drag
-    showTier(parseInt(b.dataset.ei), parseInt(b.dataset.t));
-  });
-});
+// Band selection is handled entirely via pointerup (see endDrag above),
+// since pointer capture on `wrap` prevents the native click event from
+// ever reaching an individual band.
 </script>
 </body>
 </html>
