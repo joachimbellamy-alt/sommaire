@@ -40,25 +40,47 @@
     min-height: 100%;
     background: var(--bg);
     color: var(--text);
-    font-family: "Georgia", "Iowan Old Style", serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 28px 16px 48px;
+    padding: 24px 16px 48px;
   }
   h1 {
-    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-size: clamp(1.3rem, 4vw, 1.8rem);
     margin: 0 0 4px;
     text-align: center;
-    letter-spacing: 0.01em;
   }
   p.subtitle {
     color: var(--text-soft);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 0.95rem;
-    margin: 0 0 24px;
+    margin: 0 0 6px;
     text-align: center;
     max-width: 480px;
+    line-height: 1.4;
+  }
+  .drag-hint {
+    color: var(--text-soft);
+    font-size: 0.82rem;
+    margin: 0 0 14px;
+    text-align: center;
+  }
+  .legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    font-size: 0.82rem;
+    color: var(--text-soft);
+    flex-wrap: wrap;
+  }
+  .legend .grad {
+    display: inline-flex;
+    height: 12px;
+    width: 90px;
+    border-radius: 6px;
+    background: linear-gradient(to right, #cfd8dc, #546e7a, #263238);
   }
   .layout {
     display: flex;
@@ -69,121 +91,145 @@
     width: 100%;
     max-width: 980px;
   }
-  .wheel-wrap {
-    position: relative;
-    width: min(92vw, 480px);
+  .wheel-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     flex-shrink: 0;
   }
-  svg {
-    width: 100%;
-    height: auto;
-    overflow: visible;
+  .wheel-wrap {
+    position: relative;
+    width: min(94vw, 500px);
+    touch-action: none;
   }
-  .wedge {
+  svg { width: 100%; height: auto; overflow: visible; display: block; }
+  .band {
     cursor: pointer;
     stroke: var(--bg);
     stroke-width: 2;
-    transition: opacity 0.18s ease, transform 0.18s ease;
-    transform-origin: 300px 300px;
+    transition: opacity 0.15s ease;
   }
-  .wedge:hover, .wedge.active {
-    opacity: 0.92;
-    transform: scale(1.035);
+  .band:hover, .band.active { opacity: 0.88; }
+  .band.active { stroke: #ffffff; stroke-width: 3.5; }
+  .tier-label {
+    font-weight: 500;
+    font-size: 11.5px;
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
   }
   .wedge-label {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-weight: 600;
-    font-size: 17px;
-    fill: #ffffff;
+    font-weight: 700;
+    font-size: 16px;
     pointer-events: none;
     text-anchor: middle;
     dominant-baseline: middle;
   }
   .center-label {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 13px;
     fill: var(--text-soft);
     text-anchor: middle;
     dominant-baseline: middle;
     pointer-events: none;
   }
+  .pointer-marker {
+    fill: var(--text);
+    opacity: 0.55;
+  }
+  .rotate-controls {
+    display: flex;
+    gap: 14px;
+    margin-top: 16px;
+  }
+  .rotate-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--panel-bg);
+    color: var(--text);
+    font-size: 1.3rem;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .rotate-btn:active { transform: scale(0.94); }
   .panel {
     background: var(--panel-bg);
     border: 1px solid var(--border);
     border-radius: 18px;
     box-shadow: var(--shadow);
     padding: 22px 24px;
-    width: min(92vw, 340px);
-    min-height: 320px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    width: min(94vw, 360px);
+    min-height: 340px;
   }
-  .panel-emotion {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 6px;
+  .panel-emotion { display: flex; align-items: center; gap: 10px; margin-bottom: 2px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+  .panel h2 { font-size: 1.25rem; margin: 0; }
+  .intensity-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff;
+    margin: 10px 0 14px;
   }
-  .dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .panel h2 {
-    font-family: "Georgia", serif;
-    font-size: 1.3rem;
-    margin: 0;
-  }
-  .panel .desc {
-    color: var(--text-soft);
-    font-size: 0.9rem;
-    margin: 0 0 16px;
-    line-height: 1.4;
+  .panel .desc { color: var(--text-soft); font-size: 0.9rem; margin: 0 0 4px; line-height: 1.45; }
+  .panel .example {
+    background: rgba(0,0,0,0.035);
+    border-left: 3px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    margin: 10px 0 16px;
   }
   .panel .section-title {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--text-soft);
-    margin: 14px 0 8px;
+    margin: 12px 0 8px;
   }
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
+  .tiers { display: flex; flex-direction: column; gap: 6px; }
+  .tier-chip {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 10px; border-radius: 10px; cursor: pointer;
+    border: 1.5px solid transparent; font-size: 0.9rem;
+    background: rgba(0,0,0,0.02);
   }
-  .chip {
-    padding: 5px 11px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    color: #fff;
-    white-space: nowrap;
-  }
-  .hint {
-    color: var(--text-soft);
-    font-size: 0.9rem;
-    text-align: center;
-    margin-top: 40px;
-  }
-  footer {
-    margin-top: 28px;
-    color: var(--text-soft);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 0.78rem;
-    text-align: center;
-  }
+  .tier-chip.selected { border-color: currentColor; font-weight: 700; }
+  .tier-chip .sq { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
+  .hint { color: var(--text-soft); font-size: 0.9rem; text-align: center; margin-top: 60px; line-height: 1.5; }
+  footer { margin-top: 28px; color: var(--text-soft); font-size: 0.78rem; text-align: center; }
 </style>
 </head>
 <body>
   <h1>🎭 Roue des émotions</h1>
-  <p class="subtitle">Touchez ou cliquez sur une émotion pour découvrir les sentiments qui lui sont associés, du plus léger au plus intense.</p>
+  <p class="subtitle">Touchez une zone pour découvrir un sentiment précis. Plus la couleur est foncée (proche du centre), plus l'émotion est intense.</p>
+  <p class="drag-hint">🔄 Faites glisser la roue pour la faire tourner, ou utilisez les flèches.</p>
+  <div class="legend"><span>Léger</span><span class="grad"></span><span>Intense</span></div>
 
   <div class="layout">
-    <div class="wheel-wrap">
-      <svg id="wheel" viewBox="0 0 600 600"></svg>
+    <div class="wheel-col">
+      <div class="wheel-wrap" id="wheelWrap">
+        <svg id="wheel" viewBox="0 0 600 600">
+          <path class="pointer-marker" d="M 300 8 L 312 26 L 288 26 Z"></path>
+          <g id="wheelGroup"></g>
+          <circle id="hub" cx="300" cy="300" r="64" fill="var(--bg)" stroke="var(--border)"></circle>
+          <text class="center-label" x="300" y="292">Touchez</text>
+          <text class="center-label" x="300" y="310">une zone</text>
+        </svg>
+      </div>
+      <div class="rotate-controls">
+        <button class="rotate-btn" id="rotLeft" aria-label="Tourner à gauche">⟲</button>
+        <button class="rotate-btn" id="rotRight" aria-label="Tourner à droite">⟳</button>
+      </div>
     </div>
     <div class="panel" id="panel">
-      <div class="hint">👈 Choisissez une émotion sur la roue pour commencer.</div>
+      <div class="hint">👈 Choisissez une zone sur la roue pour commencer.<br><br>Les zones extérieures (claires) sont les émotions légères, les zones centrales (foncées) sont les émotions intenses.</div>
     </div>
   </div>
 
@@ -191,102 +237,216 @@
 
 <script>
 const emotions = [
-  {
-    name: "Joie",
-    color: "#f4b400",
-    desc: "Sentiment de bien-être et de satisfaction.",
-    words: ["Contentement", "Plaisir", "Enthousiasme", "Fierté", "Gratitude", "Optimisme", "Euphorie"]
-  },
-  {
-    name: "Confiance",
-    color: "#7cb342",
-    desc: "Sentiment de sécurité envers soi ou les autres.",
-    words: ["Acceptation", "Admiration", "Sécurité", "Sérénité", "Estime", "Ouverture"]
-  },
-  {
-    name: "Peur",
-    color: "#00897b",
-    desc: "Réaction face à un danger perçu, réel ou imaginé.",
-    words: ["Appréhension", "Inquiétude", "Anxiété", "Angoisse", "Terreur", "Panique"]
-  },
-  {
-    name: "Surprise",
-    color: "#3949ab",
-    desc: "Réaction à un événement inattendu.",
-    words: ["Étonnement", "Confusion", "Stupéfaction", "Émerveillement", "Sidération"]
-  },
-  {
-    name: "Tristesse",
-    color: "#5c6bc0",
-    desc: "Sentiment de peine lié à une perte ou une déception.",
-    words: ["Déception", "Mélancolie", "Chagrin", "Solitude", "Abattement", "Désespoir"]
-  },
-  {
-    name: "Dégoût",
-    color: "#6d4c41",
-    desc: "Rejet face à quelque chose de désagréable ou inacceptable.",
-    words: ["Aversion", "Mépris", "Répulsion", "Dédain", "Écœurement"]
-  },
-  {
-    name: "Colère",
-    color: "#d32f2f",
-    desc: "Réaction à une injustice ou une frustration.",
-    words: ["Agacement", "Irritation", "Frustration", "Indignation", "Rage", "Fureur"]
-  }
+  { name: "Joie", color: "#e0a800", desc: "Sentiment de bien-être et de satisfaction.",
+    tiers: [
+      { label: "Contentement", ex: "Tu as bien répondu à une question en classe." },
+      { label: "Enthousiasme", ex: "Le professeur annonce une sortie scolaire." },
+      { label: "Euphorie", ex: "Tu obtiens la meilleure note de la classe à un contrôle que tu redoutais." }
+    ]},
+  { name: "Confiance", color: "#558b2f", desc: "Sentiment de sécurité envers soi ou envers les autres.",
+    tiers: [
+      { label: "Acceptation", ex: "Tu acceptes l'aide d'un camarade sans gêne." },
+      { label: "Sécurité", ex: "Tu sais que ton professeur t'aidera si tu te trompes." },
+      { label: "Admiration", ex: "Tu es impressionné(e) par le talent d'un camarade ou d'un auteur étudié en classe." }
+    ]},
+  { name: "Peur", color: "#00695c", desc: "Réaction face à un danger perçu, réel ou imaginé.",
+    tiers: [
+      { label: "Appréhension", ex: "Tu attends de connaître le sujet d'un contrôle." },
+      { label: "Anxiété", ex: "Tu dois passer à l'oral devant toute la classe." },
+      { label: "Terreur", ex: "Tu te retrouves seul(e) et perdu(e) dans un endroit inconnu." }
+    ]},
+  { name: "Surprise", color: "#283593", desc: "Réaction à un événement inattendu.",
+    tiers: [
+      { label: "Étonnement", ex: "Le cours ne se déroule pas comme prévu." },
+      { label: "Stupéfaction", ex: "Tu apprends une nouvelle vraiment inattendue." },
+      { label: "Sidération", ex: "Un événement bouleverse complètement ce que tu pensais savoir." }
+    ]},
+  { name: "Tristesse", color: "#3f51b5", desc: "Sentiment de peine lié à une perte ou une déception.",
+    tiers: [
+      { label: "Déception", ex: "Tu n'obtiens pas la note que tu espérais malgré ton travail." },
+      { label: "Chagrin", ex: "Un ami déménage et tu sais que tu le verras moins souvent." },
+      { label: "Désespoir", ex: "Tu as l'impression que rien ne va s'améliorer, quoi que tu fasses." }
+    ]},
+  { name: "Dégoût", color: "#5d4037", desc: "Rejet face à quelque chose de désagréable ou d'inacceptable.",
+    tiers: [
+      { label: "Réticence", ex: "On te propose de goûter un plat que tu n'aimes pas." },
+      { label: "Aversion", ex: "Tu assistes à une injustice envers un camarade." },
+      { label: "Répulsion", ex: "Tu es témoin d'un comportement violent ou cruel." }
+    ]},
+  { name: "Colère", color: "#c62828", desc: "Réaction à une injustice ou une frustration.",
+    tiers: [
+      { label: "Agacement", ex: "Un camarade te dérange sans arrêt pendant que tu travailles." },
+      { label: "Frustration", ex: "Tu n'arrives pas à finir un exercice malgré tes efforts." },
+      { label: "Fureur", ex: "On t'accuse injustement de quelque chose que tu n'as pas fait." }
+    ]}
 ];
 
-const svg = document.getElementById('wheel');
-const cx = 300, cy = 300, rOuter = 270, rInner = 60;
+const cx = 300, cy = 300;
+const radii = [70, 145, 215, 285];
 const n = emotions.length;
 const angleStep = (2 * Math.PI) / n;
+const angleStepDeg = 360 / n;
 
-function polar(r, angle) {
-  return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
+function polar(r, angle) { return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)]; }
+function bandPath(r1, r2, a1, a2) {
+  const [x1, y1] = polar(r2, a1), [x2, y2] = polar(r2, a2);
+  const [x3, y3] = polar(r1, a2), [x4, y4] = polar(r1, a1);
+  return `M ${x1} ${y1} A ${r2} ${r2} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${r1} ${r1} 0 0 0 ${x4} ${y4} Z`;
+}
+function hexToRgb(hex) { const v = parseInt(hex.slice(1), 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; }
+function shade(hex, amt) {
+  const [r, g, b] = hexToRgb(hex);
+  const mix = (c) => amt >= 0 ? Math.round(c + (255 - c) * amt) : Math.round(c * (1 + amt));
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
 }
 
-function wedgePath(startAngle, endAngle) {
-  const [x1, y1] = polar(rOuter, startAngle);
-  const [x2, y2] = polar(rOuter, endAngle);
-  const [x3, y3] = polar(rInner, endAngle);
-  const [x4, y4] = polar(rInner, startAngle);
-  return `M ${x1} ${y1} A ${rOuter} ${rOuter} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${rInner} ${rInner} 0 0 0 ${x4} ${y4} Z`;
-}
+const svgNS = "http://www.w3.org/2000/svg";
+const wheelGroup = document.getElementById('wheelGroup');
+const tierShades = [-0.18, 0.12, 0.42];
+const labelHolders = []; // {el, lx, ly}
 
-let html = '';
-emotions.forEach((e, i) => {
-  const start = -Math.PI / 2 + i * angleStep;
-  const end = start + angleStep;
-  const mid = (start + end) / 2;
-  const labelR = (rOuter + rInner) / 2 + 25;
-  const [lx, ly] = polar(labelR, mid);
-  html += `<path class="wedge" id="wedge-${i}" d="${wedgePath(start, end)}" fill="${e.color}" data-idx="${i}"></path>`;
-  html += `<text class="wedge-label" x="${lx}" y="${ly}" transform="rotate(${(mid * 180 / Math.PI) + 90}, ${lx}, ${ly})">${e.name}</text>`;
+emotions.forEach((e, ei) => {
+  const a1 = -Math.PI / 2 + ei * angleStep;
+  const a2 = a1 + angleStep;
+  const mid = (a1 + a2) / 2;
+
+  // tierIndex: 0 = léger, 1 = modéré, 2 = intense (matches e.tiers order).
+  // ring: 0 = innermost/darkest, 2 = outermost/lightest — so intense sits at the center.
+  for (let tierIndex = 0; tierIndex < 3; tierIndex++) {
+    const ring = 2 - tierIndex;
+    const r1 = radii[ring], r2 = radii[ring + 1];
+    const col = shade(e.color, tierShades[ring]);
+    const textColor = ring === 2 ? '#2b2420' : '#ffffff';
+    const rMid = (r1 + r2) / 2;
+    const [lx, ly] = polar(rMid, mid);
+
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('class', 'band');
+    path.setAttribute('id', `band-${ei}-${tierIndex}`);
+    path.setAttribute('d', bandPath(r1, r2, a1, a2));
+    path.setAttribute('fill', col);
+    path.dataset.ei = ei; path.dataset.t = tierIndex;
+    wheelGroup.appendChild(path);
+
+    const holder = document.createElementNS(svgNS, 'g');
+    const text = document.createElementNS(svgNS, 'text');
+    text.setAttribute('class', 'tier-label');
+    text.setAttribute('fill', textColor);
+    text.textContent = e.tiers[tierIndex].label;
+    holder.appendChild(text);
+    wheelGroup.appendChild(holder);
+    labelHolders.push({ el: holder, lx, ly });
+  }
+
+  const [nlx, nly] = polar(radii[3] + 22, mid);
+  const nameHolder = document.createElementNS(svgNS, 'g');
+  const nameText = document.createElementNS(svgNS, 'text');
+  nameText.setAttribute('class', 'wedge-label');
+  nameText.setAttribute('fill', e.color);
+  nameText.textContent = e.name;
+  nameHolder.appendChild(nameText);
+  wheelGroup.appendChild(nameHolder);
+  labelHolders.push({ el: nameHolder, lx: nlx, ly: nly });
 });
-html += `<circle cx="${cx}" cy="${cy}" r="${rInner - 4}" fill="var(--bg)" stroke="var(--border)"></circle>`;
-html += `<text class="center-label" x="${cx}" y="${cy}">Touchez<tspan x="${cx}" dy="16">une émotion</tspan></text>`;
-svg.innerHTML = html;
 
+let rotation = 0; // degrees
+
+function render() {
+  wheelGroup.setAttribute('transform', `rotate(${rotation} ${cx} ${cy})`);
+  labelHolders.forEach(({ el, lx, ly }) => {
+    el.setAttribute('transform', `translate(${lx} ${ly}) rotate(${-rotation})`);
+  });
+}
+render();
+
+// --- Drag to rotate ---
+const wrap = document.getElementById('wheelWrap');
+const svgEl = document.getElementById('wheel');
+let dragging = false, startPointerAngle = 0, startRotation = 0, moved = false;
+
+function pointAngleDeg(clientX, clientY) {
+  const rect = svgEl.getBoundingClientRect();
+  const scale = 600 / rect.width;
+  const x = (clientX - rect.left) * scale - cx;
+  const y = (clientY - rect.top) * scale - cy;
+  return Math.atan2(y, x) * 180 / Math.PI;
+}
+
+wrap.addEventListener('pointerdown', (ev) => {
+  dragging = true; moved = false;
+  startPointerAngle = pointAngleDeg(ev.clientX, ev.clientY);
+  startRotation = rotation;
+  wrap.setPointerCapture(ev.pointerId);
+});
+wrap.addEventListener('pointermove', (ev) => {
+  if (!dragging) return;
+  const cur = pointAngleDeg(ev.clientX, ev.clientY);
+  let delta = cur - startPointerAngle;
+  if (Math.abs(delta) > 2) moved = true;
+  rotation = startRotation + delta;
+  render();
+});
+function endDrag(ev) { dragging = false; }
+wrap.addEventListener('pointerup', endDrag);
+wrap.addEventListener('pointercancel', endDrag);
+
+// --- Button rotate (animated, one segment at a time) ---
+function animateRotateBy(deltaDeg) {
+  const start = rotation, target = rotation + deltaDeg, duration = 380;
+  const t0 = performance.now();
+  function step(now) {
+    const p = Math.min(1, (now - t0) / duration);
+    const ease = 1 - Math.pow(1 - p, 3);
+    rotation = start + (target - start) * ease;
+    render();
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+document.getElementById('rotLeft').addEventListener('click', () => animateRotateBy(-angleStepDeg));
+document.getElementById('rotRight').addEventListener('click', () => animateRotateBy(angleStepDeg));
+
+// --- Selection panel ---
 const panel = document.getElementById('panel');
+const intensityNames = ["Léger", "Modéré", "Intense"]; // indexed to match e.tiers order
 
-function showEmotion(idx) {
-  document.querySelectorAll('.wedge').forEach(w => w.classList.remove('active'));
-  document.getElementById('wedge-' + idx).classList.add('active');
-  const e = emotions[idx];
+function showTier(ei, tierIndex) {
+  document.querySelectorAll('.band').forEach(b => b.classList.remove('active'));
+  document.getElementById(`band-${ei}-${tierIndex}`).classList.add('active');
+  const e = emotions[ei];
+  const tier = e.tiers[tierIndex];
+  const ring = 2 - tierIndex; // 0 = intense/dark, 2 = léger/light
+  const col = shade(e.color, tierShades[ring]);
+  const badgeTextColor = tierIndex === 0 ? '#2b2420' : '#fff';
+
   panel.innerHTML = `
     <div class="panel-emotion">
       <span class="dot" style="background:${e.color}"></span>
-      <h2>${e.name}</h2>
+      <h2>${e.name} → ${tier.label}</h2>
     </div>
+    <span class="intensity-badge" style="background:${col}; color:${badgeTextColor}">${intensityNames[tierIndex]}</span>
     <p class="desc">${e.desc}</p>
-    <div class="section-title">Sentiments associés</div>
-    <div class="chips">
-      ${e.words.map(w => `<span class="chip" style="background:${e.color}">${w}</span>`).join('')}
+    <div class="example">💬 <strong>Exemple :</strong> ${tier.ex}</div>
+    <div class="section-title">Les 3 niveaux d'intensité</div>
+    <div class="tiers" style="color:${e.color}">
+      ${e.tiers.map((ti, i) => `
+        <div class="tier-chip ${i === tierIndex ? 'selected' : ''}" data-ei="${ei}" data-t="${i}">
+          <span class="sq" style="background:${shade(e.color, tierShades[2 - i])}"></span>
+          ${ti.label} <span style="margin-left:auto; opacity:0.6; font-size:0.78rem;">${intensityNames[i]}</span>
+        </div>
+      `).join('')}
     </div>
   `;
+  panel.querySelectorAll('.tier-chip').forEach(chip => {
+    chip.addEventListener('click', () => showTier(parseInt(chip.dataset.ei), parseInt(chip.dataset.t)));
+  });
 }
 
-document.querySelectorAll('.wedge').forEach(w => {
-  w.addEventListener('click', () => showEmotion(parseInt(w.dataset.idx)));
+document.querySelectorAll('.band').forEach(b => {
+  b.addEventListener('click', (ev) => {
+    if (moved) { moved = false; return; } // ignore click that ends a drag
+    showTier(parseInt(b.dataset.ei), parseInt(b.dataset.t));
+  });
 });
 </script>
 </body>
