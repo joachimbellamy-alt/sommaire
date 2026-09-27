@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Que sais-je ? – Remets dans l'ordre</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --ink: #1f2937;
+    --muted: #6b7280;
+    --line: #d1d5db;
+    --accent: #2563eb;
+    --ok: #16a34a;
+    --ok-bg: #dcfce7;
+    --ko: #dc2626;
+    --ko-bg: #fee2e2;
+    --sel: #fef3c7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--ink);
+  }
+  main { max-width: 1100px; margin: 0 auto; }
+  h1 { text-align: center; font-size: 2rem; margin: 8px 0 4px; }
+  .consigne { text-align: center; color: var(--muted); margin: 0 0 20px; font-size: 1.05rem; }
+
+  .zone-titre { font-weight: 700; margin: 18px 0 8px; font-size: 1.05rem; }
+
+  .slots, .pool {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+  }
+  .pool {
+    min-height: 190px;
+    padding: 12px;
+    background: #e8ecf5;
+    border-radius: 14px;
+  }
+  .slot {
+    position: relative;
+    min-height: 190px;
+    border: 2px dashed var(--line);
+    border-radius: 14px;
+    background: #fff;
+    display: flex; align-items: stretch; justify-content: stretch;
+    padding: 26px 6px 6px;
+    transition: background .15s, border-color .15s;
+  }
+  .slot .num {
+    position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
+    font-weight: 700; color: var(--muted); font-size: .95rem;
+  }
+  .slot.over { border-color: var(--accent); background: #eff6ff; }
+  .slot.ok { border: 2px solid var(--ok); background: var(--ok-bg); }
+  .slot.ko { border: 2px solid var(--ko); background: var(--ko-bg); }
+
+  .carte {
+    width: 100%;
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 6px;
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    gap: 8px;
+    cursor: grab;
+    user-select: none;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,.06);
+    transition: transform .1s, box-shadow .1s;
+  }
+  .carte:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+  .carte.dragging { opacity: .4; }
+  .carte.selected { background: var(--sel); border-color: #f59e0b; }
+  .carte .label { font-size: 1rem; line-height: 1.2; min-height: 2.4em; display: flex; align-items: center; }
+  .carte.bold .label { font-weight: 700; }
+  .carte svg { width: 72px; height: 72px; }
+
+  .boutons { display: flex; gap: 10px; justify-content: center; margin: 22px 0 10px; flex-wrap: wrap; }
+  button {
+    font: inherit; font-size: 1.05rem; font-weight: 600;
+    padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer;
+  }
+  .btn-verif { background: var(--accent); color: #fff; }
+  .btn-sec { background: #e5e7eb; color: var(--ink); }
+  button:hover { filter: brightness(.95); }
+
+  #message { text-align: center; font-size: 1.15rem; font-weight: 600; min-height: 1.6em; margin: 6px 0; }
+  #message.ok { color: var(--ok); }
+  #message.ko { color: var(--ko); }
+
+  .solution {
+    display: none;
+    margin-top: 14px;
+    background: #fff; border-radius: 14px; padding: 14px 18px;
+    border: 1px solid var(--line);
+  }
+  .solution.show { display: block; }
+  .solution ol { margin: 6px 0 0; padding-left: 22px; line-height: 1.7; }
+  .solution .phase { font-weight: 700; margin-top: 8px; }
+
+  @media (max-width: 800px) {
+    .slots, .pool { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 460px) {
+    .slots, .pool { grid-template-columns: repeat(2, 1fr); }
+    h1 { font-size: 1.6rem; }
+  }
+  @media print {
+    .boutons, #message { display: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Que sais-je ?</h1>
+  <p class="consigne">Remets dans l'ordre les étapes de la <strong>révision par test</strong>.<br>
+  Fais glisser les cartes dans les cases, ou clique sur une carte pour la placer dans la première case libre.</p>
+
+  <div class="zone-titre">Les étapes dans l'ordre :</div>
+  <div class="slots" id="slots"></div>
+
+  <div class="zone-titre">Les cartes à placer :</div>
+  <div class="pool" id="pool"></div>
+
+  <div class="boutons">
+    <button class="btn-verif" id="verifier">✔ Vérifier</button>
+    <button class="btn-sec" id="melanger">↻ Recommencer</button>
+    <button class="btn-sec" id="voir">👁 Voir la solution</button>
+  </div>
+  <div id="message"></div>
+
+  <div class="solution" id="solution">
+    <div class="phase">Sans support sous les yeux</div>
+    <ol>
+      <li>Je ferme mon cours : <strong>sans support sous les yeux</strong>.</li>
+      <li><strong>Je me remémore</strong> tout ce que je sais.</li>
+      <li><strong>J'écris</strong> tout ce dont je me souviens.</li>
+    </ol>
+    <div class="phase">Avec l'aide du cours</div>
+    <ol start="4">
+      <li>J'ouvre mon cours : <strong>avec l'aide du cours</strong>.</li>
+      <li><strong>Je vérifie</strong> ce que j'ai écrit (juste / faux).</li>
+      <li>Je repère mes <strong>oublis</strong> et je les complète.</li>
+    </ol>
+  </div>
+</main>
+
+<script>
+const ICONES = {
+  livreFerme: `<svg viewBox="0 0 80 80"><rect x="18" y="8" width="44" height="64" rx="5" fill="#e0245e"/><rect x="18" y="8" width="8" height="64" rx="3" fill="#b81d4d"/><rect x="36" y="18" width="18" height="10" rx="3" fill="#ffd166"/><rect x="58" y="12" width="4" height="56" fill="#f7c948"/></svg>`,
+  bulle: `<svg viewBox="0 0 80 80"><path d="M22 52c-9 0-14-7-12-14 1-6 7-9 11-8 1-8 9-14 17-12 5-6 16-6 20 2 8-1 14 6 12 14 6 3 6 13-1 16-2 6-9 8-14 5-4 5-13 5-17 0-5 2-12 1-16-3z" fill="#fff" stroke="#333" stroke-width="2.5"/><text x="41" y="50" font-size="30" font-weight="700" text-anchor="middle" fill="#222" font-family="Arial">?</text><circle cx="15" cy="64" r="4" fill="#fff" stroke="#333" stroke-width="2"/><circle cx="8" cy="72" r="2.5" fill="#fff" stroke="#333" stroke-width="1.5"/></svg>`,
+  ecrire: `<svg viewBox="0 0 80 80"><path d="M14 6h36l14 14v54H14z" fill="#f3f4f6" stroke="#cbd5e1" stroke-width="2"/><path d="M50 6v14h14" fill="#e5e7eb" stroke="#cbd5e1" stroke-width="2"/><g stroke="#5b6b8c" stroke-width="3"><line x1="22" y1="28" x2="50" y2="28"/><line x1="22" y1="36" x2="54" y2="36"/><line x1="22" y1="44" x2="48" y2="44"/><line x1="22" y1="52" x2="42" y2="52"/><line x1="22" y1="60" x2="38" y2="60"/></g><g transform="rotate(40 56 46)"><rect x="51" y="14" width="10" height="46" fill="#f5b700"/><rect x="51" y="10" width="10" height="6" fill="#e0245e"/><polygon points="51,60 61,60 56,70" fill="#f1d3a1"/><polygon points="54.5,66 57.5,66 56,70" fill="#333"/></g></svg>`,
+  livreOuvert: `<svg viewBox="0 0 80 80"><path d="M4 18h72v48H4z" fill="#e0245e"/><path d="M8 14h30v48H8z" fill="#fff" stroke="#e5e7eb"/><path d="M42 14h30v48H42z" fill="#fff" stroke="#e5e7eb"/><g stroke="#b0b8c4" stroke-width="2.5"><line x1="12" y1="22" x2="34" y2="22"/><line x1="12" y1="29" x2="34" y2="29"/><line x1="12" y1="36" x2="34" y2="36"/><line x1="12" y1="43" x2="34" y2="43"/><line x1="12" y1="50" x2="34" y2="50"/><line x1="46" y1="22" x2="68" y2="22"/><line x1="46" y1="29" x2="68" y2="29"/><line x1="46" y1="36" x2="68" y2="36"/><line x1="46" y1="43" x2="68" y2="43"/><line x1="46" y1="50" x2="68" y2="50"/></g><path d="M58 10h6v14l-3-3-3 3z" fill="#e0245e"/></svg>`,
+  verifier: `<svg viewBox="0 0 80 80"><path d="M14 6h36l14 14v54H14z" fill="#f3f4f6" stroke="#cbd5e1" stroke-width="2"/><path d="M50 6v14h14" fill="#e5e7eb" stroke="#cbd5e1" stroke-width="2"/><g stroke="#8b9ab5" stroke-width="3"><line x1="34" y1="28" x2="56" y2="28"/><line x1="34" y1="42" x2="56" y2="42"/><line x1="34" y1="58" x2="56" y2="58"/></g><path d="M18 28l5 5 9-10" stroke="#34c759" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 42l5 5 9-10" stroke="#34c759" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 53l10 10M30 53l-10 10" stroke="#c0392b" stroke-width="5" stroke-linecap="round"/></svg>`,
+  oublis: `<svg viewBox="0 0 80 80"><path d="M4 18h72v48H4z" fill="#e0245e"/><path d="M8 14h30v48H8z" fill="#fff" stroke="#e5e7eb"/><path d="M42 14h30v48H42z" fill="#fff" stroke="#e5e7eb"/><g stroke="#b0b8c4" stroke-width="2.5"><line x1="12" y1="22" x2="34" y2="22"/><line x1="12" y1="29" x2="34" y2="29"/><line x1="46" y1="22" x2="68" y2="22"/><line x1="46" y1="29" x2="68" y2="29"/><line x1="46" y1="36" x2="68" y2="36"/><line x1="46" y1="43" x2="68" y2="43"/><line x1="46" y1="50" x2="68" y2="50"/></g><path d="M58 10h6v14l-3-3-3 3z" fill="#e0245e"/><rect x="11" y="36" width="30" height="18" fill="#fff200" stroke="#333" stroke-width="1.5"/><text x="26" y="50" font-size="13" text-anchor="middle" fill="#222" font-family="Arial">?</text></svg>`
+};
+
+const ETAPES = [
+  { id: 1, label: "Sans support sous les yeux", icone: "livreFerme", bold: true },
+  { id: 2, label: "Se remémorer", icone: "bulle" },
+  { id: 3, label: "Écrire", icone: "ecrire" },
+  { id: 4, label: "Avec l'aide du cours", icone: "livreOuvert", bold: true },
+  { id: 5, label: "Vérifier", icone: "verifier" },
+  { id: 6, label: "Oublis ?", icone: "oublis" },
+];
+
+const slotsEl = document.getElementById("slots");
+const poolEl = document.getElementById("pool");
+const msg = document.getElementById("message");
+let dragged = null;
+
+function melange(arr) {
+  const a = arr.slice();
+  do {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+  } while (a.every((e, i) => e.id === i + 1));
+  return a;
+}
+
+function creerCarte(e) {
+  const c = document.createElement("div");
+  c.className = "carte" + (e.bold ? " bold" : "");
+  c.draggable = true;
+  c.dataset.id = e.id;
+  c.innerHTML = `<div class="label">${e.label}</div>${ICONES[e.icone]}`;
+  c.addEventListener("dragstart", ev => {
+    dragged = c; c.classList.add("dragging");
+    ev.dataTransfer.setData("text/plain", e.id);
+  });
+  c.addEventListener("dragend", () => { c.classList.remove("dragging"); dragged = null; });
+  c.addEventListener("click", () => {
+    effacerCorrection();
+    if (c.parentElement.classList.contains("slot")) {
+      poolEl.appendChild(c);
+    } else {
+      const libre = [...slotsEl.children].find(s => !s.querySelector(".carte"));
+      if (libre) libre.appendChild(c);
+    }
+  });
+  return c;
+}
+
+function rendreDeposable(zone, estSlot) {
+  zone.addEventListener("dragover", ev => { ev.preventDefault(); zone.classList.add("over"); });
+  zone.addEventListener("dragleave", () => zone.classList.remove("over"));
+  zone.addEventListener("drop", ev => {
+    ev.preventDefault(); zone.classList.remove("over");
+    if (!dragged) return;
+    effacerCorrection();
+    if (estSlot) {
+      const occupant = zone.querySelector(".carte");
+      const origine = dragged.parentElement;
+      if (occupant && occupant !== dragged) origine.appendChild(occupant);
+    }
+    zone.appendChild(dragged);
+  });
+}
+
+function init() {
+  slotsEl.innerHTML = ""; poolEl.innerHTML = "";
+  msg.textContent = ""; msg.className = "";
+  document.getElementById("solution").classList.remove("show");
+  for (let i = 1; i <= 6; i++) {
+    const s = document.createElement("div");
+    s.className = "slot"; s.dataset.pos = i;
+    s.innerHTML = `<span class="num">${i}</span>`;
+    rendreDeposable(s, true);
+    slotsEl.appendChild(s);
+  }
+  melange(ETAPES).forEach(e => poolEl.appendChild(creerCarte(e)));
+}
+rendreDeposable(poolEl, false);
+
+function effacerCorrection() {
+  document.querySelectorAll(".slot").forEach(s => s.classList.remove("ok", "ko"));
+  msg.textContent = ""; msg.className = "";
+}
+
+document.getElementById("verifier").addEventListener("click", () => {
+  const slots = [...slotsEl.children];
+  if (slots.some(s => !s.querySelector(".carte"))) {
+    msg.textContent = "Place toutes les cartes avant de vérifier !";
+    msg.className = "ko"; return;
+  }
+  let justes = 0;
+  slots.forEach(s => {
+    const ok = s.querySelector(".carte").dataset.id === s.dataset.pos;
+    s.classList.remove("ok", "ko");
+    s.classList.add(ok ? "ok" : "ko");
+    if (ok) justes++;
+  });
+  if (justes === 6) {
+    msg.textContent = "🎉 Bravo ! Toutes les étapes sont dans le bon ordre.";
+    msg.className = "ok";
+  } else {
+    msg.textContent = `${justes} / 6 bien placées. Clique sur les cartes en rouge pour les retirer et réessaie !`;
+    msg.className = "ko";
+  }
+});
+
+document.getElementById("melanger").addEventListener("click", init);
+document.getElementById("voir").addEventListener("click", () => {
+  document.getElementById("solution").classList.toggle("show");
+});
+
+init();
+</script>
+</body>
+</html>
