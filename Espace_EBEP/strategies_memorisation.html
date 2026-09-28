@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Séance 31 — Stratégies de mémorisation</title>
+<style>
+  :root{
+    --red:#d64541; --red-dark:#b8332f;
+    --orange:#f0ad2f; --orange-dark:#d99417;
+    --green:#5aa858; --green-dark:#458542;
+    --ink:#1f2937; --muted:#6b7280;
+    --bg:#f5f6f8; --card:#ffffff; --line:#d9dce1;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    overscroll-behavior:none;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:18px 16px 60px; }
+
+  .badge{ display:inline-block; background:#dbe7f5; color:#1d4e89; font-weight:700;
+    font-size:12px; letter-spacing:.04em; padding:4px 10px; border-radius:6px; margin-bottom:6px; }
+  h1{ font-size:clamp(20px,3.4vw,28px); margin:2px 0 4px; color:#1d3557; }
+  .subtitle{ color:var(--muted); font-size:14px; margin-bottom:16px; }
+
+  .tabs{ display:flex; gap:8px; margin-bottom:16px; border-bottom:2px solid var(--line); }
+  .tab-btn{ appearance:none; border:none; background:none; padding:10px 18px; font-size:15px;
+    font-weight:700; color:var(--muted); cursor:pointer; border-bottom:3px solid transparent;
+    margin-bottom:-2px; border-radius:6px 6px 0 0; }
+  .tab-btn.active{ color:#1d3557; border-bottom-color:#1d3557; background:#eef1f6; }
+
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  .reflect{ background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:14px 16px; margin-bottom:18px; }
+  .reflect label{ display:block; font-weight:700; margin-bottom:8px; }
+  .reflect textarea{ width:100%; min-height:60px; border:1px solid var(--line); border-radius:8px;
+    padding:10px; font-size:15px; font-family:inherit; resize:vertical; }
+
+  .instructions{ font-size:14px; color:var(--muted); margin:0 0 12px; }
+
+  .pool{ background:var(--card); border:2px dashed var(--line); border-radius:12px;
+    padding:14px; min-height:64px; margin-bottom:20px; }
+  .pool-label{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;
+    letter-spacing:.04em; margin-bottom:8px; }
+  .tiles-list{ display:flex; flex-wrap:wrap; gap:8px; min-height:44px; align-content:flex-start; }
+
+  .board{ display:flex; gap:14px; align-items:stretch; }
+  .col{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  .col-header{ color:#fff; font-weight:800; font-size:14px; text-align:center;
+    padding:10px 8px; letter-spacing:.02em; }
+  .col.red .col-header{ background:var(--red); }
+  .col.orange .col-header{ background:var(--orange); }
+  .col.green .col-header{ background:var(--green); }
+  .col:nth-child(1) .col-header{ clip-path: polygon(0 0, 92% 0, 100% 50%, 92% 100%, 0 100%); }
+  .col:nth-child(2) .col-header{ clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 16% 50%); }
+  .col:nth-child(3) .col-header{ clip-path: polygon(8% 0, 100% 0, 100% 100%, 8% 100%, 16% 50%); }
+
+  .dropzone{ flex:1; background:var(--card); border:2px solid var(--line); border-top:none;
+    border-radius:0 0 10px 10px; padding:10px; min-height:220px; }
+  .col.red .dropzone{ border-color:#f0c4c2; }
+  .col.orange .dropzone{ border-color:#f7ddab; }
+  .col.green .dropzone{ border-color:#c8e0c7; }
+  .dropzone .tiles-list{ min-height:200px; }
+
+  .tile{ background:#fff; border:2px solid var(--ink); border-radius:8px; padding:9px 12px;
+    font-size:14.5px; font-weight:600; cursor:grab; user-select:none; -webkit-user-select:none;
+    -webkit-touch-callout:none; touch-action:none;
+    box-shadow:0 1px 2px rgba(0,0,0,.08); line-height:1.25; max-width:100%; }
+  .tile.dragging{ position:fixed; z-index:1000; cursor:grabbing; box-shadow:0 8px 20px rgba(0,0,0,.25);
+    opacity:.96; transform:scale(1.04); pointer-events:none; }
+  .tile.correct{ border-color:var(--green-dark); background:#eaf6ea; }
+  .tile.incorrect{ border-color:var(--red-dark); background:#fbeaea; }
+  .placeholder{ border:2px dashed #c7cbd1; border-radius:8px; background:rgba(0,0,0,.02); }
+
+  .controls{ display:flex; gap:10px; margin:18px 0 6px; flex-wrap:wrap; align-items:center; }
+  .btn{ appearance:none; border:none; border-radius:8px; padding:11px 18px; font-size:14.5px;
+    font-weight:700; cursor:pointer; }
+  .btn-primary{ background:#1d3557; color:#fff; }
+  .btn-secondary{ background:#e5e7eb; color:#1f2937; }
+  .score{ font-weight:700; font-size:14.5px; color:var(--muted); }
+
+  .synthesis{ margin-top:24px; text-align:center; font-size:17px; font-weight:700;
+    line-height:1.6; color:#1d3557; }
+  .synthesis u{ text-decoration-color:#1d3557; }
+
+  footer{ text-align:center; color:#9aa1ab; font-size:11px; margin-top:30px; }
+
+  @media (max-width:640px){
+    .board{ flex-direction:column; }
+    .col:nth-child(1) .col-header,
+    .col:nth-child(2) .col-header,
+    .col:nth-child(3) .col-header{ clip-path:none; border-radius:8px 8px 0 0; }
+    .dropzone{ min-height:80px; }
+    .dropzone .tiles-list{ min-height:50px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge">Séance 31</span>
+  <h1>Quelles stratégies utiliser pour bien mémoriser à long terme ?</h1>
+  <div class="subtitle">D'après « Enseigner aux élèves comment apprendre », coll. Du labo à la classe, Nathan, 2022</div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="activite">Activité</button>
+    <button class="tab-btn" data-tab="correction">Correction</button>
+  </div>
+
+  <!-- ===================== ACTIVITÉ ===================== -->
+  <div class="panel active" id="panel-activite">
+
+    <div class="reflect">
+      <label for="reflect-box">Comment mémorises-tu une leçon ?</label>
+      <textarea id="reflect-box" placeholder="Écris ici ta réponse…"></textarea>
+    </div>
+
+    <p class="instructions">Fais glisser chaque étiquette dans la colonne qui correspond, puis clique sur « Vérifier mes réponses ».</p>
+
+    <div class="pool" id="pool">
+      <div class="pool-label">Étiquettes à trier</div>
+      <div class="tiles-list" id="pool-list"></div>
+    </div>
+
+    <div class="board">
+      <div class="col red">
+        <div class="col-header">INEFFICACES</div>
+        <div class="dropzone" data-cat="inefficace">
+          <div class="tiles-list"></div>
+        </div>
+      </div>
+      <div class="col orange">
+        <div class="col-header">PARTIELLEMENT EFFICACES</div>
+        <div class="dropzone" data-cat="partiel">
+          <div class="tiles-list"></div>
+        </div>
+      </div>
+      <div class="col green">
+        <div class="col-header">EFFICACES</div>
+        <div class="dropzone" data-cat="efficace">
+          <div class="tiles-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary" id="check-btn">Vérifier mes réponses</button>
+      <button class="btn btn-secondary" id="reset-btn">Réinitialiser</button>
+      <span class="score" id="score-label"></span>
+    </div>
+  </div>
+
+  <!-- ===================== CORRECTION ===================== -->
+  <div class="panel" id="panel-correction">
+    <div class="board">
+      <div class="col red">
+        <div class="col-header">INEFFICACES</div>
+        <div class="dropzone"><div class="tiles-list" id="fixed-inefficace"></div></div>
+      </div>
+      <div class="col orange">
+        <div class="col-header">PARTIELLEMENT EFFICACES</div>
+        <div class="dropzone"><div class="tiles-list" id="fixed-partiel"></div></div>
+      </div>
+      <div class="col green">
+        <div class="col-header">EFFICACES</div>
+        <div class="dropzone"><div class="tiles-list" id="fixed-efficace"></div></div>
+      </div>
+    </div>
+
+    <p class="synthesis">
+      Pour mémoriser, il faut utiliser des stratégies <u>actives</u><br>
+      en faisant l'effort de <u>récupérer les informations</u> en mémoire.
+    </p>
+  </div>
+
+  <footer>Outil réalisé pour un usage pédagogique — glisser-déposer compatible iPad</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var ITEMS = [
+    { text: "Relire sa leçon plusieurs fois", cat: "inefficace" },
+    { text: "Surligner le cours", cat: "inefficace" },
+    { text: "Recopier sa leçon plusieurs fois", cat: "inefficace" },
+    { text: "Regarder la vidéo de la leçon", cat: "inefficace" },
+    { text: "Se créer des fiches de révision", cat: "partiel" },
+    { text: "Savoir expliquer sa leçon", cat: "partiel" },
+    { text: "Alterner les contenus à réviser", cat: "partiel" },
+    { text: "Réciter sa leçon par cœur", cat: "partiel" },
+    { text: "Réviser juste avant l'évaluation", cat: "partiel" },
+    { text: "Refaire les exercices", cat: "partiel" },
+    { text: "Se tester", cat: "efficace" },
+    { text: "Espacer les révisions dans le temps", cat: "efficace" }
+  ];
+
+  var CAT_LABEL = { inefficace: "INEFFICACES", partiel: "PARTIELLEMENT EFFICACES", efficace: "EFFICACES" };
+
+  // ---------- Tabs ----------
+  var tabButtons = document.querySelectorAll(".tab-btn");
+  var panels = { activite: document.getElementById("panel-activite"), correction: document.getElementById("panel-correction") };
+  tabButtons.forEach(function(btn){
+    btn.addEventListener("click", function(){
+      tabButtons.forEach(function(b){ b.classList.remove("active"); });
+      btn.classList.add("active");
+      Object.keys(panels).forEach(function(k){ panels[k].classList.remove("active"); });
+      panels[btn.getAttribute("data-tab")].classList.add("active");
+    });
+  });
+
+  // ---------- Build correction tab (static, fixed order) ----------
+  ["inefficace", "partiel", "efficace"].forEach(function(cat){
+    var container = document.getElementById("fixed-" + cat);
+    ITEMS.filter(function(it){ return it.cat === cat; }).forEach(function(it){
+      var d = document.createElement("div");
+      d.className = "tile correct";
+      d.textContent = it.text;
+      d.style.cursor = "default";
+      container.appendChild(d);
+    });
+  });
+
+  // ---------- Build activity tiles (shuffled into the pool) ----------
+  function shuffle(arr){
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  var poolList = document.getElementById("pool-list");
+  var scoreLabel = document.getElementById("score-label");
+
+  function buildTile(item){
+    var t = document.createElement("div");
+    t.className = "tile";
+    t.textContent = item.text;
+    t.dataset.cat = item.cat;
+    makeDraggable(t);
+    return t;
+  }
+
+  function populatePool(){
+    poolList.innerHTML = "";
+    shuffle(ITEMS).forEach(function(item){
+      poolList.appendChild(buildTile(item));
+    });
+  }
+
+  // ---------- Drag & drop (Pointer Events — works on iPad Safari) ----------
+  function findZoneAt(x, y){
+    var el = document.elementFromPoint(x, y);
+    if (!el) return null;
+    return el.closest(".dropzone, .pool");
+  }
+
+  function makeDraggable(tile){
+    tile.addEventListener("pointerdown", function(e){
+      if (e.button !== undefined && e.button !== 0) return;
+      e.preventDefault();
+
+      var rect = tile.getBoundingClientRect();
+      var offsetX = e.clientX - rect.left;
+      var offsetY = e.clientY - rect.top;
+
+      var placeholder = document.createElement("div");
+      placeholder.className = "placeholder tile";
+      placeholder.style.width = rect.width + "px";
+      placeholder.style.height = rect.height + "px";
+      placeholder.style.visibility = "hidden";
+      tile.parentNode.insertBefore(placeholder, tile);
+
+      document.body.appendChild(tile);
+      tile.classList.add("dragging");
+      tile.style.width = rect.width + "px";
+      tile.style.left = rect.left + "px";
+      tile.style.top = rect.top + "px";
+
+      try { tile.setPointerCapture(e.pointerId); } catch (err) {}
+
+      function onMove(ev){
+        tile.style.left = (ev.clientX - offsetX) + "px";
+        tile.style.top = (ev.clientY - offsetY) + "px";
+      }
+
+      function onUp(ev){
+        document.removeEventListener("pointermove", onMove);
+        document.removeEventListener("pointerup", onUp);
+        document.removeEventListener("pointercancel", onUp);
+
+        tile.classList.remove("dragging");
+        tile.classList.remove("correct", "incorrect");
+        tile.style.position = "";
+        tile.style.left = "";
+        tile.style.top = "";
+        tile.style.width = "";
+
+        var zone = findZoneAt(ev.clientX, ev.clientY);
+        if (zone) {
+          zone.querySelector(".tiles-list").appendChild(tile);
+        } else {
+          placeholder.parentNode.insertBefore(tile, placeholder);
+        }
+        placeholder.remove();
+        scoreLabel.textContent = "";
+      }
+
+      document.addEventListener("pointermove", onMove);
+      document.addEventListener("pointerup", onUp);
+      document.addEventListener("pointercancel", onUp);
+    });
+  }
+
+  // ---------- Check answers ----------
+  document.getElementById("check-btn").addEventListener("click", function(){
+    var total = ITEMS.length;
+    var correctCount = 0;
+    document.querySelectorAll(".dropzone").forEach(function(zone){
+      var expected = zone.getAttribute("data-cat");
+      zone.querySelectorAll(".tile").forEach(function(tile){
+        tile.classList.remove("correct", "incorrect");
+        if (tile.dataset.cat === expected) {
+          tile.classList.add("correct");
+          correctCount++;
+        } else {
+          tile.classList.add("incorrect");
+        }
+      });
+    });
+    // tiles still in the pool are unplaced -> not counted as correct
+    poolList.querySelectorAll(".tile").forEach(function(tile){
+      tile.classList.remove("correct", "incorrect");
+    });
+    scoreLabel.textContent = correctCount + " / " + total + " bien placées";
+  });
+
+  // ---------- Reset ----------
+  document.getElementById("reset-btn").addEventListener("click", function(){
+    document.querySelectorAll(".dropzone .tiles-list").forEach(function(l){ l.innerHTML = ""; });
+    populatePool();
+    scoreLabel.textContent = "";
+  });
+
+  populatePool();
+})();
+</script>
+</body>
+</html>
