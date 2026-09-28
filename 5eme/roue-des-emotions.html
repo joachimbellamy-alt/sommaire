@@ -91,6 +91,38 @@
     width: 100%;
     max-width: 980px;
   }
+  .preamble {
+    width: 100%;
+    max-width: 760px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 12px 18px;
+    margin: 0 0 22px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .preamble summary {
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 4px 0;
+  }
+  .preamble .pair {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 10px 0;
+  }
+  .preamble .def {
+    flex: 1 1 260px;
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.035);
+  }
+  .preamble .def strong { display: block; margin-bottom: 4px; }
+  .preamble .note { color: var(--text-soft); font-size: 0.85rem; margin: 6px 0 2px; }
   .wheel-col {
     display: flex;
     flex-direction: column;
@@ -208,7 +240,23 @@
 </head>
 <body>
   <h1>🎭 Roue des émotions</h1>
-  <p class="subtitle">Touchez une zone pour découvrir un sentiment précis. Plus la couleur est foncée (proche du centre), plus l'émotion est intense.</p>
+  <details class="preamble" open>
+    <summary>💡 Émotion ou sentiment : quelle différence ?</summary>
+    <div class="pair">
+      <div class="def">
+        <strong>L'émotion</strong>
+        Une réaction rapide et intense du corps face à une situation : le cœur bat vite, on rougit, on tremble… Elle arrive d'un coup et dure peu de temps.<br>
+        <em>Exemple : la peur juste avant un contrôle.</em>
+      </div>
+      <div class="def">
+        <strong>Le sentiment</strong>
+        Ce que l'on ressent dans la durée, après avoir réfléchi à ce qui se passe. Il dépend de notre histoire, de nos valeurs et de nos relations avec les autres.<br>
+        <em>Exemple : la fierté d'avoir progressé, ou la nostalgie d'un souvenir.</em>
+      </div>
+    </div>
+    <p class="note">Une émotion peut donner naissance à un sentiment. Les spécialistes ne s'accordent pas toujours sur la frontière exacte : la roue ci-dessous sert surtout à trouver le mot juste, du plus léger au plus intense.</p>
+  </details>
+  <p class="subtitle">Touchez une zone pour découvrir un mot précis. Plus la couleur est foncée (proche du centre), plus l'émotion est intense.</p>
   <p class="drag-hint">🔄 Faites glisser la roue pour la faire tourner, ou utilisez les flèches.</p>
   <div class="legend"><span>Léger</span><span class="grad"></span><span>Intense</span></div>
 
@@ -245,7 +293,7 @@ const emotions = [
     ]},
   { name: "Confiance", color: "#558b2f", desc: "Sentiment de sécurité envers soi ou envers les autres.",
     tiers: [
-      { label: "Acceptation", ex: "Tu acceptes l'aide d'un camarade sans gêne." },
+      { label: "Soulagement", ex: "Tu rends ton exposé : c'est fini et ça s'est bien passé." },
       { label: "Sécurité", ex: "Tu sais que ton professeur t'aidera si tu te trompes." },
       { label: "Admiration", ex: "Tu es impressionné(e) par le talent d'un camarade ou d'un auteur étudié en classe." }
     ]},
