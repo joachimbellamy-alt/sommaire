@@ -143,6 +143,42 @@
   }
   .band:hover, .band.active { opacity: 0.88; }
   .band.active { stroke: #ffffff; stroke-width: 3.5; }
+  .emotion-band {
+    stroke: var(--bg);
+    stroke-width: 2;
+    pointer-events: none;
+  }
+  .emotion-label {
+    font-weight: 800;
+    font-size: 15px;
+    fill: #ffffff;
+    stroke: rgba(0,0,0,0.35);
+    stroke-width: 3px;
+    paint-order: stroke;
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+  .ring-boundary {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 1.5;
+    pointer-events: none;
+  }
+  .ring-tag rect {
+    fill: var(--panel-bg);
+    stroke: var(--border);
+    stroke-width: 1.5;
+  }
+  .ring-tag text {
+    font-weight: 800;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    fill: var(--text-soft);
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+  }
   .tier-label {
     font-weight: 500;
     font-size: 11.5px;
@@ -263,12 +299,23 @@
   <div class="layout">
     <div class="wheel-col">
       <div class="wheel-wrap" id="wheelWrap">
-        <svg id="wheel" viewBox="0 0 600 600">
-          <path class="pointer-marker" d="M 300 8 L 312 26 L 288 26 Z"></path>
+        <svg id="wheel" viewBox="0 0 720 720">
+          <circle class="ring-boundary" cx="360" cy="360" r="288"></circle>
+          <circle class="ring-boundary" cx="360" cy="360" r="300"></circle>
+          <circle class="ring-boundary" cx="360" cy="360" r="340"></circle>
+          <path class="pointer-marker" d="M 360 12 L 372 30 L 348 30 Z"></path>
           <g id="wheelGroup"></g>
-          <circle id="hub" cx="300" cy="300" r="64" fill="var(--bg)" stroke="var(--border)"></circle>
-          <text class="center-label" x="300" y="292">Touchez</text>
-          <text class="center-label" x="300" y="310">une zone</text>
+          <g class="ring-tag" transform="translate(360, 72)">
+            <rect x="-52" y="-13" width="104" height="26" rx="13"></rect>
+            <text>SENTIMENTS</text>
+          </g>
+          <g class="ring-tag" transform="translate(360, 40)">
+            <rect x="-46" y="-13" width="92" height="26" rx="13"></rect>
+            <text>ÉMOTIONS</text>
+          </g>
+          <circle id="hub" cx="360" cy="360" r="64" fill="var(--bg)" stroke="var(--border)"></circle>
+          <text class="center-label" x="360" y="352">Touchez</text>
+          <text class="center-label" x="360" y="370">une zone</text>
         </svg>
       </div>
       <div class="rotate-controls">
@@ -329,8 +376,9 @@ const emotions = [
     ]}
 ];
 
-const cx = 300, cy = 300;
+const cx = 360, cy = 360;
 const radii = [70, 145, 215, 285];
+const emotionRingInner = 300, emotionRingOuter = 340;
 const n = emotions.length;
 const angleStep = (2 * Math.PI) / n;
 const angleStepDeg = 360 / n;
@@ -386,11 +434,16 @@ emotions.forEach((e, ei) => {
     labelHolders.push({ el: holder, lx, ly });
   }
 
-  const [nlx, nly] = polar(radii[3] + 22, mid);
+  const [nlx, nly] = polar((emotionRingInner + emotionRingOuter) / 2, mid);
+  const emoPath = document.createElementNS(svgNS, 'path');
+  emoPath.setAttribute('class', 'emotion-band');
+  emoPath.setAttribute('d', bandPath(emotionRingInner, emotionRingOuter, a1, a2));
+  emoPath.setAttribute('fill', e.color);
+  wheelGroup.appendChild(emoPath);
+
   const nameHolder = document.createElementNS(svgNS, 'g');
   const nameText = document.createElementNS(svgNS, 'text');
-  nameText.setAttribute('class', 'wedge-label');
-  nameText.setAttribute('fill', e.color);
+  nameText.setAttribute('class', 'emotion-label');
   nameText.textContent = e.name;
   nameHolder.appendChild(nameText);
   wheelGroup.appendChild(nameHolder);
@@ -414,7 +467,7 @@ let dragging = false, startPointerAngle = 0, startRotation = 0, moved = false;
 
 function pointAngleDeg(clientX, clientY) {
   const rect = svgEl.getBoundingClientRect();
-  const scale = 600 / rect.width;
+  const scale = 720 / rect.width;
   const x = (clientX - rect.left) * scale - cx;
   const y = (clientY - rect.top) * scale - cy;
   return Math.atan2(y, x) * 180 / Math.PI;
