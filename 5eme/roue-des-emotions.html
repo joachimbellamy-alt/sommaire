@@ -122,6 +122,7 @@
     background: rgba(0,0,0,0.035);
   }
   .preamble .def strong { display: block; margin-bottom: 4px; }
+  .preamble .def u { text-decoration-thickness: 2px; text-underline-offset: 2px; font-weight: 700; }
   .preamble .note { color: var(--text-soft); font-size: 0.85rem; margin: 6px 0 2px; }
   .wheel-col {
     display: flex;
@@ -281,16 +282,16 @@
     <div class="pair">
       <div class="def">
         <strong>L'émotion</strong>
-        Une réaction rapide et intense du corps face à une situation : le cœur bat vite, on rougit, on tremble… Elle arrive d'un coup et dure peu de temps.<br>
+        Une réaction rapide et physique face à une situation, qui dure <u>peu de temps</u>.<br>
         <em>Exemple : la peur juste avant un contrôle.</em>
       </div>
       <div class="def">
         <strong>Le sentiment</strong>
-        Ce que l'on ressent dans la durée, après avoir réfléchi à ce qui se passe. Il dépend de notre histoire, de nos valeurs et de nos relations avec les autres.<br>
-        <em>Exemple : la fierté d'avoir progressé, ou la nostalgie d'un souvenir.</em>
+        Ce que l'on ressent <u>plus durablement</u>, une fois qu'on a réfléchi à la situation.<br>
+        <em>Exemple : la fierté d'avoir progressé.</em>
       </div>
     </div>
-    <p class="note">Une émotion peut donner naissance à un sentiment. Les spécialistes ne s'accordent pas toujours sur la frontière exacte : la roue ci-dessous sert surtout à trouver le mot juste, du plus léger au plus intense.</p>
+    <p class="note">Une émotion peut donner naissance à un sentiment.</p>
   </details>
   <p class="subtitle">Touchez une zone pour découvrir un mot précis. Plus la couleur est foncée (proche du centre), plus l'émotion est intense.</p>
   <p class="drag-hint">🔄 Faites glisser la roue pour la faire tourner, ou utilisez les flèches.</p>
@@ -332,47 +333,47 @@
 
 <script>
 const emotions = [
-  { name: "Joie", color: "#e0a800", desc: "Sentiment de bien-être et de satisfaction.",
+  { name: "Joie", color: "#e0a800", desc: "Émotion agréable liée à un moment de bien-être ou de réussite.",
     tiers: [
-      { label: "Contentement", ex: "Tu as bien répondu à une question en classe." },
-      { label: "Enthousiasme", ex: "Le professeur annonce une sortie scolaire." },
-      { label: "Euphorie", ex: "Tu obtiens la meilleure note de la classe à un contrôle que tu redoutais." }
+      { label: "Contentement", def: "Satisfaction calme, quand les choses se passent comme on le souhaite.", ex: "Tu as bien répondu à une question en classe." },
+      { label: "Enthousiasme", def: "Joie vive qui donne envie de s'investir dans quelque chose.", ex: "Le professeur annonce une sortie scolaire." },
+      { label: "Euphorie", def: "Joie très intense, presque incontrôlable.", ex: "Tu obtiens la meilleure note de la classe à un contrôle que tu redoutais." }
     ]},
-  { name: "Confiance", color: "#558b2f", desc: "Sentiment de sécurité envers soi ou envers les autres.",
+  { name: "Confiance", color: "#558b2f", desc: "Émotion qui pousse à se sentir en sécurité, seul(e) ou avec les autres.",
     tiers: [
-      { label: "Soulagement", ex: "Tu rends ton exposé : c'est fini et ça s'est bien passé." },
-      { label: "Sécurité", ex: "Tu sais que ton professeur t'aidera si tu te trompes." },
-      { label: "Admiration", ex: "Tu es impressionné(e) par le talent d'un camarade ou d'un auteur étudié en classe." }
+      { label: "Soulagement", def: "Détente ressentie après la disparition d'une inquiétude.", ex: "Tu rends ton exposé : c'est fini et ça s'est bien passé." },
+      { label: "Sécurité", def: "Sentiment d'être protégé(e), sans danger.", ex: "Tu sais que ton professeur t'aidera si tu te trompes." },
+      { label: "Admiration", def: "Grande estime pour quelqu'un ou quelque chose.", ex: "Tu es impressionné(e) par le talent d'un camarade ou d'un auteur étudié en classe." }
     ]},
   { name: "Peur", color: "#00695c", desc: "Réaction face à un danger perçu, réel ou imaginé.",
     tiers: [
-      { label: "Appréhension", ex: "Tu attends de connaître le sujet d'un contrôle." },
-      { label: "Anxiété", ex: "Tu dois passer à l'oral devant toute la classe." },
-      { label: "Terreur", ex: "Tu te retrouves seul(e) et perdu(e) dans un endroit inconnu." }
+      { label: "Appréhension", def: "Légère inquiétude avant un évènement à venir.", ex: "Tu attends de connaître le sujet d'un contrôle." },
+      { label: "Anxiété", def: "Tension et malaise face à une menace incertaine, difficile à calmer.", ex: "Tu dois passer à l'oral devant toute la classe." },
+      { label: "Terreur", def: "Peur extrême, qui pousse à fuir ou à se figer complètement.", ex: "Tu te retrouves seul(e) et perdu(e) dans un endroit inconnu." }
     ]},
   { name: "Surprise", color: "#283593", desc: "Réaction à un événement inattendu.",
     tiers: [
-      { label: "Étonnement", ex: "Le cours ne se déroule pas comme prévu." },
-      { label: "Stupéfaction", ex: "Tu apprends une nouvelle vraiment inattendue." },
-      { label: "Sidération", ex: "Un événement bouleverse complètement ce que tu pensais savoir." }
+      { label: "Étonnement", def: "Réaction légère face à quelque chose d'inattendu.", ex: "Le cours ne se déroule pas comme prévu." },
+      { label: "Stupéfaction", def: "Surprise forte qui laisse sans réaction pendant un moment.", ex: "Tu apprends une nouvelle vraiment inattendue." },
+      { label: "Sidération", def: "Surprise si intense qu'elle empêche un instant de penser ou d'agir.", ex: "Un événement bouleverse complètement ce que tu pensais savoir." }
     ]},
-  { name: "Tristesse", color: "#3f51b5", desc: "Sentiment de peine lié à une perte ou une déception.",
+  { name: "Tristesse", color: "#3f51b5", desc: "Émotion ressentie face à une perte ou une déception.",
     tiers: [
-      { label: "Déception", ex: "Tu n'obtiens pas la note que tu espérais malgré ton travail." },
-      { label: "Chagrin", ex: "Un ami déménage et tu sais que tu le verras moins souvent." },
-      { label: "Désespoir", ex: "Tu as l'impression que rien ne va s'améliorer, quoi que tu fasses." }
+      { label: "Déception", def: "Sentiment désagréable quand la réalité ne correspond pas à ce qu'on espérait.", ex: "Tu n'obtiens pas la note que tu espérais malgré ton travail." },
+      { label: "Chagrin", def: "Tristesse profonde liée à une perte ou une séparation.", ex: "Un ami déménage et tu sais que tu le verras moins souvent." },
+      { label: "Désespoir", def: "Tristesse extrême, avec l'impression qu'aucune solution n'est possible.", ex: "Tu as l'impression que rien ne va s'améliorer, quoi que tu fasses." }
     ]},
-  { name: "Dégoût", color: "#5d4037", desc: "Rejet face à quelque chose de désagréable ou d'inacceptable.",
+  { name: "Dégoût", color: "#5d4037", desc: "Rejet face à quelque chose de déplaisant ou d'inacceptable.",
     tiers: [
-      { label: "Réticence", ex: "On te propose de goûter un plat que tu n'aimes pas." },
-      { label: "Aversion", ex: "Tu assistes à une injustice envers un camarade." },
-      { label: "Répulsion", ex: "Tu es témoin d'un comportement violent ou cruel." }
+      { label: "Réticence", def: "Léger refus ou hésitation face à quelque chose de déplaisant.", ex: "On te propose de goûter un plat que tu n'aimes pas." },
+      { label: "Aversion", def: "Rejet net de quelque chose jugé désagréable ou injuste.", ex: "Tu assistes à une injustice envers un camarade." },
+      { label: "Répulsion", def: "Dégoût très fort, presque physique.", ex: "Tu es témoin d'un comportement violent ou cruel." }
     ]},
   { name: "Colère", color: "#c62828", desc: "Réaction à une injustice ou une frustration.",
     tiers: [
-      { label: "Agacement", ex: "Un camarade te dérange sans arrêt pendant que tu travailles." },
-      { label: "Frustration", ex: "Tu n'arrives pas à finir un exercice malgré tes efforts." },
-      { label: "Fureur", ex: "On t'accuse injustement de quelque chose que tu n'as pas fait." }
+      { label: "Agacement", def: "Irritation légère provoquée par une gêne répétée.", ex: "Un camarade te dérange sans arrêt pendant que tu travailles." },
+      { label: "Frustration", def: "Sentiment désagréable quand on est empêché(e) d'atteindre un but.", ex: "Tu n'arrives pas à finir un exercice malgré tes efforts." },
+      { label: "Fureur", def: "Colère extrême, très difficile à contrôler.", ex: "On t'accuse injustement de quelque chose que tu n'as pas fait." }
     ]}
 ];
 
@@ -540,7 +541,13 @@ function showTier(ei, tierIndex) {
       <h2>${e.name} → ${tier.label}</h2>
     </div>
     <span class="intensity-badge" style="background:${col}; color:${badgeTextColor}">${intensityNames[tierIndex]}</span>
+
+    <div class="section-title">Émotion : ${e.name}</div>
     <p class="desc">${e.desc}</p>
+
+    <div class="section-title">Sentiment : ${tier.label}</div>
+    <p class="desc">${tier.def}</p>
+
     <div class="example">💬 <strong>Exemple :</strong> ${tier.ex}</div>
     <div class="section-title">Les 3 niveaux d'intensité</div>
     <div class="tiers" style="color:${e.color}">
