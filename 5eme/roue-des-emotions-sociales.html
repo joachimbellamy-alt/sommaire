@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roue des émotions sociales</title>
+<style>
+  :root {
+    --bg: #faf7f2;
+    --panel-bg: #ffffff;
+    --text: #2b2420;
+    --text-soft: #6b5f55;
+    --border: rgba(43,36,32,0.10);
+    --shadow: 0 12px 30px rgba(43,36,32,0.10);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --bg: #1c1a18;
+      --panel-bg: #26231f;
+      --text: #f2ece3;
+      --text-soft: #b8ada0;
+      --border: rgba(255,255,255,0.10);
+      --shadow: 0 12px 30px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1c1a18;
+    --panel-bg: #26231f;
+    --text: #f2ece3;
+    --text-soft: #b8ada0;
+    --border: rgba(255,255,255,0.10);
+    --shadow: 0 12px 30px rgba(0,0,0,0.35);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+  }
+  h1 {
+    font-size: clamp(1.3rem, 4vw, 1.8rem);
+    margin: 0 0 4px;
+    text-align: center;
+  }
+  p.subtitle {
+    color: var(--text-soft);
+    font-size: 0.95rem;
+    margin: 0 0 6px;
+    text-align: center;
+    max-width: 480px;
+    line-height: 1.4;
+  }
+  .drag-hint {
+    color: var(--text-soft);
+    font-size: 0.82rem;
+    margin: 0 0 14px;
+    text-align: center;
+  }
+  .legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    font-size: 0.82rem;
+    color: var(--text-soft);
+    flex-wrap: wrap;
+  }
+  .legend .grad {
+    display: inline-flex;
+    height: 12px;
+    width: 90px;
+    border-radius: 6px;
+    background: linear-gradient(to right, #cfd8dc, #546e7a, #263238);
+  }
+  .layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 980px;
+  }
+  .preamble {
+    width: 100%;
+    max-width: 760px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 12px 18px;
+    margin: 0 0 22px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .preamble summary {
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 4px 0;
+  }
+  .preamble .pair {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 10px 0;
+  }
+  .preamble .def {
+    flex: 1 1 260px;
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.035);
+  }
+  .preamble .def strong { display: block; margin-bottom: 4px; }
+  .preamble .def u { text-decoration-thickness: 2px; text-underline-offset: 2px; font-weight: 700; }
+  .preamble .note { color: var(--text-soft); font-size: 0.85rem; margin: 6px 0 2px; }
+  .wheel-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .wheel-wrap {
+    position: relative;
+    width: min(94vw, 500px);
+    touch-action: none;
+  }
+  svg { width: 100%; height: auto; overflow: visible; display: block; }
+  .band {
+    cursor: pointer;
+    stroke: var(--bg);
+    stroke-width: 2;
+    transition: opacity 0.15s ease;
+  }
+  .band:hover, .band.active { opacity: 0.88; }
+  .band.active { stroke: #ffffff; stroke-width: 3.5; }
+  .emotion-band {
+    stroke: var(--bg);
+    stroke-width: 2;
+    pointer-events: none;
+  }
+  .emotion-label {
+    font-weight: 800;
+    font-size: 15px;
+    fill: #ffffff;
+    stroke: rgba(0,0,0,0.35);
+    stroke-width: 3px;
+    paint-order: stroke;
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+  .ring-boundary {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 1.5;
+    pointer-events: none;
+  }
+  .ring-tag rect {
+    fill: var(--panel-bg);
+    stroke: var(--border);
+    stroke-width: 1.5;
+  }
+  .ring-tag text {
+    font-weight: 800;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    fill: var(--text-soft);
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+  }
+  .tier-label {
+    font-weight: 500;
+    font-size: 11.5px;
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+  .wedge-label {
+    font-weight: 700;
+    font-size: 16px;
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+  .center-label {
+    font-size: 13px;
+    fill: var(--text-soft);
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+  }
+  .pointer-marker {
+    fill: var(--text);
+    opacity: 0.55;
+  }
+  .rotate-controls {
+    display: flex;
+    gap: 14px;
+    margin-top: 16px;
+  }
+  .rotate-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--panel-bg);
+    color: var(--text);
+    font-size: 1.3rem;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .rotate-btn:active { transform: scale(0.94); }
+  .panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 22px 24px;
+    width: min(94vw, 360px);
+    min-height: 340px;
+  }
+  .panel-emotion { display: flex; align-items: center; gap: 10px; margin-bottom: 2px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+  .panel h2 { font-size: 1.25rem; margin: 0; }
+  .intensity-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff;
+    margin: 10px 0 14px;
+  }
+  .panel .desc { color: var(--text-soft); font-size: 0.9rem; margin: 0 0 4px; line-height: 1.45; }
+  .panel .example {
+    background: rgba(0,0,0,0.035);
+    border-left: 3px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    margin: 10px 0 16px;
+  }
+  .panel .section-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-soft);
+    margin: 12px 0 8px;
+  }
+  .tiers { display: flex; flex-direction: column; gap: 6px; }
+  .tier-chip {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 10px; border-radius: 10px; cursor: pointer;
+    border: 1.5px solid transparent; font-size: 0.9rem;
+    background: rgba(0,0,0,0.02);
+  }
+  .tier-chip.selected { border-color: currentColor; font-weight: 700; }
+  .tier-chip .sq { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
+  .hint { color: var(--text-soft); font-size: 0.9rem; text-align: center; margin-top: 60px; line-height: 1.5; }
+  footer { margin-top: 28px; color: var(--text-soft); font-size: 0.78rem; text-align: center; }
+</style>
+</head>
+<body>
+  <h1>🤝 Roue des émotions sociales</h1>
+  <details class="preamble" open>
+    <summary>💡 Qu'est-ce qu'une émotion sociale ?</summary>
+    <div class="pair">
+      <div class="def">
+        <strong>Émotion primaire</strong>
+        Réaction automatique face à une situation, même seul(e) sur une île déserte (peur, joie, colère…).
+      </div>
+      <div class="def">
+        <strong>Émotion sociale</strong>
+        Réaction qui suppose le regard, réel ou imaginé, des autres, ou une règle à respecter (honte, fierté, culpabilité…).
+      </div>
+    </div>
+    <p class="note">Les émotions sociales apparaissent un peu plus tard chez l'enfant : elles demandent de se voir soi-même à travers le regard des autres.</p>
+  </details>
+  <div class="legend"><span>Léger</span><span class="grad"></span><span>Intense</span></div>
+
+  <div class="layout">
+    <div class="wheel-col">
+      <div class="wheel-wrap" id="wheelWrap">
+        <svg id="wheel" viewBox="0 0 720 720">
+          <circle class="ring-boundary" cx="360" cy="360" r="288"></circle>
+          <circle class="ring-boundary" cx="360" cy="360" r="300"></circle>
+          <circle class="ring-boundary" cx="360" cy="360" r="340"></circle>
+          <path class="pointer-marker" d="M 360 12 L 372 30 L 348 30 Z"></path>
+          <g id="wheelGroup"></g>
+          <g class="ring-tag" transform="translate(360, 72)">
+            <rect x="-52" y="-13" width="104" height="26" rx="13"></rect>
+            <text>SENTIMENTS</text>
+          </g>
+          <g class="ring-tag" transform="translate(360, 40)">
+            <rect x="-84" y="-13" width="168" height="26" rx="13"></rect>
+            <text style="font-size:9.5px">ÉMOTIONS SOCIALES</text>
+          </g>
+          <circle id="hub" cx="360" cy="360" r="64" fill="var(--bg)" stroke="var(--border)"></circle>
+          <text class="center-label" x="360" y="352">Touchez</text>
+          <text class="center-label" x="360" y="370">une zone</text>
+        </svg>
+      </div>
+      <div class="rotate-controls">
+        <button class="rotate-btn" id="rotLeft" aria-label="Tourner à gauche">⟲</button>
+        <button class="rotate-btn" id="rotRight" aria-label="Tourner à droite">⟳</button>
+      </div>
+    </div>
+    <div class="panel" id="panel">
+      <div class="hint">👈 Choisissez une zone sur la roue pour commencer.<br><br>Les zones extérieures (claires) sont les nuances légères, les zones centrales (foncées) sont les nuances intenses.</div>
+    </div>
+  </div>
+
+  <footer>Roue inspirée des travaux de Michael Lewis sur les émotions sociales — outil pédagogique</footer>
+
+<script>
+const emotions = [
+  { name: "Fierté", color: "#b8860b", desc: "Émotion positive ressentie après une réussite, reconnue par soi ou par les autres.",
+    tiers: [
+      { label: "Satisfaction", def: "Contentement discret d'avoir bien fait quelque chose.", ex: "Tu as fini ton exercice tout(e) seul(e), sans aide." },
+      { label: "Fierté", def: "Sentiment positif d'avoir réussi, reconnu par soi ou par les autres.", ex: "Tes parents te félicitent pour ton bulletin." },
+      { label: "Triomphe", def: "Fierté très forte après une réussite éclatante.", ex: "Tu remportes un concours après des mois de préparation." }
+    ]},
+  { name: "Honte", color: "#7b2d26", desc: "Émotion ressentie quand on a l'impression d'être jugé(e) négativement par les autres.",
+    tiers: [
+      { label: "Gêne", def: "Malaise léger face à une petite maladresse devant les autres.", ex: "Tu trébuches légèrement devant la classe." },
+      { label: "Honte", def: "Sentiment désagréable de se sentir en faute devant les autres.", ex: "Tu te trompes plusieurs fois à l'oral devant tout le monde." },
+      { label: "Humiliation", def: "Honte très forte, souvent provoquée par le regard moqueur des autres.", ex: "On se moque de toi publiquement devant la classe." }
+    ]},
+  { name: "Culpabilité", color: "#3949ab", desc: "Émotion ressentie quand on pense avoir causé du tort à quelqu'un ou enfreint une règle.",
+    tiers: [
+      { label: "Regret", def: "Léger malaise à l'idée d'avoir mal agi.", ex: "Tu regrettes d'avoir oublié d'aider un camarade." },
+      { label: "Culpabilité", def: "Sentiment d'être responsable d'un tort causé à quelqu'un.", ex: "Tu as dit un mot blessant à un ami sans le vouloir." },
+      { label: "Remords", def: "Culpabilité qui revient sans cesse à l'esprit, difficile à apaiser.", ex: "Tu repenses souvent à une dispute où tu n'as pas été juste." }
+    ]},
+  { name: "Jalousie", color: "#2e7d32", desc: "Émotion ressentie quand on craint de perdre une relation ou une place au profit d'un(e) autre.",
+    tiers: [
+      { label: "Envie", def: "Désir d'avoir ce qu'un autre possède, sans forcément de rancœur.", ex: "Un camarade a un jeu vidéo que tu aimerais avoir." },
+      { label: "Jalousie", def: "Sentiment désagréable face à la peur de perdre une place ou une relation.", ex: "Ton meilleur ami passe plus de temps avec un nouveau copain." },
+      { label: "Possessivité", def: "Jalousie très forte, avec l'envie de garder l'autre pour soi.", ex: "Tu es contrarié(e) dès que ton ami parle à quelqu'un d'autre." }
+    ]},
+  { name: "Gratitude", color: "#00838f", desc: "Émotion positive ressentie envers quelqu'un qui nous a aidé(e) ou fait du bien.",
+    tiers: [
+      { label: "Appréciation", def: "Reconnaissance discrète pour un geste gentil.", ex: "Un camarade te prête un stylo sans que tu demandes." },
+      { label: "Gratitude", def: "Sentiment sincère de reconnaissance envers quelqu'un.", ex: "Un professeur prend du temps pour t'expliquer une notion difficile." },
+      { label: "Profonde gratitude", def: "Gratitude très forte, qu'on a envie d'exprimer clairement.", ex: "Quelqu'un t'a beaucoup aidé(e) dans un moment difficile." }
+    ]},
+  { name: "Mépris", color: "#8e24aa", desc: "Émotion ressentie quand on juge quelqu'un ou quelque chose comme indigne de respect.",
+    tiers: [
+      { label: "Dédain", def: "Léger désintérêt teinté de jugement envers quelqu'un ou quelque chose.", ex: "Tu trouves qu'un jeu est « nul » sans même y avoir joué." },
+      { label: "Mépris", def: "Sentiment de supériorité qui pousse à ne pas respecter quelqu'un.", ex: "Tu ignores volontairement un camarade que tu juges « pas intéressant »." },
+      { label: "Dégoût moral", def: "Mépris très fort, proche du rejet total envers un comportement jugé inacceptable.", ex: "Tu es choqué(e) par un comportement injuste ou malhonnête." }
+    ]}
+];
+
+const cx = 360, cy = 360;
+const radii = [70, 145, 215, 285];
+const emotionRingInner = 300, emotionRingOuter = 340;
+const n = emotions.length;
+const angleStep = (2 * Math.PI) / n;
+const angleStepDeg = 360 / n;
+
+function polar(r, angle) { return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)]; }
+function bandPath(r1, r2, a1, a2) {
+  const [x1, y1] = polar(r2, a1), [x2, y2] = polar(r2, a2);
+  const [x3, y3] = polar(r1, a2), [x4, y4] = polar(r1, a1);
+  return `M ${x1} ${y1} A ${r2} ${r2} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${r1} ${r1} 0 0 0 ${x4} ${y4} Z`;
+}
+function hexToRgb(hex) { const v = parseInt(hex.slice(1), 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; }
+function shade(hex, amt) {
+  const [r, g, b] = hexToRgb(hex);
+  const mix = (c) => amt >= 0 ? Math.round(c + (255 - c) * amt) : Math.round(c * (1 + amt));
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+}
+
+const svgNS = "http://www.w3.org/2000/svg";
+const wheelGroup = document.getElementById('wheelGroup');
+const tierShades = [-0.18, 0.12, 0.42];
+const labelHolders = []; // {el, lx, ly}
+
+emotions.forEach((e, ei) => {
+  // With an even number of emotions, a plain top-aligned start puts two wedge
+  // centers exactly on the horizontal axis, where stacked labels have almost
+  // no vertical gap to separate them. Offsetting by half a step moves wedge
+  // centers off that axis (onto safer, more vertical angles) instead.
+  const a1 = -Math.PI / 2 + angleStep / 2 + ei * angleStep;
+  const a2 = a1 + angleStep;
+  const mid = (a1 + a2) / 2;
+
+  // tierIndex: 0 = léger, 1 = modéré, 2 = intense (matches e.tiers order).
+  // ring: 0 = innermost/darkest, 2 = outermost/lightest — so intense sits at the center.
+  for (let tierIndex = 0; tierIndex < 3; tierIndex++) {
+    const ring = 2 - tierIndex;
+    const r1 = radii[ring], r2 = radii[ring + 1];
+    const col = shade(e.color, tierShades[ring]);
+    const textColor = ring === 2 ? '#2b2420' : '#ffffff';
+    const rMid = (r1 + r2) / 2;
+    const [lx, ly] = polar(rMid, mid);
+
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('class', 'band');
+    path.setAttribute('id', `band-${ei}-${tierIndex}`);
+    path.setAttribute('d', bandPath(r1, r2, a1, a2));
+    path.setAttribute('fill', col);
+    path.dataset.ei = ei; path.dataset.t = tierIndex;
+    wheelGroup.appendChild(path);
+
+    const holder = document.createElementNS(svgNS, 'g');
+    const text = document.createElementNS(svgNS, 'text');
+    text.setAttribute('class', 'tier-label');
+    text.setAttribute('fill', textColor);
+    text.textContent = e.tiers[tierIndex].label;
+    holder.appendChild(text);
+    wheelGroup.appendChild(holder);
+    labelHolders.push({ el: holder, lx, ly });
+  }
+
+  const [nlx, nly] = polar((emotionRingInner + emotionRingOuter) / 2, mid);
+  const emoPath = document.createElementNS(svgNS, 'path');
+  emoPath.setAttribute('class', 'emotion-band');
+  emoPath.setAttribute('d', bandPath(emotionRingInner, emotionRingOuter, a1, a2));
+  emoPath.setAttribute('fill', e.color);
+  wheelGroup.appendChild(emoPath);
+
+  const nameHolder = document.createElementNS(svgNS, 'g');
+  const nameText = document.createElementNS(svgNS, 'text');
+  nameText.setAttribute('class', 'emotion-label');
+  nameText.textContent = e.name;
+  nameHolder.appendChild(nameText);
+  wheelGroup.appendChild(nameHolder);
+  labelHolders.push({ el: nameHolder, lx: nlx, ly: nly });
+});
+
+let rotation = 0; // degrees
+
+function render() {
+  wheelGroup.setAttribute('transform', `rotate(${rotation} ${cx} ${cy})`);
+  labelHolders.forEach(({ el, lx, ly }) => {
+    el.setAttribute('transform', `translate(${lx} ${ly}) rotate(${-rotation})`);
+  });
+}
+render();
+
+// --- Drag to rotate ---
+const wrap = document.getElementById('wheelWrap');
+const svgEl = document.getElementById('wheel');
+let dragging = false, startPointerAngle = 0, startRotation = 0, moved = false;
+
+function pointAngleDeg(clientX, clientY) {
+  const rect = svgEl.getBoundingClientRect();
+  const scale = 720 / rect.width;
+  const x = (clientX - rect.left) * scale - cx;
+  const y = (clientY - rect.top) * scale - cy;
+  return Math.atan2(y, x) * 180 / Math.PI;
+}
+
+wrap.addEventListener('pointerdown', (ev) => {
+  dragging = true; moved = false;
+  startPointerAngle = pointAngleDeg(ev.clientX, ev.clientY);
+  startRotation = rotation;
+  wrap.setPointerCapture(ev.pointerId);
+});
+wrap.addEventListener('pointermove', (ev) => {
+  if (!dragging) return;
+  const cur = pointAngleDeg(ev.clientX, ev.clientY);
+  let delta = cur - startPointerAngle;
+  if (Math.abs(delta) > 2) moved = true;
+  rotation = startRotation + delta;
+  render();
+});
+function endDrag(ev) {
+  if (dragging && !moved) {
+    // Pointer capture redirects the native click event to `wrap`, so a plain
+    // tap/click on a band never reaches it — resolve the actual element by
+    // coordinates instead, for both mouse and touch.
+    const el = document.elementFromPoint(ev.clientX, ev.clientY);
+    const band = el && el.closest('.band');
+    if (band) showTier(parseInt(band.dataset.ei), parseInt(band.dataset.t));
+  }
+  dragging = false;
+  moved = false;
+  if (wrap.hasPointerCapture && wrap.hasPointerCapture(ev.pointerId)) {
+    wrap.releasePointerCapture(ev.pointerId);
+  }
+}
+wrap.addEventListener('pointerup', endDrag);
+wrap.addEventListener('pointercancel', endDrag);
+
+// --- Button rotate (animated, one segment at a time) ---
+function animateRotateBy(deltaDeg) {
+  const start = rotation, target = rotation + deltaDeg, duration = 380;
+  const t0 = performance.now();
+  function step(now) {
+    const p = Math.min(1, (now - t0) / duration);
+    const ease = 1 - Math.pow(1 - p, 3);
+    rotation = start + (target - start) * ease;
+    render();
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+document.getElementById('rotLeft').addEventListener('click', () => animateRotateBy(-angleStepDeg));
+document.getElementById('rotRight').addEventListener('click', () => animateRotateBy(angleStepDeg));
+
+// --- Selection panel ---
+const panel = document.getElementById('panel');
+const intensityNames = ["Léger", "Modéré", "Intense"]; // indexed to match e.tiers order
+
+function showTier(ei, tierIndex) {
+  document.querySelectorAll('.band').forEach(b => b.classList.remove('active'));
+  document.getElementById(`band-${ei}-${tierIndex}`).classList.add('active');
+  const e = emotions[ei];
+  const tier = e.tiers[tierIndex];
+  const ring = 2 - tierIndex; // 0 = intense/dark, 2 = léger/light
+  const col = shade(e.color, tierShades[ring]);
+  const badgeTextColor = tierIndex === 0 ? '#2b2420' : '#fff';
+
+  panel.innerHTML = `
+    <div class="panel-emotion">
+      <span class="dot" style="background:${e.color}"></span>
+      <h2>${e.name} → ${tier.label}</h2>
+    </div>
+    <span class="intensity-badge" style="background:${col}; color:${badgeTextColor}">${intensityNames[tierIndex]}</span>
+
+    <div class="section-title">Émotion sociale : ${e.name}</div>
+    <p class="desc">${e.desc}</p>
+
+    <div class="section-title">Sentiment : ${tier.label}</div>
+    <p class="desc">${tier.def}</p>
+
+    <div class="example">💬 <strong>Exemple :</strong> ${tier.ex}</div>
+    <div class="section-title">Les 3 niveaux d'intensité</div>
+    <div class="tiers" style="color:${e.color}">
+      ${e.tiers.map((ti, i) => `
+        <div class="tier-chip ${i === tierIndex ? 'selected' : ''}" data-ei="${ei}" data-t="${i}">
+          <span class="sq" style="background:${shade(e.color, tierShades[2 - i])}"></span>
+          ${ti.label} <span style="margin-left:auto; opacity:0.6; font-size:0.78rem;">${intensityNames[i]}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  panel.querySelectorAll('.tier-chip').forEach(chip => {
+    chip.addEventListener('click', () => showTier(parseInt(chip.dataset.ei), parseInt(chip.dataset.t)));
+  });
+}
+
+// Band selection is handled entirely via pointerup (see endDrag above),
+// since pointer capture on `wrap` prevents the native click event from
+// ever reaching an individual band.
+</script>
+</body>
+</html>
