@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Créateur de flashcards</title>
+<style>
+:root{
+    --fond:#f2f2f7;
+    --surface:#ffffff;
+    --texte:#1c1c1e;
+    --texte-doux:#6b6b70;
+    --ligne:#e3e3e8;
+    --bleu:#007AFF;
+    --bleu-fonce:#0060cc;
+    --bleu-clair:#e8f1ff;
+    --rouge:#d92d20;
+    --vert:#1f9d55;
+    --ombre:0 1px 2px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme: dark){
+    :root{
+        --fond:#101012;
+        --surface:#1c1c1f;
+        --texte:#f2f2f4;
+        --texte-doux:#9d9da4;
+        --ligne:#34343a;
+        --bleu:#4d9bff;
+        --bleu-fonce:#2f86f5;
+        --bleu-clair:#172740;
+        --rouge:#ff6b5e;
+        --vert:#4cd08a;
+        --ombre:none;
+        color-scheme:dark;
+    }
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+    margin:0;
+    background:var(--fond);
+    color:var(--texte);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    line-height:1.5;
+    padding-inline:16px;
+    padding-block:28px 120px;
+}
+main{max-width:760px;margin:0 auto;}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:-.3px;}
+.intro{color:var(--texte-doux);font-size:14px;margin:0 0 22px;max-width:60ch;}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--texte-doux);margin:0 0 10px;font-weight:700;}
+section{margin-bottom:26px;}
+.bloc{background:var(--surface);border:1px solid var(--ligne);border-radius:14px;padding:16px;box-shadow:var(--ombre);}
+.champs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+label{display:block;font-size:13px;font-weight:600;margin-bottom:5px;}
+label small{font-weight:400;color:var(--texte-doux);}
+input[type=text],textarea{
+    width:100%;
+    font:inherit;
+    font-size:16px;
+    color:var(--texte);
+    background:var(--fond);
+    border:1px solid var(--ligne);
+    border-radius:10px;
+    padding:10px 12px;
+}
+textarea{resize:vertical;min-height:44px;line-height:1.45;overflow:hidden;}
+input:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--bleu);outline-offset:1px;}
+button{
+    font:inherit;
+    font-size:14px;
+    font-weight:600;
+    border-radius:10px;
+    border:1px solid var(--ligne);
+    background:var(--surface);
+    color:var(--texte);
+    padding:9px 14px;
+    cursor:pointer;
+}
+button:hover{background:var(--fond);}
+button.principal{background:var(--bleu);border-color:var(--bleu);color:#fff;}
+button.principal:hover{background:var(--bleu-fonce);}
+button.discret{border:none;background:none;color:var(--texte-doux);padding:6px 8px;font-weight:600;}
+button.discret:hover{color:var(--texte);background:var(--fond);}
+button.danger{color:var(--rouge);}
+button:disabled{opacity:.45;cursor:not-allowed;}
+
+details.bloc summary{cursor:pointer;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+details.bloc summary::-webkit-details-marker{display:none;}
+details.bloc summary::after{content:"＋";color:var(--bleu);font-size:18px;}
+details[open].bloc summary::after{content:"−";}
+.aide{font-size:13px;color:var(--texte-doux);margin:10px 0;}
+.aide code{background:var(--fond);padding:1px 6px;border-radius:6px;font-size:12.5px;}
+.vrac-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px;}
+.rapport{font-size:13px;color:var(--texte-doux);}
+
+.liste-cartes{display:flex;flex-direction:column;gap:12px;}
+.carte{background:var(--surface);border:1px solid var(--ligne);border-radius:14px;padding:14px 16px 10px;box-shadow:var(--ombre);}
+.carte-tete{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+.carte-num{font-size:12px;font-weight:700;color:var(--bleu);background:var(--bleu-clair);padding:3px 10px;border-radius:100px;font-variant-numeric:tabular-nums;}
+.carte-actions{display:flex;gap:2px;flex-wrap:wrap;justify-content:flex-end;}
+.carte-champs{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.carte.incomplete{border-color:var(--rouge);}
+@media (max-width:560px){.carte-champs{grid-template-columns:1fr;}}
+
+.barre{
+    position:fixed;left:0;right:0;bottom:0;
+    background:var(--surface);
+    border-top:1px solid var(--ligne);
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
+}
+.barre-in{max-width:760px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;}
+.compteur{font-size:14px;font-variant-numeric:tabular-nums;}
+.compteur strong{font-size:16px;}
+.barre-boutons{display:flex;gap:8px;flex-wrap:wrap;}
+#statut{min-height:20px;font-size:13px;margin-top:8px;color:var(--vert);}
+#statut.erreur{color:var(--rouge);}
+.entete-liste{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;}
+.entete-liste h2{margin:0;}
+</style>
+</head>
+<body>
+<main>
+
+<h1>Créateur de flashcards</h1>
+<p class="intro">Saisis tes questions et réponses, puis télécharge le fichier à importer dans Mémo Révisions (bouton <strong>+</strong> → <strong>Importer des flashcards</strong>). Tout se passe dans ton navigateur : rien n'est envoyé nulle part, et ton brouillon est gardé automatiquement.</p>
+
+<section>
+    <h2>La fiche</h2>
+    <div class="bloc champs">
+        <div>
+            <label for="nom">Titre de la fiche</label>
+            <input type="text" id="nom" placeholder="Ex : S'engager au collège" autocomplete="off">
+        </div>
+        <div>
+            <label for="matiere">Matière</label>
+            <input type="text" id="matiere" list="liste-matieres" placeholder="Ex : Histoire-Géo-EMC" autocomplete="off">
+            <datalist id="liste-matieres">
+                <option value="Français"><option value="Maths"><option value="Histoire-Géo-EMC"><option value="Anglais">
+                <option value="Espagnol"><option value="EMI"><option value="Sciences"><option value="SVT">
+                <option value="Sciences physiques"><option value="Latin"><option value="Éducation musicale">
+                <option value="Arts plastiques"><option value="Autre">
+            </datalist>
+        </div>
+        <div>
+            <label for="chapitre">Chapitre <small>(facultatif)</small></label>
+            <input type="text" id="chapitre" placeholder="Ex : Thème 1 — Voter" autocomplete="off">
+        </div>
+    </div>
+</section>
+
+<section>
+    <details class="bloc" id="bloc-vrac">
+        <summary>Coller plusieurs cartes d'un coup</summary>
+        <p class="aide">Une carte par ligne, avec la question et la réponse séparées par un point-virgule <code>;</code>, une barre <code>|</code>, <code>=&gt;</code> ou une tabulation (copier-coller depuis Excel ou Sheets : deux colonnes). Pour aller à la ligne dans une réponse, écris <code>\n</code>.</p>
+        <label for="vrac" class="sr-only" style="position:absolute;left:-9999px;">Cartes en vrac</label>
+        <textarea id="vrac" rows="6" placeholder="Qu'est-ce qu'un bulletin blanc ? ; Un bulletin sur lequel rien n'est inscrit.&#10;Que fait un maire ? ; Il dirige la commune."></textarea>
+        <div class="vrac-actions">
+            <button type="button" class="principal" id="btn-vrac">Ajouter ces cartes</button>
+            <span class="rapport" id="rapport-vrac"></span>
+        </div>
+    </details>
+</section>
+
+<section>
+    <div class="entete-liste">
+        <h2 id="titre-liste">Les cartes</h2>
+        <button type="button" class="discret" id="btn-charger" title="Rouvrir un fichier exporté depuis l'app pour le modifier">Ouvrir un fichier…</button>
+        <input type="file" id="fichier" style="display:none;">
+    </div>
+    <div class="liste-cartes" id="liste"></div>
+    <div style="margin-top:12px;">
+        <button type="button" id="btn-ajouter">＋ Ajouter une carte</button>
+    </div>
+</section>
+
+<div id="statut" role="status" aria-live="polite"></div>
+
+</main>
+
+<div class="barre">
+    <div class="barre-in">
+        <div class="compteur"><strong id="nb-valides">0</strong> carte(s) prête(s)<span id="nb-incompletes" style="color:var(--rouge);"></span></div>
+        <div class="barre-boutons">
+            <button type="button" class="discret danger" id="btn-nouveau">Tout effacer</button>
+            <button type="button" id="btn-copier">Copier</button>
+            <button type="button" class="principal" id="btn-telecharger">Télécharger le fichier</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    var CLE = 'createur_flashcards_brouillon_v1';
+    var etat = { nom:'', matiere:'', chapitre:'', cartes:[ { question:'', reponse:'' } ] };
+
+    var $ = function(id){ return document.getElementById(id); };
+    var liste = $('liste');
+
+    /* ---------- Utilitaires ---------- */
+    function slug(s){
+        return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'fiche';
+    }
+    function sauver(){ try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch(e) {} }
+    function restaurer(){
+        try {
+            var brut = localStorage.getItem(CLE);
+            if (!brut) return;
+            var d = JSON.parse(brut);
+            if (d && Array.isArray(d.cartes) && d.cartes.length) etat = d;
+        } catch(e) {}
+    }
+    function statut(msg, erreur){
+        var el = $('statut');
+        el.textContent = msg || '';
+        el.className = erreur ? 'erreur' : '';
+    }
+    function estValide(c){ return (c.question || '').trim() !== '' && (c.reponse || '').trim() !== ''; }
+    function grandir(ta){ ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 2) + 'px'; }
+
+    function majCompteurs(){
+        var valides = etat.cartes.filter(estValide).length;
+        var incompletes = etat.cartes.filter(function(c){
+            return !estValide(c) && ((c.question || '').trim() !== '' || (c.reponse || '').trim() !== '');
+        }).length;
+        $('nb-valides').textContent = valides;
+        $('nb-incompletes').textContent = incompletes ? ' · ' + incompletes + ' incomplète(s)' : '';
+        $('titre-liste').textContent = 'Les cartes (' + etat.cartes.length + ')';
+        document.querySelectorAll('.carte').forEach(function(el, i){
+            var c = etat.cartes[i];
+            var incomplete = c && !estValide(c) && ((c.question || '').trim() !== '' || (c.reponse || '').trim() !== '');
+            el.classList.toggle('incomplete', !!incomplete);
+        });
+    }
+
+    /* ---------- Rendu de la liste ---------- */
+    function echapper(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+
+    function rendre(focusIndex, champ){
+        liste.innerHTML = etat.cartes.map(function(c, i){
+            return '<div class="carte">' +
+                '<div class="carte-tete">' +
+                    '<span class="carte-num">Carte ' + (i + 1) + '</span>' +
+                    '<div class="carte-actions">' +
+                        '<button type="button" class="discret" data-act="haut" data-i="' + i + '" aria-label="Monter la carte ' + (i+1) + '"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
+                        '<button type="button" class="discret" data-act="bas" data-i="' + i + '" aria-label="Descendre la carte ' + (i+1) + '"' + (i === etat.cartes.length - 1 ? ' disabled' : '') + '>↓</button>' +
+                        '<button type="button" class="discret" data-act="dupliquer" data-i="' + i + '">Dupliquer</button>' +
+                        '<button type="button" class="discret danger" data-act="supprimer" data-i="' + i + '">Supprimer</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="carte-champs">' +
+                    '<div><label for="q' + i + '">Question</label><textarea id="q' + i + '" data-i="' + i + '" data-champ="question" rows="1">' + echapper(c.question) + '</textarea></div>' +
+                    '<div><label for="r' + i + '">Réponse</label><textarea id="r' + i + '" data-i="' + i + '" data-champ="reponse" rows="1">' + echapper(c.reponse) + '</textarea></div>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+        liste.querySelectorAll('textarea').forEach(grandir);
+        majCompteurs();
+        if (focusIndex !== undefined) {
+            var cible = $((champ === 'reponse' ? 'r' : 'q') + focusIndex);
+            if (cible) cible.focus();
+        }
+    }
+
+    /* ---------- Événements : champs de la fiche ---------- */
+    ['nom','matiere','chapitre'].forEach(function(id){
+        $(id).addEventListener('input', function(){ etat[id] = $(id).value; sauver(); });
+    });
+
+    /* ---------- Événements : liste des cartes (délégation) ---------- */
+    liste.addEventListener('input', function(ev){
+        var ta = ev.target;
+        if (ta.tagName !== 'TEXTAREA') return;
+        etat.cartes[+ta.dataset.i][ta.dataset.champ] = ta.value;
+        grandir(ta);
+        majCompteurs();
+        sauver();
+    });
+    liste.addEventListener('keydown', function(ev){
+        // Ctrl/Cmd + Entrée : nouvelle carte juste après celle-ci
+        if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey) && ev.target.tagName === 'TEXTAREA') {
+            ev.preventDefault();
+            var i = +ev.target.dataset.i;
+            etat.cartes.splice(i + 1, 0, { question:'', reponse:'' });
+            sauver();
+            rendre(i + 1, 'question');
+        }
+    });
+    liste.addEventListener('click', function(ev){
+        var b = ev.target.closest('button[data-act]');
+        if (!b) return;
+        var i = +b.dataset.i, act = b.dataset.act, c = etat.cartes;
+        if (act === 'haut' && i > 0) { var t = c[i-1]; c[i-1] = c[i]; c[i] = t; sauver(); rendre(); }
+        else if (act === 'bas' && i < c.length - 1) { var u = c[i+1]; c[i+1] = c[i]; c[i] = u; sauver(); rendre(); }
+        else if (act === 'dupliquer') { c.splice(i + 1, 0, JSON.parse(JSON.stringify(c[i]))); sauver(); rendre(i + 1, 'question'); }
+        else if (act === 'supprimer') {
+            c.splice(i, 1);
+            if (!c.length) c.push({ question:'', reponse:'' });
+            sauver(); rendre();
+        }
+    });
+    $('btn-ajouter').addEventListener('click', function(){
+        etat.cartes.push({ question:'', reponse:'' });
+        sauver();
+        rendre(etat.cartes.length - 1, 'question');
+    });
+
+    /* ---------- Coller en vrac ---------- */
+    function analyserVrac(texte){
+        var cartes = [], ignorees = 0;
+        texte.split(/\r?\n/).forEach(function(ligne){
+            if (!ligne.trim()) return;
+            var sep = null, pos = -1;
+            [ '\t', ' => ', '=>', ' | ', '|', ' ; ', ';' ].some(function(s){
+                var p = ligne.indexOf(s);
+                if (p > 0) { sep = s; pos = p; return true; }
+                return false;
+            });
+            if (sep === null) { ignorees++; return; }
+            var q = ligne.slice(0, pos).trim();
+            var r = ligne.slice(pos + sep.length).trim().replace(/\\n/g, '\n');
+            if (q && r) cartes.push({ question:q, reponse:r }); else ignorees++;
+        });
+        return { cartes:cartes, ignorees:ignorees };
+    }
+    $('btn-vrac').addEventListener('click', function(){
+        var res = analyserVrac($('vrac').value);
+        var rapport = $('rapport-vrac');
+        if (!res.cartes.length) {
+            rapport.textContent = 'Aucune carte reconnue. Vérifie que chaque ligne contient un séparateur (;  |  =>).';
+            return;
+        }
+        // Remplace la carte vide de départ au lieu de la laisser traîner
+        if (etat.cartes.length === 1 && !estValide(etat.cartes[0]) && !etat.cartes[0].question && !etat.cartes[0].reponse) etat.cartes = [];
+        etat.cartes = etat.cartes.concat(res.cartes);
+        sauver();
+        rendre();
+        $('vrac').value = '';
+        rapport.textContent = res.cartes.length + ' carte(s) ajoutée(s)' + (res.ignorees ? ' · ' + res.ignorees + ' ligne(s) ignorée(s) (pas de séparateur)' : '') + '.';
+    });
+
+    /* ---------- Export ---------- */
+    function construirePaquet(){
+        var valides = etat.cartes.filter(estValide);
+        var nom = (etat.nom || '').trim() || 'Nouvelle fiche';
+        var alea = Math.random().toString(36).slice(2, 6);
+        return {
+            paquet: {
+                type: 'sauvegarde-memo-revisions',
+                version: 1,
+                exporteLe: new Date().toISOString(),
+                supports: [{
+                    id: slug(nom) + '-' + alea,
+                    nom: nom,
+                    matiere: (etat.matiere || '').trim() || 'Autre',
+                    chapitre: (etat.chapitre || '').trim(),
+                    type: 'texte',
+                    etat: {},
+                    mode: 'simple',
+                    creeLe: Date.now(),
+                    cartes: valides.map(function(c){
+                        var copie = JSON.parse(JSON.stringify(c));
+                        copie.question = c.question.trim();
+                        copie.reponse = c.reponse.trim();
+                        return copie;
+                    })
+                }]
+            },
+            valides: valides.length,
+            ignorees: etat.cartes.length - valides.length,
+            nom: nom
+        };
+    }
+
+    // Sur iPhone/iPad, la feuille de partage évite l'aperçu de texte brut
+    // de Safari ; ailleurs, téléchargement classique.
+    async function livrerFichier(blob, nomFichier){
+        var ios = /iP(hone|ad|od)/.test(navigator.userAgent);
+        if (ios && navigator.share && navigator.canShare) {
+            try {
+                var f = new File([blob], nomFichier, { type: blob.type });
+                if (navigator.canShare({ files:[f] })) { await navigator.share({ files:[f] }); return true; }
+            } catch(e) { if (e && e.name === 'AbortError') return false; }
+        }
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = nomFichier;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+        return true;
+    }
+
+    $('btn-telecharger').addEventListener('click', async function(){
+        var r = construirePaquet();
+        if (!r.valides) { statut('Aucune carte complète à exporter : remplis au moins une question et sa réponse.', true); return; }
+        var blob = new Blob([JSON.stringify(r.paquet, null, 2)], { type:'application/octet-stream' });
+        var ok = await livrerFichier(blob, slug(r.nom) + '.json');
+        if (ok) statut('Fichier « ' + slug(r.nom) + '.json » prêt : ' + r.valides + ' carte(s)' + (r.ignorees ? ' (' + r.ignorees + ' carte(s) vide(s) ou incomplète(s) laissée(s) de côté)' : '') + '.');
+    });
+
+    $('btn-copier').addEventListener('click', function(){
+        var r = construirePaquet();
+        if (!r.valides) { statut('Aucune carte complète à copier.', true); return; }
+        var texte = JSON.stringify(r.paquet, null, 2);
+        function repli(){
+            var ta = document.createElement('textarea');
+            ta.value = texte; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            var ok = false;
+            try { ok = document.execCommand('copy'); } catch(e) {}
+            document.body.removeChild(ta);
+            statut(ok ? 'Contenu copié (' + r.valides + ' carte(s)).' : 'Copie impossible ici : utilise « Télécharger le fichier ».', !ok);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(texte).then(function(){ statut('Contenu copié (' + r.valides + ' carte(s)).'); }, repli);
+        } else { repli(); }
+    });
+
+    /* ---------- Rouvrir un fichier exporté ---------- */
+    $('btn-charger').addEventListener('click', function(){ $('fichier').click(); });
+    $('fichier').addEventListener('change', function(ev){
+        var f = ev.target.files[0];
+        ev.target.value = '';
+        if (!f) return;
+        var lecteur = new FileReader();
+        lecteur.onload = function(){
+            try {
+                var d = JSON.parse(lecteur.result);
+                var supports = Array.isArray(d.supports) ? d.supports : [];
+                var s = supports.filter(function(x){ return x && x.type === 'texte' && Array.isArray(x.cartes); })[0];
+                if (!s) throw new Error('pas de fiche de flashcards');
+                etat = {
+                    nom: s.nom || '',
+                    matiere: s.matiere || '',
+                    chapitre: s.chapitre || '',
+                    cartes: s.cartes.length ? s.cartes : [ { question:'', reponse:'' } ]
+                };
+                $('nom').value = etat.nom; $('matiere').value = etat.matiere; $('chapitre').value = etat.chapitre;
+                sauver(); rendre();
+                statut('Fiche « ' + (s.nom || 'sans titre') + ' » ouverte (' + s.cartes.length + ' carte(s)). Elle sera exportée comme une nouvelle fiche, avec une progression vierge.' +
+                    (supports.length > 1 ? ' Le fichier contenait ' + supports.length + ' fiches : seule la première est chargée.' : ''));
+            } catch(e) {
+                statut('Ce fichier n\'est pas une fiche de flashcards de Mémo Révisions.', true);
+            }
+        };
+        lecteur.readAsText(f);
+    });
+
+    /* ---------- Tout effacer ---------- */
+    $('btn-nouveau').addEventListener('click', function(){
+        if (!confirm('Effacer le titre et toutes les cartes de ce brouillon ?')) return;
+        etat = { nom:'', matiere:'', chapitre:'', cartes:[ { question:'', reponse:'' } ] };
+        $('nom').value = ''; $('matiere').value = ''; $('chapitre').value = '';
+        sauver(); rendre(0, 'question'); statut('');
+    });
+
+    /* ---------- Démarrage ---------- */
+    restaurer();
+    $('nom').value = etat.nom || '';
+    $('matiere').value = etat.matiere || '';
+    $('chapitre').value = etat.chapitre || '';
+    rendre();
+})();
+</script>
+</body>
+</html>
