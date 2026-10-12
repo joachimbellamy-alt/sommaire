@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Le sujet du verbe : sujets complexes</title>
+<style>
+:root{
+  --bg:#f6efe0; --card:#fffdf7; --ink:#2b2a33; --muted:#6b6658; --navy:#1f3864;
+  --terra:#b5532f; --line:#e0d5bc; --ok:#2f7a3b; --okbg:#dff0dc; --ko:#b3261e; --kobg:#f9dedb;
+  --sel:#ffe08a; --subj:#cfe3ff;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Georgia,"Times New Roman",serif;font-size:20px;line-height:1.5;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) 40px env(safe-area-inset-left)}
+.wrap{max-width:860px;margin:0 auto;padding:0 16px}
+header{padding:22px 0 8px;border-bottom:3px double var(--terra)}
+h1{margin:0;font-size:28px;color:var(--navy);line-height:1.2}
+.sub{margin:4px 0 0;color:var(--terra);font-style:italic}
+nav{display:flex;gap:8px;margin:16px 0 12px;flex-wrap:wrap}
+nav button{flex:1 1 200px;min-height:56px;border:2px solid var(--line);background:var(--card);border-radius:12px;
+  font:inherit;font-size:17px;color:var(--navy);cursor:pointer;padding:8px 12px;text-align:left;touch-action:manipulation}
+nav button.on{border-color:var(--navy);background:var(--navy);color:#fff}
+nav button small{display:block;font-size:14px;opacity:.85;font-family:-apple-system,"Helvetica Neue",Arial,sans-serif}
+details.method{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px;margin-bottom:14px}
+details.method summary{cursor:pointer;font-weight:bold;color:var(--navy);min-height:32px}
+details.method ol,details.method ul{margin:8px 0 4px 0;padding-left:24px}
+details.method li{margin:4px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 2px 0 var(--line)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.pill{display:inline-block;background:#f3e3d8;color:var(--terra);border-radius:999px;padding:3px 12px;font-size:15px;
+  font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;font-weight:600}
+.count{color:var(--muted);font-size:15px;font-family:-apple-system,"Helvetica Neue",Arial,sans-serif}
+.consigne{margin:6px 0 14px;color:var(--navy);font-weight:bold}
+.sent{font-size:24px;line-height:2.3;margin:8px 0 12px;-webkit-user-select:none;user-select:none}
+.w{display:inline-block;padding:0 5px;margin:0 1px;border-radius:8px;border:2px solid transparent;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.w.fixed{cursor:default}
+.w.sel{background:var(--sel);border-color:#e0b43a}
+.w.verb{border:2px solid var(--ink);border-radius:4px;font-weight:bold;cursor:default}
+.w.subj{background:var(--subj);border-color:#8db4e8;cursor:default}
+.w.good{background:var(--okbg);border-color:var(--ok)}
+.w.miss{background:#fff;border:2px dashed var(--terra)}
+.w.bad{background:var(--kobg);border-color:var(--ko);text-decoration:line-through}
+.chunk{display:inline-block;padding:2px 12px;margin:0 3px;border-radius:10px;border:2px solid var(--navy);background:#fff;color:var(--navy);
+  font:inherit;font-weight:bold;cursor:pointer;touch-action:manipulation;min-height:44px;vertical-align:middle}
+.chunk.sel{background:var(--sel);border-color:#e0b43a;color:var(--ink)}
+.chunk.good{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.chunk.bad{background:var(--kobg);border-color:var(--ko);color:var(--ko)}
+.slot{display:inline-block;min-width:110px;border-bottom:3px solid var(--terra);text-align:center;margin:0 4px;font-weight:bold;color:var(--navy)}
+.slot.good{color:var(--ok);border-color:var(--ok)}
+.slot.bad{color:var(--ko);border-color:var(--ko);text-decoration:line-through}
+.sujet-rev{background:var(--subj);border-radius:8px;padding:0 4px;text-decoration:underline}
+.opts{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+.opt{flex:1 1 180px;min-height:56px;font:inherit;font-size:21px;font-weight:bold;border:2px solid var(--navy);background:#fff;color:var(--navy);
+  border-radius:12px;cursor:pointer;touch-action:manipulation}
+.opt.good{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.opt.bad{background:var(--kobg);border-color:var(--ko);color:var(--ko)}
+.opt:disabled{cursor:default}
+.actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.btn{min-height:52px;padding:0 24px;border-radius:12px;border:0;background:var(--terra);color:#fff;font:inherit;font-size:19px;font-weight:bold;cursor:pointer;touch-action:manipulation}
+.btn.alt{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+.btn:disabled{background:#cdbfa8;cursor:not-allowed}
+.fb{margin-top:14px;padding:12px 16px;border-radius:12px;font-size:19px}
+.fb.ok{background:var(--okbg);border-left:6px solid var(--ok)}
+.fb.ko{background:var(--kobg);border-left:6px solid var(--ko)}
+.fb b.t{display:block;margin-bottom:2px}
+.dots{display:flex;gap:6px;margin:0 0 4px;flex-wrap:wrap}
+.dot{width:14px;height:14px;border-radius:50%;background:#e6dcc6}
+.dot.cur{outline:2px solid var(--navy)}.dot.ok{background:var(--ok)}.dot.ko{background:var(--ko)}
+.end{text-align:center;padding:12px 0}
+.end .big{font-size:44px;color:var(--navy);margin:0}
+@media (max-width:600px){body{font-size:18px}.sent{font-size:21px}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Le sujet du verbe : sujets complexes</h1>
+  <p class="sub">Héroïnes et héros de l'Antiquité</p>
+</header>
+
+<nav id="tabs"></nav>
+
+<details class="method">
+  <summary>Ma méthode pour trouver le sujet</summary>
+  <ol>
+    <li>Je repère le <b>verbe conjugué</b> (parfois deux mots : <i>avait vaincu</i>).</li>
+    <li>Je pose la question <b>« Qui est-ce qui… ? »</b> devant le verbe, et je vérifie avec <b>« C'est … qui »</b>.</li>
+    <li>Je prends <b>tout le groupe</b> qui répond à la question, avec ses expansions.</li>
+  </ol>
+  <p style="margin:6px 0 2px"><b>Attention, le sujet peut être :</b></p>
+  <ul>
+    <li>placé <b>après</b> le verbe (sujet inversé) ;</li>
+    <li>séparé du verbe par un complément ou une virgule ;</li>
+    <li>un groupe nominal étendu (participe, complément du nom, relative…) ;</li>
+    <li>un verbe à l'infinitif ;</li>
+    <li>plusieurs noms coordonnés ;</li>
+    <li>un pronom, y compris <i>qui</i>.</li>
+  </ul>
+  <p style="margin:6px 0 2px">Un complément <b>peut être supprimé</b> ; le sujet, <b>non</b>.</p>
+</details>
+
+<main class="card" id="card"></main>
+</div>
+
+<script>
+/* ---------- DONNÉES ----------
+   {S:…} = sujet   {V:…} = verbe (module 1) ou verbe proposé (module 2)
+   {C:…} = bon verbe (module 2)   {_:} = trou (module 3)                    */
+const MODS = {
+ A:{
+  name:"1 · Repère le sujet", desc:"Touche les mots du sujet",
+  items:[
+   {type:"Sujet inversé",
+    t:"Sur la mer Égée {V:soufflait} {S:un vent glacial}.",
+    why:"Le sujet est placé après le verbe : Qui est-ce qui soufflait ? Un vent glacial. « Sur la mer Égée » est un complément de lieu."},
+   {type:"Sujet éloigné du verbe",
+    t:"{S:Ulysse}, malgré les avertissements de ses compagnons, {V:écouta} le chant des Sirènes.",
+    why:"Le groupe entre virgules (« malgré les avertissements… ») est un complément qu'on peut supprimer. Le sujet est Ulysse."},
+   {type:"Groupe nominal étendu",
+    t:"{S:Le bouclier forgé par Héphaïstos pour Achille} {V:brillait} comme le soleil.",
+    why:"Le sujet est un groupe nominal étendu : il faut prendre tout le groupe, avec le participe « forgé » et ses compléments."},
+   {type:"Sujet infinitif",
+    t:"{S:Affronter le Minotaure dans le labyrinthe} {V:exigeait} un courage immense.",
+    why:"Un verbe à l'infinitif peut être sujet, avec ses compléments. Qui est-ce qui exigeait un courage immense ? Affronter le Minotaure dans le labyrinthe."},
+   {type:"Sujets coordonnés",
+    t:"{S:Castor, Pollux et leur sœur Hélène} {V:grandirent} à Sparte.",
+    why:"Trois noms réunis par une virgule et « et » forment un seul sujet. C'est pourquoi le verbe est au pluriel."},
+   {type:"Pronom relatif « qui »",
+    t:"Persée, {S:qui} {V:avait vaincu} la Méduse, offrit sa tête à Athéna.",
+    why:"« Qui » est un pronom relatif : il remplace Persée et il est le sujet de « avait vaincu ». Le verbe est composé de deux mots."},
+   {type:"Dans une subordonnée",
+    t:"Quand {S:les Troyens} {V:virent} le grand cheval de bois, ils crurent à un cadeau.",
+    why:"Chaque verbe a son sujet. Pour « virent », Qui est-ce qui virent ? Les Troyens (le sujet de « crurent » est « ils »)."},
+   {type:"Piège : « que » n'est pas sujet",
+    t:"Pénélope, que {S:les prétendants} {V:pressaient} de choisir un époux, défaisait chaque nuit son ouvrage.",
+    why:"« Que » est complément d'objet de « pressaient ». Qui est-ce qui pressait Pénélope ? Les prétendants. (Le sujet de « défaisait » est Pénélope.)"}
+  ]},
+ B:{
+  name:"2 · À quel verbe ?", desc:"Relie le sujet à son verbe",
+  items:[
+   {type:"Relative en incise",
+    t:"{S:Les dieux} qui {V:régnaient} sur l'Olympe {C:observaient} les mortels.",
+    why:"« Qui » est le sujet de « régnaient ». Les dieux sont le sujet de « observaient » : ce sont les dieux qui observaient les mortels."},
+   {type:"Subordonnée complétive",
+    t:"{S:Ulysse} {C:ordonna} que ses hommes {V:rament} plus vite.",
+    why:"Ulysse ordonna ; ses hommes rament. Chaque verbe a son propre sujet."},
+   {type:"Relative avec « que »",
+    t:"Le cheval que {S:les Grecs} {C:avaient construit} {V:resta} devant les portes de Troie.",
+    why:"Qui est-ce qui avait construit le cheval ? Les Grecs. Le sujet de « resta » est « le cheval que les Grecs avaient construit »."},
+   {type:"Sujet inversé dans une subordonnée",
+    t:"Quand {V:retentit} le cri de guerre, {S:Achille} {C:saisit} sa lance.",
+    why:"Pour « retentit », le sujet est inversé : le cri de guerre. Achille est le sujet de « saisit »."},
+   {type:"Relative avec « que »",
+    t:"Les marins {V:entendirent} le chant que {S:les Sirènes} {C:entonnaient} sans cesse.",
+    why:"« Que » remplace « le chant » (complément). Qui est-ce qui entonnait le chant ? Les Sirènes. Les marins entendirent."},
+   {type:"Subordonnée avec sujet inversé",
+    t:"{S:Thésée}, après que {V:retentirent} les cris du monstre, {C:s'avança} dans la galerie.",
+    why:"Le sujet de « retentirent » est « les cris du monstre » (sujet inversé). Thésée est le sujet de « s'avança »."}
+  ]},
+ C:{
+  name:"3 · Accorde le verbe", desc:"Choisis la bonne forme",
+  items:[
+   {type:"Complément du nom",
+    t:"{S:Le chant} des Sirènes, malgré les cris de l'équipage, {_:} Ulysse.",
+    opts:["envoûte","envoûtent"], ok:0,
+    why:"Le noyau du sujet est « le chant » (singulier). « Des Sirènes » est un complément du nom : il n'impose pas l'accord. On écrit « envoûte »."},
+   {type:"Sujet inversé",
+    t:"Sur le rivage d'Ithaque {_:} {S:les prétendants de Pénélope}.",
+    opts:["attendait","attendaient"], ok:1,
+    why:"Le sujet est après le verbe : « les prétendants de Pénélope » (pluriel). On écrit « attendaient »."},
+   {type:"Sujets coordonnés par « ni »",
+    t:"{S:Ni la peur ni la fatigue} n'{_:} arrêté Héraclès.",
+    opts:["a","ont"], ok:1,
+    why:"Deux sujets coordonnés : le verbe se met au pluriel. On écrit « ont »."},
+   {type:"Pronom relatif « qui »",
+    t:"Ce sont {S:les dieux} qui {_:} le destin des hommes.",
+    opts:["décide","décident"], ok:1,
+    why:"Le verbe s'accorde avec l'antécédent de « qui » : les dieux (pluriel). On écrit « décident »."},
+   {type:"Sujet inversé",
+    t:"Aux portes de Troie {_:} {S:les armées grecques}.",
+    opts:["campait","campaient"], ok:1,
+    why:"Qui est-ce qui campait ? Les armées grecques (pluriel). On écrit « campaient »."},
+   {type:"Sujet infinitif",
+    t:"{S:Affronter les monstres de la mythologie} {_:} du courage.",
+    opts:["demande","demandent"], ok:0,
+    why:"Un sujet infinitif commande l'accord à la 3e personne du singulier, même si un nom pluriel (« les monstres ») le suit. On écrit « demande »."},
+   {type:"« Qui » après « moi »",
+    t:"C'est {S:moi} qui {_:} tué le monstre, dit Thésée.",
+    opts:["ai","a"], ok:0,
+    why:"L'antécédent de « qui » est « moi » (1re personne du singulier). On écrit « ai »."},
+   {type:"Sujet éloigné du verbe",
+    t:"{S:Les armes} que le dieu forgeron avait offertes à Achille {_:} divines.",
+    opts:["était","étaient"], ok:1,
+    why:"Le noyau du sujet est « les armes » (pluriel). Le mot le plus proche du verbe, « Achille », n'est pas le sujet. On écrit « étaient »."}
+  ]}
+};
+
+/* ---------- OUTILS ---------- */
+const WORD=/[\p{L}\p{N}-]+(?:['’][\p{L}\p{N}-]+)?/gu;
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function parse(s,chunk){
+  const out=[],TAG=/\{([SVC_]):([^}]*)\}/g;let pos=0,m;
+  const plain=(txt,role)=>{let p=0,w;WORD.lastIndex=0;
+    while((w=WORD.exec(txt))){if(w.index>p)out.push({t:txt.slice(p,w.index),w:false});out.push({t:w[0],w:true,role});p=w.index+w[0].length}
+    if(p<txt.length)out.push({t:txt.slice(p),w:false})};
+  while((m=TAG.exec(s))){
+    if(m.index>pos)plain(s.slice(pos,m.index),null);
+    if(m[1]==='_')out.push({blank:true});
+    else if(chunk&&(m[1]==='V'||m[1]==='C'))out.push({t:m[2],chunk:true,role:m[1]});
+    else plain(m[2],m[1]);
+    pos=m.index+m[0].length}
+  if(pos<s.length)plain(s.slice(pos),null);
+  return out}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+/* ---------- ÉTAT ---------- */
+const state={mod:'A',idx:{A:0,B:0,C:0},res:{A:[],B:[],C:[]},done:false,sel:new Set(),answered:false};
+const $=id=>document.getElementById(id);
+
+function renderTabs(){
+  $('tabs').innerHTML=Object.keys(MODS).map(k=>{
+    const m=MODS[k],ok=state.res[k].filter(Boolean).length,n=state.res[k].length;
+    return `<button class="${k===state.mod?'on':''}" data-k="${k}">${m.name}<small>${m.desc}${n?` · ${ok}/${m.items.length}`:''}</small></button>`}).join('');
+  $('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{state.mod=b.dataset.k;state.sel=new Set();state.answered=false;render()});
+}
+function dots(k){const m=MODS[k];return '<div class="dots">'+m.items.map((_,i)=>{
+  const r=state.res[k][i];return `<span class="dot ${r===true?'ok':r===false?'ko':''} ${i===state.idx[k]&&state.res[k].length<=i?'cur':''}"></span>`}).join('')+'</div>'}
+function head(k,it){
+  const m=MODS[k];return `${dots(k)}<div class="top"><span class="pill">${esc(it.type)}</span><span class="count">Phrase ${state.idx[k]+1} / ${m.items.length}</span></div>`}
+function fb(ok,why){return `<div class="fb ${ok?'ok':'ko'}"><b class="t">${ok?'✔ Bien joué !':'✘ Pas tout à fait.'}</b>${esc(why)}</div>`}
+
+function next(){const k=state.mod;state.idx[k]++;state.sel=new Set();state.answered=false;render()}
+function finish(k){
+  const m=MODS[k],ok=state.res[k].filter(Boolean).length,n=m.items.length;
+  const msg=ok===n?"Parfait, tu maîtrises les sujets complexes !":ok>=n*0.7?"Très bien ! Relis les explications des phrases ratées.":"Courage : relis la méthode, puis recommence.";
+  $('card').innerHTML=`<div class="end"><p class="big">${ok} / ${n}</p><p>${msg}</p>
+   <div class="actions" style="justify-content:center"><button class="btn" id="again">Recommencer cette activité</button></div></div>`;
+  $('again').onclick=()=>{state.idx[k]=0;state.res[k]=[];state.sel=new Set();state.answered=false;render()}
+}
+
+/* ---------- MODULE A : toucher les mots du sujet ---------- */
+function renderA(){
+  const k='A',it=MODS.A.items[state.idx.A],toks=parse(it.t,false);
+  const subj=new Set(),verbTxt=[];
+  toks.forEach((x,i)=>{if(x.w&&x.role==='S')subj.add(i);if(x.w&&x.role==='V')verbTxt.push(x.t)});
+  const view=()=>toks.map((x,i)=>{
+    if(!x.w)return esc(x.t);
+    let c='w';
+    if(x.role==='V')c+=' verb';
+    else if(state.answered){const s=state.sel.has(i),r=subj.has(i);c+=s&&r?' good':s&&!r?' bad':!s&&r?' miss':''}
+    else if(state.sel.has(i))c+=' sel';
+    return `<span class="${c}" data-i="${i}">${esc(x.t)}</span>`}).join('');
+  $('card').innerHTML=head(k,it)+
+    `<p class="consigne">Le verbe « ${esc(verbTxt.join(' '))} » est encadré. Touche tous les mots de son sujet.</p>
+     <p class="sent" id="sent">${view()}</p><div class="actions" id="act"></div><div id="fb"></div>`;
+  const act=$('act');
+  const bind=()=>{$('sent').querySelectorAll('.w').forEach(el=>{
+    if(el.classList.contains('verb'))return;
+    el.onclick=()=>{if(state.answered)return;const i=+el.dataset.i;state.sel.has(i)?state.sel.delete(i):state.sel.add(i);
+      el.classList.toggle('sel');$('val').disabled=state.sel.size===0}})};
+  if(!state.answered){
+    act.innerHTML=`<button class="btn" id="val" disabled>Valider</button><button class="btn alt" id="clr">Effacer</button>`;
+    bind();
+    $('clr').onclick=()=>{state.sel=new Set();$('sent').innerHTML=view();bind();$('val').disabled=true};
+    $('val').onclick=()=>{
+      const ok=state.sel.size===subj.size&&[...subj].every(i=>state.sel.has(i));
+      state.answered=true;state.res.A[state.idx.A]=ok;$('sent').innerHTML=view();
+      $('fb').innerHTML=fb(ok,it.why);
+      act.innerHTML=`<button class="btn" id="nx">${state.idx.A+1<MODS.A.items.length?'Phrase suivante':'Voir mon score'}</button>`;
+      $('nx').onclick=next;renderTabs()}
+  }
+}
+
+/* ---------- MODULE B : à quel verbe ? ---------- */
+function renderB(){
+  const k='B',it=MODS.B.items[state.idx.B],toks=parse(it.t,true);
+  const choices=toks.filter(x=>x.chunk);
+  const view=()=>toks.map((x,i)=>{
+    if(x.chunk){let c='chunk';
+      if(state.answered){if(x.role==='C')c+=' good';else if(state.sel.has(i))c+=' bad'}
+      else if(state.sel.has(i))c+=' sel';
+      return `<button class="${c}" data-i="${i}" ${state.answered?'disabled':''}>${esc(x.t)}</button>`}
+    if(x.w&&x.role==='S')return `<span class="w subj fixed">${esc(x.t)}</span>`;
+    return esc(x.t)}).join('');
+  $('card').innerHTML=head(k,it)+
+    `<p class="consigne">Le sujet est surligné en bleu. Touche le verbe dont il est le sujet.</p>
+     <p class="sent" id="sent">${view()}</p><div class="actions" id="act"></div><div id="fb"></div>`;
+  const bind=()=>{$('sent').querySelectorAll('.chunk').forEach(el=>el.onclick=()=>{
+    if(state.answered)return;
+    const i=+el.dataset.i;state.sel=new Set([i]);
+    const ok=toks[i].role==='C';state.answered=true;state.res.B[state.idx.B]=ok;
+    $('sent').innerHTML=view();
+    $('fb').innerHTML=fb(ok,it.why);
+    $('act').innerHTML=`<button class="btn" id="nx">${state.idx.B+1<MODS.B.items.length?'Phrase suivante':'Voir mon score'}</button>`;
+    $('nx').onclick=next;renderTabs()})};
+  bind();
+}
+
+/* ---------- MODULE C : accord ---------- */
+function renderC(){
+  const k='C',it=MODS.C.items[state.idx.C],toks=parse(it.t,false);
+  if(!it._order)it._order=shuffle([0,1]);
+  const chosen=state.sel.size?[...state.sel][0]:null;
+  const view=()=>toks.map(x=>{
+    if(x.blank){const c=state.answered?(chosen===it.ok?'good':'bad'):'';
+      return `<span class="slot ${c}">${chosen!==null?esc(it.opts[chosen]):'&nbsp;'}</span>`}
+    if(!x.w)return esc(x.t);
+    if(x.role==='S'&&state.answered)return `<span class="sujet-rev">${esc(x.t)}</span>`;
+    return esc(x.t)}).join('');
+  $('card').innerHTML=head(k,it)+
+    `<p class="consigne">Choisis la bonne forme du verbe. (Après ta réponse, le sujet sera souligné.)</p>
+     <p class="sent" id="sent">${view()}</p>
+     <div class="opts" id="opts">${it._order.map(i=>`<button class="opt ${state.answered?(i===it.ok?'good':i===chosen?'bad':''):''}" data-i="${i}" ${state.answered?'disabled':''}>${esc(it.opts[i])}</button>`).join('')}</div>
+     <div class="actions" id="act"></div><div id="fb"></div>`;
+  if(!state.answered)$('opts').querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i,ok=i===it.ok;state.sel=new Set([i]);state.answered=true;state.res.C[state.idx.C]=ok;
+    renderC();
+  });
+  else{
+    const ok=chosen===it.ok;
+    $('fb').innerHTML=fb(ok,it.why);
+    $('act').innerHTML=`<button class="btn" id="nx">${state.idx.C+1<MODS.C.items.length?'Phrase suivante':'Voir mon score'}</button>`;
+    $('nx').onclick=next;renderTabs();
+  }
+}
+
+function render(){
+  renderTabs();
+  const k=state.mod;
+  if(state.idx[k]>=MODS[k].items.length){finish(k);return}
+  ({A:renderA,B:renderB,C:renderC})[k]();
+}
+render();
+</script>
+</body>
+</html>
