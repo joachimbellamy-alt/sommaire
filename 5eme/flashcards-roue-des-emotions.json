@@ -1,0 +1,169 @@
+{
+  "type": "sauvegarde-memo-revisions",
+  "version": 1,
+  "exporteLe": "2026-10-06T00:00:00.000Z",
+  "supports": [
+    {
+      "id": "5e-roue-emotions-heros-antiques",
+      "nom": "Roue des émotions — héros de l'Antiquité",
+      "matiere": "Français",
+      "chapitre": "Les émotions et les sentiments",
+      "type": "texte",
+      "etat": {},
+      "mode": "simple",
+      "creeLe": 1791319275005,
+      "cartes": [
+        {
+          "question": "Qu'est-ce qu'une émotion ?",
+          "reponse": "Une réaction rapide et courte du corps et de l'esprit face à une situation.",
+          "exemple": "Face au Cyclope qui surgit dans la grotte, Ulysse et ses compagnons ressentent une peur soudaine."
+        },
+        {
+          "question": "Qu'est-ce qu'un sentiment ?",
+          "reponse": "Un état intérieur qui dure dans le temps et auquel on peut réfléchir.",
+          "exemple": "Pendant vingt ans, Pénélope éprouve de l'amour et de la fidélité pour Ulysse."
+        },
+        {
+          "question": "La joie est une émotion. Comment la définit-on ?",
+          "reponse": "Émotion agréable liée à un moment de bien-être ou de réussite.",
+          "exemple": "Quand Pénélope reconnaît enfin Ulysse, elle court vers lui en pleurant de joie."
+        },
+        {
+          "question": "Le contentement est un sentiment de la famille de la joie. Comment le définit-on ?",
+          "reponse": "Satisfaction calme, quand les choses se passent comme on le souhaite.",
+          "exemple": "Philémon et Baucis vivent heureux dans leur petite cabane, sans rien désirer de plus."
+        },
+        {
+          "question": "L'enthousiasme est un sentiment de la famille de la joie. Comment le définit-on ?",
+          "reponse": "Joie vive qui donne envie de s'investir dans quelque chose.",
+          "exemple": "Les Argonautes se pressent autour de Jason, impatients de partir conquérir la Toison d'or."
+        },
+        {
+          "question": "L'euphorie est un sentiment de la famille de la joie. Comment la définit-on ?",
+          "reponse": "Joie très intense, presque incontrôlable.",
+          "exemple": "Croyant la guerre finie, les Troyens font la fête toute la nuit après avoir fait entrer le cheval dans la ville."
+        },
+        {
+          "question": "La confiance est une émotion. Comment la définit-on ?",
+          "reponse": "Émotion qui pousse à se sentir en sécurité, seul(e) ou avec les autres.",
+          "exemple": "Thésée entre dans le Labyrinthe en tenant le fil donné par Ariane."
+        },
+        {
+          "question": "Le soulagement est un sentiment de la famille de la confiance. Comment le définit-on ?",
+          "reponse": "Détente ressentie après la disparition d'une inquiétude.",
+          "exemple": "Cachés sous les moutons, Ulysse et ses compagnons sortent enfin vivants de la grotte du Cyclope."
+        },
+        {
+          "question": "La sécurité est un sentiment de la famille de la confiance. Comment la définit-on ?",
+          "reponse": "Sentiment d'être protégé(e), sans danger.",
+          "exemple": "Télémaque voyage sans crainte, car la déesse Athéna, déguisée en Mentor, l'accompagne."
+        },
+        {
+          "question": "L'admiration est un sentiment de la famille de la confiance. Comment la définit-on ?",
+          "reponse": "Grande estime pour quelqu'un ou quelque chose.",
+          "exemple": "Les Phéaciens regardent Ulysse lancer le disque plus loin que tous leurs champions."
+        },
+        {
+          "question": "La peur est une émotion. Comment la définit-on ?",
+          "reponse": "Réaction face à un danger perçu, réel ou imaginé.",
+          "exemple": "Enfermés dans la grotte du Cyclope, les compagnons d'Ulysse tremblent."
+        },
+        {
+          "question": "L'appréhension est un sentiment de la famille de la peur. Comment la définit-on ?",
+          "reponse": "Légère inquiétude avant un évènement à venir.",
+          "exemple": "Avant de passer près de l'île des Sirènes, Ulysse sait que leur chant est dangereux et se fait attacher au mât."
+        },
+        {
+          "question": "L'anxiété est un sentiment de la famille de la peur. Comment la définit-on ?",
+          "reponse": "Tension et malaise face à une menace incertaine, difficile à calmer.",
+          "exemple": "Pénélope attend Ulysse depuis des années sans savoir s'il est encore vivant."
+        },
+        {
+          "question": "La terreur est un sentiment de la famille de la peur. Comment la définit-on ?",
+          "reponse": "Peur extrême, qui pousse à fuir ou à se figer complètement.",
+          "exemple": "Les marins d'Ulysse hurlent quand le monstre Scylla saisit six d'entre eux."
+        },
+        {
+          "question": "La surprise est une émotion. Comment la définit-on ?",
+          "reponse": "Réaction à un événement inattendu.",
+          "exemple": "Un matin, les Troyens découvrent le camp grec vide et un immense cheval de bois sur la plage."
+        },
+        {
+          "question": "L'étonnement est un sentiment de la famille de la surprise. Comment le définit-on ?",
+          "reponse": "Réaction légère face à quelque chose d'inattendu.",
+          "exemple": "Nausicaa et ses servantes jouent à la balle quand un inconnu, Ulysse, sort soudain des buissons."
+        },
+        {
+          "question": "La stupéfaction est un sentiment de la famille de la surprise. Comment la définit-on ?",
+          "reponse": "Surprise forte qui laisse sans réaction pendant un moment.",
+          "exemple": "Les prétendants restent sans voix quand le vieux mendiant réussit à tendre l'arc d'Ulysse."
+        },
+        {
+          "question": "La sidération est un sentiment de la famille de la surprise. Comment la définit-on ?",
+          "reponse": "Surprise si intense qu'elle empêche un instant de penser ou d'agir.",
+          "exemple": "Ceux qui croisent le regard de Méduse restent figés, changés en pierre."
+        },
+        {
+          "question": "La tristesse est une émotion. Comment la définit-on ?",
+          "reponse": "Émotion ressentie face à une perte ou une déception.",
+          "exemple": "Sur l'île de Calypso, Ulysse pleure chaque jour en regardant la mer vers Ithaque."
+        },
+        {
+          "question": "La déception est un sentiment de la famille de la tristesse. Comment la définit-on ?",
+          "reponse": "Sentiment désagréable quand la réalité ne correspond pas à ce qu'on espérait.",
+          "exemple": "Ithaque est en vue quand les compagnons d'Ulysse ouvrent l'outre d'Éole : les vents les repoussent loin de chez eux."
+        },
+        {
+          "question": "Le chagrin est un sentiment de la famille de la tristesse. Comment le définit-on ?",
+          "reponse": "Tristesse profonde liée à une perte ou une séparation.",
+          "exemple": "Achille apprend la mort de son ami Patrocle : il se couvre de cendres et gémit."
+        },
+        {
+          "question": "Le désespoir est un sentiment de la famille de la tristesse. Comment le définit-on ?",
+          "reponse": "Tristesse extrême, avec l'impression qu'aucune solution n'est possible.",
+          "exemple": "Voyant revenir le bateau de Thésée avec des voiles noires, Égée croit son fils mort et se jette dans la mer."
+        },
+        {
+          "question": "Le dégoût est une émotion. Comment le définit-on ?",
+          "reponse": "Rejet face à quelque chose de déplaisant ou d'inacceptable.",
+          "exemple": "Les Harpies salissent la nourriture du roi Phinée, qui ne peut plus rien avaler."
+        },
+        {
+          "question": "La réticence est un sentiment de la famille du dégoût. Comment la définit-on ?",
+          "reponse": "Léger refus ou hésitation face à quelque chose de déplaisant.",
+          "exemple": "Ulysse se méfie des fruits du lotus que lui offrent les Lotophages et refuse d'y goûter."
+        },
+        {
+          "question": "L'aversion est un sentiment de la famille du dégoût. Comment la définit-on ?",
+          "reponse": "Rejet net de quelque chose jugé désagréable ou injuste.",
+          "exemple": "Ulysse rejette les prétendants qui pillent sa maison et maltraitent ses serviteurs."
+        },
+        {
+          "question": "La répulsion est un sentiment de la famille du dégoût. Comment la définit-on ?",
+          "reponse": "Dégoût très fort, presque physique.",
+          "exemple": "Ulysse voit le Cyclope dévorer ses compagnons."
+        },
+        {
+          "question": "La colère est une émotion. Comment la définit-on ?",
+          "reponse": "Réaction à une injustice ou une frustration.",
+          "exemple": "Poséidon poursuit Ulysse de sa colère parce qu'il a aveuglé son fils, le Cyclope."
+        },
+        {
+          "question": "L'agacement est un sentiment de la famille de la colère. Comment le définit-on ?",
+          "reponse": "Irritation légère provoquée par une gêne répétée.",
+          "exemple": "Chaque jour, les prétendants envahissent le palais et pressent Pénélope de choisir un mari."
+        },
+        {
+          "question": "La frustration est un sentiment de la famille de la colère. Comment la définit-on ?",
+          "reponse": "Sentiment désagréable quand on est empêché(e) d'atteindre un but.",
+          "exemple": "Aux Enfers, Tantale a de l'eau jusqu'au menton et des fruits au-dessus de la tête, mais tout recule dès qu'il veut boire ou manger."
+        },
+        {
+          "question": "La fureur est un sentiment de la famille de la colère. Comment la définit-on ?",
+          "reponse": "Colère extrême, très difficile à contrôler.",
+          "exemple": "Après la mort de Patrocle, Achille tue Hector et traîne son corps derrière son char."
+        }
+      ]
+    }
+  ]
+}
