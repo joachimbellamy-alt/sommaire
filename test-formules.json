@@ -1,0 +1,23 @@
+{
+  "type": "sauvegarde-memo-revisions",
+  "version": 1,
+  "exporteLe": "2026-10-13T15:50:02.168Z",
+  "supports": [
+    {
+      "id": "test-formules-x8wb",
+      "nom": "Test formules",
+      "matiere": "Autre",
+      "chapitre": "",
+      "type": "texte",
+      "etat": {},
+      "mode": "simple",
+      "creeLe": 1791906602173,
+      "cartes": [
+        {
+          "question": "Aire du disque ?",
+          "reponse": "$\\frac{1}{2}$ de base × hauteur\nsoit $A = \\pi r^{2}$"
+        }
+      ]
+    }
+  ]
+}
