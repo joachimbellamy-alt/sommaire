@@ -1440,7 +1440,9 @@ async function afficherEspaceStockage() {
                     new Promise((resolve) => setTimeout(resolve, 2000))
                 ]);
             }
-            const keys = await caches.keys();
+            // Seuls les caches "memo-eleve-v123" comptent : le cache des
+            // formules (memo-eleve-vendor-...) n'est pas une version de l'app.
+            const keys = (await caches.keys()).filter(k => /^memo-eleve-v\d+$/.test(k));
             const versionEl = document.getElementById('versionApp');
             if (versionEl && keys.length > 0) {
                 versionEl.textContent = keys[keys.length - 1].replace('memo-eleve-', '');
@@ -2828,6 +2830,134 @@ function supprimerAudio(idx, champ) {
     chargerEditionTexte();
 }
 
+/* ---------------- Formules mathématiques (KaTeX, chargé à la demande) ----------------
+   Une formule s'écrit entre dollars dans n'importe quel champ de carte :
+   "$\frac{1}{2}$" (dans le texte) ou "$$...$$" (formule centrée sur sa ligne).
+   Un "\$" donne un dollar ordinaire. KaTeX (~270 Ko) n'est chargé que quand
+   une carte contient réellement une formule, puis gardé en cache pour
+   fonctionner hors ligne (voir service-worker.js). */
+let katexPromesse = null;
+let katexCssAjoute = false;
+let jetonRendu = 0;
+
+function chargerKatex() {
+    if (window.katex) return Promise.resolve(true);
+    if (katexPromesse) return katexPromesse;
+    if (!katexCssAjoute) {
+        katexCssAjoute = true;
+        const css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.href = 'vendor/katex/katex.min.css';
+        document.head.appendChild(css);
+    }
+    katexPromesse = new Promise((resolve) => {
+        const s = document.createElement('script');
+        s.src = 'vendor/katex/katex.min.js';
+        s.onload = () => resolve(!!window.katex);
+        // Hors ligne et jamais chargé : on garde le texte brut, et on
+        // retentera au prochain affichage.
+        s.onerror = () => { katexPromesse = null; resolve(false); };
+        document.head.appendChild(s);
+    });
+    return katexPromesse;
+}
+
+// Découpe un texte en morceaux { type: 'txt' | 'math' | 'disp', v }.
+function decouperFormules(texte) {
+    const segs = [];
+    let buf = '';
+    const n = texte.length;
+    let i = 0;
+    const pousser = () => { if (buf) { segs.push({ type: 'txt', v: buf }); buf = ''; } };
+    while (i < n) {
+        const ch = texte[i];
+        if (ch === '\\' && texte[i + 1] === '$') { buf += '$'; i += 2; continue; }
+        if (ch === '$') {
+            const delim = texte[i + 1] === '$' ? '$$' : '$';
+            let j = i + delim.length;
+            let fin = -1;
+            while (j < n) {
+                if (texte[j] === '\\') { j += 2; continue; }
+                if (texte.startsWith(delim, j)) { fin = j; break; }
+                j++;
+            }
+            const contenu = fin > -1 ? texte.slice(i + delim.length, fin) : '';
+            if (fin > -1 && contenu.trim() !== '') {
+                pousser();
+                segs.push({ type: delim === '$$' ? 'disp' : 'math', v: contenu });
+                i = fin + delim.length;
+                continue;
+            }
+        }
+        buf += ch;
+        i++;
+    }
+    pousser();
+    return segs;
+}
+
+function contientFormule(texte) {
+    return typeof texte === 'string' && texte.indexOf('$') !== -1
+        && decouperFormules(texte).some(s => s.type !== 'txt');
+}
+
+// Écrit `texte` dans `el` : texte brut s'il n'y a pas de formule, sinon
+// formules rendues par KaTeX. Le texte brut s'affiche aussitôt ; le rendu
+// remplace l'affichage dès que KaTeX est prêt (sauf si l'élément a été
+// réutilisé entre-temps, d'où le jeton).
+function ecrireTexteRiche(el, texte) {
+    texte = texte || '';
+    const jeton = String(++jetonRendu);
+    el.dataset.rendu = jeton;
+    if (!contientFormule(texte)) {
+        el.textContent = texte.replace(/\\\$/g, '$');
+        return;
+    }
+    el.textContent = texte;
+    const segs = decouperFormules(texte);
+    chargerKatex().then(ok => {
+        if (!ok || el.dataset.rendu !== jeton) return;
+        const frag = document.createDocumentFragment();
+        segs.forEach(s => {
+            if (s.type === 'txt') { frag.appendChild(document.createTextNode(s.v)); return; }
+            const conteneur = document.createElement(s.type === 'disp' ? 'div' : 'span');
+            try {
+                conteneur.innerHTML = window.katex.renderToString(s.v, {
+                    throwOnError: false,
+                    displayMode: s.type === 'disp'
+                });
+            } catch (e) {
+                conteneur.textContent = (s.type === 'disp' ? '$$' : '$') + s.v + (s.type === 'disp' ? '$$' : '$');
+            }
+            frag.appendChild(conteneur);
+        });
+        el.textContent = '';
+        el.appendChild(frag);
+    });
+}
+
+/* ── Recalage des progressions quand les cartes bougent ──
+   La progression d'une flashcard est rangée par POSITION ("3", et "3_inv" pour
+   le sens inversé). Insérer ou supprimer une carte au milieu de la liste
+   décale donc toutes les suivantes : sans recalage, chacune hériterait de la
+   progression de sa voisine. `correspondance(ancienIndex)` renvoie le nouvel
+   index, ou null si la carte disparaît. */
+function recalerEtatCartes(support, correspondance) {
+    if (!support.etat) support.etat = {};
+    const ancien = support.etat;
+    const nouveau = {};
+    Object.keys(ancien).forEach(cle => {
+        const m = /^(\d+)(_inv)?$/.exec(cle);
+        if (!m) { nouveau[cle] = ancien[cle]; return; }
+        const ni = correspondance(parseInt(m[1], 10));
+        if (ni === null) return;
+        nouveau[ni + (m[2] || '')] = ancien[cle];
+    });
+    // Sur place : d'autres variables (etatRevisionTexte...) pointent vers cet objet.
+    Object.keys(ancien).forEach(cle => { delete ancien[cle]; });
+    Object.assign(ancien, nouveau);
+}
+
 /* ── Champ média (image + audio) ── */
 function htmlChampMedia(c, i, champ, labelTexte, placeholder) {
     const cleImage = champ + 'Image';
@@ -2838,6 +2968,7 @@ function htmlChampMedia(c, i, champ, labelTexte, placeholder) {
     <div class="champ-carte">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
             <span class="label-modale" style="flex:1;">${labelTexte}</span>
+            <button type="button" class="btn-media btn-formule" data-idx="${i}" data-champ="${champ}" onclick="ouvrirEditeurFormule(this)" title="Insérer une formule" aria-label="Insérer une formule">Σ</button>
             <label class="btn-media" title="Image">
                 📷
                 <input type="file" accept="image/*" class="input-image-champ" data-idx="${i}" data-champ="${champ}" style="display:none;">
@@ -2845,7 +2976,9 @@ function htmlChampMedia(c, i, champ, labelTexte, placeholder) {
             <button class="btn-media btn-dictee" data-idx="${i}" data-champ="${champ}" onclick="demarrerDicteeChamp(this)" title="Dicter au micro">🎤</button>
             <button class="btn-media btn-audio-rec" data-idx="${i}" data-champ="${champ}" onclick="demarrerEnregistrement(${i},'${champ}',this)">🎙️</button>
         </div>
-        <input type="text" class="champ-modale input-champ-texte" data-idx="${i}" data-champ="${champ}" value="${echapperHtml(c[champ] || '')}" placeholder="${placeholder}" style="margin-bottom:4px;">
+        <textarea rows="1" class="champ-modale input-champ-texte" data-idx="${i}" data-champ="${champ}" placeholder="${placeholder}" style="margin-bottom:4px;resize:none;overflow:hidden;">
+${echapperHtml(c[champ] || '')}</textarea>
+        <div class="apercu-formule" data-idx="${i}" data-champ="${champ}" style="display:none;"></div>
         ${hasImage ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
             <img src="${c[cleImage]}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;">
             <button class="icon-btn danger" style="font-size:11px;" onclick="supprimerImageChamp(${i},'${champ}')">🗑 Image</button>
@@ -2947,14 +3080,36 @@ function chargerEditionTexte() {
                     ${htmlChampMedia(c, i, 'exemple', 'Phrase d\'exemple (facultatif)', 'Ex : Madrid es la capital de España.')}
                     ${htmlChampMedia(c, i, 'indice', '💡 Indice (facultatif)', 'Ex : commence par M...')}
                 </div>
-                <button class="icon-btn danger" data-suppr-carte="${i}">🗑</button>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button class="icon-btn" data-dupl-carte="${i}" title="Dupliquer cette carte">⧉ Dupliquer</button>
+                    <button class="icon-btn danger" data-suppr-carte="${i}">🗑</button>
+                </div>
             </div>
         `).join('');
 
-        // Textes
-        conteneur.querySelectorAll('.input-champ-texte').forEach(inp => inp.addEventListener('input', () => {
-            supportActif.cartes[parseInt(inp.dataset.idx, 10)][inp.dataset.champ] = inp.value;
-            sauvegarderSupportsDifferee();
+        // Textes (champ multi-lignes : Entrée = retour à la ligne)
+        conteneur.querySelectorAll('.input-champ-texte').forEach(inp => {
+            ajusterHauteurChamp(inp);
+            majApercuFormuleChamp(inp);
+            inp.addEventListener('input', () => {
+                supportActif.cartes[parseInt(inp.dataset.idx, 10)][inp.dataset.champ] = inp.value;
+                sauvegarderSupportsDifferee();
+                ajusterHauteurChamp(inp);
+                majApercuFormuleChamp(inp);
+            });
+            // Mémorise la position du curseur : le bouton Σ lui fait perdre le
+            // focus avant qu'on sache où insérer la formule.
+            inp.addEventListener('blur', () => { inp.dataset.curseur = String(inp.selectionStart); });
+        });
+        // Duplication : la copie se place juste après l'originale
+        conteneur.querySelectorAll('[data-dupl-carte]').forEach(btn => btn.addEventListener('click', () => {
+            const i = parseInt(btn.dataset.duplCarte, 10);
+            supportActif.cartes.splice(i + 1, 0, JSON.parse(JSON.stringify(supportActif.cartes[i])));
+            recalerEtatCartes(supportActif, k => (k > i ? k + 1 : k));
+            sauvegarderSupports();
+            chargerEditionTexte();
+            const copie = conteneur.querySelector('.input-champ-texte[data-idx="' + (i + 1) + '"][data-champ="question"]');
+            if (copie) { copie.focus(); copie.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
         }));
         // Images par champ
         conteneur.querySelectorAll('.input-image-champ').forEach(inp => inp.addEventListener('change', (e) => {
@@ -2968,9 +3123,11 @@ function chargerEditionTexte() {
                 chargerEditionTexte();
             });
         }));
-        // Suppression carte
+        // Suppression carte (les progressions des cartes suivantes sont recalées)
         conteneur.querySelectorAll('[data-suppr-carte]').forEach(btn => btn.addEventListener('click', () => {
-            supportActif.cartes.splice(parseInt(btn.dataset.supprCarte, 10), 1);
+            const d = parseInt(btn.dataset.supprCarte, 10);
+            supportActif.cartes.splice(d, 1);
+            recalerEtatCartes(supportActif, k => (k === d ? null : (k > d ? k - 1 : k)));
             sauvegarderSupports();
             chargerEditionTexte();
         }));
@@ -2984,6 +3141,122 @@ function supprimerImageChamp(idx, champ) {
     delete supportActif.cartes[idx][champ + 'Image'];
     sauvegarderSupports();
     chargerEditionTexte();
+}
+
+/* ── Champs de carte multi-lignes + aperçu des formules ── */
+function ajusterHauteurChamp(ta) {
+    ta.style.height = 'auto';
+    ta.style.height = (ta.scrollHeight + 2) + 'px';
+}
+
+// Sous un champ qui contient une formule, affiche son rendu en direct.
+function majApercuFormuleChamp(ta) {
+    const apercu = ta.parentElement.querySelector('.apercu-formule[data-idx="' + ta.dataset.idx + '"][data-champ="' + ta.dataset.champ + '"]');
+    if (!apercu) return;
+    if (contientFormule(ta.value)) {
+        apercu.style.display = '';
+        ecrireTexteRiche(apercu, ta.value);
+    } else {
+        apercu.style.display = 'none';
+    }
+}
+
+/* ── Éditeur de formules ──
+   Une palette de modèles (fraction, puissance, racine...) insère l'écriture
+   LaTeX dans une zone de saisie avec aperçu en direct ; "Insérer" place la
+   formule, entre dollars, à l'endroit du curseur dans le champ de la carte. */
+const MODELES_FORMULE = [
+    // [libellé du bouton, texte inséré, position du curseur dans ce texte]
+    ['a⁄b', '\\frac{}{}', 6],
+    ['x²', '^{2}', 4],
+    ['xⁿ', '^{}', 2],
+    ['xₙ', '_{}', 2],
+    ['√', '\\sqrt{}', 6],
+    ['π', '\\pi ', 4],
+    ['×', '\\times ', 7],
+    ['÷', '\\div ', 5],
+    ['·', '\\cdot ', 6],
+    ['±', '\\pm ', 4],
+    ['≤', '\\leq ', 5],
+    ['≥', '\\geq ', 5],
+    ['≠', '\\neq ', 5],
+    ['≈', '\\approx ', 8],
+    ['°', '^{\\circ}', 9],
+    ['%', '\\%', 2],
+    ['( )', '\\left(  \\right)', 7],
+    ['→', '\\rightarrow ', 12]
+];
+let champFormuleCible = null;
+let positionFormuleCible = 0;
+
+function ouvrirEditeurFormule(btn) {
+    const ta = btn.closest('.champ-carte').querySelector('.input-champ-texte');
+    if (!ta) return;
+    champFormuleCible = ta;
+    positionFormuleCible = ta.dataset.curseur !== undefined
+        ? Math.min(parseInt(ta.dataset.curseur, 10), ta.value.length)
+        : ta.value.length;
+
+    const palette = document.getElementById('paletteFormule');
+    if (!palette.dataset.pret) {
+        palette.dataset.pret = '1';
+        MODELES_FORMULE.forEach(([libelle, texte, curseur]) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'btn-modele-formule';
+            b.textContent = libelle;
+            b.addEventListener('click', () => insererModeleFormule(texte, curseur));
+            palette.appendChild(b);
+        });
+        document.getElementById('champFormule').addEventListener('input', majApercuEditeurFormule);
+    }
+    document.getElementById('champFormule').value = '';
+    majApercuEditeurFormule();
+    document.getElementById('modalFormule').classList.add('ouverte');
+    setTimeout(() => document.getElementById('champFormule').focus(), 50);
+}
+
+function fermerEditeurFormule() {
+    document.getElementById('modalFormule').classList.remove('ouverte');
+    champFormuleCible = null;
+}
+
+function insererModeleFormule(texte, curseur) {
+    const champ = document.getElementById('champFormule');
+    const debut = champ.selectionStart, fin = champ.selectionEnd;
+    champ.value = champ.value.slice(0, debut) + texte + champ.value.slice(fin);
+    const pos = debut + curseur;
+    champ.focus();
+    champ.setSelectionRange(pos, pos);
+    majApercuEditeurFormule();
+}
+
+function majApercuEditeurFormule() {
+    const zone = document.getElementById('apercuFormule');
+    const latex = document.getElementById('champFormule').value.trim();
+    if (!latex) {
+        zone.textContent = 'L\'aperçu de ta formule apparaît ici.';
+        zone.classList.add('vide');
+        return;
+    }
+    zone.classList.remove('vide');
+    // Les $ entourent la formule : on réutilise le même rendu que pour les cartes.
+    ecrireTexteRiche(zone, '$' + latex.replace(/\$/g, '\\$') + '$');
+}
+
+function insererFormule() {
+    const latex = document.getElementById('champFormule').value.trim();
+    const ta = champFormuleCible;
+    if (!latex || !ta) { fermerEditeurFormule(); return; }
+    const formule = '$' + latex.replace(/\$/g, '\\$') + '$';
+    const pos = positionFormuleCible;
+    ta.value = ta.value.slice(0, pos) + formule + ta.value.slice(pos);
+    ta.dataset.curseur = String(pos + formule.length);
+    // Déclenche l'enregistrement, l'ajustement de hauteur et l'aperçu
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    fermerEditeurFormule();
+    ta.focus();
+    ta.setSelectionRange(pos + formule.length, pos + formule.length);
 }
 
 // Langue utilisée pour la reconnaissance vocale (dictée) sur les champs de
@@ -3006,8 +3279,12 @@ function ajouterCarteTexte() {
     sauvegarderSupports();
     chargerEditionTexte();
     setTimeout(() => {
-        const inputs = document.querySelectorAll('.input-question');
-        if (inputs.length) inputs[inputs.length - 1].focus();
+        const champs = document.querySelectorAll('.input-champ-texte[data-champ="question"]');
+        if (champs.length) {
+            const dernier = champs[champs.length - 1];
+            dernier.focus();
+            dernier.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
     }, 50);
 }
 
@@ -3051,7 +3328,7 @@ function creerElementCarte(support, idx) {
     const question = document.createElement('div');
     question.className = 'question-texte';
     const texteQuestion = document.createElement('span');
-    texteQuestion.textContent = c.question;
+    ecrireTexteRiche(texteQuestion, c.question);
     question.appendChild(texteQuestion);
     if (modeSessionMelangee) {
         const etiquette = document.createElement('div');
@@ -3098,12 +3375,12 @@ function creerElementCarte(support, idx) {
     const contenuReponse = document.createElement('div');
     const reponse = document.createElement('div');
     reponse.className = 'reponse-texte';
-    reponse.textContent = c.reponse;
+    ecrireTexteRiche(reponse, c.reponse);
     contenuReponse.appendChild(reponse);
     if (c.exemple) {
         const exemple = document.createElement('div');
         exemple.className = 'exemple-texte';
-        exemple.textContent = '« ' + c.exemple + ' »';
+        ecrireTexteRiche(exemple, '« ' + c.exemple + ' »');
         contenuReponse.appendChild(exemple);
     }
 
@@ -3425,12 +3702,12 @@ function lancerQCM() {
 }
 
 function afficherQuestionQCM() {
-    document.getElementById('feedbackQCM').textContent = '';
+    ecrireTexteRiche(document.getElementById('feedbackQCM'), '');
     document.getElementById('btnSuivantQCM').style.display = 'none';
     const idx = qcmEtat.cartes[qcmEtat.index];
     const c = supportActif.cartes[idx];
     document.getElementById('progressionQCM').textContent = 'Question ' + (qcmEtat.index + 1) + ' / ' + qcmEtat.cartes.length + '   ·   Score : ' + qcmEtat.score;
-    document.getElementById('questionQCM').textContent = c.question;
+    ecrireTexteRiche(document.getElementById('questionQCM'), c.question);
     document.getElementById('imageQCM').innerHTML = c.image ? '<img src="' + c.image + '" class="image-carte-revision">' : '';
 
     const autresReponses = supportActif.cartes.filter((cc, ii) => ii !== idx && cc.reponse).map(cc => cc.reponse);
@@ -3451,7 +3728,10 @@ function afficherQuestionQCM() {
     choix.forEach(rep => {
         const btn = document.createElement('button');
         btn.className = 'choix-qcm';
-        btn.textContent = rep;
+        // Une formule rendue change le texte affiché : on repère donc la bonne
+        // réponse par un attribut plutôt qu'en comparant le texte du bouton.
+        btn.dataset.bonne = (rep === c.reponse) ? '1' : '0';
+        ecrireTexteRiche(btn, rep);
         btn.addEventListener('click', () => repondreQCM(btn, rep === c.reponse, idx));
         conteneur.appendChild(btn);
     });
@@ -3461,11 +3741,11 @@ function repondreQCM(btnClique, bon, idx) {
     document.querySelectorAll('#choixQCM button').forEach(b => b.disabled = true);
     const c = supportActif.cartes[idx];
     document.querySelectorAll('#choixQCM button').forEach(b => {
-        if (b.textContent === c.reponse) b.classList.add('choix-correct');
+        if (b.dataset.bonne === '1') b.classList.add('choix-correct');
     });
     if (!bon) btnClique.classList.add('choix-incorrect');
     if (bon) qcmEtat.score++;
-    document.getElementById('feedbackQCM').textContent = bon ? '✅ Bonne réponse !' : '❌ La bonne réponse était : ' + c.reponse;
+    ecrireTexteRiche(document.getElementById('feedbackQCM'), bon ? '✅ Bonne réponse !' : '❌ La bonne réponse était : ' + c.reponse);
     document.getElementById('btnSuivantQCM').style.display = '';
 }
 
@@ -3475,7 +3755,7 @@ function questionSuivanteQCM() {
         document.getElementById('questionQCM').textContent = '🏁 Terminé !';
         document.getElementById('imageQCM').innerHTML = '';
         document.getElementById('choixQCM').innerHTML = '';
-        document.getElementById('feedbackQCM').textContent = '';
+        ecrireTexteRiche(document.getElementById('feedbackQCM'), '');
         document.getElementById('progressionQCM').textContent = 'Score final : ' + qcmEtat.score + ' / ' + qcmEtat.cartes.length;
         document.getElementById('btnSuivantQCM').style.display = 'none';
         return;
@@ -3510,7 +3790,7 @@ function afficherQuestionEcrire() {
     const idx = ecrireEtat.cartes[ecrireEtat.index];
     const c = supportActif.cartes[idx];
     document.getElementById('progressionEcrire').textContent = 'Question ' + (ecrireEtat.index + 1) + ' / ' + ecrireEtat.cartes.length + '   ·   Score : ' + ecrireEtat.score;
-    document.getElementById('questionEcrire').textContent = c.question;
+    ecrireTexteRiche(document.getElementById('questionEcrire'), c.question);
     document.getElementById('imageEcrire').innerHTML = c.image ? '<img src="' + c.image + '" class="image-carte-revision">' : '';
     champ.focus();
 }
@@ -4307,7 +4587,7 @@ function afficherCarteFlash() {
     badge.style.color = couleur.txt;
 
     // Question
-    document.getElementById('questionFlash').textContent = qa.question || '';
+    ecrireTexteRiche(document.getElementById('questionFlash'), qa.question || '');
 
     // Image question (pas de sens en mode inversé : l'image reste liée à la
     // question d'origine, pas à la réponse).
@@ -4333,7 +4613,7 @@ function afficherCarteFlash() {
     // Réinitialiser zone réponse
     document.getElementById('zoneReponseFlash').style.display = 'none';
     document.getElementById('reponseFlash').style.display = 'none';
-    document.getElementById('reponseFlash').textContent = qa.reponse || '';
+    ecrireTexteRiche(document.getElementById('reponseFlash'), qa.reponse || '');
     document.getElementById('lettresFlash').style.display = 'none';
     document.getElementById('saisieFLashWrap').style.display = 'none';
     document.getElementById('exempleFlash').style.display = 'none';
@@ -4470,7 +4750,12 @@ function jouerAudioFlash(src) {
 // "ne pas apparaître" pendant la révision.
 function afficherTexteOuAudio(idEl, texte, audioSrc) {
     const el = document.getElementById(idEl);
-    el.textContent = texte;
+    // Le texte vit dans son propre <span> : le rendu des formules, qui peut
+    // arriver après coup, ne doit pas effacer le petit bouton 🔊.
+    el.textContent = '';
+    const zoneTexte = document.createElement('span');
+    el.appendChild(zoneTexte);
+    ecrireTexteRiche(zoneTexte, texte);
     if (audioSrc) {
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -4495,7 +4780,7 @@ function finirRevelationFlash() {
     animerEntree(document.getElementById('zoneReponseFlash'), 'anim-entree');
 
     const repEl = document.getElementById('reponseFlash');
-    repEl.textContent = qa.reponse || '';
+    ecrireTexteRiche(repEl, qa.reponse || '');
     repEl.style.display = '';
 
     if (qa.exemple || qa.exempleAudio) document.getElementById('exempleFlash').style.display = '';
@@ -4538,24 +4823,27 @@ function evaluerFlash(resultat) {
     const prochainJours = etat.intervalle || INTERVALLES[etat.box - 1];
     if (resultat === 'maitrise') {
         bandeau.className = 'bandeau-feedback bon';
-        bandeau.textContent = '✅ Très bien ! Prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : '');
+        ecrireTexteRiche(bandeau, '✅ Très bien ! Prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : ''));
     } else if (resultat === 'satisfaisant' || resultat === 'oui') {
         bandeau.className = 'bandeau-feedback bon';
-        bandeau.textContent = '✓ Bien ! Prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : '');
+        ecrireTexteRiche(bandeau, '✓ Bien ! Prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : ''));
     } else if (resultat === 'fragile' || resultat === 'moyen') {
         bandeau.className = 'bandeau-feedback moyen';
-        bandeau.textContent = '〜 Fragile — prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : '');
+        ecrireTexteRiche(bandeau, '〜 Fragile — prochaine révision dans ' + prochainJours + ' jour' + (prochainJours > 1 ? 's' : ''));
     } else {
         bandeau.className = 'bandeau-feedback mauvais';
         const carteItem = item.support.cartes[item.idx];
         const reponseAttendue = item.inverse ? carteItem.question : carteItem.reponse;
-        bandeau.textContent = '❌ À retravailler — réponse : ' + (reponseAttendue || '');
+        let texteBandeau = '❌ À retravailler — réponse : ' + (reponseAttendue || '');
         // Option Réglages : la carte ratée revient plus tard dans cette même
         // session (en plus de son intervalle SM-2 normal, inchangé).
         if (rejouerRateesActif()) {
             flashSession.push(item);
-            bandeau.textContent += ' (elle revient plus tard dans cette session)';
+            texteBandeau += ' (elle revient plus tard dans cette session)';
         }
+        // Le texte complet est assemblé avant d'être écrit : une réponse qui
+        // contient une formule est rendue après coup et remplace l'affichage.
+        ecrireTexteRiche(bandeau, texteBandeau);
     }
     bandeau.style.display = '';
     flashIndex++;

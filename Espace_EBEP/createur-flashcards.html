@@ -117,6 +117,11 @@ details[open].bloc summary::after{content:"−";}
 #statut.erreur{color:var(--rouge);}
 .entete-liste{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;}
 .entete-liste h2{margin:0;}
+.palette{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.palette button{min-width:44px;height:40px;padding:0 10px;font-size:16px;font-weight:500;}
+.apercu{grid-column:1 / -1;margin-top:2px;padding:10px 12px;background:var(--bleu-clair);border-radius:10px;font-size:16px;white-space:pre-line;overflow-x:auto;}
+.katex{font-size:1.1em;}
+.katex-display{overflow-x:auto;overflow-y:hidden;margin:.5em 0;}
 </style>
 </head>
 <body>
@@ -159,6 +164,15 @@ details[open].bloc summary::after{content:"−";}
             <button type="button" class="principal" id="btn-vrac">Ajouter ces cartes</button>
             <span class="rapport" id="rapport-vrac"></span>
         </div>
+    </details>
+</section>
+
+<section>
+    <details class="bloc" id="bloc-formules">
+        <summary>Insérer une formule mathématique</summary>
+        <p class="aide">Clique dans une question ou une réponse, puis sur un modèle : la formule est insérée entre <code>$ … $</code> au niveau du curseur et son aperçu s'affiche sous la carte. Dans Mémo Révisions, l'élève voit la formule mise en forme, jamais le code.</p>
+        <div class="palette" id="palette"></div>
+        <p class="aide" id="aide-formule"></p>
     </details>
 </section>
 
@@ -252,16 +266,160 @@ details[open].bloc summary::after{content:"−";}
                 '<div class="carte-champs">' +
                     '<div><label for="q' + i + '">Question</label><textarea id="q' + i + '" data-i="' + i + '" data-champ="question" rows="1">' + echapper(c.question) + '</textarea></div>' +
                     '<div><label for="r' + i + '">Réponse</label><textarea id="r' + i + '" data-i="' + i + '" data-champ="reponse" rows="1">' + echapper(c.reponse) + '</textarea></div>' +
+                    '<div class="apercu" id="ap' + i + '" style="display:none;"></div>' +
                 '</div>' +
             '</div>';
         }).join('');
         liste.querySelectorAll('textarea').forEach(grandir);
+        etat.cartes.forEach(function(c, i){ majApercu(i); });
         majCompteurs();
         if (focusIndex !== undefined) {
             var cible = $((champ === 'reponse' ? 'r' : 'q') + focusIndex);
             if (cible) cible.focus();
         }
     }
+
+    /* ---------- Formules (KaTeX chargé à la demande depuis le dossier de l'app) ---------- */
+    var DOSSIER_KATEX = 'eleve/vendor/katex/';
+    var katexPromesse = null, katexCssAjoute = false, jetonRendu = 0;
+
+    function chargerKatex(){
+        if (window.katex) return Promise.resolve(true);
+        if (katexPromesse) return katexPromesse;
+        if (!katexCssAjoute) {
+            katexCssAjoute = true;
+            var css = document.createElement('link');
+            css.rel = 'stylesheet'; css.href = DOSSIER_KATEX + 'katex.min.css';
+            document.head.appendChild(css);
+        }
+        katexPromesse = new Promise(function(resolve){
+            var sc = document.createElement('script');
+            sc.src = DOSSIER_KATEX + 'katex.min.js';
+            sc.onload = function(){ resolve(!!window.katex); };
+            sc.onerror = function(){ katexPromesse = null; resolve(false); };
+            document.head.appendChild(sc);
+        });
+        return katexPromesse;
+    }
+
+    // Même découpage que dans l'app : $...$ (dans le texte), $$...$$ (centré), \$ = dollar
+    function decouper(texte){
+        var segs = [], buf = '', n = texte.length, i = 0;
+        function pousser(){ if (buf) { segs.push({ type:'txt', v:buf }); buf = ''; } }
+        while (i < n) {
+            var ch = texte[i];
+            if (ch === '\\' && texte[i + 1] === '$') { buf += '$'; i += 2; continue; }
+            if (ch === '$') {
+                var delim = texte[i + 1] === '$' ? '$$' : '$';
+                var j = i + delim.length, fin = -1;
+                while (j < n) {
+                    if (texte[j] === '\\') { j += 2; continue; }
+                    if (texte.indexOf(delim, j) === j) { fin = j; break; }
+                    j++;
+                }
+                var contenu = fin > -1 ? texte.slice(i + delim.length, fin) : '';
+                if (fin > -1 && contenu.trim() !== '') {
+                    pousser();
+                    segs.push({ type: delim === '$$' ? 'disp' : 'math', v: contenu });
+                    i = fin + delim.length;
+                    continue;
+                }
+            }
+            buf += ch; i++;
+        }
+        pousser();
+        return segs;
+    }
+    function aFormule(texte){
+        return texte.indexOf('$') !== -1 && decouper(texte).some(function(sg){ return sg.type !== 'txt'; });
+    }
+    function rendreRiche(el, texte){
+        var jeton = String(++jetonRendu);
+        el.dataset.rendu = jeton;
+        el.textContent = texte;
+        var segs = decouper(texte);
+        chargerKatex().then(function(ok){
+            if (!ok) { el.textContent = texte + '\n(Aperçu indisponible : dossier eleve/vendor/katex introuvable.)'; return; }
+            if (el.dataset.rendu !== jeton) return;
+            var frag = document.createDocumentFragment();
+            segs.forEach(function(sg){
+                if (sg.type === 'txt') { frag.appendChild(document.createTextNode(sg.v)); return; }
+                var c = document.createElement(sg.type === 'disp' ? 'div' : 'span');
+                try { c.innerHTML = window.katex.renderToString(sg.v, { throwOnError:false, displayMode: sg.type === 'disp' }); }
+                catch(e) { c.textContent = sg.v; }
+                frag.appendChild(c);
+            });
+            el.textContent = '';
+            el.appendChild(frag);
+        });
+    }
+    function majApercu(i){
+        var ap = $('ap' + i), c = etat.cartes[i];
+        if (!ap || !c) return;
+        var texte = ((c.question || '') + '\n' + (c.reponse || '')).replace(/^\n|\n$/g, '');
+        if (aFormule(c.question || '') || aFormule(c.reponse || '')) {
+            ap.style.display = '';
+            var morceaux = [];
+            if ((c.question || '').trim()) morceaux.push('Q : ' + c.question);
+            if ((c.reponse || '').trim()) morceaux.push('R : ' + c.reponse);
+            rendreRiche(ap, morceaux.join('\n'));
+        } else {
+            ap.style.display = 'none';
+        }
+    }
+
+    var MODELES = [
+        ['a⁄b','\\frac{}{}',6], ['x²','^{2}',4], ['xⁿ','^{}',2], ['xₙ','_{}',2], ['√','\\sqrt{}',6],
+        ['π','\\pi ',4], ['×','\\times ',7], ['÷','\\div ',5], ['·','\\cdot ',6], ['±','\\pm ',4],
+        ['≤','\\leq ',5], ['≥','\\geq ',5], ['≠','\\neq ',5], ['≈','\\approx ',8],
+        ['°','^{\\circ}',9], ['%','\\%',2], ['( )','\\left(  \\right)',7], ['→','\\rightarrow ',12]
+    ];
+    // Vrai si la position `pos` du texte se trouve à l'intérieur d'un $...$ ou $$...$$
+    function dansFormule(texte, pos){
+        var ouvert = null, i = 0;
+        while (i < pos) {
+            var ch = texte[i];
+            if (ch === '\\') { i += 2; continue; }
+            if (ch === '$') {
+                var d = texte[i + 1] === '$' ? '$$' : '$';
+                if (ouvert === null) ouvert = d; else if (ouvert === d) ouvert = null;
+                i += d.length;
+                continue;
+            }
+            i++;
+        }
+        return ouvert !== null;
+    }
+    var dernierChamp = null;
+    liste.addEventListener('focusin', function(ev){
+        if (ev.target.tagName === 'TEXTAREA') {
+            dernierChamp = ev.target;
+            $('aide-formule').textContent = '';
+        }
+    });
+    MODELES.forEach(function(m){
+        var b = document.createElement('button');
+        b.type = 'button'; b.textContent = m[0];
+        // mousedown : évite que le bouton ne retire le focus (et la sélection) du champ
+        b.addEventListener('mousedown', function(ev){ ev.preventDefault(); });
+        b.addEventListener('click', function(){
+            if (!dernierChamp || !document.body.contains(dernierChamp)) {
+                $('aide-formule').textContent = 'Clique d\'abord dans une question ou une réponse, puis choisis un modèle.';
+                return;
+            }
+            var ta = dernierChamp, deb = ta.selectionStart, fin = ta.selectionEnd;
+            // Curseur déjà dans une formule : on insère le modèle tel quel, ce
+            // qui permet d'enchaîner (fraction, ×, π...) sans imbriquer les $.
+            var dedans = dansFormule(ta.value, deb);
+            var ajout = dedans ? m[1] : '$' + m[1] + '$';
+            ta.value = ta.value.slice(0, deb) + ajout + ta.value.slice(fin);
+            var pos = deb + (dedans ? 0 : 1) + m[2];
+            ta.focus();
+            ta.setSelectionRange(pos, pos);
+            ta.dispatchEvent(new Event('input', { bubbles:true }));
+        });
+        $('palette').appendChild(b);
+    });
 
     /* ---------- Événements : champs de la fiche ---------- */
     ['nom','matiere','chapitre'].forEach(function(id){
@@ -274,6 +432,7 @@ details[open].bloc summary::after{content:"−";}
         if (ta.tagName !== 'TEXTAREA') return;
         etat.cartes[+ta.dataset.i][ta.dataset.champ] = ta.value;
         grandir(ta);
+        majApercu(+ta.dataset.i);
         majCompteurs();
         sauver();
     });

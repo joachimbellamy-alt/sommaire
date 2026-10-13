@@ -1,4 +1,8 @@
-const CACHE_NAME = 'memo-eleve-v139';
+const CACHE_NAME = 'memo-eleve-v140';
+// Cache à part pour KaTeX (formules mathématiques) : rempli à la première
+// utilisation d'une formule, et conservé d'une version de l'app à l'autre pour
+// ne pas obliger à le retélécharger à chaque mise à jour.
+const CACHE_VENDOR = 'memo-eleve-vendor-katex-1';
 const FICHIERS_A_METTRE_EN_CACHE = [
     './',
     './index.html',
@@ -34,7 +38,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((noms) =>
-            Promise.all(noms.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
+            Promise.all(noms.filter((n) => n !== CACHE_NAME && n !== CACHE_VENDOR).map((n) => caches.delete(n)))
         )
     );
     self.clients.claim();
@@ -47,6 +51,12 @@ self.addEventListener('fetch', (event) => {
             if (reponseCache) return reponseCache;
             return fetch(event.request).then((reponseReseau) => {
                 // Les pages d'exercices que l'élève crée restent en localStorage, pas besoin de les mettre en cache ici.
+                // Seuls les fichiers KaTeX sont gardés au passage : ils ne sont
+                // téléchargés que si une carte contient une formule.
+                if (reponseReseau && reponseReseau.ok && event.request.url.indexOf('/vendor/katex/') !== -1) {
+                    const copie = reponseReseau.clone();
+                    caches.open(CACHE_VENDOR).then((cache) => cache.put(event.request, copie));
+                }
                 return reponseReseau;
             }).catch(() => reponseCache);
         })
