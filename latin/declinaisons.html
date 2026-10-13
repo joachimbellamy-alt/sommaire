@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tabula declinationum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@500;700&display=swap">
+<style>
+/* Layout : une colonne centrée, la tablette (tableau de déclinaison) au centre, réglages au-dessus, palette dessous */
+:root {
+  --bg: #f1f3f7;
+  --surface: #ffffff;
+  --ink: #1c2333;
+  --muted: #5a6377;
+  --line: #d6dbe5;
+  --accent: #2b4fa8;
+  --accent-soft: #e4eafb;
+  --good: #1d7a4b;
+  --good-soft: #e1f3e9;
+  --bad: #b3261e;
+  --bad-soft: #fbe6e4;
+  --d1: #a86c12;
+  --d2: #2b4fa8;
+  --d3p: #167a74;
+  --d3i: #7a3f8f;
+  --display: "Cinzel", "Trajan Pro", Georgia, serif;
+  --body: "Atkinson Hyperlegible", "Verdana", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11141c; --surface: #1a1f2d; --ink: #e8ebf2; --muted: #9aa3b8; --line: #2e3548;
+    --accent: #8aa6f2; --accent-soft: #232c47; --good: #52c58e; --good-soft: #17322a;
+    --bad: #f27a6f; --bad-soft: #3a1f22; --d1: #e2ae4d; --d2: #8aa6f2; --d3p: #4fc6bf; --d3i: #c695da;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11141c; --surface: #1a1f2d; --ink: #e8ebf2; --muted: #9aa3b8; --line: #2e3548;
+  --accent: #8aa6f2; --accent-soft: #232c47; --good: #52c58e; --good-soft: #17322a;
+  --bad: #f27a6f; --bad-soft: #3a1f22; --d1: #e2ae4d; --d2: #8aa6f2; --d3p: #4fc6bf; --d3i: #c695da;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--body); font-size: 17px; line-height: 1.5;
+  padding: 24px 16px 48px;
+}
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+header { display: flex; flex-direction: column; gap: 4px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(1.6rem, 5vw, 2.2rem); letter-spacing: .06em; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; }
+
+.settings { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.row-label { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); width: 100%; font-weight: 700; }
+.chip {
+  font: inherit; font-size: .95rem; padding: 7px 14px; border-radius: 999px;
+  border: 2px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.chip .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--accent)); }
+.chip[aria-pressed="true"] { border-color: var(--c, var(--accent)); background: var(--accent-soft); font-weight: 700; }
+.chip:focus-visible, .btn:focus-visible, .slot:focus-visible, .end:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.progress { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-variant-numeric: tabular-nums; color: var(--muted); font-size: .95rem; }
+.bar { flex: 1; height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+
+.tablet { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+.lemma { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.lemma .w { font-size: clamp(1.7rem, 6vw, 2.3rem); font-weight: 700; }
+.lemma .g { font-style: italic; color: var(--muted); font-size: 1.2rem; }
+.lemma .sens { color: var(--muted); font-size: 1.05rem; width: 100%; }
+.badge { font-size: .82rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; color: var(--c); border: 2px solid var(--c); }
+
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: separate; border-spacing: 6px; width: 100%; margin: -6px; width: calc(100% + 12px); }
+th { font-family: var(--display); font-weight: 700; font-size: .85rem; letter-spacing: .06em; color: var(--muted); text-align: left; padding: 0 4px; }
+thead th { text-align: center; }
+td { background: var(--bg); border-radius: 10px; padding: 8px; vertical-align: top; border: 2px solid transparent; min-width: 0; }
+td.ok { background: var(--good-soft); border-color: var(--good); }
+td.ko { background: var(--bad-soft); border-color: var(--bad); }
+td.given { background: transparent; border: 2px dashed var(--line); }
+.cell { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; font-size: 1.2rem; min-height: 44px; }
+.rad { font-weight: 400; }
+.slot {
+  font: inherit; font-weight: 700; min-width: 3.2em; min-height: 40px; padding: 2px 8px;
+  border: 2px dashed var(--muted); background: var(--surface); color: var(--accent); border-radius: 8px; cursor: pointer;
+}
+.slot.active { border-style: solid; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.slot:disabled { cursor: default; }
+input.txt {
+  font: inherit; font-weight: 700; color: var(--accent); width: 100%; min-width: 0;
+  padding: 6px 8px; border: 2px solid var(--line); border-radius: 8px; background: var(--surface);
+}
+input.txt.short { width: 4.2em; flex: 0 0 auto; }
+.fix { width: 100%; font-size: .9rem; color: var(--bad); margin-top: 4px; }
+.fix b { color: var(--ink); }
+.mark { margin-left: auto; font-weight: 700; }
+td.ok .mark { color: var(--good); }
+td.ko .mark { color: var(--bad); }
+
+.palette { display: flex; flex-wrap: wrap; gap: 8px; }
+.end {
+  font: inherit; font-size: 1.15rem; font-weight: 700; padding: 8px 16px; min-width: 64px;
+  border-radius: 10px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer;
+}
+.end:hover { border-color: var(--accent); }
+.end::before { content: "-"; color: var(--muted); }
+
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { font: inherit; font-weight: 700; padding: 11px 20px; border-radius: 10px; border: 2px solid var(--accent); cursor: pointer; background: var(--surface); color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--surface); }
+.btn[hidden] { display: none; }
+
+.explain { border-left: 4px solid var(--c, var(--accent)); padding: 6px 12px; background: var(--bg); border-radius: 0 8px 8px 0; }
+.explain p { margin: 0; }
+
+details.help { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px 20px; }
+details.help summary { cursor: pointer; font-weight: 700; padding: 12px 0; }
+.models { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; padding-bottom: 16px; }
+.model { border-top: 4px solid var(--c); background: var(--bg); border-radius: 8px; padding: 10px 12px; }
+.model h3 { margin: 0 0 6px; font-size: .95rem; color: var(--c); }
+.model table { border-spacing: 0; margin: 0; width: 100%; font-size: .95rem; }
+.model td, .model th { background: none; border: 0; padding: 2px 4px; border-radius: 0; font-family: var(--body); font-size: .95rem; }
+.model th { color: var(--muted); font-weight: 400; font-size: .85rem; }
+.model td { font-weight: 700; }
+.rule { margin: 0 0 16px; color: var(--ink); }
+.rule em { color: var(--muted); }
+
+.final { text-align: center; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.final .big { font-family: var(--display); font-size: 3rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.final ul { text-align: left; margin: 0; padding-left: 1.2em; color: var(--muted); }
+.empty { color: var(--bad); font-weight: 700; }
+
+@media (max-width: 480px) {
+  .tablet { padding: 14px; }
+  table { border-spacing: 4px; margin: -4px; width: calc(100% + 8px); }
+  th { font-size: .72rem; }
+  .cell { font-size: 1.05rem; }
+  td { padding: 6px; }
+  .slot { min-width: 2.6em; }
+}
+/* Plateau façon Jeopardy : un seul univers visuel (bleu nuit et or), identique dans les deux thèmes */
+:root {
+  --jb-ground: #050c45;
+  --jb-tile: #1029a8;
+  --jb-tile-edge: #0a1a78;
+  --jb-back: #f7f3e3;
+  --jb-back-ink: #10194f;
+  --jb-gold: #f5c542;
+  --jb-label: #c9d3ff;
+}
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 2px solid var(--line); }
+.tab { font: inherit; font-weight: 700; padding: 10px 16px; border: 0; background: none; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+.tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.tab:focus-visible, .tile:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.board-view { display: flex; flex-direction: column; gap: 14px; }
+.board-bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
+.board-bar .btn { padding: 8px 14px; font-size: .95rem; }
+.board-wrap { overflow-x: auto; border-radius: 14px; background: var(--jb-ground); }
+.board { display: grid; gap: 8px; padding: 12px; min-width: 520px; }
+.bh { color: #fff; text-align: center; padding: 8px 4px 10px; border-bottom: 4px solid var(--c); display: flex; flex-direction: column; gap: 2px; justify-content: flex-end; }
+.bh .dn { font-family: var(--display); font-weight: 700; font-size: .8rem; letter-spacing: .08em; color: var(--jb-gold); text-transform: uppercase; }
+.bh .lw { font-size: 1.1rem; font-weight: 700; }
+.bh .ls { font-size: .85rem; color: var(--jb-label); }
+.rl { color: var(--jb-label); font-family: var(--display); font-weight: 700; font-size: .8rem; letter-spacing: .06em; display: flex; flex-direction: column; justify-content: center; text-transform: uppercase; padding-right: 4px; }
+.rl small { font-family: var(--body); text-transform: none; letter-spacing: 0; font-weight: 400; }
+.tile { font: inherit; border: 0; padding: 0; background: none; cursor: pointer; perspective: 800px; min-height: 76px; }
+.tile .in { position: relative; display: block; width: 100%; height: 100%; min-height: 76px; transition: transform .5s cubic-bezier(.3,.7,.3,1); transform-style: preserve-3d; }
+.tile.open .in { transform: rotateY(180deg); }
+.tile .face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; border-radius: 6px; backface-visibility: hidden; -webkit-backface-visibility: hidden; padding: 4px; }
+.tile .front { background: var(--jb-tile); box-shadow: inset 0 -4px 0 var(--jb-tile-edge); color: var(--jb-gold); font-family: var(--display); font-weight: 700; font-size: 1.25rem; text-shadow: 2px 2px 0 #000; letter-spacing: .04em; }
+.tile .front .rd { font-family: var(--body); text-shadow: 1px 1px 0 #000; }
+.tile:hover .front { filter: brightness(1.15); }
+.tile .back { background: var(--jb-back); color: var(--jb-back-ink); transform: rotateY(180deg); font-size: 1.35rem; }
+.tile .back b { color: #b0261b; }
+.tile .back .var { font-size: .9rem; font-style: italic; }
+.hint { margin: 0; color: var(--muted); font-size: .95rem; }
+@media (prefers-reduced-motion: reduce) {
+  .bar > i { transition: none; }
+  .tile .in { transition: none; }
+}
+.back { color: var(--muted); text-decoration: none; font-weight: 700; font-size: .95rem; }
+.back:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">← Espace Latin 3ème</a>
+    <h1>Tabula declinationum</h1>
+    <p class="sub">Complète le tableau : nominatif, accusatif et génitif, au singulier et au pluriel.</p>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Mode">
+    <button type="button" role="tab" class="tab" id="tab-board" data-view="board">Plateau à dévoiler</button>
+    <button type="button" role="tab" class="tab" id="tab-game" data-view="game">Exercice à compléter</button>
+  </div>
+
+  <section class="settings" aria-label="Réglages">
+    <div class="row" id="filters">
+      <span class="row-label">Déclinaisons</span>
+    </div>
+    <div class="row" id="levels">
+      <span class="row-label">Niveau</span>
+    </div>
+  </section>
+
+  <section id="view-board" class="board-view" aria-label="Plateau">
+    <div class="board-bar">
+      <div class="row" id="bmodes"></div>
+      <div class="row">
+        <button type="button" class="btn" id="b-all">Révéler tout</button>
+        <button type="button" class="btn" id="b-none">Tout voiler</button>
+      </div>
+    </div>
+    <div class="board-wrap"><div class="board" id="board"></div></div>
+    <p class="hint">Clique sur une case pour dévoiler la terminaison : elle se revoile au bout de 2 secondes.</p>
+  </section>
+
+  <div id="view-game" class="game-view">
+  <div class="progress"><span id="prog-txt">Mot 1 / 10</span><div class="bar"><i id="prog-bar"></i></div><span id="score-txt">0 pt</span></div>
+
+  <main class="tablet" id="tablet" aria-live="polite"></main>
+  </div>
+
+  <details class="help" id="help">
+    <summary>Aide : les terminaisons</summary>
+    <p class="rule"><b>3<sup>e</sup> déclinaison :</b> compte les syllabes du nominatif et du génitif singulier.<br>
+      Même nombre → <b>parisyllabique</b>, génitif pluriel en <b>-ium</b> <em>(ci·vis, ci·vis)</em>.<br>
+      Le génitif a une syllabe de plus → <b>imparisyllabique</b>, génitif pluriel en <b>-um</b> <em>(rex, re·gis)</em>.</p>
+    <div class="models" id="models"></div>
+  </details>
+</div>
+
+<script>
+const DECL = {
+  '1':  { name: '1re déclinaison', short: '1re', c: '--d1',
+          end: { nomS: 'a', nomP: 'ae', accS: 'am', accP: 'as', genS: 'ae', genP: 'arum' },
+          pal: ['a', 'ae', 'am', 'arum', 'as', 'os', 'um'] },
+  '2':  { name: '2e déclinaison', short: '2e', c: '--d2',
+          end: { nomS: 'us', nomP: 'i', accS: 'um', accP: 'os', genS: 'i', genP: 'orum' },
+          pal: ['am', 'as', 'i', 'orum', 'os', 'um', 'us'] },
+  '3p': { name: '3e déclinaison parisyllabique', short: '3e parisyllabique', c: '--d3p',
+          end: { nomS: null, nomP: 'es', accS: 'em', accP: 'es', genS: 'is', genP: 'ium' },
+          pal: ['as', 'em', 'es', 'i', 'is', 'ium', 'um'] },
+  '3i': { name: '3e déclinaison imparisyllabique', short: '3e imparisyllabique', c: '--d3i',
+          end: { nomS: null, nomP: 'es', accS: 'em', accP: 'es', genS: 'is', genP: 'um' },
+          pal: ['as', 'em', 'es', 'i', 'is', 'ium', 'um'] }
+};
+// [nominatif, génitif, genre, sens, déclinaison, syllabes nom/gén (3e)]
+const WORDS = [
+  ['rosa', 'rosae', 'f', 'la rose', '1'], ['puella', 'puellae', 'f', 'la jeune fille', '1'],
+  ['filia', 'filiae', 'f', 'la fille', '1'], ['via', 'viae', 'f', 'la route', '1'],
+  ['insula', 'insulae', 'f', "l'île", '1'], ['silva', 'silvae', 'f', 'la forêt', '1'],
+  ['porta', 'portae', 'f', 'la porte', '1'], ['regina', 'reginae', 'f', 'la reine', '1'],
+  ['nauta', 'nautae', 'm', 'le marin', '1'], ['agricola', 'agricolae', 'm', "l'agriculteur", '1'],
+  ['aqua', 'aquae', 'f', "l'eau", '1'], ['ancilla', 'ancillae', 'f', 'la servante', '1'],
+  ['dominus', 'domini', 'm', 'le maître', '2'], ['servus', 'servi', 'm', "l'esclave", '2'],
+  ['amicus', 'amici', 'm', "l'ami", '2'], ['lupus', 'lupi', 'm', 'le loup', '2'],
+  ['equus', 'equi', 'm', 'le cheval', '2'], ['murus', 'muri', 'm', 'le mur', '2'],
+  ['hortus', 'horti', 'm', 'le jardin', '2'], ['ventus', 'venti', 'm', 'le vent', '2'],
+  ['oculus', 'oculi', 'm', "l'œil", '2'], ['annus', 'anni', 'm', "l'année", '2'],
+  ['populus', 'populi', 'm', 'le peuple', '2'], ['legatus', 'legati', 'm', "l'ambassadeur", '2'],
+  ['civis', 'civis', 'm', 'le citoyen', '3p', ['ci·vis', 'ci·vis']],
+  ['navis', 'navis', 'f', 'le navire', '3p', ['na·vis', 'na·vis']],
+  ['hostis', 'hostis', 'm', "l'ennemi", '3p', ['hos·tis', 'hos·tis']],
+  ['avis', 'avis', 'f', "l'oiseau", '3p', ['a·vis', 'a·vis']],
+  ['ovis', 'ovis', 'f', 'la brebis', '3p', ['o·vis', 'o·vis']],
+  ['collis', 'collis', 'm', 'la colline', '3p', ['col·lis', 'col·lis']],
+  ['nubes', 'nubis', 'f', 'le nuage', '3p', ['nu·bes', 'nu·bis']],
+  ['vulpes', 'vulpis', 'f', 'le renard', '3p', ['vul·pes', 'vul·pis']],
+  ['ignis', 'ignis', 'm', 'le feu', '3p', ['ig·nis', 'ig·nis']],
+  ['finis', 'finis', 'm', 'la limite', '3p', ['fi·nis', 'fi·nis']],
+  ['rex', 'regis', 'm', 'le roi', '3i', ['rex', 're·gis']],
+  ['consul', 'consulis', 'm', 'le consul', '3i', ['con·sul', 'con·su·lis']],
+  ['miles', 'militis', 'm', 'le soldat', '3i', ['mi·les', 'mi·li·tis']],
+  ['dux', 'ducis', 'm', 'le chef', '3i', ['dux', 'du·cis']],
+  ['homo', 'hominis', 'm', "l'homme", '3i', ['ho·mo', 'ho·mi·nis']],
+  ['leo', 'leonis', 'm', 'le lion', '3i', ['le·o', 'le·o·nis']],
+  ['soror', 'sororis', 'f', 'la sœur', '3i', ['so·ror', 'so·ro·ris']],
+  ['uxor', 'uxoris', 'f', "l'épouse", '3i', ['u·xor', 'u·xo·ris']],
+  ['virtus', 'virtutis', 'f', 'le courage', '3i', ['vir·tus', 'vir·tu·tis']],
+  ['lex', 'legis', 'f', 'la loi', '3i', ['lex', 'le·gis']],
+  ['vox', 'vocis', 'f', 'la voix', '3i', ['vox', 'vo·cis']],
+  ['labor', 'laboris', 'm', 'le travail', '3i', ['la·bor', 'la·bo·ris']],
+  ['pastor', 'pastoris', 'm', 'le berger', '3i', ['pas·tor', 'pas·to·ris']],
+  ['mulier', 'mulieris', 'f', 'la femme', '3i', ['mu·li·er', 'mu·li·e·ris']],
+  ['civitas', 'civitatis', 'f', 'la cité', '3i', ['ci·vi·tas', 'ci·vi·ta·tis']],
+  ['imperator', 'imperatoris', 'm', 'le général', '3i', ['im·pe·ra·tor', 'im·pe·ra·to·ris']]
+];
+const CELLS = ['nomS', 'nomP', 'accS', 'accP', 'genS', 'genP'];
+const CASES = [['nom', 'Nominatif'], ['acc', 'Accusatif'], ['gen', 'Génitif']];
+const LEVELS = [
+  ['1', 'Je clique la terminaison'],
+  ['2', "J'écris la terminaison"],
+  ['3', "J'écris le mot entier"]
+];
+const SERIES = 10;
+const PER_WORD = 5;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&"<>]/g, c => ({"&":"&amp;","\"":"&quot;","<":"&lt;",">":"&gt;"})[c]);
+const norm = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+  .replace(/^-/, '').replace(/j/g, 'i').replace(/v/g, 'u');
+
+function word(i) {
+  const [nom, gen, g, sens, d, syl] = WORDS[i];
+  const cut = { '1': 2, '2': 1, '3p': 2, '3i': 2 }[d];
+  const rad = gen.slice(0, gen.length - cut);
+  const genShort = { '1': 'ae', '2': 'i', '3p': 'is' }[d] || gen;
+  return { nom, gen, g, sens, d, syl, rad, genShort };
+}
+function expected(w, cell) {
+  if (cell === 'nomS') return [w.nom];
+  const list = [w.rad + DECL[w.d].end[cell]];
+  if (w.d === '3p' && cell === 'accP') list.push(w.rad + 'is'); // ancien accusatif pluriel en -is
+  return list;
+}
+function answerOf(w, cell) {
+  const a = state.answers[cell] || '';
+  return state.level === '3' ? a : (a ? w.rad + norm(a) : '');
+}
+function isRight(w, cell) {
+  const a = norm(answerOf(w, cell));
+  return a !== '' && expected(w, cell).some(e => norm(e) === a);
+}
+
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+function loadPrefs() {
+  try { const p = JSON.parse(localStorage.getItem('tabula-prefs') || 'null'); if (p) return p; } catch (e) {}
+  return { filters: ['1', '2', '3p', '3i'], level: '1', view: 'board', bmode: 'word' };
+}
+function savePrefs() {
+  try { localStorage.setItem('tabula-prefs', JSON.stringify({ filters: state.filters, level: state.level, view: state.view, bmode: state.board.mode })); } catch (e) {}
+}
+
+let state;
+
+function newSeries() {
+  const pool = WORDS.map((_, i) => i).filter(i => state.filters.includes(WORDS[i][4]));
+  state.series = shuffle(pool).slice(0, Math.min(SERIES, pool.length));
+  state.pos = 0; state.score = 0; state.history = []; state.done = false;
+  startWord();
+}
+function startWord() {
+  state.answers = {}; state.checked = false; state.active = 'nomP';
+  render();
+}
+
+function renderSettings() {
+  const f = $('#filters');
+  f.querySelectorAll('.chip').forEach(n => n.remove());
+  Object.entries(DECL).forEach(([k, d]) => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.type = 'button'; b.id = 'f-' + k;
+    b.style.setProperty('--c', `var(${d.c})`);
+    b.setAttribute('aria-pressed', state.filters.includes(k));
+    b.innerHTML = `<span class="dot"></span>${d.short}`;
+    b.onclick = () => {
+      const on = state.filters.includes(k);
+      if (on && state.filters.length === 1) return;
+      state.filters = on ? state.filters.filter(x => x !== k) : [...state.filters, k];
+      savePrefs(); renderSettings(); newSeries(); renderBoard();
+    };
+    f.appendChild(b);
+  });
+  const l = $('#levels');
+  l.querySelectorAll('.chip').forEach(n => n.remove());
+  LEVELS.forEach(([k, label]) => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.type = 'button'; b.id = 'l-' + k;
+    b.setAttribute('aria-pressed', state.level === k);
+    b.textContent = `${k}. ${label}`;
+    b.onclick = () => {
+      if (state.level === k) return;
+      state.level = k; savePrefs(); renderSettings();
+      if (!state.done) startWord();
+    };
+    l.appendChild(b);
+  });
+}
+
+function renderModels() {
+  $('#models').innerHTML = Object.values(DECL).map(d => `
+    <div class="model" style="--c: var(${d.c})">
+      <h3>${d.name}</h3>
+      <table><thead><tr><th></th><th>sing.</th><th>plur.</th></tr></thead><tbody>
+      ${CASES.map(([c, n]) => `<tr><th>${n.slice(0, 3)}.</th><td>${d.end[c + 'S'] === null ? '—' : '-' + d.end[c + 'S']}</td><td>-${d.end[c + 'P']}</td></tr>`).join('')}
+      </tbody></table>
+    </div>`).join('');
+}
+
+function cellHTML(w, cell) {
+  if (cell === 'nomS') return `<td class="given"><div class="cell"><span>${w.nom}</span></div></td>`;
+  const a = state.answers[cell] || '';
+  const ck = state.checked;
+  const ok = ck && isRight(w, cell);
+  const cls = ck ? (ok ? 'ok' : 'ko') : '';
+  const mark = ck ? `<span class="mark" aria-label="${ok ? 'juste' : 'faux'}">${ok ? '✓' : '✗'}</span>` : '';
+  const fix = ck && !ok ? `<div class="fix">→ <b>${expected(w, cell).join(' ou ')}</b></div>` : '';
+  let inner;
+  if (state.level === '1') {
+    inner = `<span class="rad">${w.rad}</span><button type="button" class="slot${state.active === cell && !ck ? ' active' : ''}" data-cell="${cell}" ${ck ? 'disabled' : ''} aria-label="Terminaison ${cell}">${a || '…'}</button>`;
+  } else if (state.level === '2') {
+    inner = `<span class="rad">${w.rad}</span><input class="txt short" id="in-${cell}" data-cell="${cell}" value="${esc(a)}" ${ck ? 'disabled' : ''} autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminaison">`;
+  } else {
+    inner = `<input class="txt" id="in-${cell}" data-cell="${cell}" value="${esc(a)}" ${ck ? 'disabled' : ''} autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Forme">`;
+  }
+  return `<td class="${cls}"><div class="cell">${inner}${mark}${fix}</div></td>`;
+}
+
+function render() {
+  const t = $('#tablet');
+  const n = state.series.length;
+  $('#prog-bar').style.width = (100 * (state.pos + (state.checked ? 1 : 0)) / n) + '%';
+  $('#score-txt').textContent = `${state.score} / ${n * PER_WORD} pts`;
+
+  if (state.done) {
+    $('#prog-txt').textContent = 'Série terminée';
+    const max = n * PER_WORD;
+    const errs = state.history.filter(h => h.errors.length);
+    t.innerHTML = `<div class="final">
+      <div class="big">${state.score} / ${max}</div>
+      <p>${state.score === max ? 'Optime ! Aucune faute.' : state.score >= max * .75 ? 'Bene ! Encore un petit effort.' : 'Continue, chaque série te fait progresser.'}</p>
+      ${errs.length ? `<div><p><b>À revoir :</b></p><ul>${errs.map(h => `<li><b>${h.nom}</b> (${DECL[h.d].short}) : ${h.errors.join(', ')}</li>`).join('')}</ul></div>` : ''}
+      <button type="button" class="btn primary" id="again">Nouvelle série</button>
+    </div>`;
+    $('#again').onclick = newSeries;
+    return;
+  }
+
+  $('#prog-txt').textContent = `Mot ${state.pos + 1} / ${n}`;
+  const w = word(state.series[state.pos]);
+  const d = DECL[w.d];
+  const badge = state.checked ? `<span class="badge" style="--c: var(${d.c})">${d.short}</span>` : '';
+  let explain = '';
+  if (state.checked) {
+    let txt = `<b>${w.nom}</b>, génitif <b>${w.gen}</b> : radical <b>${w.rad}-</b>.`;
+    if (w.syl) {
+      const a = w.syl[0].split('·').length, b = w.syl[1].split('·').length;
+      txt += ` ${w.syl[0]} (${a} syll.) / ${w.syl[1]} (${b} syll.) → ${a === b ? 'parisyllabique, génitif pluriel en <b>-ium</b>' : 'imparisyllabique, génitif pluriel en <b>-um</b>'}.`;
+    }
+    explain = `<div class="explain" style="--c: var(${d.c})"><p>${txt}</p></div>`;
+  }
+
+  t.innerHTML = `
+    <div class="lemma"><span class="w">${w.nom}, ${w.genShort}</span><span class="g">${w.g}.</span>${badge}<span class="sens">${w.sens}</span></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th></th><th>Singulier</th><th>Pluriel</th></tr></thead>
+      <tbody>${CASES.map(([c, name]) => `<tr><th scope="row">${name}</th>${cellHTML(w, c + 'S')}${cellHTML(w, c + 'P')}</tr>`).join('')}</tbody>
+    </table></div>
+    ${state.level === '1' && !state.checked ? `<div class="palette" role="group" aria-label="Terminaisons">${d.pal.map(e => `<button type="button" class="end" data-end="${e}">${e}</button>`).join('')}</div>` : ''}
+    ${explain}
+    <div class="actions">
+      ${state.checked
+        ? `<button type="button" class="btn primary" id="next">${state.pos + 1 < n ? 'Mot suivant' : 'Voir mon score'}</button>`
+        : `<button type="button" class="btn primary" id="check">Vérifier</button><button type="button" class="btn" id="clear">Effacer</button>`}
+    </div>`;
+
+  t.querySelectorAll('.slot').forEach(b => b.onclick = () => { state.active = b.dataset.cell; render(); });
+  t.querySelectorAll('.end').forEach(b => b.onclick = () => {
+    if (!state.active) return;
+    state.answers[state.active] = b.dataset.end;
+    const rest = CELLS.slice(1).filter(c => !state.answers[c]);
+    const after = CELLS.slice(CELLS.indexOf(state.active) + 1).find(c => !state.answers[c]);
+    state.active = after || rest[0] || state.active;
+    render();
+    const s = t.querySelector('.slot.active'); if (s) s.focus();
+  });
+  const inputs = [...t.querySelectorAll('input.txt')];
+  inputs.forEach((inp, i) => {
+    inp.oninput = () => { state.answers[inp.dataset.cell] = inp.value; };
+    inp.onkeydown = e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      if (inputs[i + 1]) inputs[i + 1].focus(); else check();
+    };
+  });
+  if (inputs.length && !state.checked) inputs[0].focus({ preventScroll: true });
+  if ($('#check')) $('#check').onclick = check;
+  if ($('#clear')) $('#clear').onclick = startWord;
+  if ($('#next')) { $('#next').onclick = next; $('#next').focus({ preventScroll: true }); }
+}
+
+function check() {
+  const w = word(state.series[state.pos]);
+  const cells = CELLS.slice(1);
+  const errors = cells.filter(c => !isRight(w, c)).map(c => expected(w, c)[0]);
+  state.score += PER_WORD - errors.length;
+  state.history.push({ nom: w.nom, d: w.d, errors });
+  state.checked = true;
+  render();
+}
+function next() {
+  if (state.pos + 1 < state.series.length) { state.pos++; startWord(); }
+  else { state.done = true; render(); }
+}
+
+const BMODES = [['word', 'Avec un mot'], ['end', 'Terminaisons seules']];
+const ROWS = CASES.flatMap(([c, n]) => [[c + 'S', n, 'singulier', c.toUpperCase() + '. SG.'], [c + 'P', n, 'pluriel', c.toUpperCase() + '. PL.']]);
+
+// Mots modèles toujours affichés sur le plateau
+const FIXED = { '1': 'puella', '2': 'dominus', '3p': 'civis', '3i': 'rex' };
+
+function pickBoardWords() {
+  const prev = state.board.words || {};
+  const words = {};
+  Object.keys(DECL).forEach(d => {
+    if (FIXED[d]) { words[d] = WORDS.findIndex(w => w[0] === FIXED[d]); return; }
+    const pool = WORDS.map((_, i) => i).filter(i => WORDS[i][4] === d && i !== prev[d]);
+    words[d] = pool[Math.floor(Math.random() * pool.length)];
+  });
+  state.board.words = words;
+  state.board.open = {};
+}
+
+function tileBack(d, w, cell) {
+  const e = DECL[d].end[cell];
+  if (state.board.mode === 'end') return e === null ? '<span class="var">variable</span>' : `<b>-${e}</b>`;
+  if (cell === 'nomS') return `<b>${w.nom}</b>`;
+  return `<span>${w.rad}<b>${e}</b></span>`;
+}
+function tileFront(d, w, cell) {
+  if (state.board.mode === 'end') return '?';
+  if (cell === 'nomS' && d.startsWith('3')) return '?';
+  return `<span class="rd">${w.rad}-</span>`;
+}
+
+function renderBoard() {
+  const cols = Object.keys(DECL).filter(k => state.filters.includes(k));
+  const b = $('#board');
+  b.style.gridTemplateColumns = `minmax(84px, auto) repeat(${cols.length}, minmax(100px, 1fr))`;
+  const wm = state.board.mode === 'word';
+  let h = '<div></div>' + cols.map(d => {
+    const w = word(state.board.words[d]);
+    return `<div class="bh" style="--c: var(${DECL[d].c})"><span class="dn">${DECL[d].short}</span>${wm ? `<span class="lw">${w.nom}, ${w.genShort} ${w.g}.</span><span class="ls">${w.sens}</span>` : ''}</div>`;
+  }).join('');
+  ROWS.forEach(([cell, cas, nb]) => {
+    h += `<div class="rl">${cas}<small>${nb}</small></div>`;
+    cols.forEach(d => {
+      const w = word(state.board.words[d]);
+      const key = d + '|' + cell;
+      const open = !!state.board.open[key];
+      h += `<button type="button" class="tile${open ? ' open' : ''}" data-key="${key}" aria-pressed="${open}" aria-label="${DECL[d].short}, ${cas} ${nb}"><span class="in"><span class="face front">${tileFront(d, w, cell)}</span><span class="face back">${tileBack(d, w, cell)}</span></span></button>`;
+    });
+  });
+  b.innerHTML = h;
+  clearTimers();
+  b.querySelectorAll('.tile').forEach(t => t.onclick = () => {
+    const k = t.dataset.key;
+    const open = !state.board.open[k];
+    setTile(t, open);
+    clearTimeout(timers[k]);
+    if (open) timers[k] = setTimeout(() => setTile(t, false), CLOSE_AFTER);
+  });
+  const m = $('#bmodes');
+  m.innerHTML = BMODES.map(([k, l]) => `<button type="button" class="chip" id="bm-${k}" data-mode="${k}" aria-pressed="${state.board.mode === k}">${l}</button>`).join('');
+  m.querySelectorAll('.chip').forEach(c => c.onclick = () => { state.board.mode = c.dataset.mode; state.board.open = {}; savePrefs(); renderBoard(); });
+}
+// Une case dévoilée d'un clic se revoile seule au bout de 2 secondes
+const CLOSE_AFTER = 2000;
+let timers = {};
+function clearTimers() { Object.values(timers).forEach(clearTimeout); timers = {}; }
+function setTile(t, open) {
+  const k = t.dataset.key;
+  if (open) state.board.open[k] = true; else delete state.board.open[k];
+  t.classList.toggle('open', open);
+  t.setAttribute('aria-pressed', open);
+}
+// « Révéler tout » laisse les cases ouvertes jusqu'à « Tout voiler »
+function setAll(open) {
+  clearTimers();
+  document.querySelectorAll('#board .tile').forEach(t => setTile(t, open));
+}
+
+function showView() {
+  const board = state.view === 'board';
+  $('#view-board').hidden = !board;
+  $('#view-game').hidden = board;
+  $('#help').hidden = board;
+  $('#levels').hidden = board;
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.view === state.view));
+}
+
+function start(saved) {
+  const p = loadPrefs();
+  state = saved && saved.series ? saved : { filters: p.filters, level: p.level };
+  if (!state.view) state.view = p.view || 'board';
+  if (!state.board) { state.board = { mode: p.bmode || 'word' }; pickBoardWords(); }
+  Object.entries(FIXED).forEach(([d, nom]) => { state.board.words[d] = WORDS.findIndex(w => w[0] === nom); });
+  renderSettings(); renderModels(); renderBoard();
+  document.querySelectorAll('.tab').forEach(t => t.onclick = () => { state.view = t.dataset.view; savePrefs(); showView(); });
+  $('#b-all').onclick = () => setAll(true);
+  $('#b-none').onclick = () => setAll(false);
+  if (state.series) render(); else newSeries();
+  showView();
+}
+start({});
+</script>
+
+</body>
+</html>
