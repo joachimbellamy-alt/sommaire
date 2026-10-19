@@ -117,9 +117,27 @@ details[open].bloc summary::after{content:"−";}
 #statut.erreur{color:var(--rouge);}
 .entete-liste{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;}
 .entete-liste h2{margin:0;}
-.palette{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.champ-tete{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-bottom:5px;}
+.champ-tete label{margin:0;}
+.btn-sigma{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;font-size:12.5px;font-weight:700;color:var(--bleu);border-radius:9px;}
+.btn-sigma .sigma{font-size:15px;line-height:1;}
+.zone-formule{margin-top:6px;padding:8px 12px;background:var(--bleu-clair);border-radius:10px;font-size:16px;white-space:pre-line;overflow-x:auto;}
+.zone-formule.champ-rendu{margin-top:0;padding:10px 12px;background:var(--fond);border:1px solid var(--ligne);font-size:16px;line-height:1.55;cursor:text;overflow-x:visible;}
+.champ-rendu .rendu-contenu{overflow-x:auto;}
+.formule-cliquable{display:inline-block;padding:2px 8px;margin:0 2px;border-radius:8px;background:var(--bleu-clair);cursor:pointer;vertical-align:middle;}
+div.formule-cliquable{display:block;text-align:center;margin:6px 0;padding:6px 8px;}
+.champ-rendu .rendu-aide{margin-top:8px;font-size:11.5px;color:var(--texte-doux);}
+/* Fenêtre d'édition des formules */
+.fond-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50;}
+.fond-modal.ouverte{display:flex;}
+.boite-modal{background:var(--surface);color:var(--texte);border-radius:16px;width:100%;max-width:560px;max-height:90vh;overflow:auto;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.25);}
+.boite-modal h3{margin:0 0 14px;font-size:17px;text-align:center;}
+.palette{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
 .palette button{min-width:44px;height:40px;padding:0 10px;font-size:16px;font-weight:500;}
-.apercu{grid-column:1 / -1;margin-top:2px;padding:10px 12px;background:var(--bleu-clair);border-radius:10px;font-size:16px;white-space:pre-line;overflow-x:auto;}
+.apercu-modal{min-height:64px;display:flex;align-items:center;justify-content:center;padding:12px;background:var(--fond);border-radius:12px;font-size:20px;margin:6px 0 16px;overflow-x:auto;}
+.apercu-modal.vide{font-size:13px;color:var(--texte-doux);}
+.actions-modal{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+.actions-modal .suppr{margin-right:auto;color:var(--rouge);}
 .katex{font-size:1.1em;}
 .katex-display{overflow-x:auto;overflow-y:hidden;margin:.5em 0;}
 </style>
@@ -168,15 +186,6 @@ details[open].bloc summary::after{content:"−";}
 </section>
 
 <section>
-    <details class="bloc" id="bloc-formules">
-        <summary>Insérer une formule mathématique</summary>
-        <p class="aide">Clique dans une question ou une réponse, puis sur un modèle : la formule est insérée entre <code>$ … $</code> au niveau du curseur et son aperçu s'affiche sous la carte. Dans Mémo Révisions, l'élève voit la formule mise en forme, jamais le code.</p>
-        <div class="palette" id="palette"></div>
-        <p class="aide" id="aide-formule"></p>
-    </details>
-</section>
-
-<section>
     <div class="entete-liste">
         <h2 id="titre-liste">Les cartes</h2>
         <button type="button" class="discret" id="btn-charger" title="Rouvrir un fichier exporté depuis l'app pour le modifier">Ouvrir un fichier…</button>
@@ -199,6 +208,22 @@ details[open].bloc summary::after{content:"−";}
             <button type="button" class="discret danger" id="btn-nouveau">Tout effacer</button>
             <button type="button" id="btn-copier">Copier</button>
             <button type="button" class="principal" id="btn-telecharger">Télécharger le fichier</button>
+        </div>
+    </div>
+</div>
+
+<div class="fond-modal" id="modal-formule" role="dialog" aria-modal="true" aria-labelledby="titre-modal">
+    <div class="boite-modal">
+        <h3 id="titre-modal">Insérer une formule</h3>
+        <div class="palette" id="palette"></div>
+        <label for="champ-latex">Écriture de la formule</label>
+        <textarea id="champ-latex" rows="2" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="Ex : \frac{1}{3} \times \pi \times r^{2} \times h" style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;"></textarea>
+        <label style="margin-top:12px;">Aperçu</label>
+        <div class="apercu-modal vide" id="apercu-modal">L'aperçu de ta formule apparaît ici.</div>
+        <div class="actions-modal">
+            <button type="button" class="discret suppr" id="btn-suppr-formule" style="display:none;">Supprimer la formule</button>
+            <button type="button" id="btn-annuler-formule">Annuler</button>
+            <button type="button" class="principal" id="btn-valider-formule">Insérer</button>
         </div>
     </div>
 </div>
@@ -251,6 +276,14 @@ details[open].bloc summary::after{content:"−";}
     /* ---------- Rendu de la liste ---------- */
     function echapper(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
 
+    function champHtml(i, champ, pref, libelle, valeur){
+        return '<div class="champ">' +
+            '<div class="champ-tete"><label for="' + pref + i + '">' + libelle + '</label>' +
+            '<button type="button" class="btn-sigma" data-i="' + i + '" data-champ="' + champ + '" title="Insérer une formule mathématique" aria-label="Insérer une formule mathématique dans ' + libelle.toLowerCase() + ' de la carte ' + (i + 1) + '"><span class="sigma">Σ</span> Formule</button></div>' +
+            '<textarea id="' + pref + i + '" data-i="' + i + '" data-champ="' + champ + '" rows="1">' + echapper(valeur) + '</textarea>' +
+            '<div class="zone-formule" style="display:none;"></div>' +
+        '</div>';
+    }
     function rendre(focusIndex, champ){
         liste.innerHTML = etat.cartes.map(function(c, i){
             return '<div class="carte">' +
@@ -264,14 +297,13 @@ details[open].bloc summary::after{content:"−";}
                     '</div>' +
                 '</div>' +
                 '<div class="carte-champs">' +
-                    '<div><label for="q' + i + '">Question</label><textarea id="q' + i + '" data-i="' + i + '" data-champ="question" rows="1">' + echapper(c.question) + '</textarea></div>' +
-                    '<div><label for="r' + i + '">Réponse</label><textarea id="r' + i + '" data-i="' + i + '" data-champ="reponse" rows="1">' + echapper(c.reponse) + '</textarea></div>' +
-                    '<div class="apercu" id="ap' + i + '" style="display:none;"></div>' +
+                    champHtml(i, 'question', 'q', 'Question', c.question) +
+                    champHtml(i, 'reponse', 'r', 'Réponse', c.reponse) +
                 '</div>' +
             '</div>';
         }).join('');
         liste.querySelectorAll('textarea').forEach(grandir);
-        etat.cartes.forEach(function(c, i){ majApercu(i); });
+        liste.querySelectorAll('textarea').forEach(majChamp);
         majCompteurs();
         if (focusIndex !== undefined) {
             var cible = $((champ === 'reponse' ? 'r' : 'q') + focusIndex);
@@ -320,7 +352,7 @@ details[open].bloc summary::after{content:"−";}
                 var contenu = fin > -1 ? texte.slice(i + delim.length, fin) : '';
                 if (fin > -1 && contenu.trim() !== '') {
                     pousser();
-                    segs.push({ type: delim === '$$' ? 'disp' : 'math', v: contenu });
+                    segs.push({ type: delim === '$$' ? 'disp' : 'math', v: contenu, i0: i, i1: fin + delim.length });
                     i = fin + delim.length;
                     continue;
                 }
@@ -353,72 +385,171 @@ details[open].bloc summary::after{content:"−";}
             el.appendChild(frag);
         });
     }
-    function majApercu(i){
-        var ap = $('ap' + i), c = etat.cartes[i];
-        if (!ap || !c) return;
-        var texte = ((c.question || '') + '\n' + (c.reponse || '')).replace(/^\n|\n$/g, '');
-        if (aFormule(c.question || '') || aFormule(c.reponse || '')) {
-            ap.style.display = '';
-            var morceaux = [];
-            if ((c.question || '').trim()) morceaux.push('Q : ' + c.question);
-            if ((c.reponse || '').trim()) morceaux.push('R : ' + c.reponse);
-            rendreRiche(ap, morceaux.join('\n'));
-        } else {
-            ap.style.display = 'none';
+    /* Champ contenant une formule : on montre la formule, pas son code.
+       Tap sur une formule = la modifier ; tap ailleurs = modifier le texte
+       (le code n'apparaît alors que le temps de l'édition). */
+    function majChamp(ta){
+        var zone = ta.parentElement.querySelector('.zone-formule');
+        if (!zone) return;
+        if (!aFormule(ta.value)) {
+            ta.style.display = '';
+            grandir(ta);
+            zone.style.display = 'none';
+            zone.className = 'zone-formule';
+            zone.textContent = '';
+            return;
         }
+        var enSaisie = document.activeElement === ta || ta.dataset.modeBrut === '1';
+        if (enSaisie) {
+            ta.style.display = '';
+            grandir(ta);
+            zone.style.display = '';
+            zone.className = 'zone-formule';
+            rendreRiche(zone, ta.value);
+            return;
+        }
+        ta.style.display = 'none';
+        zone.style.display = '';
+        zone.className = 'zone-formule champ-rendu';
+        construireChampRendu(zone, ta.value);
+    }
+    function construireChampRendu(zone, texte){
+        zone.textContent = '';
+        var contenu = document.createElement('div');
+        contenu.className = 'rendu-contenu';
+        decouper(texte).forEach(function(sg){
+            if (sg.type === 'txt') { contenu.appendChild(document.createTextNode(sg.v)); return; }
+            var el = document.createElement(sg.type === 'disp' ? 'div' : 'span');
+            el.className = 'formule-cliquable';
+            el.dataset.i0 = String(sg.i0); el.dataset.i1 = String(sg.i1);
+            el.dataset.latex = sg.v; el.dataset.disp = sg.type === 'disp' ? '1' : '';
+            el.setAttribute('role', 'button'); el.setAttribute('aria-label', 'Modifier cette formule');
+            el.textContent = '…';
+            contenu.appendChild(el);
+        });
+        zone.appendChild(contenu);
+        var aide = document.createElement('div');
+        aide.className = 'rendu-aide';
+        aide.textContent = 'Clique sur une formule pour la modifier, ailleurs pour modifier le texte.';
+        zone.appendChild(aide);
+        chargerKatex().then(function(ok){
+            contenu.querySelectorAll('.formule-cliquable').forEach(function(el){
+                if (!ok) { el.textContent = el.dataset.latex; return; }
+                try { el.innerHTML = window.katex.renderToString(el.dataset.latex, { throwOnError:false, displayMode: el.dataset.disp === '1' }); }
+                catch(e) { el.textContent = el.dataset.latex; }
+            });
+        });
     }
 
+    /* ---------- Fenêtre d'édition d'une formule ---------- */
     var MODELES = [
         ['a⁄b','\\frac{}{}',6], ['x²','^{2}',4], ['xⁿ','^{}',2], ['xₙ','_{}',2], ['√','\\sqrt{}',6],
         ['π','\\pi ',4], ['×','\\times ',7], ['÷','\\div ',5], ['·','\\cdot ',6], ['±','\\pm ',4],
         ['≤','\\leq ',5], ['≥','\\geq ',5], ['≠','\\neq ',5], ['≈','\\approx ',8],
         ['°','^{\\circ}',9], ['%','\\%',2], ['( )','\\left(  \\right)',7], ['→','\\rightarrow ',12]
     ];
-    // Vrai si la position `pos` du texte se trouve à l'intérieur d'un $...$ ou $$...$$
-    function dansFormule(texte, pos){
-        var ouvert = null, i = 0;
-        while (i < pos) {
-            var ch = texte[i];
-            if (ch === '\\') { i += 2; continue; }
-            if (ch === '$') {
-                var d = texte[i + 1] === '$' ? '$$' : '$';
-                if (ouvert === null) ouvert = d; else if (ouvert === d) ouvert = null;
-                i += d.length;
-                continue;
-            }
-            i++;
+    var champCible = null, posCible = 0, enEdition = null, paletteFaite = false;
+
+    function preparerModal(titre, latex, edition){
+        if (!paletteFaite) {
+            paletteFaite = true;
+            MODELES.forEach(function(m){
+                var b = document.createElement('button');
+                b.type = 'button'; b.textContent = m[0];
+                b.addEventListener('mousedown', function(ev){ ev.preventDefault(); });
+                b.addEventListener('click', function(){ insererModele(m[1], m[2]); });
+                $('palette').appendChild(b);
+            });
+            $('champ-latex').addEventListener('input', majApercuModal);
         }
-        return ouvert !== null;
+        $('titre-modal').textContent = titre;
+        $('btn-valider-formule').textContent = edition ? 'Enregistrer' : 'Insérer';
+        $('btn-suppr-formule').style.display = edition ? '' : 'none';
+        $('champ-latex').value = latex;
+        majApercuModal();
+        $('modal-formule').classList.add('ouverte');
+        setTimeout(function(){ $('champ-latex').focus(); }, 50);
     }
-    var dernierChamp = null;
-    liste.addEventListener('focusin', function(ev){
-        if (ev.target.tagName === 'TEXTAREA') {
-            dernierChamp = ev.target;
-            $('aide-formule').textContent = '';
+    function fermerModal(){
+        $('modal-formule').classList.remove('ouverte');
+        champCible = null; enEdition = null;
+    }
+    function majApercuModal(){
+        var latex = $('champ-latex').value.trim(), zone = $('apercu-modal');
+        if (!latex) { zone.textContent = 'L\'aperçu de ta formule apparaît ici.'; zone.className = 'apercu-modal vide'; return; }
+        zone.className = 'apercu-modal';
+        rendreRiche(zone, '$' + latex.replace(/\$/g, '\\$') + '$');
+    }
+    function insererModele(texte, curseur){
+        var ch = $('champ-latex'), deb = ch.selectionStart, fin = ch.selectionEnd;
+        ch.value = ch.value.slice(0, deb) + texte + ch.value.slice(fin);
+        var pos = deb + curseur;
+        ch.focus(); ch.setSelectionRange(pos, pos);
+        majApercuModal();
+    }
+    function terminerEdition(ta){
+        ta.dataset.modeBrut = '';
+        ta.dataset.curseur = String(ta.value.length);
+        ta.dispatchEvent(new Event('input', { bubbles:true }));   // enregistre + met le champ à jour
+        fermerModal();
+    }
+    $('btn-valider-formule').addEventListener('click', function(){
+        var latex = $('champ-latex').value.trim(), ta = champCible;
+        if (!latex || !ta) { fermerModal(); return; }
+        var contenu = latex.replace(/\$/g, '\\$');
+        if (enEdition) {
+            var d = enEdition.disp ? '$$' : '$';
+            ta.value = ta.value.slice(0, enEdition.i0) + d + contenu + d + ta.value.slice(enEdition.i1);
+        } else {
+            var avant = ta.value.slice(0, posCible);
+            var formule = (avant && !/\s$/.test(avant) ? ' ' : '') + '$' + contenu + '$';
+            ta.value = avant + formule + ta.value.slice(posCible);
+        }
+        terminerEdition(ta);
+    });
+    $('btn-suppr-formule').addEventListener('click', function(){
+        var ta = champCible;
+        if (!ta || !enEdition) { fermerModal(); return; }
+        ta.value = ta.value.slice(0, enEdition.i0) + ta.value.slice(enEdition.i1);
+        terminerEdition(ta);
+    });
+    $('btn-annuler-formule').addEventListener('click', fermerModal);
+    $('modal-formule').addEventListener('click', function(ev){ if (ev.target === $('modal-formule')) fermerModal(); });
+    document.addEventListener('keydown', function(ev){
+        if (ev.key === 'Escape' && $('modal-formule').classList.contains('ouverte')) fermerModal();
+    });
+
+    /* Liste des cartes : bouton Σ, formules cliquables, retour à l'affichage rendu */
+    liste.addEventListener('click', function(ev){
+        var sigma = ev.target.closest('.btn-sigma');
+        if (sigma) {
+            var ta = sigma.closest('.champ').querySelector('textarea');
+            champCible = ta; enEdition = null;
+            posCible = ta.dataset.curseur !== undefined ? Math.min(+ta.dataset.curseur, ta.value.length) : ta.value.length;
+            preparerModal('Insérer une formule', '', false);
+            return;
+        }
+        var zone = ev.target.closest('.champ-rendu');
+        if (!zone) return;
+        var champ = zone.parentElement.querySelector('textarea');
+        var formule = ev.target.closest('.formule-cliquable');
+        if (formule) {
+            champCible = champ;
+            enEdition = { i0: +formule.dataset.i0, i1: +formule.dataset.i1, disp: formule.dataset.disp === '1' };
+            preparerModal('Modifier la formule', formule.dataset.latex, true);
+        } else {
+            champ.dataset.modeBrut = '1';
+            majChamp(champ);
+            champ.focus();
+            champ.setSelectionRange(champ.value.length, champ.value.length);
         }
     });
-    MODELES.forEach(function(m){
-        var b = document.createElement('button');
-        b.type = 'button'; b.textContent = m[0];
-        // mousedown : évite que le bouton ne retire le focus (et la sélection) du champ
-        b.addEventListener('mousedown', function(ev){ ev.preventDefault(); });
-        b.addEventListener('click', function(){
-            if (!dernierChamp || !document.body.contains(dernierChamp)) {
-                $('aide-formule').textContent = 'Clique d\'abord dans une question ou une réponse, puis choisis un modèle.';
-                return;
-            }
-            var ta = dernierChamp, deb = ta.selectionStart, fin = ta.selectionEnd;
-            // Curseur déjà dans une formule : on insère le modèle tel quel, ce
-            // qui permet d'enchaîner (fraction, ×, π...) sans imbriquer les $.
-            var dedans = dansFormule(ta.value, deb);
-            var ajout = dedans ? m[1] : '$' + m[1] + '$';
-            ta.value = ta.value.slice(0, deb) + ajout + ta.value.slice(fin);
-            var pos = deb + (dedans ? 0 : 1) + m[2];
-            ta.focus();
-            ta.setSelectionRange(pos, pos);
-            ta.dispatchEvent(new Event('input', { bubbles:true }));
-        });
-        $('palette').appendChild(b);
+    liste.addEventListener('focusout', function(ev){
+        var ta = ev.target;
+        if (ta.tagName !== 'TEXTAREA') return;
+        ta.dataset.curseur = String(ta.selectionStart);
+        ta.dataset.modeBrut = '';
+        majChamp(ta);   // champ quitté : on remontre la formule, pas son code
     });
 
     /* ---------- Événements : champs de la fiche ---------- */
@@ -432,7 +563,7 @@ details[open].bloc summary::after{content:"−";}
         if (ta.tagName !== 'TEXTAREA') return;
         etat.cartes[+ta.dataset.i][ta.dataset.champ] = ta.value;
         grandir(ta);
-        majApercu(+ta.dataset.i);
+        majChamp(ta);
         majCompteurs();
         sauver();
     });
