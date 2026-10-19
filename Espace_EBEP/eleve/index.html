@@ -232,9 +232,9 @@ body.filtre-actif .masque:not(.due){display:none;}
 
 /* ── Révision Flashcards : une carte à la fois ── */
 #vueRevisionCarte{display:flex;flex-direction:column;min-height:calc(100vh - 120px - var(--tab-h));}
-.barre-progression-flash{height:3px;background:var(--gris-fond);overflow:hidden;margin-bottom:6px;flex-shrink:0;}
-.barre-progression-fill{height:100%;background:var(--bleu);transition:width .4s ease;}
-.compteur-flash{text-align:center;font-size:12px;color:var(--gris-texte);margin-bottom:10px;flex-shrink:0;font-weight:500;}
+.barre-progression-flash{height:6px;border-radius:999px;background:rgba(60,60,67,.12);overflow:hidden;margin-bottom:8px;flex-shrink:0;}
+.barre-progression-fill{height:100%;border-radius:999px;background:var(--bleu);transition:width .4s ease;}
+.compteur-flash{text-align:center;font-size:14px;color:#5C5C61;margin-bottom:12px;flex-shrink:0;font-weight:600;font-variant-numeric:tabular-nums;}
 
 /* Bandeau feedback inter-cartes */
 .bandeau-feedback{border-radius:12px;padding:10px 14px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-shrink:0;}
@@ -252,16 +252,25 @@ body.filtre-actif .masque:not(.due){display:none;}
     @keyframes pulseZone{0%,100%{box-shadow:0 0 0 0 rgba(0,122,255,.4);}50%{box-shadow:0 0 0 8px rgba(0,122,255,0);}}
     .carte-flashcard.anim-entree{animation:slideInRight .28s cubic-bezier(.34,1.56,.64,1);}
     .carte-confiance.anim-entree{animation:slideInUp .25s cubic-bezier(.34,1.56,.64,1);}
-    .carte-reponse.anim-entree{animation:slideInUp .28s cubic-bezier(.34,1.56,.64,1);}
+    .carte-reponse.anim-entree{animation:revelationReponse .34s ease-out both;}
+    @keyframes revelationReponse{from{opacity:0;transform:translateY(14px) scale(.985);}to{opacity:1;transform:none;}}
+    @media (prefers-reduced-motion: reduce){
+        .carte-reponse.anim-entree,.carte-flashcard.anim-entree,.carte-confiance.anim-entree{animation:none;}
+        .btn-voir-reponse.reflexion::after{animation:none;transform:scaleX(1);}
+    }
 
-    .carte-flashcard{background:var(--surface);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--ombre-forte);margin-bottom:10px;cursor:pointer;}
-    .carte-flashcard.revelee{cursor:default;}
+    .carte-flashcard{background:var(--surface);border-radius:22px;border-top:6px solid var(--matiere,#8E8E93);padding:16px 20px 20px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--ombre-forte);margin-bottom:12px;cursor:pointer;flex:1 1 auto;min-height:240px;max-height:540px;}
+    .carte-flashcard.revelee{cursor:default;flex:0 0 auto;min-height:0;}
+    .carte-flashcard.revelee .question-flash{margin:0;}
     .carte-flashcard:active:not(.revelee){opacity:0.96;}
 .carte-flashcard-header{display:flex;align-items:center;justify-content:space-between;}
-.badge-matiere-flash{font-size:11px;font-weight:600;padding:4px 12px;border-radius:999px;letter-spacing:0.1px;}
+.badge-matiere-flash{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:5px 12px 5px 10px;border-radius:999px;letter-spacing:.1px;color:var(--texte);background:var(--matiere-teinte,#ececf0);}
+.badge-matiere-flash::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--matiere,#8E8E93);flex-shrink:0;}
 .btn-indice-flash{background:var(--jaune-clair);border:1px solid var(--jaune-bord);border-radius:999px;color:#7a5500;font-size:12px;padding:6px 13px;cursor:pointer;font-weight:500;font-family:inherit;display:flex;align-items:center;gap:4px;}
 .btn-indice-flash.a-un-indice{background:var(--bleu);border-color:var(--bleu);color:#fff;}
-.question-flash{background:var(--gris-fond);border-radius:14px;padding:18px;font-size:20px;font-weight:600;color:var(--texte);text-align:center;line-height:1.4;letter-spacing:-0.3px;}
+.question-flash{background:none;padding:6px 4px;margin:auto 0;font-family:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:clamp(22px,5.4vw,29px);font-weight:700;color:var(--texte);text-align:center;line-height:1.35;letter-spacing:-0.2px;}
+.question-flash[data-taille="long"]{font-size:clamp(18px,4.4vw,22px);}
+.question-flash[data-taille="tres-long"]{font-size:clamp(16px,3.9vw,19px);font-weight:600;}
 .image-flash{max-width:100%;max-height:140px;object-fit:contain;border-radius:12px;display:block;margin:0 auto;}
 
 /* Bouton audio central */
@@ -269,9 +278,14 @@ body.filtre-actif .masque:not(.due){display:none;}
 .btn-audio-central:active,.btn-audio-central.playing{background:var(--bleu);color:#fff;}
 
 /* Carte confiance AVANT révélation */
-.carte-confiance{background:var(--surface);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--ombre-forte);margin-bottom:10px;}
-.texte-reflexion{font-size:12px;color:var(--gris-texte);text-align:center;transition:opacity .3s ease;}
-.btn-voir-reponse:disabled{opacity:0.45;cursor:default;}
+.carte-confiance{background:none;padding:0 2px;display:flex;flex-direction:column;gap:10px;box-shadow:none;margin-bottom:12px;}
+.texte-reflexion{font-size:13px;font-weight:500;color:#5C5C61;text-align:center;transition:opacity .3s ease;}
+.btn-voir-reponse{position:relative;overflow:hidden;width:100%;min-height:58px;border:none !important;border-radius:16px;background:var(--bleu) !important;color:#fff !important;font-family:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:18px;font-weight:700;letter-spacing:.1px;cursor:pointer;-webkit-appearance:none;appearance:none;box-shadow:0 6px 16px rgba(0,122,255,.28);transition:transform .12s ease,background .25s ease,color .25s ease,box-shadow .25s ease;}
+.btn-voir-reponse:active:not(:disabled){transform:scale(.98);}
+/* Pendant le délai de réflexion : bouton pâle + barre qui se remplit en 2 s */
+.btn-voir-reponse:disabled{background:var(--bleu-clair) !important;color:#0A4FB3 !important;box-shadow:none;cursor:default;opacity:1;}
+.btn-voir-reponse.reflexion::after{content:"";position:absolute;left:0;bottom:0;width:100%;height:5px;background:var(--bleu);transform-origin:left center;animation:remplissageReflexion 2s linear forwards;}
+@keyframes remplissageReflexion{from{transform:scaleX(0);}to{transform:scaleX(1);}}
 .confiance-titre{font-size:12px;font-weight:600;color:var(--gris-texte);text-transform:uppercase;letter-spacing:0.5px;}
 .confiance-btns{display:flex;gap:8px;}
 .conf-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border-radius:14px;border:1.5px solid transparent;cursor:pointer;font-family:inherit;transition:all .15s;}
@@ -285,8 +299,11 @@ body.filtre-actif .masque:not(.due){display:none;}
 .confiance-hint{font-size:11px;color:var(--gris-texte);text-align:center;}
 
 /* Carte réponse */
-.carte-reponse{background:var(--surface);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--ombre-forte);margin-bottom:10px;}
-.reponse-flash{font-size:20px;color:var(--texte);font-weight:700;line-height:1.4;text-align:center;letter-spacing:-0.3px;background:var(--gris-fond);border-radius:14px;padding:16px;}
+.carte-reponse{background-color:var(--surface);background-image:linear-gradient(var(--matiere-teinte-leger,transparent),var(--matiere-teinte-leger,transparent));border-radius:22px;border-top:6px solid var(--matiere,#8E8E93);padding:16px 20px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--ombre-forte);margin-bottom:12px;}
+.reponse-flash{font-family:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:clamp(20px,4.8vw,26px);color:var(--texte);font-weight:700;line-height:1.4;text-align:center;letter-spacing:-0.2px;background:none;padding:2px 4px;}
+.reponse-flash::before{content:"Réponse";display:block;margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#5C5C61;}
+.reponse-flash[data-taille="long"]{font-size:clamp(17px,4.2vw,21px);font-weight:600;}
+.reponse-flash[data-taille="tres-long"]{font-size:clamp(15px,3.7vw,18px);font-weight:600;}
 .btn-audio-reponse{background:var(--bleu-clair);border:none;border-radius:999px;padding:7px 16px;font-size:12px;color:var(--bleu);cursor:pointer;align-self:center;font-weight:500;font-family:inherit;}
 .exemple-flash{font-size:13px;font-style:italic;color:var(--gris-texte);text-align:center;padding:0 8px;}
 .btn-audio-inline{background:none;border:none;font-size:14px;cursor:pointer;margin-left:6px;padding:2px 4px;vertical-align:middle;}
@@ -297,13 +314,18 @@ body.filtre-actif .masque:not(.due){display:none;}
 .feedback-saisie.bon{color:var(--vert);}.feedback-saisie.moyen{color:var(--jaune);}.feedback-saisie.mauvais{color:var(--rouge);}
 
 /* Zone confirmation après révélation */
-.zone-confirmation{background:var(--gris-fond);border-radius:14px;padding:14px;}
-.texte-confirmation{font-size:13px;color:var(--gris-texte);text-align:center;margin-bottom:12px;font-weight:400;}
+.zone-confirmation{background:none;border-top:1px solid var(--bord);padding:6px 0 0;scroll-margin-bottom:110px;}
+.texte-confirmation{font-size:14px;color:#5C5C61;text-align:center;margin:10px 0 12px;font-weight:600;}
 .texte-confirmation strong{color:var(--texte);font-weight:600;}
-.btns-evaluation{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.btn-eval-titre{font-size:14px;font-weight:600;line-height:1.2;}
+.btns-evaluation{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn-eval-pict{font-size:20px;font-weight:800;line-height:1;}
+.btn-eval-titre{flex:1;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;line-height:1.2;}
+/* Échéance : pastille ancrée en bas du bouton, donc alignée d'un bouton à l'autre */
+.btn-eval-echeance{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;background:rgba(255,255,255,.24);color:#fff;font-size:12px;font-weight:700;line-height:1.2;white-space:nowrap;}
+.btn-eval-echeance::before{content:"↻";font-size:13px;font-weight:800;}
+.btn-eval-echeance:empty{visibility:hidden;}
 .btn-eval-sous{font-size:11px;font-weight:500;line-height:1.1;color:rgba(255,255,255,0.75);}
-.btn-eval{flex:1;padding:13px 6px;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;text-align:center;-webkit-appearance:none;appearance:none;}
+.btn-eval{flex:1;min-height:104px;padding:12px 8px 10px;border-radius:16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;text-align:center;-webkit-appearance:none;appearance:none;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:4px;width:100%;}
 .btn-eval:active{transform:scale(0.97);}
 .btn-eval-insuffisant{background:#FF3B30 !important;color:#fff !important;border:none !important;}
 .btn-eval-fragile{background:#FF9500 !important;color:#fff !important;border:none !important;}
@@ -876,18 +898,25 @@ body.filtre-actif .masque:not(.due){display:none;}
         <div id="zoneConfirmation" class="zone-confirmation" style="display:none;">
             <div id="texteConfirmation" class="texte-confirmation"></div>
             <div class="btns-evaluation" id="btnsEvaluation">
-                <button class="btn-eval" onclick="evaluerFlash('insuffisant')" style="-webkit-appearance:none;appearance:none;background:#FF3B30;color:#fff;border:none;border-radius:14px;padding:13px 6px;cursor:pointer;font-family:inherit;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
-                    <span class="btn-eval-titre">✗ Aucune idée</span>
+                <button type="button" class="btn-eval btn-eval-insuffisant" onclick="evaluerFlash('insuffisant')" style="-webkit-appearance:none;appearance:none;background:#FF3B30;color:#fff;border:none;">
+                    <span class="btn-eval-pict">✗</span>
+                    <span class="btn-eval-titre">Aucune idée</span>
+                    <span class="btn-eval-echeance" data-echeance="insuffisant"></span>
                 </button>
-                <button class="btn-eval" onclick="evaluerFlash('fragile')" style="-webkit-appearance:none;appearance:none;background:#FF9500;color:#fff;border:none;border-radius:14px;padding:13px 6px;cursor:pointer;font-family:inherit;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
-                    <span class="btn-eval-titre">〜 Réponse incomplète</span>
-                    <span class="btn-eval-sous">ou inexacte</span>
+                <button type="button" class="btn-eval btn-eval-fragile" onclick="evaluerFlash('fragile')" style="-webkit-appearance:none;appearance:none;background:#FF9500;color:#fff;border:none;">
+                    <span class="btn-eval-pict">〜</span>
+                    <span class="btn-eval-titre">Incomplète ou inexacte</span>
+                    <span class="btn-eval-echeance" data-echeance="fragile"></span>
                 </button>
-                <button class="btn-eval" onclick="evaluerFlash('satisfaisant')" style="-webkit-appearance:none;appearance:none;background:#007AFF;color:#fff;border:none;border-radius:14px;padding:13px 6px;cursor:pointer;font-family:inherit;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
-                    <span class="btn-eval-titre">● Correcte après réflexion</span>
+                <button type="button" class="btn-eval btn-eval-satisfaisant" onclick="evaluerFlash('satisfaisant')" style="-webkit-appearance:none;appearance:none;background:#007AFF;color:#fff;border:none;">
+                    <span class="btn-eval-pict">✓</span>
+                    <span class="btn-eval-titre">Correcte après réflexion</span>
+                    <span class="btn-eval-echeance" data-echeance="satisfaisant"></span>
                 </button>
-                <button class="btn-eval" onclick="evaluerFlash('maitrise')" style="-webkit-appearance:none;appearance:none;background:#34C759;color:#fff;border:none;border-radius:14px;padding:13px 6px;cursor:pointer;font-family:inherit;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
-                    <span class="btn-eval-titre">✓ Réponse immédiate</span>
+                <button type="button" class="btn-eval btn-eval-maitrise" onclick="evaluerFlash('maitrise')" style="-webkit-appearance:none;appearance:none;background:#34C759;color:#fff;border:none;">
+                    <span class="btn-eval-pict">✓✓</span>
+                    <span class="btn-eval-titre">Réponse immédiate</span>
+                    <span class="btn-eval-echeance" data-echeance="maitrise"></span>
                 </button>
             </div>
         </div>

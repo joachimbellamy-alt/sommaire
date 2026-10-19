@@ -300,11 +300,11 @@ const TUTORIEL_CONTENU = {
             'Tape "Voir la réponse" pour révéler',
             'Évalue honnêtement avec les 4 boutons colorés :<br>'
                 + '🔴 Aucune idée → revient dès le lendemain<br>'
-                + '🟠 Réponse incomplète → revient dès le lendemain aussi<br>'
+                + '🟠 Incomplète ou inexacte → revient dès le lendemain aussi<br>'
                 + '🔵 Correcte après réflexion → revient dans 2 jours<br>'
                 + '🟢 Réponse immédiate → revient dans 3 jours',
             "Tant qu'une carte est nouvelle, elle revient vite (1 à 3 jours) pour bien s'ancrer. Une fois apprise sur plusieurs jours différents, les intervalles s'allongent progressivement (jusqu'à plusieurs semaines).",
-            "L'app calcule tout ça automatiquement pour chaque carte",
+            "L'app calcule tout ça automatiquement pour chaque carte, et t'indique sous chaque bouton quand elle reviendra",
         ] },
     ],
     masque: [
@@ -4570,24 +4570,19 @@ function afficherCarteFlash() {
     flashItemsDejaVus.add(item);
     gererDelaiReflexion(!dejaVueCetteSession);
 
-    // Badge matière
-    const couleursMat = {
-        'Anglais':{ bg:'#d1eaff', txt:'#0055aa' },'Histoire-Géo-EMC':{ bg:'#ffe4cc', txt:'#a04800' },
-        'Maths':{ bg:'#e0d4ff', txt:'#5500cc' },'SVT':{ bg:'#d4f5dd', txt:'#1a6e30' },
-        'Espagnol':{ bg:'#ffd6d6', txt:'#cc0000' },'Latin':{ bg:'#f5e8c8', txt:'#7a5500' },
-        'Français':{ bg:'#ffeef5', txt:'#880044' },'Sciences physiques':{ bg:'#e8f0fe', txt:'#1a5276' },
-    };
-    const couleur = couleursMat[support.matiere] || { bg:'#e8e8e8', txt:'#555' };
+    // Badge matière : la couleur vient de la même palette que les tuiles de
+    // "Mes fiches" (GRADIENTS_MATIERES), appliquée via des variables CSS à la
+    // carte question et à la carte réponse (bande du haut, pastille, teinte).
+    appliquerCouleurMatiere((GRADIENTS_MATIERES[support.matiere] || GRADIENTS_MATIERES['Autre'])[0]);
     const badge = document.getElementById('badgeMatiereFlash');
     // Rappel visuel discret quand la carte est révisée en sens inverse, pour
     // que l'élève comprenne pourquoi la question habituelle est devenue la
     // réponse à trouver.
     badge.textContent = (item.inverse ? '🔁 ' : '') + (support.matiere || 'Autre');
-    badge.style.background = couleur.bg;
-    badge.style.color = couleur.txt;
 
     // Question
     ecrireTexteRiche(document.getElementById('questionFlash'), qa.question || '');
+    ajusterTailleTexteCarte(document.getElementById('questionFlash'), qa.question);
 
     // Image question (pas de sens en mode inversé : l'image reste liée à la
     // question d'origine, pas à la réponse).
@@ -4614,6 +4609,7 @@ function afficherCarteFlash() {
     document.getElementById('zoneReponseFlash').style.display = 'none';
     document.getElementById('reponseFlash').style.display = 'none';
     ecrireTexteRiche(document.getElementById('reponseFlash'), qa.reponse || '');
+    ajusterTailleTexteCarte(document.getElementById('reponseFlash'), qa.reponse);
     document.getElementById('lettresFlash').style.display = 'none';
     document.getElementById('saisieFLashWrap').style.display = 'none';
     document.getElementById('exempleFlash').style.display = 'none';
@@ -4681,11 +4677,17 @@ function gererDelaiReflexion(appliquerDelai) {
     const texte = document.getElementById('texteReflexion');
     if (appliquerDelai) {
         revelationBloquee = true;
-        if (btn) btn.disabled = true;
+        if (btn) {
+            btn.disabled = true;
+            // Relance l'animation de la barre (2 s, comme le délai) à chaque carte
+            btn.classList.remove('reflexion');
+            void btn.offsetWidth;
+            btn.classList.add('reflexion');
+        }
         if (texte) { texte.style.display = ''; texte.style.opacity = '1'; }
         delaiReflexionTimer = setTimeout(() => {
             revelationBloquee = false;
-            if (btn) btn.disabled = false;
+            if (btn) { btn.disabled = false; btn.classList.remove('reflexion'); }
             if (texte) {
                 texte.style.opacity = '0';
                 setTimeout(() => { texte.style.display = 'none'; }, 300);
@@ -4693,7 +4695,7 @@ function gererDelaiReflexion(appliquerDelai) {
         }, 2000);
     } else {
         revelationBloquee = false;
-        if (btn) btn.disabled = false;
+        if (btn) { btn.disabled = false; btn.classList.remove('reflexion'); }
         if (texte) { texte.style.display = 'none'; texte.style.opacity = '0'; }
     }
 }
@@ -4781,6 +4783,7 @@ function finirRevelationFlash() {
 
     const repEl = document.getElementById('reponseFlash');
     ecrireTexteRiche(repEl, qa.reponse || '');
+    ajusterTailleTexteCarte(repEl, qa.reponse);
     repEl.style.display = '';
 
     if (qa.exemple || qa.exempleAudio) document.getElementById('exempleFlash').style.display = '';
@@ -4790,7 +4793,17 @@ function finirRevelationFlash() {
     if (qa.reponseAudio) jouerAudioFlash(qa.reponseAudio);
 
     document.getElementById('texteConfirmation').textContent = "Tu savais ?";
+    majEcheancesEvaluation(item);
     document.getElementById('zoneConfirmation').style.display = '';
+    // Les boutons d'évaluation doivent rester sous la main : si la réponse est
+    // longue et les pousse sous la ligne de flottaison, on fait défiler la page
+    // jusqu'à eux (une fois la petite animation d'apparition terminée).
+    setTimeout(() => {
+        const zone = document.getElementById('zoneConfirmation');
+        if (!zone || zone.getBoundingClientRect().bottom <= window.innerHeight - 90) return;
+        const reduit = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        zone.scrollIntoView({ behavior: reduit ? 'auto' : 'smooth', block: 'end' });
+    }, 380);
 }
 
 function evaluerFlash(resultat) {
@@ -4944,6 +4957,51 @@ function recommencerSession() {
 function changerModeRevision(mode) {
     modeRevisionFlash = mode;
     afficherCarteFlash();
+}
+
+/* ── Aspect des cartes de révision ── */
+
+// Pose la couleur de la matière sur la carte question et la carte réponse :
+// bande du haut, pastille du badge, légère teinte de fond de la réponse.
+function appliquerCouleurMatiere(hex) {
+    const rgb = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)).join(',');
+    ['carteFlashcard', 'zoneReponseFlash'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.setProperty('--matiere', hex);
+        el.style.setProperty('--matiere-teinte', 'rgba(' + rgb + ',.16)');
+        el.style.setProperty('--matiere-teinte-leger', 'rgba(' + rgb + ',.07)');
+    });
+}
+
+// Un texte long garde une taille lisible sans déborder : la CSS réduit la
+// police selon data-taille.
+function ajusterTailleTexteCarte(el, texte) {
+    const n = (texte || '').length;
+    el.dataset.taille = n > 180 ? 'tres-long' : (n > 90 ? 'long' : '');
+}
+
+// "demain", "dans 3 jours", "dans 2 semaines"...
+function libelleEcheance(jours) {
+    if (jours <= 0) return "aujourd'hui";
+    if (jours === 1) return 'demain';
+    if (jours < 7) return 'dans ' + jours + ' jours';
+    if (jours < 30) { const sem = Math.round(jours / 7); return 'dans ' + sem + (sem > 1 ? ' semaines' : ' semaine'); }
+    const mois = Math.round(jours / 30);
+    return 'dans ' + mois + ' mois';
+}
+
+// Sous chaque bouton d'évaluation, quand la carte reviendra si on le choisit.
+// Calculé sur une COPIE de la progression avec le vrai algorithme (SM-2) :
+// l'affichage est donc toujours identique à ce qui sera réellement appliqué.
+function majEcheancesEvaluation(item) {
+    const etat = item.support.etat[cleEtatItem(item)] || { box: 1 };
+    [['insuffisant', 0], ['fragile', 2], ['satisfaisant', 4], ['maitrise', 5]].forEach(([cle, qualite]) => {
+        const copie = JSON.parse(JSON.stringify(etat));
+        appliquerSM2(copie, qualite);
+        const el = document.querySelector('[data-echeance="' + cle + '"]');
+        if (el) el.textContent = libelleEcheance(copie.intervalle);
+    });
 }
 
 // Colore le bouton 💡 Indice dès qu'il y a quelque chose à voir dedans —
