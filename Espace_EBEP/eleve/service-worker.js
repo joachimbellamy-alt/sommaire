@@ -1,4 +1,4 @@
-const CACHE_NAME = 'memo-eleve-v141';
+const CACHE_NAME = 'memo-eleve-v142';
 // Cache à part pour KaTeX (formules mathématiques) : rempli à la première
 // utilisation d'une formule, et conservé d'une version de l'app à l'autre pour
 // ne pas obliger à le retélécharger à chaque mise à jour.

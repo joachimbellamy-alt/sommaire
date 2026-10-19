@@ -665,8 +665,28 @@ body.filtre-actif .masque:not(.due){display:none;}
     /* Formules mathématiques (KaTeX) */
     .katex{font-size:1.1em;}
     .katex-display{overflow-x:auto;overflow-y:hidden;margin:.5em 0;padding:2px 0;}
+    /* Barre d'outils au-dessus d'un champ de carte : icône + mot, cible tactile confortable */
+    .entete-champ{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:6px 10px;margin-bottom:6px;}
+    .entete-champ .label-modale{flex:1 1 110px;}
+    .outils-champ{display:flex;gap:6px;flex:0 0 auto;}
+    .btn-outil{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:56px;min-height:48px;padding:6px 6px 5px;border-radius:10px;border:0.5px solid var(--bord-fort);background:var(--surface);color:var(--bleu);font-family:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;}
+    .btn-outil:hover{background:var(--gris-fond);}
+    .btn-outil:active{background:var(--bleu-clair);}
+    .outil-pict{display:block;flex-shrink:0;}
+    .outil-sigma{font-size:20px;font-weight:700;line-height:20px;height:20px;}
+    .outil-label{font-size:10.5px;font-weight:600;line-height:1.1;color:#5C5C61;}
+    /* En cours d'enregistrement / de dictée : rouge qui pulse */
+    .btn-outil.enregistrement{background:#fde9e7;color:#FF3B30;border-color:#f5b5ae;animation:pulse-rec 1s ease infinite;}
+    .btn-outil.enregistrement .outil-label{color:#FF3B30;}
     .btn-formule{font-weight:700;color:var(--bleu);}
     .apercu-formule{margin:0 0 6px;padding:8px 12px;background:var(--bleu-clair);border-radius:8px;font-size:15px;color:var(--texte);white-space:pre-line;overflow-x:auto;}
+    /* Champ dont le code est masqué : il se présente comme un champ de saisie, avec la formule rendue */
+    .apercu-formule.champ-rendu{margin:4px 0 6px;padding:12px 14px;background:var(--surface);border:0.5px solid var(--bord-fort);border-radius:10px;font-size:16px;line-height:1.55;cursor:text;overflow-x:visible;}
+    .champ-rendu .rendu-contenu{overflow-x:auto;}
+    .formule-cliquable{display:inline-block;padding:2px 8px;margin:0 2px;border-radius:8px;background:var(--bleu-clair);cursor:pointer;vertical-align:middle;}
+    div.formule-cliquable{display:block;text-align:center;margin:6px 0;padding:6px 8px;}
+    .formule-cliquable:active{background:#cfe3ff;}
+    .champ-rendu .rendu-aide{margin-top:8px;font-size:11px;color:var(--gris-texte);}
     .formule-palette{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
     .btn-modele-formule{min-width:44px;height:40px;padding:0 10px;border:0.5px solid var(--bord-fort);border-radius:10px;background:var(--surface);color:var(--texte);font-size:16px;font-family:inherit;cursor:pointer;}
     .btn-modele-formule:active{background:var(--bleu-clair);}
@@ -1200,15 +1220,16 @@ body.filtre-actif .masque:not(.due){display:none;}
 
 <div class="modale-fond" id="modalFormule">
     <div class="modale-boite">
-        <h3>Insérer une formule</h3>
+        <h3 id="titreModalFormule">Insérer une formule</h3>
         <div class="formule-palette" id="paletteFormule"></div>
         <span class="label-modale">Écriture de la formule</span>
         <textarea id="champFormule" class="champ-modale" rows="2" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="Ex : \frac{1}{3} \times \pi \times r^{2} \times h" style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;"></textarea>
         <span class="label-modale">Aperçu</span>
         <div class="apercu-formule-grand vide" id="apercuFormule">L'aperçu de ta formule apparaît ici.</div>
         <div style="margin-top:6px;text-align:right;">
+            <button class="btn-modal annuler" id="btnSupprimerFormule" onclick="supprimerFormuleEnEdition()" style="display:none;float:left;margin-left:0;color:var(--rouge);">Supprimer</button>
             <button class="btn-modal annuler" onclick="fermerEditeurFormule()">Annuler</button>
-            <button class="btn-modal enregistrer" onclick="insererFormule()">Insérer</button>
+            <button class="btn-modal enregistrer" id="btnValiderFormule" onclick="insererFormule()">Insérer</button>
         </div>
     </div>
 </div>

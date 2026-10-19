@@ -2884,7 +2884,7 @@ function decouperFormules(texte) {
             const contenu = fin > -1 ? texte.slice(i + delim.length, fin) : '';
             if (fin > -1 && contenu.trim() !== '') {
                 pousser();
-                segs.push({ type: delim === '$$' ? 'disp' : 'math', v: contenu });
+                segs.push({ type: delim === '$$' ? 'disp' : 'math', v: contenu, i0: i, i1: fin + delim.length });
                 i = fin + delim.length;
                 continue;
             }
@@ -2966,15 +2966,23 @@ function htmlChampMedia(c, i, champ, labelTexte, placeholder) {
     const hasAudio = !!c[cleAudio];
     return `
     <div class="champ-carte">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-            <span class="label-modale" style="flex:1;">${labelTexte}</span>
-            <button type="button" class="btn-media btn-formule" data-idx="${i}" data-champ="${champ}" onclick="ouvrirEditeurFormule(this)" title="Insérer une formule" aria-label="Insérer une formule">Σ</button>
-            <label class="btn-media" title="Image">
-                📷
-                <input type="file" accept="image/*" class="input-image-champ" data-idx="${i}" data-champ="${champ}" style="display:none;">
-            </label>
-            <button class="btn-media btn-dictee" data-idx="${i}" data-champ="${champ}" onclick="demarrerDicteeChamp(this)" title="Dicter au micro">🎤</button>
-            <button class="btn-media btn-audio-rec" data-idx="${i}" data-champ="${champ}" onclick="demarrerEnregistrement(${i},'${champ}',this)">🎙️</button>
+        <div class="entete-champ">
+            <span class="label-modale">${labelTexte}</span>
+            <div class="outils-champ">
+                <button type="button" class="btn-outil btn-formule" data-idx="${i}" data-champ="${champ}" onclick="ouvrirEditeurFormule(this)" title="Insérer une formule mathématique" aria-label="Insérer une formule mathématique">
+                    <span class="outil-pict outil-sigma">Σ</span><span class="outil-label">Formule</span>
+                </button>
+                <label class="btn-outil" title="Ajouter une image" aria-label="Ajouter une image">
+                    <svg class="outil-pict" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg><span class="outil-label">Image</span>
+                    <input type="file" accept="image/*" class="input-image-champ" data-idx="${i}" data-champ="${champ}" style="display:none;">
+                </label>
+                <button type="button" class="btn-outil btn-dictee" data-idx="${i}" data-champ="${champ}" onclick="demarrerDicteeChamp(this)" title="Dicter le texte au micro" aria-label="Dicter le texte au micro">
+                    <svg class="outil-pict" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg><span class="outil-label">Dicter</span>
+                </button>
+                <button type="button" class="btn-outil btn-audio-rec" data-idx="${i}" data-champ="${champ}" onclick="demarrerEnregistrement(${i},'${champ}',this)" title="Enregistrer ma voix sur ce champ" aria-label="Enregistrer ma voix sur ce champ">
+                    <svg class="outil-pict" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="10" x2="4" y2="14"/><line x1="8" y1="6" x2="8" y2="18"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="16" y1="8" x2="16" y2="16"/><line x1="20" y1="10" x2="20" y2="14"/></svg><span class="outil-label">Audio</span>
+                </button>
+            </div>
         </div>
         <textarea rows="1" class="champ-modale input-champ-texte" data-idx="${i}" data-champ="${champ}" placeholder="${placeholder}" style="margin-bottom:4px;resize:none;overflow:hidden;">
 ${echapperHtml(c[champ] || '')}</textarea>
@@ -3099,8 +3107,31 @@ function chargerEditionTexte() {
             });
             // Mémorise la position du curseur : le bouton Σ lui fait perdre le
             // focus avant qu'on sache où insérer la formule.
-            inp.addEventListener('blur', () => { inp.dataset.curseur = String(inp.selectionStart); });
+            inp.addEventListener('blur', () => {
+                inp.dataset.curseur = String(inp.selectionStart);
+                inp.dataset.modeBrut = '';
+                majApercuFormuleChamp(inp);   // champ quitté : on remontre la formule, pas son code
+            });
         });
+        // Zone "formule rendue" : un tap sur une formule la modifie, ailleurs on édite le texte
+        if (!conteneur.dataset.clicsFormulesInit) {
+            conteneur.dataset.clicsFormulesInit = '1';
+            conteneur.addEventListener('click', (ev) => {
+                const zone = ev.target.closest('.champ-rendu');
+                if (!zone) return;
+                const champ = zone.parentElement.querySelector('.input-champ-texte');
+                if (!champ) return;
+                const formule = ev.target.closest('.formule-cliquable');
+                if (formule) {
+                    modifierFormuleExistante(champ, parseInt(formule.dataset.i0, 10), parseInt(formule.dataset.i1, 10), formule.dataset.latex, formule.dataset.disp === '1');
+                } else {
+                    champ.dataset.modeBrut = '1';
+                    majApercuFormuleChamp(champ);
+                    champ.focus();
+                    champ.setSelectionRange(champ.value.length, champ.value.length);
+                }
+            });
+        }
         // Duplication : la copie se place juste après l'originale
         conteneur.querySelectorAll('[data-dupl-carte]').forEach(btn => btn.addEventListener('click', () => {
             const i = parseInt(btn.dataset.duplCarte, 10);
@@ -3149,16 +3180,71 @@ function ajusterHauteurChamp(ta) {
     ta.style.height = (ta.scrollHeight + 2) + 'px';
 }
 
-// Sous un champ qui contient une formule, affiche son rendu en direct.
+/* ── Champ qui contient une formule ──
+   Une fois la formule saisie, le champ n'affiche plus son code (illisible pour
+   un élève) mais la formule mise en forme. Un tap sur une formule la rouvre
+   dans l'éditeur ; un tap ailleurs rend le texte modifiable (le code, lui,
+   n'apparaît que dans ce cas, et pendant la saisie manuelle). */
 function majApercuFormuleChamp(ta) {
-    const apercu = ta.parentElement.querySelector('.apercu-formule[data-idx="' + ta.dataset.idx + '"][data-champ="' + ta.dataset.champ + '"]');
-    if (!apercu) return;
-    if (contientFormule(ta.value)) {
-        apercu.style.display = '';
-        ecrireTexteRiche(apercu, ta.value);
-    } else {
-        apercu.style.display = 'none';
+    const zone = ta.parentElement.querySelector('.apercu-formule[data-idx="' + ta.dataset.idx + '"][data-champ="' + ta.dataset.champ + '"]');
+    if (!zone) return;
+    if (!contientFormule(ta.value)) {
+        ta.style.display = '';
+        ajusterHauteurChamp(ta);
+        zone.style.display = 'none';
+        zone.className = 'apercu-formule';
+        zone.textContent = '';   // pas de pastilles fantômes dans la zone masquée
+        return;
     }
+    // Pendant qu'on écrit dans le champ, on ne le masque surtout pas :
+    // il reste visible avec un aperçu en direct dessous.
+    const enSaisie = document.activeElement === ta || ta.dataset.modeBrut === '1';
+    if (enSaisie) {
+        ta.style.display = '';
+        ajusterHauteurChamp(ta);
+        zone.style.display = '';
+        zone.className = 'apercu-formule';
+        ecrireTexteRiche(zone, ta.value);
+        return;
+    }
+    ta.style.display = 'none';
+    zone.style.display = '';
+    zone.className = 'apercu-formule champ-rendu';
+    construireChampRendu(zone, ta.value);
+}
+
+// Construit l'affichage "formule rendue" : le texte, et chaque formule dans
+// une pastille cliquable qui garde sa position dans le texte brut.
+function construireChampRendu(zone, texte) {
+    zone.textContent = '';
+    const contenu = document.createElement('div');
+    contenu.className = 'rendu-contenu';
+    decouperFormules(texte).forEach(sg => {
+        if (sg.type === 'txt') { contenu.appendChild(document.createTextNode(sg.v)); return; }
+        const el = document.createElement(sg.type === 'disp' ? 'div' : 'span');
+        el.className = 'formule-cliquable';
+        el.dataset.i0 = String(sg.i0);
+        el.dataset.i1 = String(sg.i1);
+        el.dataset.latex = sg.v;
+        el.dataset.disp = sg.type === 'disp' ? '1' : '';
+        el.setAttribute('role', 'button');
+        el.setAttribute('aria-label', 'Modifier cette formule');
+        el.textContent = '…';
+        contenu.appendChild(el);
+    });
+    zone.appendChild(contenu);
+    const aide = document.createElement('div');
+    aide.className = 'rendu-aide';
+    aide.textContent = 'Tape sur une formule pour la modifier, ailleurs pour modifier le texte.';
+    zone.appendChild(aide);
+    chargerKatex().then(ok => {
+        contenu.querySelectorAll('.formule-cliquable').forEach(el => {
+            if (!ok) { el.textContent = el.dataset.latex; return; }
+            try {
+                el.innerHTML = window.katex.renderToString(el.dataset.latex, { throwOnError: false, displayMode: el.dataset.disp === '1' });
+            } catch (e) { el.textContent = el.dataset.latex; }
+        });
+    });
 }
 
 /* ── Éditeur de formules ──
@@ -3188,15 +3274,9 @@ const MODELES_FORMULE = [
 ];
 let champFormuleCible = null;
 let positionFormuleCible = 0;
+let formuleEnEdition = null;   // { i0, i1, disp } quand on modifie une formule existante
 
-function ouvrirEditeurFormule(btn) {
-    const ta = btn.closest('.champ-carte').querySelector('.input-champ-texte');
-    if (!ta) return;
-    champFormuleCible = ta;
-    positionFormuleCible = ta.dataset.curseur !== undefined
-        ? Math.min(parseInt(ta.dataset.curseur, 10), ta.value.length)
-        : ta.value.length;
-
+function preparerModalFormule(titre, latex, edition) {
     const palette = document.getElementById('paletteFormule');
     if (!palette.dataset.pret) {
         palette.dataset.pret = '1';
@@ -3210,15 +3290,38 @@ function ouvrirEditeurFormule(btn) {
         });
         document.getElementById('champFormule').addEventListener('input', majApercuEditeurFormule);
     }
-    document.getElementById('champFormule').value = '';
+    document.getElementById('titreModalFormule').textContent = titre;
+    document.getElementById('btnValiderFormule').textContent = edition ? 'Enregistrer' : 'Insérer';
+    document.getElementById('btnSupprimerFormule').style.display = edition ? '' : 'none';
+    document.getElementById('champFormule').value = latex;
     majApercuEditeurFormule();
     document.getElementById('modalFormule').classList.add('ouverte');
     setTimeout(() => document.getElementById('champFormule').focus(), 50);
 }
 
+// Bouton Σ : nouvelle formule, insérée à l'endroit du curseur (ou à la fin).
+function ouvrirEditeurFormule(btn) {
+    const ta = btn.closest('.champ-carte').querySelector('.input-champ-texte');
+    if (!ta) return;
+    champFormuleCible = ta;
+    formuleEnEdition = null;
+    positionFormuleCible = ta.dataset.curseur !== undefined
+        ? Math.min(parseInt(ta.dataset.curseur, 10), ta.value.length)
+        : ta.value.length;
+    preparerModalFormule('Insérer une formule', '', false);
+}
+
+// Tap sur une formule déjà saisie : on la rouvre pour la modifier.
+function modifierFormuleExistante(ta, i0, i1, latex, disp) {
+    champFormuleCible = ta;
+    formuleEnEdition = { i0: i0, i1: i1, disp: disp };
+    preparerModalFormule('Modifier la formule', latex, true);
+}
+
 function fermerEditeurFormule() {
     document.getElementById('modalFormule').classList.remove('ouverte');
     champFormuleCible = null;
+    formuleEnEdition = null;
 }
 
 function insererModeleFormule(texte, curseur) {
@@ -3248,15 +3351,34 @@ function insererFormule() {
     const latex = document.getElementById('champFormule').value.trim();
     const ta = champFormuleCible;
     if (!latex || !ta) { fermerEditeurFormule(); return; }
-    const formule = '$' + latex.replace(/\$/g, '\\$') + '$';
-    const pos = positionFormuleCible;
-    ta.value = ta.value.slice(0, pos) + formule + ta.value.slice(pos);
-    ta.dataset.curseur = String(pos + formule.length);
-    // Déclenche l'enregistrement, l'ajustement de hauteur et l'aperçu
+    const contenu = latex.replace(/\$/g, '\\$');
+    if (formuleEnEdition) {
+        // Remplace la formule existante, sur sa position dans le texte brut
+        const d = formuleEnEdition.disp ? '$$' : '$';
+        ta.value = ta.value.slice(0, formuleEnEdition.i0) + d + contenu + d + ta.value.slice(formuleEnEdition.i1);
+    } else {
+        // Une espace est ajoutée si la formule se collerait au mot précédent
+        const avant = ta.value.slice(0, positionFormuleCible);
+        const formule = (avant && !/\s$/.test(avant) ? ' ' : '') + '$' + contenu + '$';
+        ta.value = avant + formule + ta.value.slice(positionFormuleCible);
+    }
+    terminerEditionFormule(ta);
+}
+
+function supprimerFormuleEnEdition() {
+    const ta = champFormuleCible;
+    if (!ta || !formuleEnEdition) { fermerEditeurFormule(); return; }
+    ta.value = ta.value.slice(0, formuleEnEdition.i0) + ta.value.slice(formuleEnEdition.i1);
+    terminerEditionFormule(ta);
+}
+
+// Enregistre, ajuste le champ, et le laisse en affichage "formule rendue" :
+// on ne redonne surtout pas le focus au champ, ce qui ferait réapparaître le code.
+function terminerEditionFormule(ta) {
+    ta.dataset.modeBrut = '';
+    ta.dataset.curseur = String(ta.value.length);
     ta.dispatchEvent(new Event('input', { bubbles: true }));
     fermerEditeurFormule();
-    ta.focus();
-    ta.setSelectionRange(pos + formule.length, pos + formule.length);
 }
 
 // Langue utilisée pour la reconnaissance vocale (dictée) sur les champs de
