@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Arbre *bheH₂ interactif</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  html, body { margin: 0; padding: 0; background: #ffffff; }
+  svg { display: block; width: 210mm; height: 297mm; margin: 0 auto; }
+  text { font-family: "Avenir Next", "Avenir", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+  .greek { font-family: "Georgia", "Times New Roman", serif; }
+  .title { font-weight: 700; font-size: 21px; letter-spacing: 1.5px; }
+  .word { font-weight: 700; font-size: 22px; fill: #2b2b2b; }
+  .gloss { font-size: 20px; fill: #5a5a5a; }
+  .blank { stroke: #8a8a8a; stroke-width: 2; stroke-dasharray: 0.1 6; stroke-linecap: round; }
+  .write { stroke: #9a9a9a; stroke-width: 1.4; stroke-dasharray: 0.1 4; stroke-linecap: round; }
+  .branch { fill: none; stroke: url(#bark); stroke-linecap: round; }
+
+  @media screen {
+    body { background: #eef3e6; padding: 12px 16px 32px; }
+    svg { width: 100%; max-width: 840px; height: auto; border-radius: 18px; background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,.08); }
+  }
+  .hint { max-width: 840px; margin: 0 auto 10px; font: 600 17px "Avenir Next", "Segoe UI", Arial, sans-serif; color: #34402b; display: flex; justify-content: space-between; align-items: center; gap: 8px 14px; flex-wrap: wrap; }
+  .hint a { color: #d6336c; text-decoration: none; }
+  .hint .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hint button { font: inherit; font-size: 14px; border: 1px solid #c9d4bb; background: #fff; color: #34402b; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+  .w { cursor: pointer; }
+  .w:hover, .w.active { text-decoration: underline; fill: #000; }
+  .w.seen { fill: #2e7d32; }
+  .b { cursor: pointer; }
+  .b:hover .ans-hide { fill: #000; }
+  .b:hover rect { fill: rgba(46,125,50,.08); }
+  .hand { font-family: "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive; font-size: 19px; font-weight: 700; fill: #2e7d32; }
+  .fill { fill: #2e7d32; }
+  #pop { position: absolute; display: none; max-width: 300px; background: #fff; border-radius: 14px; padding: 12px 14px; box-shadow: 0 8px 30px rgba(0,0,0,.22); font: 15px/1.45 "Avenir Next", "Segoe UI", Arial, sans-serif; color: #333; z-index: 10; border-top: 5px solid var(--c); }
+  #pop h3 { margin: 0 24px 6px 0; font-size: 18px; color: var(--c); }
+  #pop .x { position: absolute; top: 4px; right: 8px; border: 0; background: none; font-size: 20px; cursor: pointer; color: #999; }
+  @media print { .hint, #pop { display: none !important; } .w.seen { fill: #2b2b2b; } }
+</style>
+</head>
+<body>
+<div class="hint"><a href="index.html">← Espace Latin</a><span>Clique sur un mot ou sur une ligne à compléter.</span><span id="count"></span><span class="btns"><button id="all">Afficher toutes les réponses</button><button id="reset">Recommencer</button></span></div>
+<div id="wrap" style="position:relative;max-width:840px;margin:0 auto">
+<svg viewBox="0 0 840 1188" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="leaf" cx="42%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#d9f0a3"/>
+      <stop offset="0.55" stop-color="#a6d96a"/>
+      <stop offset="1" stop-color="#6fb43f"/>
+    </radialGradient>
+    <linearGradient id="bark" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#7a4a26"/>
+      <stop offset="0.5" stop-color="#a0673a"/>
+      <stop offset="1" stop-color="#7a4a26"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#9a6236"/>
+      <stop offset="1" stop-color="#6e4220"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#2f4a1a" flood-opacity="0.25"/>
+    </filter>
+    <pattern id="leaves" width="46" height="46" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+      <ellipse cx="12" cy="12" rx="9" ry="4" fill="#ffffff" opacity="0.13"/>
+      <ellipse cx="35" cy="34" rx="8" ry="3.5" fill="#3d7a1f" opacity="0.10"/>
+    </pattern>
+    <path id="arcRom" d="M 33.6 346.5 A 400 400 0 0 1 296.4 69.6"/>
+    <path id="arcGer" d="M 543.6 69.6 A 400 400 0 0 1 806.4 346.5"/>
+  </defs>
+
+  <!-- Feuillage -->
+  <circle cx="420" cy="450" r="355" fill="url(#leaf)"/>
+  <circle cx="420" cy="450" r="355" fill="url(#leaves)"/>
+  <circle cx="420" cy="450" r="355" fill="none" stroke="#5f9e35" stroke-width="2" opacity="0.5"/>
+
+  <!-- Familles de langues -->
+  <path d="M 45.2 349.6 A 388 388 0 0 1 300.1 81" fill="none" stroke="#f3a6c4" stroke-width="10" stroke-linecap="round"/>
+  <path d="M 539.9 81 A 388 388 0 0 1 794.8 349.6" fill="none" stroke="#9fd3ec" stroke-width="10" stroke-linecap="round"/>
+  <text class="title" font-size="27" fill="#d6336c" letter-spacing="3">
+    <textPath href="#arcRom" startOffset="50%" text-anchor="middle">LANGUES ROMANES</textPath>
+  </text>
+  <text class="title" font-size="27" fill="#1c8fc0" letter-spacing="3">
+    <textPath href="#arcGer" startOffset="50%" text-anchor="middle">LANGUES GERMANIQUES</textPath>
+  </text>
+
+  <!-- Tronc et sol -->
+  <path d="M 120 1012 C 330 1004, 393 962, 396 820 L 399 470 L 441 470 L 444 820 C 447 962, 510 1004, 720 1012 Z" fill="url(#bark)"/>
+  <rect x="48" y="1008" width="744" height="160" rx="22" fill="url(#ground)"/>
+  <path d="M 140 1030 C 230 1060, 260 1110, 250 1160 M 690 1030 C 610 1070, 600 1120, 620 1160" fill="none" stroke="#5c3518" stroke-width="2" opacity="0.5"/>
+
+  <!-- Branches -->
+  <path class="branch" stroke-width="18" d="M 380 340 Q 360 260 330 185"/>
+  <path class="branch" stroke-width="15" d="M 340 372 Q 270 318 190 275"/>
+  <path class="branch" stroke-width="15" d="M 320 412 Q 250 404 170 416"/>
+  <path class="branch" stroke-width="16" d="M 520 430 Q 585 340 625 245"/>
+  <path class="branch" stroke-width="13" d="M 584 352 Q 620 346 660 340"/>
+  <path class="branch" stroke-width="20" d="M 428 770 Q 525 650 625 530"/>
+  <path class="branch" stroke-width="20" d="M 412 770 Q 360 710 315 665"/>
+  <path class="branch" stroke-width="15" d="M 335 685 Q 260 615 200 560"/>
+
+  <!-- FRANÇAIS (haut) -->
+  <g filter="url(#shadow)"><rect x="205" y="110" width="260" height="104" rx="14" fill="#fff"/></g>
+  <text class="title" x="335" y="141" text-anchor="middle" fill="#d6336c">FRANÇAIS</text>
+  <text class="word" x="335" y="171" text-anchor="middle"><tspan class="w" data-id="profession">profession</tspan>, <tspan class="w" data-id="affable">affable</tspan>,</text>
+  <text class="word" x="335" y="198" text-anchor="middle"><tspan class="w" data-id="fabuleux">fabuleux</tspan>, <tspan class="w" data-id="diffamer">diffamer</tspan></text>
+
+  <!-- ESPAGNOL -->
+  <g filter="url(#shadow)"><rect x="100" y="230" width="150" height="88" rx="14" fill="#fff"/></g>
+  <text class="title" x="175" y="261" text-anchor="middle" fill="#d6336c">ESPAGNOL</text>
+  <line class="blank" x1="122" y1="280" x2="228" y2="280"/>
+  <text class="gloss" x="175" y="306" text-anchor="middle">parler</text>
+
+  <!-- ITALIEN -->
+  <g filter="url(#shadow)"><rect x="40" y="372" width="150" height="92" rx="14" fill="#fff"/></g>
+  <text class="title" x="115" y="402" text-anchor="middle" fill="#d6336c">ITALIEN</text>
+  <text class="word" x="115" y="429" text-anchor="middle"><tspan class="w" data-id="telefono">telefono</tspan></text>
+  <text class="gloss" x="115" y="453" text-anchor="middle">téléphone</text>
+
+  <!-- ANGLAIS -->
+  <g filter="url(#shadow)"><rect x="522" y="186" width="184" height="96" rx="14" fill="#fff"/></g>
+  <text class="title" x="614" y="213" text-anchor="middle" fill="#1c8fc0">ANGLAIS</text>
+  <line class="blank" x1="540" y1="240" x2="590" y2="240"/>
+  <line class="blank" x1="624" y1="240" x2="688" y2="240"/>
+  <line x1="607" y1="228" x2="607" y2="270" stroke="#d8d8d8" stroke-width="1.5"/>
+  <text class="gloss" x="565" y="264" text-anchor="middle" font-size="16">connu</text>
+  <text class="gloss" x="656" y="264" text-anchor="middle" font-size="16">célébrité</text>
+
+  <!-- ALLEMAND -->
+  <g filter="url(#shadow)"><rect x="612" y="302" width="152" height="90" rx="14" fill="#fff"/></g>
+  <text class="title" x="688" y="333" text-anchor="middle" fill="#1c8fc0">ALLEMAND</text>
+  <text class="word" x="688" y="360" text-anchor="middle"><tspan class="w" data-id="Fabel">Fabel</tspan></text>
+  <line class="blank" x1="634" y1="378" x2="742" y2="378"/>
+
+  <!-- LATIN -->
+  <g filter="url(#shadow)"><rect x="228" y="288" width="360" height="214" rx="20" fill="#fdf7ea" stroke="#e9d9b4" stroke-width="1.5"/></g>
+  <text class="title" x="252" y="316" fill="#d6336c" font-size="23">LATIN</text>
+  <text class="word" x="252" y="354"><tspan class="w" data-id="Fama">Fama</tspan> →</text>
+  <line class="write" x1="344" y1="354" x2="566" y2="354"/>
+  <text class="word" x="252" y="395"><tspan class="w" data-id="Fatum">Fatum</tspan> →</text>
+  <line class="write" x1="352" y1="395" x2="566" y2="395"/>
+  <text class="word" x="252" y="436"><tspan class="w" data-id="Fabula">Fabula</tspan> →</text>
+  <line class="write" x1="360" y1="436" x2="566" y2="436"/>
+  <text class="word" x="252" y="477"><tspan class="w" data-id="Famosus">Famosus</tspan> →</text>
+  <line class="write" x1="380" y1="477" x2="566" y2="477"/>
+
+  <!-- FRANÇAIS (bas, via le grec) -->
+  <g filter="url(#shadow)"><rect x="78" y="508" width="214" height="104" rx="14" fill="#fff"/></g>
+  <text class="title" x="185" y="538" text-anchor="middle" fill="#7b5ea7">FRANÇAIS</text>
+  <text class="word" x="185" y="566" text-anchor="middle"><tspan class="w" data-id="enfant">enfant</tspan>, <tspan class="w" data-id="infantile">infantile</tspan></text>
+  <text class="word b" data-id="euphemisme" x="185" y="594" text-anchor="middle" letter-spacing="1"><tspan class="ans-hide">_ _ phem _ _ _ _</tspan><tspan class="ans" display="none"><tspan class="fill">eu</tspan>phém<tspan class="fill">isme</tspan></tspan></text>
+
+  <!-- SANSKRIT -->
+  <g filter="url(#shadow)"><rect x="560" y="470" width="170" height="96" rx="14" fill="#fff"/></g>
+  <text class="title" x="645" y="501" text-anchor="middle" fill="#e8892b">SANSKRIT</text>
+  <text class="word" x="645" y="528" text-anchor="middle"><tspan class="w" data-id="bhas">bhàs</tspan></text>
+  <text class="gloss" x="645" y="553" text-anchor="middle">parler, raconter</text>
+
+  <!-- GREC -->
+  <g filter="url(#shadow)"><rect x="226" y="616" width="156" height="98" rx="14" fill="#fff"/></g>
+  <text class="title" x="304" y="647" text-anchor="middle" fill="#7b5ea7">GREC</text>
+  <text class="word greek" x="304" y="676" text-anchor="middle" font-size="26"><tspan class="w" data-id="phemi">φημὶ</tspan></text>
+  <text class="gloss" x="304" y="701" text-anchor="middle">dire, parler</text>
+
+  <!-- Zones à compléter (cliquables) -->
+  <g class="b" data-id="hablar"><rect x="118" y="254" width="114" height="32" fill="transparent"/><text class="ans hand" display="none" x="175.0" y="275" text-anchor="middle">hablar</text></g>
+  <g class="b" data-id="famous"><rect x="536" y="214" width="58" height="32" fill="transparent"/><text class="ans hand" display="none" x="565.0" y="235" text-anchor="middle">famous</text></g>
+  <g class="b" data-id="fame"><rect x="620" y="214" width="72" height="32" fill="transparent"/><text class="ans hand" display="none" x="656.0" y="235" text-anchor="middle">fame</text></g>
+  <g class="b" data-id="fable"><rect x="630" y="352" width="116" height="32" fill="transparent"/><text class="ans hand" display="none" x="688.0" y="373" text-anchor="middle">la fable</text></g>
+  <g class="b" data-id="rFama"><rect x="340" y="328" width="230" height="32" fill="transparent"/><text class="ans hand" display="none" x="350" y="349" text-anchor="start">la renommée, la rumeur</text></g>
+  <g class="b" data-id="rFatum"><rect x="348" y="369" width="222" height="32" fill="transparent"/><text class="ans hand" display="none" x="358" y="390" text-anchor="start">le destin</text></g>
+  <g class="b" data-id="rFabula"><rect x="356" y="410" width="214" height="32" fill="transparent"/><text class="ans hand" display="none" x="366" y="431" text-anchor="start">le récit, la fable</text></g>
+  <g class="b" data-id="rFamosus"><rect x="376" y="451" width="194" height="32" fill="transparent"/><text class="ans hand" display="none" x="386" y="472" text-anchor="start">célèbre, fameux</text></g>
+
+  <!-- RACINE -->
+  <text x="420" y="1062" text-anchor="middle" fill="#fff7ec" font-size="50" font-weight="700" letter-spacing="4">RACINE</text>
+  <text x="420" y="1096" text-anchor="middle" fill="#fff7ec" font-size="26" font-weight="700" letter-spacing="2">INDO-EUROPÉENNE</text>
+  <text x="420" y="1130" text-anchor="middle" fill="#ffffff" font-size="30" font-weight="700">*bheH<tspan font-size="18" dy="7">2</tspan></text>
+  <text x="420" y="1158" text-anchor="middle" fill="#f6e3cc" font-size="22">déclarer, exposer</text>
+</svg>
+<div id="pop" role="dialog"><button class="x" aria-label="Fermer">×</button><h3></h3><div class="d"></div></div>
+</div>
+<script>
+const DEF = {"profession": ["profession", "Le métier que l'on exerce. Au départ, c'est une <b>déclaration publique</b> : du latin <i>profiteri</i> « déclarer devant tous » (<i>pro</i> « devant » + <i>fateri</i> « avouer, déclarer »)."], "affable": ["affable", "Aimable, qui accueille avec douceur et à qui l'on peut facilement <b>parler</b>. Du latin <i>affabilis</i> (<i>ad</i> « vers » + <i>fari</i> « parler »)."], "fabuleux": ["fabuleux", "Qui appartient aux fables et aux légendes ; par extension, extraordinaire, incroyable. Du latin <i>fabulosus</i>, formé sur <i>fabula</i> « récit »."], "diffamer": ["diffamer", "Dire du mal de quelqu'un pour salir sa <b>réputation</b>. Du latin <i>diffamare</i> (<i>dis-</i> marque la dispersion + <i>fama</i> « la renommée »)."], "telefono": ["telefono / téléphone", "Appareil qui transmet la voix à distance. Mot formé sur le grec : <i>tēle</i> « loin » + <i>phōnē</i> « la voix », un mot de la même famille que <i>φημί</i> « dire »."], "Fabel": ["Fabel", "En allemand, <i>die Fabel</i> désigne une <b>fable</b>, un court récit souvent avec des animaux et une morale. Mot emprunté au latin <i>fabula</i>."], "bhas": ["bhàs (sanskrit)", "Verbe sanskrit qui signifie « parler, raconter ». Le sanskrit, langue ancienne de l'Inde, descend lui aussi de la racine indo-européenne <i>*bheH₂</i>."], "phemi": ["φημί (phêmi)", "Verbe grec qui signifie « je dis, je parle ». On le retrouve dans <i>euphémisme</i>, <i>blasphème</i>, <i>prophète</i> (celui qui dit à l'avance)."], "enfant": ["enfant", "Du latin <i>infans</i> « celui qui ne parle pas encore » : <i>in-</i> « ne… pas » + <i>fari</i> « parler ». Ce mot vient donc du latin, pas du grec."], "infantile": ["infantile", "Qui concerne l'enfant (une maladie infantile) ; qui se comporte comme un enfant, puéril. Du latin <i>infantilis</i>, formé sur <i>infans</i>."], "Fama": ["fama, ae (f.)", "La <b>renommée</b>, la réputation ; aussi la rumeur, ce que l'on dit de quelqu'un. Mots français : <i>fameux, diffamer, infâme</i>."], "Fatum": ["fatum, i (n.)", "Le <b>destin</b> : littéralement « ce qui a été dit » par les dieux (participe de <i>fari</i> « parler »). Mots français : <i>fatal, fatalité</i>."], "Fabula": ["fabula, ae (f.)", "Le <b>récit</b>, l'histoire, la fable : ce que l'on raconte. Mots français : <i>fable, fabuleux, affabulation</i>."], "Famosus": ["famosus, a, um", "<b>Célèbre</b>, dont on parle beaucoup, en bien ou en mal. Formé sur <i>fama</i>. Mots : <i>fameux</i> en français, <i>famous</i> en anglais."], "hablar": ["Réponse : hablar", "En espagnol, <i>hablar</i> signifie « parler ». Il vient du latin <i>fabulari</i> « bavarder, raconter », formé sur <i>fabula</i>. Le <i>f-</i> latin est devenu <i>h-</i> en espagnol."], "famous": ["Réponse : famous", "En anglais, <i>famous</i> signifie « connu, célèbre ». Il vient du latin <i>famosus</i>, par le vieux français."], "fame": ["Réponse : fame", "En anglais, <i>fame</i> signifie « la célébrité, la renommée ». Il vient du latin <i>fama</i>."], "fable": ["Réponse : la fable", "<i>Fabel</i> se traduit par « la fable », comme celles de La Fontaine. Les deux mots viennent du latin <i>fabula</i>."], "rFama": ["fama → la renommée", "Mots français issus de <i>fama</i> : <i>fameux, diffamer, infâme, famé</i> (mal famé)."], "rFatum": ["fatum → le destin", "Mots français issus de <i>fatum</i> : <i>fatal, fatalité, fatalisme</i>."], "rFabula": ["fabula → le récit, la fable", "Mots français issus de <i>fabula</i> : <i>fable, fabuleux, affabulation</i>."], "rFamosus": ["famosus → célèbre", "Mots issus de <i>famosus</i> : <i>fameux</i> en français, <i>famous</i> en anglais."], "euphemisme": ["Réponse : euphémisme", "Figure de style qui adoucit une idée désagréable (« il nous a quittés » pour « il est mort »). Du grec <i>eu</i> « bien » + <i>phêmi</i> « dire » : « dire de manière agréable »."]};
+const COL = {"profession": "#d6336c", "affable": "#d6336c", "fabuleux": "#d6336c", "diffamer": "#d6336c", "telefono": "#d6336c", "hablar": "#d6336c", "Fabel": "#1c8fc0", "famous": "#1c8fc0", "fame": "#1c8fc0", "fable": "#1c8fc0", "bhas": "#e8892b", "phemi": "#7b5ea7", "enfant": "#7b5ea7", "infantile": "#7b5ea7", "euphemisme": "#7b5ea7"};
+const pop = document.getElementById('pop'), wrap = document.getElementById('wrap');
+const items = [...document.querySelectorAll('.w, .b')];
+let current = null;
+function count() {
+  const n = items.filter(w => w.classList.contains('seen')).length;
+  document.getElementById('count').textContent = n + ' / ' + items.length + ' découverts';
+}
+function reveal(el, on) {
+  el.classList.toggle('seen', on);
+  if (el.classList.contains('b')) {
+    el.querySelectorAll('.ans').forEach(a => a.setAttribute('display', on ? 'inline' : 'none'));
+    el.querySelectorAll('.ans-hide').forEach(a => a.setAttribute('display', on ? 'none' : 'inline'));
+  }
+}
+function hide() { pop.style.display = 'none'; if (current) current.classList.remove('active'); current = null; }
+function show(el) {
+  if (current === el) return hide();
+  hide(); current = el;
+  el.classList.add('active'); reveal(el, true); count();
+  const [t, d] = DEF[el.dataset.id];
+  pop.style.setProperty('--c', COL[el.dataset.id] || '#d6336c');
+  pop.querySelector('h3').textContent = t;
+  pop.querySelector('.d').innerHTML = d;
+  pop.style.display = 'block';
+  const r = el.getBoundingClientRect(), b = wrap.getBoundingClientRect();
+  const pw = pop.offsetWidth, ph = pop.offsetHeight;
+  let x = r.left - b.left + r.width / 2 - pw / 2;
+  x = Math.max(4, Math.min(x, b.width - pw - 4));
+  let y = r.bottom - b.top + 8;
+  if (r.bottom + ph + 12 > window.innerHeight && r.top - ph - 8 > 0) y = r.top - b.top - ph - 8;
+  pop.style.left = x + 'px'; pop.style.top = y + 'px';
+}
+items.forEach(el => el.addEventListener('click', e => { e.stopPropagation(); show(el); }));
+pop.addEventListener('click', e => e.stopPropagation());
+pop.querySelector('.x').addEventListener('click', hide);
+document.addEventListener('click', hide);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
+const allBtn = document.getElementById('all');
+allBtn.addEventListener('click', e => {
+  e.stopPropagation(); hide();
+  const show = allBtn.dataset.on !== '1';
+  items.filter(el => el.classList.contains('b')).forEach(el => reveal(el, show));
+  allBtn.dataset.on = show ? '1' : '';
+  allBtn.textContent = show ? 'Masquer les réponses' : 'Afficher toutes les réponses';
+  count();
+});
+document.getElementById('reset').addEventListener('click', e => {
+  e.stopPropagation(); hide(); items.forEach(el => reveal(el, false));
+  allBtn.dataset.on = ''; allBtn.textContent = 'Afficher toutes les réponses'; count();
+});
+count();
+</script>
+</body>
+</html>
