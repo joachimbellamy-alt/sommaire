@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Tempus lapsum</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800&display=swap">
+<style>
+/* Plateau de jeu : tapis à pois, une grande carte cartonnée au centre, le sablier à côté ; chaque manche a sa couleur. */
+:root{
+  --bg:#f3f1fb; --dots:#dcd7f0; --panel:#ffffff; --ink:#1f1c3a; --muted:#625d80; --line:#d9d4ee; --shadow:#c9c2e6;
+  --r1:#1c7ed6; --on-r1:#ffffff; --r2:#fcc419; --on-r2:#2a2100; --r3:#d6336c; --on-r3:#ffffff;
+  --go:#37b26c; --on-go:#0f2a1b; --alert:#e03131;
+  --t1:#f0643c; --t2:#12a4a0; --t3:#7b5cd6; --t4:#e6a100; --t5:#2f7fe0; --t6:#3fa34d;
+  --glass:#e9e6f7; --sand:#f2b632; --wood:#8a5a3b;
+  --display:"Fredoka","Arial Rounded MT Bold","Trebuchet MS",sans-serif;
+  --body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#17162a; --dots:#25233f; --panel:#232140; --ink:#f4f2ff; --muted:#aaa5c8; --line:#37345a; --shadow:#0d0c1a;
+    --r1:#4dabf7; --on-r1:#0b1e33; --r2:#ffd43b; --on-r2:#2a2100; --r3:#f06595; --on-r3:#2b0a17;
+    --go:#51cf66; --on-go:#0f2a1b; --alert:#ff6b6b;
+    --t1:#ff8a65; --t2:#38d9c4; --t3:#a78bfa; --t4:#ffc53d; --t5:#74b4ff; --t6:#69db7c;
+    --glass:#2e2b52; --sand:#ffc53d; --wood:#c08a63; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#17162a; --dots:#25233f; --panel:#232140; --ink:#f4f2ff; --muted:#aaa5c8; --line:#37345a; --shadow:#0d0c1a;
+  --r1:#4dabf7; --on-r1:#0b1e33; --r2:#ffd43b; --on-r2:#2a2100; --r3:#f06595; --on-r3:#2b0a17;
+  --go:#51cf66; --on-go:#0f2a1b; --alert:#ff6b6b;
+  --t1:#ff8a65; --t2:#38d9c4; --t3:#a78bfa; --t4:#ffc53d; --t5:#74b4ff; --t6:#69db7c;
+  --glass:#2e2b52; --sand:#ffc53d; --wood:#c08a63; color-scheme:dark;
+}
+html,body{height:100%}
+body{background:radial-gradient(var(--dots) 1.6px, transparent 1.8px) 0 0/22px 22px, var(--bg);color:var(--ink);font-family:var(--body);
+  font-size:clamp(16px,0.6vw + 13px,20px);line-height:1.45;-webkit-text-size-adjust:100%;overscroll-behavior:none}
+*{box-sizing:border-box}
+#app{--round:var(--r1);--on-round:var(--on-r1);min-height:100%;max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 28px}
+#app[data-round="2"]{--round:var(--r2);--on-round:var(--on-r2)}
+#app[data-round="3"]{--round:var(--r3);--on-round:var(--on-r3)}
+h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance;line-height:1.1}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:4px solid var(--r1);outline-offset:3px}
+
+/* En-tête */
+.masthead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-width:0}
+.brand h1{font-size:clamp(32px,3vw + 16px,52px);letter-spacing:-.01em}
+.brand h1 span{color:var(--r3)}
+.sticker{font-family:var(--display);font-weight:600;background:var(--r2);color:var(--on-r2);padding:.2em .7em;border-radius:999px;transform:rotate(-5deg);font-size:.9em;box-shadow:0 3px 0 var(--shadow)}
+.brand p{color:var(--muted);font-size:.85em;flex-basis:100%}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.pill{display:inline-block;font-family:var(--display);font-weight:600;font-size:.85em;letter-spacing:.02em;background:var(--round);color:var(--on-round);padding:.25em .9em;border-radius:999px}
+
+/* Boutons « en relief » */
+.btn{font-family:var(--display);font-weight:600;border:3px solid var(--line);background:var(--panel);border-radius:16px;padding:.5em 1.1em;cursor:pointer;line-height:1.2;
+  box-shadow:0 5px 0 var(--shadow);transition:transform .08s, box-shadow .08s}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--shadow)}
+.btn.primary{background:var(--round);border-color:var(--round);color:var(--on-round)}
+.btn.big{font-size:1.35em;padding:.65em 1.6em;border-radius:20px}
+.btn.found{background:var(--go);border-color:var(--go);color:var(--on-go)}
+.btn.small{font-size:.85em;padding:.35em .85em;border-radius:12px;box-shadow:0 3px 0 var(--shadow)}
+.btn.armed{background:var(--alert);border-color:var(--alert);color:#fff}
+.btn:disabled{opacity:.45;cursor:default;transform:none}
+
+/* Équipes */
+.scores{display:flex;flex-wrap:wrap;gap:10px}
+.chip{display:flex;align-items:center;gap:8px;padding:.3em .9em .3em .4em;border-radius:999px;border:3px solid var(--line);background:var(--panel);font-family:var(--display);font-weight:600;font-variant-numeric:tabular-nums}
+.chip .dot{width:1.4em;height:1.4em;border-radius:50%;background:var(--c);flex:none}
+.chip b{font-weight:700;margin-left:2px}
+.chip.active{border-color:var(--c);transform:translateY(-3px);box-shadow:0 4px 0 var(--c)}
+
+/* Réglages */
+.setup{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px;align-items:start}
+.panel{background:var(--panel);border:3px solid var(--line);border-radius:22px;padding:18px 20px;display:flex;flex-direction:column;gap:14px;min-width:0;box-shadow:0 6px 0 var(--shadow)}
+.panel h2{font-size:1.45em}
+.rounds{display:grid;gap:14px}
+.round{display:grid;grid-template-columns:2.4em 1fr;gap:2px 12px;align-items:start}
+.badge{grid-row:span 2;width:2.2em;height:2.2em;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;background:var(--rc);color:var(--orc)}
+.round h3{font-size:1.15em}
+.round p{color:var(--muted);font-size:.92em}
+.field{display:flex;flex-direction:column;gap:6px}
+.lbl{font-weight:800;font-size:.9em}
+.teamrow{display:flex;align-items:center;gap:10px}
+.teamrow .dot{width:22px;height:22px;border-radius:50%;background:var(--c);flex:none}
+input[type=text],textarea{background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:.45em .7em;width:100%;min-width:0}
+textarea{font-size:.85em;line-height:1.5;min-height:260px;resize:vertical;font-family:var(--body)}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{font-family:var(--display);font-weight:600;border:2px solid var(--line);background:var(--bg);border-radius:12px;padding:.35em .9em;cursor:pointer;font-variant-numeric:tabular-nums}
+.seg button[aria-pressed=true]{background:var(--r1);border-color:var(--r1);color:var(--on-r1)}
+.check{display:flex;gap:10px;align-items:flex-start}
+.check input{margin-top:.3em;width:1.2em;height:1.2em;accent-color:var(--r1)}
+.hint{color:var(--muted);font-size:.85em}
+details summary{cursor:pointer;font-weight:800}
+details[open] summary{margin-bottom:10px}
+.start{display:flex;flex-wrap:wrap;align-items:center;gap:16px}
+.error{color:var(--alert);font-weight:800}
+.stepper{display:flex;align-items:center;gap:12px}
+.stepper .btn{min-width:2.6em;font-size:1.1em}
+.stepper .val{font-family:var(--display);font-weight:700;font-size:1.4em;min-width:3.4em;text-align:center;font-variant-numeric:tabular-nums}
+.prefix{font-weight:800;white-space:nowrap}
+textarea.members{min-height:64px;font-size:.9em;margin-top:-6px}
+.speaker{font-family:var(--display);font-size:1.7em}
+
+/* Scène */
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center}
+.stage .lead{font-size:clamp(36px,4vw + 16px,68px)}
+.stage .lead span{color:var(--c)}
+.rule{max-width:62ch;font-size:1.1em}
+.rulebox{background:var(--panel);border:4px solid var(--round);border-radius:24px;padding:18px 24px;max-width:680px;display:flex;flex-direction:column;gap:8px;align-items:center;box-shadow:0 8px 0 var(--shadow)}
+.rulebox h2{font-size:1.9em}
+.meta{color:var(--muted);font-size:.92em;font-variant-numeric:tabular-nums}
+
+/* Partie : sablier + carte */
+.play{flex:1;display:grid;grid-template-columns:auto minmax(0,1fr);gap:32px;align-items:center}
+.timer{display:flex;flex-direction:column;align-items:center;gap:10px}
+.glass{--lvl:100%;display:flex;flex-direction:column;align-items:center;padding:6px 8px;border-top:10px solid var(--wood);border-bottom:10px solid var(--wood);border-radius:6px}
+.bulb{position:relative;width:84px;height:min(19vh,130px);background:var(--glass)}
+.bulb.top{clip-path:polygon(0 0,100% 0,56% 100%,44% 100%)}
+.bulb.bot{clip-path:polygon(44% 0,56% 0,100% 100%,0 100%)}
+.sand{position:absolute;left:0;right:0;bottom:0;background:var(--sand);transition:height .12s linear,background .4s}
+.top .sand{height:var(--lvl)}
+.bot .sand{height:calc(100% - var(--lvl))}
+.glass.urgent .sand{background:var(--alert)}
+.secs{font-family:var(--display);font-weight:700;font-size:3em;line-height:1;font-variant-numeric:tabular-nums}
+.glass.urgent + .secs{color:var(--alert)}
+.cardwrap{display:flex;flex-direction:column;gap:18px;align-items:center;min-width:0}
+.gamecard{width:min(100%,760px);background:var(--panel);border:5px solid var(--round);border-radius:32px;padding:30px 26px 28px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;
+  box-shadow:0 12px 0 var(--shadow);animation:deal .32s ease-out}
+@keyframes deal{from{transform:perspective(900px) rotateY(80deg) scale(.94);opacity:.3}to{transform:none;opacity:1}}
+.word{font-family:var(--display);font-weight:700;font-size:clamp(42px,6vw + 12px,108px);line-height:1.02;overflow-wrap:anywhere}
+.ety{font-size:clamp(19px,1.2vw + 13px,30px);font-weight:800;background:var(--round);color:var(--on-round);padding:.3em .8em;border-radius:16px}
+.ety.soft{font-size:1em;font-weight:400;background:none;color:var(--muted);padding:0}
+.forbid{font-size:1em;color:var(--muted)}
+.forbid b{color:var(--alert)}
+.actions{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
+.keys{color:var(--muted);font-size:.8em}
+.paused .word{color:var(--muted)}
+
+/* Tableaux */
+.tablewrap{overflow-x:auto;max-width:100%;background:var(--panel);border:3px solid var(--line);border-radius:20px;padding:6px 10px}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:320px}
+th,td{padding:.45em .8em;border-bottom:2px solid var(--line);text-align:right}
+tr:last-child td{border-bottom:0}
+th:first-child,td:first-child{text-align:left}
+thead th{font-family:var(--display);font-weight:600;color:var(--muted)}
+td.total{font-family:var(--display);font-weight:700;font-size:1.15em}
+.tablewrap .chip{border:0;padding:0;background:none}
+.podium{display:flex;flex-direction:column;gap:10px;align-items:center}
+.review{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:720px}
+.review span{border:2px solid var(--line);background:var(--panel);border-radius:12px;padding:.3em .8em;font-weight:700}
+.review small{color:var(--muted);font-weight:400}
+.steal{display:flex;flex-direction:column;gap:12px;align-items:center;background:var(--panel);border:4px dashed var(--round);border-radius:24px;padding:16px 20px;max-width:720px}
+.steal .btn{border-color:var(--c)}
+
+/* Confettis */
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:20}
+.confetti i{position:absolute;top:-16px;width:10px;height:16px;border-radius:3px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(760deg)}}
+
+@media (max-width:640px){
+  .play{grid-template-columns:1fr;gap:16px}
+  .timer{flex-direction:row;justify-content:center;width:100%}
+  .bulb{width:44px;height:46px}
+  .glass{border-top-width:6px;border-bottom-width:6px;padding:3px 4px}
+  .secs{font-size:2.2em;min-width:2ch}
+  .gamecard{padding:20px 16px;border-radius:24px}
+}
+@media (prefers-reduced-motion: reduce){ .sand{transition:none} .gamecard{animation:none} .btn{transition:none} }
+</style>
+</head>
+<body style="margin:0">
+
+<div id="app"></div>
+
+<script>
+const DEFAULT_CARDS = `# mot ; étymologie ; mots de la même famille, interdits en manche I (séparés par des virgules)
+# Racine latine LOQUOR « parler »
+interlocuteur ; inter « entre » + loquor, locutus « parler » ; locuteur, élocution, allocution
+circonlocution ; circum « autour » + loquor « parler » : parler en tournant autour ; locution, élocution, allocution
+allocution ; ad « vers » + loquor « parler » : discours adressé à un public ; locution, élocution, interlocuteur
+élocution ; ē- (ex, « hors de ») + loquor « parler » : manière de s'exprimer ; éloquent, éloquence, locution
+ventriloque ; venter « ventre » + loquor « parler » ; ventriloquie, loquace, colloque
+éloquent ; ē- (ex, « hors de ») + loquor « parler » ; éloquence, éloquemment, élocution
+colloque ; cum « avec » + loquor « parler » ; loquace, éloquent, interlocuteur
+loquace ; loquax, de loquor « parler » ; loquacité, éloquent, colloque
+# Racine grecque LEG- / LOG- « choisir, dire » (logos : parole, raison)
+anthologie ; gr. anthos « fleur » + legein « cueillir, choisir » : recueil de textes choisis ; anthologique, éclectique, logique
+monologue ; gr. monos « seul » + logos « parole » ; monologuer, dialogue, prologue
+apologie ; gr. apo + logos : discours de défense ; apologiste, éloge, logique
+prologue ; gr. pro « avant » + logos « parole » ; épilogue, dialogue, monologue
+analogue ; gr. ana « selon » + logos « rapport, raison » : semblable ; analogie, logique, dialogue
+épilogue ; gr. epi « après » + logos « parole » ; épiloguer, prologue, dialogue
+dialogue ; gr. dia « à travers » + logos « parole » ; dialoguer, monologue, prologue
+syllogisme ; gr. syn « avec » + logos « raisonnement » : raisonnement en trois propositions ; syllogistique, logique, analogue
+éclectique ; gr. ek « hors de » + legein « choisir » : qui choisit de tous côtés ; éclectisme, anthologie, logique
+éloge ; gr. eulogia « bonne parole » (eu « bien » + logos) ; élogieux, apologie, logique
+logique ; gr. logikos, de logos « raison » ; logiquement, logicien, analogue
+logorrhée ; gr. logos « parole » + rhein « couler » ; logorrhéique, dialogue, monologue
+# Racine *bheH2 « déclarer » : latin fari, fama, fatum, fateor
+fable ; fabula « récit », de fari « parler » ; fabuleux, fabuliste, affabulateur
+fabuleux ; fabulosus, de fabula « récit » ; fable, fabuliste, affabulateur
+affabulateur ; ad + fabula « récit » + -teur ; affabuler, affabulation, fable
+affable ; ad + fari « parler » : à qui l'on peut parler ; affabilité, affablement, fable
+enfant ; in- « ne… pas » + fari « parler » : infans, « qui ne parle pas » ; enfance, enfantin, infantile
+fameux ; famosus, de fama « rumeur, réputation » ; famé, diffamer, infâme
+mal famé ; fama « rumeur, réputation » : qui a mauvaise réputation ; fameux, diffamer, infâme
+diffamatoire ; dis- « en tous sens » + fama « réputation » ; diffamer, diffamation, fameux
+fatal ; fatum « ce qui a été dit (par les dieux) : le destin » ; fatalité, fatalement, fatidique
+fatidique ; fatum « destin » + dicere « dire » : qui annonce le destin ; fatal, fatalité, fatalement
+confession ; cum + fateor « avouer » ; confesser, confesseur, profession
+profession (de foi) ; pro « devant » + fateor « déclarer » : déclarer publiquement ; professer, professeur, confession
+# Même racine en grec : phêmi « dire », phônê « voix », phasis « parole »
+prophétie ; gr. pro « avant » + phêmi « dire » ; prophète, prophétiser, prophétique
+aphone ; gr. a- privatif + phônê « voix » ; aphonie, téléphone, phonétique
+aphasique ; gr. a- privatif + phasis « parole » ; aphasie`;
+
+const ROUNDS = [
+  {num:'I', name:'Definitio', fr:'Définition', rule:"Faites deviner le mot en le définissant, sans le dire ni employer un mot de sa famille. Les synonymes sont permis."},
+  {num:'II', name:'Unum verbum', fr:'Un seul mot', rule:"Un seul mot pour faire deviner, pas un de plus. L'étymologie est indiquée sur la carte comme aide."},
+  {num:'III', name:'Pantomimus', fr:'Mime', rule:"Mimez le mot, sans un son ni un mot. Toute la classe se tait."}
+];
+const DEFAULT_TEAMS = ['Cicéron','Démosthène','Hortensius','Périclès','Caton','Isocrate'];
+const COLORS = ['var(--t1)','var(--t2)','var(--t3)','var(--t4)','var(--t5)','var(--t6)'];
+const LS = 'tempus-lapsum-v3';
+
+function loadSettings(){ try{ return JSON.parse(localStorage.getItem(LS)) || null }catch(e){ return null } }
+function saveSettings(){ try{ localStorage.setItem(LS, JSON.stringify(settings)) }catch(e){} }
+let settings = Object.assign({nTeams:4, names:DEFAULT_TEAMS.slice(), members:['','','','','',''], fixedOrator:false, seconds:40, steal:true, sound:true, cardsText:DEFAULT_CARDS}, loadSettings() || {});
+const CARDS_VERSION = 2; // cartes alignées sur la correction de la séance
+if(settings.cardsVersion !== CARDS_VERSION){ settings.cardsText = DEFAULT_CARDS; settings.cardsVersion = CARDS_VERSION }
+
+const app = document.getElementById('app');
+let G = null, tick = null, lastWhole = null, quitArmed = null, setupError = '';
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a }
+function parseCards(text){
+  return text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#')).map(l => {
+    const [word='', ety='', forbidden=''] = l.split(';').map(s => s.trim());
+    return {word, ety, forbidden, passes:0, missed:0};
+  }).filter(c => c.word);
+}
+function plural(n, w){ return n + ' ' + w + (n > 1 ? 's' : '') }
+const pre = name => /^[aeiouyhàâäéèêëîïôöûüœ]/i.test(name.trim()) ? "d'" : 'de ';
+const ofName = name => pre(name) + esc(name);
+const stepper = () => `<div class="stepper"><button class="btn small" data-act="secs" data-arg="-5" aria-label="Retirer 5 secondes">−</button><span class="val">${settings.seconds} s</span><button class="btn small" data-act="secs" data-arg="5" aria-label="Ajouter 5 secondes">+</button></div>`;
+function changeSecs(d){
+  settings.seconds = Math.min(180, Math.max(10, settings.seconds + d)); saveSettings();
+  if(G && G.phase === 'ready'){ G.seconds = settings.seconds; G.timeLeft = G.seconds }
+  render();
+}
+const parseMembers = s => (s || '').split(/[\n,;]+/).map(x => x.trim()).filter(Boolean);
+/* Orateur tournant : chaque élève fait deviner à son tour.
+   Orateur fixe : le premier nom de la liste fait deviner, les autres devinent à tour de rôle. */
+function rolesOf(i){
+  const t = G.teams[i], m = t.members || [], n = t.next || 0;
+  if(!m.length) return {orator:'', guesser:''};
+  if(G.fixed){ const rest = m.slice(1); return {orator:m[0], guesser: rest.length ? rest[n % rest.length] : ''} }
+  return {orator:m[n % m.length], guesser:''};
+}
+
+/* Son */
+let ac = null;
+function audio(){
+  if(!settings.sound) return null;
+  try{ ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if(ac.state === 'suspended') ac.resume(); }catch(e){ return null }
+  return ac;
+}
+function beep(f, d, type='sine', vol=.15, when=0){
+  const a = audio(); if(!a) return;
+  const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + when;
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .02);
+}
+const chime = () => { beep(660,.12); beep(990,.2,'sine',.12,.08) };
+const fanfare = () => { [523,659,784,1047].forEach((f, i) => beep(f,.25,'triangle',.14,i*.12)) };
+const gong = () => { beep(196,1.3,'triangle',.3); beep(147,1.5,'sine',.25,.05) };
+async function keepAwake(){ try{ await navigator.wakeLock?.request('screen') }catch(e){} }
+
+function confetti(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const box = document.createElement('div'); box.className = 'confetti';
+  const cols = ['--t1','--t2','--t3','--t4','--t5','--t6','--r2','--r3'];
+  for(let i = 0; i < 70; i++){
+    const p = document.createElement('i');
+    p.style.left = Math.random() * 100 + '%';
+    p.style.background = `var(${cols[i % cols.length]})`;
+    p.style.animationDuration = (1.6 + Math.random() * 1.4) + 's';
+    p.style.animationDelay = (Math.random() * .5) + 's';
+    p.style.transform = `rotate(${Math.random() * 360}deg)`;
+    box.appendChild(p);
+  }
+  document.body.appendChild(box);
+  setTimeout(() => box.remove(), 3600);
+}
+
+/* Partie */
+function newGame(){
+  const cards = parseCards(settings.cardsText);
+  if(cards.length < 3){ setupError = 'Il faut au moins 3 cartes pour jouer.'; render(); return }
+  setupError = '';
+  const teams = settings.names.slice(0, settings.nTeams).map((n, i) => ({name: n.trim() || DEFAULT_TEAMS[i], color: COLORS[i], members: parseMembers(settings.members[i]), next: 0}));
+  G = {teams, scores: teams.map(() => [0,0,0]), cards, round:0, team:0, seconds:settings.seconds,
+       deck: shuffle(cards.map((_, i) => i)), fixed: !!settings.fixedOrator, phase:'ready', newRound:true, paused:false, timeLeft:settings.seconds, turnPts:0};
+  render();
+}
+function startTurn(){
+  audio(); keepAwake();
+  Object.assign(G, {phase:'play', paused:false, timeLeft:G.seconds, turnPts:0, stealPending:false, stealResult:null, reason:null});
+  const roles = rolesOf(G.team);
+  G.speaker = roles.orator; G.guesser = roles.guesser;
+  if(G.fixed ? roles.guesser : roles.orator) G.teams[G.team].next = (G.teams[G.team].next || 0) + 1;
+  lastWhole = null; render(); runTimer();
+}
+function runTimer(){ clearInterval(tick); G.endAt = performance.now() + G.timeLeft * 1000; tick = setInterval(onTick, 100) }
+function stopTimer(){ clearInterval(tick); tick = null }
+function onTick(){
+  G.timeLeft = Math.max(0, (G.endAt - performance.now()) / 1000);
+  updateClock();
+  const w = Math.ceil(G.timeLeft);
+  if(w !== lastWhole){ lastWhole = w; if(w <= 5 && w > 0) beep(880,.07,'square',.06) }
+  if(G.timeLeft <= 0) timeUp();
+}
+function found(){
+  if(G.phase !== 'play' || G.paused) return;
+  G.scores[G.team][G.round]++; G.turnPts++; G.deck.shift(); chime();
+  if(!G.deck.length){ stopTimer(); G.phase = 'turnEnd'; G.reason = 'empty'; render(); confetti(); return }
+  render();
+}
+function pass(){
+  if(G.phase !== 'play' || G.paused || G.deck.length < 2) return;
+  G.cards[G.deck[0]].passes++; G.deck.push(G.deck.shift()); render();
+}
+function timeUp(){
+  stopTimer(); gong();
+  G.cards[G.deck[0]].missed++;
+  G.phase = 'turnEnd'; G.reason = 'time';
+  if(settings.steal && G.teams.length > 1) G.stealPending = true;
+  else G.deck.push(G.deck.shift());
+  render();
+}
+function steal(i){
+  G.stealPending = false;
+  if(i >= 0){ G.scores[i][G.round]++; G.deck.shift(); G.stealResult = G.teams[i].name; chime(); render(); confetti(); return }
+  G.deck.push(G.deck.shift()); G.stealResult = ''; render();
+}
+function nextTurn(){
+  if(!G.deck.length){ G.phase = 'roundEnd'; render(); return }
+  G.team = (G.team + 1) % G.teams.length; G.phase = 'ready'; G.newRound = false; render();
+}
+function nextRound(){
+  G.round++;
+  if(G.round > 2){ G.phase = 'final'; render(); fanfare(); confetti(); return }
+  G.deck = shuffle(G.cards.map((_, i) => i));
+  G.team = (G.team + 1) % G.teams.length; G.phase = 'ready'; G.newRound = true; render();
+}
+function togglePause(){
+  if(!G || G.phase !== 'play') return;
+  G.paused = !G.paused;
+  if(G.paused){ G.timeLeft = Math.max(0, (G.endAt - performance.now()) / 1000); stopTimer() }
+  render();
+  if(!G.paused) runTimer();
+}
+function quit(btn){
+  if(quitArmed){ clearTimeout(quitArmed); quitArmed = null; stopTimer(); G = null; render(); return }
+  btn.textContent = 'Confirmer : quitter'; btn.classList.add('armed');
+  quitArmed = setTimeout(() => { quitArmed = null; btn.textContent = 'Quitter la partie'; btn.classList.remove('armed') }, 3000);
+}
+
+/* Affichage */
+const total = i => G.scores[i].reduce((a, b) => a + b, 0);
+const roundTag = r => `<span class="pill">Manche ${r.num} · ${r.name}</span>`;
+function masthead(){
+  const inGame = !!G;
+  return `<header class="masthead">
+    <div class="brand"><h1>Tempus <span>lapsum</span></h1><span class="sticker">Latin 3e</span><p>Les mots de la parole · <i>Arma togae cedant ?</i></p></div>
+    <div class="tools">
+      <button class="btn small" data-act="sound" aria-pressed="${settings.sound}">Son : ${settings.sound ? 'oui' : 'non'}</button>
+      ${inGame && G.phase === 'play' ? `<button class="btn small" data-act="pause">${G.paused ? 'Reprendre' : 'Pause'}</button>` : ''}
+      ${inGame ? `<button class="btn small" data-act="quit">Quitter la partie</button>` : ''}
+    </div>
+  </header>`;
+}
+function scoreChips(){
+  return `<div class="scores" aria-label="Scores">${G.teams.map((t, i) => `<span class="chip ${i === G.team && ['ready','play','turnEnd'].includes(G.phase) ? 'active' : ''}" style="--c:${t.color}"><span class="dot"></span>Équipe ${ofName(t.name)} <b>${total(i)}</b></span>`).join('')}</div>`;
+}
+function scoreTable(){
+  return `<div class="tablewrap"><table><thead><tr><th>Équipe</th><th>I</th><th>II</th><th>III</th><th>Total</th></tr></thead><tbody>
+    ${G.teams.map((t, i) => `<tr><td><span class="chip" style="--c:${t.color}"><span class="dot"></span>Équipe ${ofName(t.name)}</span></td>${G.scores[i].map((s, r) => `<td>${r <= G.round ? s : '–'}</td>`).join('')}<td class="total">${total(i)}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function viewSetup(){
+  const n = parseCards(settings.cardsText).length;
+  return `${masthead()}
+  <div class="setup">
+    <section class="panel">
+      <h2>Trois manches, les mêmes cartes</h2>
+      <div class="rounds">${ROUNDS.map((r, i) => `<div class="round"><span class="badge" style="--rc:var(--r${i + 1});--orc:var(--on-r${i + 1})">${r.num}</span><h3>${r.name} · ${r.fr}</h3><p>${esc(r.rule)}</p></div>`).join('')}</div>
+      <p class="hint">À chaque tour, un nouvel orateur fait deviner un maximum de mots à son équipe avant que le sablier ne se vide. Quand toutes les cartes sont trouvées, on passe à la manche suivante.</p>
+    </section>
+    <section class="panel">
+      <h2>Équipes</h2>
+      <div class="field"><span class="lbl">Nombre d'équipes</span>
+        <div class="seg">${[2,3,4,5,6].map(k => `<button data-act="nteams" data-arg="${k}" aria-pressed="${settings.nTeams === k}">${k}</button>`).join('')}</div>
+        <span class="hint">Pour 23 élèves : 4 équipes de 5 ou 6.</span></div>
+      ${settings.names.slice(0, settings.nTeams).map((nm, i) => `<div class="teamrow" style="--c:${COLORS[i]}"><span class="dot"></span><span class="prefix" id="pre-${i}">Équipe ${pre(nm)}</span><input type="text" id="team-${i}" data-team="${i}" value="${esc(nm)}" aria-label="Orateur de l'équipe ${i + 1}" maxlength="24"></div><textarea class="members" id="members-${i}" data-members="${i}" rows="2" placeholder="Élèves de l'équipe (facultatif) : un nom par ligne" aria-label="Élèves de l'équipe ${i + 1}">${esc(settings.members[i] || '')}</textarea>`).join('')}
+      <div class="field"><span class="lbl">Qui change à chaque tour ?</span>
+        <div class="seg"><button data-act="orator" data-arg="0" aria-pressed="${!settings.fixedOrator}">L'orateur</button><button data-act="orator" data-arg="1" aria-pressed="${!!settings.fixedOrator}">Celui qui devine</button></div>
+        <span class="hint">${settings.fixedOrator
+          ? "Orateur fixe : le <b>premier nom</b> de chaque liste fait deviner pendant toute la partie ; les autres élèves devinent chacun leur tour."
+          : "Chaque élève de la liste fait deviner à son tour ; toute l'équipe devine."} Les noms restent sur cet appareil.</span></div>
+      <div class="field"><span class="lbl">Durée d'un tour</span>
+        ${stepper()}<span class="hint">De 10 à 180 secondes, par pas de 5. On peut aussi la changer entre deux tours.</span></div>
+      <label class="check"><input type="checkbox" id="opt-steal" ${settings.steal ? 'checked' : ''}><span><b>Vol autorisé</b><br><span class="hint">Si le temps s'arrête sur un mot, une autre équipe peut le trouver pour 1 point.</span></span></label>
+    </section>
+    <section class="panel">
+      <h2>Cartes <span class="meta" id="cardcount">(${plural(n, 'carte')})</span></h2>
+      <details>
+        <summary>Voir ou modifier les cartes</summary>
+        <div class="field">
+          <textarea id="cards" spellcheck="false" aria-label="Liste des cartes">${esc(settings.cardsText)}</textarea>
+          <span class="hint">Une carte par ligne : <b>mot ; étymologie ; mots de la même famille</b>. Ces mots sont interdits en manche I ; les synonymes restent permis. Les lignes qui commencent par # sont ignorées.</span>
+          <div><button class="btn small" data-act="resetcards">Rétablir les cartes de la séance</button></div>
+        </div>
+      </details>
+      <p class="hint">Les cartes reprennent la séance « Et encore des paroles que tu sèmes au vent » : familles de <i>loquor</i>, <i>logos</i>, <i>fari / fama / fateor</i> et <i>phêmi / phônê</i>.</p>
+    </section>
+  </div>
+  <div class="start">
+    <button class="btn primary big" data-act="start">Commencer la partie</button>
+    ${setupError ? `<span class="error">${esc(setupError)}</span>` : `<span class="hint">Raccourcis en jeu : Espace = trouvé · → = passer · Échap = pause.</span>`}
+  </div>`;
+}
+
+function viewReady(){
+  const r = ROUNDS[G.round], t = G.teams[G.team];
+  return `${masthead()}${scoreChips()}
+  <main class="stage">
+    ${G.newRound ? `<div class="rulebox"><span class="pill">Nouvelle manche</span><h2>Manche ${r.num} · ${r.name}</h2><p class="rule">${esc(r.rule)}</p></div>` : roundTag(r)}
+    <h2 class="lead" style="--c:${t.color}">Au tour de <span>l'équipe ${ofName(t.name)}</span></h2>
+    ${(() => {
+      const ro = rolesOf(G.team);
+      if(!ro.orator) return `<p class="rule">${G.fixed ? "L'orateur prend l'iPad, un nouvel élève devine." : "Un nouvel orateur prend l'iPad."} Les autres équipes se taisent.</p>`;
+      const skip = G.fixed ? (ro.guesser ? 'Élève absent : devin suivant' : '') : 'Élève absent : orateur suivant';
+      return `<p class="speaker">Orateur : <b>${esc(ro.orator)}</b>${ro.guesser ? ` · Devine : <b>${esc(ro.guesser)}</b>` : ''}</p>
+        <p class="rule">${esc(ro.orator)} prend l'iPad${ro.guesser ? ', ' + esc(ro.guesser) + ' devine' : ''}. Les autres équipes se taisent.</p>
+        ${skip ? `<button class="btn small" data-act="skipspeaker">${skip}</button>` : ''}`;
+    })()}
+    ${G.newRound ? '' : `<p class="rule">${esc(r.rule)}</p>`}
+    <button class="btn primary big" data-act="go">Retourner le sablier</button>
+    <p class="meta">${plural(G.deck.length, 'carte')} à trouver · durée du tour :</p>${stepper()}
+  </main>`;
+}
+
+function viewPlay(){
+  const r = ROUNDS[G.round], c = G.cards[G.deck[0]];
+  let info = '';
+  if(G.round === 0) info = `${c.forbidden ? `<p class="forbid"><b>Famille interdite :</b> ${esc(c.word)}, ${esc(c.forbidden)}</p><p class="hint">Les synonymes sont permis.</p>` : ''}${c.ety ? `<p class="ety soft">Aide : ${esc(c.ety)}</p>` : ''}`;
+  if(G.round === 1) info = `<p class="forbid"><b>Un seul mot !</b></p>${c.ety ? `<p class="ety">Aide : ${esc(c.ety)}</p>` : ''}`;
+  if(G.round === 2) info = `<p class="forbid">Pas un son, pas un mot.</p>`;
+  return `${masthead()}${scoreChips()}
+  <main class="play ${G.paused ? 'paused' : ''}">
+    <div class="timer"><div class="glass" id="clep"><div class="bulb top"><div class="sand"></div></div><div class="bulb bot"><div class="sand"></div></div></div><div class="secs" id="secs"></div></div>
+    <div class="cardwrap">
+      ${roundTag(r)}
+      <div class="gamecard">
+        ${G.paused ? `<p class="word">Pause</p><p class="forbid">Le mot est caché.</p>` : `<p class="word">${esc(c.word)}</p>${info}`}
+      </div>
+      <div class="actions">
+        ${G.paused ? `<button class="btn primary big" data-act="pause">Reprendre</button>`
+          : `<button class="btn big" data-act="pass" ${G.deck.length < 2 ? 'disabled' : ''}>Passer</button><button class="btn found big" data-act="found">Trouvé !</button>`}
+      </div>
+      <p class="meta">Équipe ${ofName(G.teams[G.team].name)}${G.speaker ? ' · orateur : ' + esc(G.speaker) : ''}${G.guesser ? ' · devine : ' + esc(G.guesser) : ''} : +${G.turnPts} ce tour · ${plural(G.deck.length, 'carte')} restante${G.deck.length > 1 ? 's' : ''}</p>
+      <p class="keys">Espace = trouvé · → = passer · Échap = pause</p>
+    </div>
+  </main>`;
+}
+
+function viewTurnEnd(){
+  const t = G.teams[G.team];
+  const title = G.reason === 'empty' ? 'Toutes les cartes sont trouvées !' : 'Tempus lapsum est !';
+  let stealBlock = '';
+  if(G.stealPending){
+    const w = G.cards[G.deck[0]].word;
+    stealBlock = `<div class="steal"><span class="pill">Vol</span><p class="rule">Le mot en cours était <b>${esc(w)}</b>. La première équipe qui lève la main peut tenter sa chance.</p>
+      <div class="actions">${G.teams.map((tm, i) => i === G.team ? '' : `<button class="btn" data-act="steal" data-arg="${i}" style="--c:${tm.color}">L'équipe ${ofName(tm.name)} l'a trouvé</button>`).join('')}
+      <button class="btn" data-act="steal" data-arg="-1">Personne</button></div></div>`;
+  } else if(G.stealResult){
+    stealBlock = `<p class="rule">Vol réussi : +1 pour <b>l'équipe ${ofName(G.stealResult)}</b>.</p>`;
+  }
+  const deckDone = !G.deck.length;
+  return `${masthead()}${scoreChips()}
+  <main class="stage">
+    ${roundTag(ROUNDS[G.round])}
+    <h2 class="lead">${title}</h2>
+    <p class="rule"><b>L'équipe ${ofName(t.name)}</b> marque ${plural(G.turnPts, 'point')} ce tour${G.speaker ? ', avec ' + esc(G.speaker) + ' comme orateur' : ''}${G.guesser ? ' et ' + esc(G.guesser) + ' qui devinait' : ''}.</p>
+    ${stealBlock}
+    ${G.stealPending ? '' : `<button class="btn primary big" data-act="next">${deckDone ? 'Voir la fin de la manche' : "Au tour de l'équipe " + ofName(G.teams[(G.team + 1) % G.teams.length].name)}</button>
+      <p class="meta">${plural(G.deck.length, 'carte')} encore à trouver</p>`}
+  </main>`;
+}
+
+function viewRoundEnd(){
+  const r = ROUNDS[G.round], nx = ROUNDS[G.round + 1];
+  return `${masthead()}${scoreChips()}
+  <main class="stage">
+    <span class="pill">Fin de la manche ${r.num}</span>
+    <h2 class="lead">${r.name} : terminée</h2>
+    ${scoreTable()}
+    ${nx ? `<div class="rulebox"><span class="pill">Ensuite</span><h2>Manche ${nx.num} · ${nx.name}</h2><p class="rule">${esc(nx.rule)}</p></div>
+      <button class="btn primary big" data-act="nextround">Commencer la manche ${nx.num}</button>`
+         : `<button class="btn primary big" data-act="nextround">Voir le classement</button>`}
+  </main>`;
+}
+
+function viewFinal(){
+  const ranked = G.teams.map((t, i) => ({t, i, s: total(i)})).sort((a, b) => b.s - a.s);
+  const best = ranked[0].s, winners = ranked.filter(x => x.s === best);
+  const hard = G.cards.map(c => ({c, n: c.passes + c.missed})).filter(x => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 8);
+  return `${masthead()}
+  <main class="stage">
+    <span class="pill">Finis !</span>
+    <h2 class="lead" style="--c:${winners[0].t.color}">${winners.length > 1 ? 'Égalité entre les équipes ' + winners.map(w => `<span style="--c:${w.t.color}">${ofName(w.t.name)}</span>`).join(', ').replace(/, (?=[^,]*$)/, ' et ') : `Victoire de <span>l'équipe ${ofName(winners[0].t.name)}</span>`}</h2>
+    ${scoreTable()}
+    <div class="podium"><span class="pill">Cartes à revoir au prochain rituel</span>
+      ${hard.length ? `<div class="review">${hard.map(x => `<span>${esc(x.c.word)} <small>${x.c.passes ? plural(x.c.passes, 'passe') : ''}${x.c.passes && x.c.missed ? ' · ' : ''}${x.c.missed ? x.c.missed + ' fin de temps' : ''}</small></span>`).join('')}</div>`
+                   : `<p class="rule">Aucune carte passée : tout le lexique est acquis.</p>`}
+    </div>
+    <div class="actions"><button class="btn primary big" data-act="replay">Rejouer avec les mêmes équipes</button><button class="btn big" data-act="tosetup">Modifier les réglages</button></div>
+  </main>`;
+}
+
+function updateClock(){
+  const clep = document.getElementById('clep'), secs = document.getElementById('secs');
+  if(!clep || !G) return;
+  clep.style.setProperty('--lvl', (G.timeLeft / G.seconds * 100).toFixed(2) + '%');
+  clep.classList.toggle('urgent', G.timeLeft <= 10);
+  secs.textContent = Math.ceil(G.timeLeft);
+}
+
+function render(){
+  if(quitArmed){ clearTimeout(quitArmed); quitArmed = null }
+  app.dataset.round = G && G.phase !== 'final' ? G.round + 1 : 1;
+  if(!G) app.innerHTML = viewSetup();
+  else app.innerHTML = ({ready:viewReady, play:viewPlay, turnEnd:viewTurnEnd, roundEnd:viewRoundEnd, final:viewFinal})[G.phase]();
+  updateClock();
+}
+
+/* Événements */
+app.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if(!b) return;
+  const arg = b.dataset.arg;
+  switch(b.dataset.act){
+    case 'sound': settings.sound = !settings.sound; saveSettings(); if(settings.sound) audio(); render(); break;
+    case 'nteams': settings.nTeams = +arg; saveSettings(); render(); break;
+    case 'orator': settings.fixedOrator = arg === '1'; saveSettings(); render(); break;
+    case 'secs': changeSecs(+arg); break;
+    case 'resetcards': settings.cardsText = DEFAULT_CARDS; saveSettings(); render(); document.querySelector('details')?.setAttribute('open', ''); break;
+    case 'start': newGame(); break;
+    case 'go': startTurn(); break;
+    case 'skipspeaker': G.teams[G.team].next = (G.teams[G.team].next || 0) + 1; render(); break;
+    case 'found': found(); break;
+    case 'pass': pass(); break;
+    case 'pause': togglePause(); break;
+    case 'steal': steal(+arg); break;
+    case 'next': nextTurn(); break;
+    case 'nextround': nextRound(); break;
+    case 'replay': newGame(); break;
+    case 'tosetup': G = null; render(); break;
+    case 'quit': quit(b); break;
+  }
+});
+app.addEventListener('input', e => {
+  const t = e.target;
+  if(t.dataset.team !== undefined){
+    settings.names[+t.dataset.team] = t.value; saveSettings();
+    const p = document.getElementById('pre-' + t.dataset.team); if(p) p.textContent = 'Équipe ' + pre(t.value);
+  }
+  if(t.id === 'cards'){ settings.cardsText = t.value; saveSettings(); const el = document.getElementById('cardcount'); if(el) el.textContent = '(' + plural(parseCards(t.value).length, 'carte') + ')' }
+  if(t.id === 'opt-steal'){ settings.steal = t.checked; saveSettings() }
+  if(t.dataset.members !== undefined){ settings.members[+t.dataset.members] = t.value; saveSettings() }
+});
+document.addEventListener('keydown', e => {
+  if(!G) return;
+  const t = e.target;
+  if(t.matches && t.matches('input,textarea,select')) return;
+  const go = e.key === ' ' || e.key === 'Enter';
+  if(go && t.tagName === 'BUTTON') return;
+  if(G.phase === 'play'){
+    if(e.key === 'Escape'){ e.preventDefault(); togglePause(); return }
+    if(G.paused) return;
+    if(go){ e.preventDefault(); found() }
+    else if(e.key === 'ArrowRight' || e.key.toLowerCase() === 'p'){ e.preventDefault(); pass() }
+  } else if(G.phase === 'ready' && go){ e.preventDefault(); startTurn() }
+});
+
+/* Conserver la partie en cours lors d'une mise à jour de la page */
+window.claude?.hot?.snapshot?.(() => ({G}));
+function boot(data){
+  if(data && data.G){ G = data.G; if(G.phase === 'play'){ G.paused = true } }
+  render();
+}
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
