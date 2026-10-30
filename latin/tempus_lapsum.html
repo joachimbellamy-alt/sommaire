@@ -182,46 +182,46 @@ td.total{font-family:var(--display);font-weight:700;font-size:1.15em}
 <div id="app"></div>
 
 <script>
-const DEFAULT_CARDS = `# mot ; étymologie ; mots de la même famille, interdits en manche I (séparés par des virgules)
+const DEFAULT_CARDS = `# mot ; étymologie (affichée comme aide en manche II)
 # Racine latine LOQUOR « parler »
-interlocuteur ; inter « entre » + loquor, locutus « parler » ; locuteur, élocution, allocution
-circonlocution ; circum « autour » + loquor « parler » : parler en tournant autour ; locution, élocution, allocution
-allocution ; ad « vers » + loquor « parler » : discours adressé à un public ; locution, élocution, interlocuteur
-élocution ; ē- (ex, « hors de ») + loquor « parler » : manière de s'exprimer ; éloquent, éloquence, locution
-ventriloque ; venter « ventre » + loquor « parler » ; ventriloquie, loquace, colloque
-éloquent ; ē- (ex, « hors de ») + loquor « parler » ; éloquence, éloquemment, élocution
-colloque ; cum « avec » + loquor « parler » ; loquace, éloquent, interlocuteur
-loquace ; loquax, de loquor « parler » ; loquacité, éloquent, colloque
+interlocuteur ; inter « entre » + loquor, locutus « parler »
+circonlocution ; circum « autour » + loquor « parler » : parler en tournant autour
+allocution ; ad « vers » + loquor « parler » : discours adressé à un public
+élocution ; ē- (ex, « hors de ») + loquor « parler » : manière de s'exprimer
+ventriloque ; venter « ventre » + loquor « parler »
+éloquent ; ē- (ex, « hors de ») + loquor « parler »
+colloque ; cum « avec » + loquor « parler »
+loquace ; loquax, de loquor « parler »
 # Racine grecque LEG- / LOG- « choisir, dire » (logos : parole, raison)
-anthologie ; gr. anthos « fleur » + legein « cueillir, choisir » : recueil de textes choisis ; anthologique, éclectique, logique
-monologue ; gr. monos « seul » + logos « parole » ; monologuer, dialogue, prologue
-apologie ; gr. apo + logos : discours de défense ; apologiste, éloge, logique
-prologue ; gr. pro « avant » + logos « parole » ; épilogue, dialogue, monologue
-analogue ; gr. ana « selon » + logos « rapport, raison » : semblable ; analogie, logique, dialogue
-épilogue ; gr. epi « après » + logos « parole » ; épiloguer, prologue, dialogue
-dialogue ; gr. dia « à travers » + logos « parole » ; dialoguer, monologue, prologue
-syllogisme ; gr. syn « avec » + logos « raisonnement » : raisonnement en trois propositions ; syllogistique, logique, analogue
-éclectique ; gr. ek « hors de » + legein « choisir » : qui choisit de tous côtés ; éclectisme, anthologie, logique
-éloge ; gr. eulogia « bonne parole » (eu « bien » + logos) ; élogieux, apologie, logique
-logique ; gr. logikos, de logos « raison » ; logiquement, logicien, analogue
-logorrhée ; gr. logos « parole » + rhein « couler » ; logorrhéique, dialogue, monologue
+anthologie ; gr. anthos « fleur » + legein « cueillir, choisir » : recueil de textes choisis
+monologue ; gr. monos « seul » + logos « parole »
+apologie ; gr. apo + logos : discours de défense
+prologue ; gr. pro « avant » + logos « parole »
+analogue ; gr. ana « selon » + logos « rapport, raison » : semblable
+épilogue ; gr. epi « après » + logos « parole »
+dialogue ; gr. dia « à travers » + logos « parole »
+syllogisme ; gr. syn « avec » + logos « raisonnement » : raisonnement en trois propositions
+éclectique ; gr. ek « hors de » + legein « choisir » : qui choisit de tous côtés
+éloge ; gr. eulogia « bonne parole » (eu « bien » + logos)
+logique ; gr. logikos, de logos « raison »
+logorrhée ; gr. logos « parole » + rhein « couler »
 # Racine *bheH2 « déclarer » : latin fari, fama, fatum, fateor
-fable ; fabula « récit », de fari « parler » ; fabuleux, fabuliste, affabulateur
-fabuleux ; fabulosus, de fabula « récit » ; fable, fabuliste, affabulateur
-affabulateur ; ad + fabula « récit » + -teur ; affabuler, affabulation, fable
-affable ; ad + fari « parler » : à qui l'on peut parler ; affabilité, affablement, fable
-enfant ; in- « ne… pas » + fari « parler » : infans, « qui ne parle pas » ; enfance, enfantin, infantile
-fameux ; famosus, de fama « rumeur, réputation » ; famé, diffamer, infâme
-mal famé ; fama « rumeur, réputation » : qui a mauvaise réputation ; fameux, diffamer, infâme
-diffamatoire ; dis- « en tous sens » + fama « réputation » ; diffamer, diffamation, fameux
-fatal ; fatum « ce qui a été dit (par les dieux) : le destin » ; fatalité, fatalement, fatidique
-fatidique ; fatum « destin » + dicere « dire » : qui annonce le destin ; fatal, fatalité, fatalement
-confession ; cum + fateor « avouer » ; confesser, confesseur, profession
-profession (de foi) ; pro « devant » + fateor « déclarer » : déclarer publiquement ; professer, professeur, confession
+fable ; fabula « récit », de fari « parler »
+fabuleux ; fabulosus, de fabula « récit »
+affabulateur ; ad + fabula « récit » + -teur
+affable ; ad + fari « parler » : à qui l'on peut parler
+enfant ; in- « ne… pas » + fari « parler » : infans, « qui ne parle pas »
+fameux ; famosus, de fama « rumeur, réputation »
+mal famé ; fama « rumeur, réputation » : qui a mauvaise réputation
+diffamatoire ; dis- « en tous sens » + fama « réputation »
+fatal ; fatum « ce qui a été dit (par les dieux) : le destin »
+fatidique ; fatum « destin » + dicere « dire » : qui annonce le destin
+confession ; cum + fateor « avouer »
+profession (de foi) ; pro « devant » + fateor « déclarer » : déclarer publiquement
 # Même racine en grec : phêmi « dire », phônê « voix », phasis « parole »
-prophétie ; gr. pro « avant » + phêmi « dire » ; prophète, prophétiser, prophétique
-aphone ; gr. a- privatif + phônê « voix » ; aphonie, téléphone, phonétique
-aphasique ; gr. a- privatif + phasis « parole » ; aphasie`;
+prophétie ; gr. pro « avant » + phêmi « dire »
+aphone ; gr. a- privatif + phônê « voix »
+aphasique ; gr. a- privatif + phasis « parole »`;
 
 const ROUNDS = [
   {num:'I', name:'Definitio', fr:'Définition', rule:"Faites deviner le mot en le définissant, sans le dire ni employer un mot de sa famille. Les synonymes sont permis."},
@@ -235,7 +235,7 @@ const LS = 'tempus-lapsum-v3';
 function loadSettings(){ try{ return JSON.parse(localStorage.getItem(LS)) || null }catch(e){ return null } }
 function saveSettings(){ try{ localStorage.setItem(LS, JSON.stringify(settings)) }catch(e){} }
 let settings = Object.assign({nTeams:4, names:DEFAULT_TEAMS.slice(), members:['','','','','',''], fixedOrator:false, seconds:40, steal:true, sound:true, cardsText:DEFAULT_CARDS}, loadSettings() || {});
-const CARDS_VERSION = 2; // cartes alignées sur la correction de la séance
+const CARDS_VERSION = 3; // cartes alignées sur la correction de la séance
 if(settings.cardsVersion !== CARDS_VERSION){ settings.cardsText = DEFAULT_CARDS; settings.cardsVersion = CARDS_VERSION }
 
 const app = document.getElementById('app');
@@ -430,7 +430,7 @@ function viewSetup(){
         <summary>Voir ou modifier les cartes</summary>
         <div class="field">
           <textarea id="cards" spellcheck="false" aria-label="Liste des cartes">${esc(settings.cardsText)}</textarea>
-          <span class="hint">Une carte par ligne : <b>mot ; étymologie ; mots de la même famille</b>. Ces mots sont interdits en manche I ; les synonymes restent permis. Les lignes qui commencent par # sont ignorées.</span>
+          <span class="hint">Une carte par ligne : <b>mot ; étymologie</b>. L'étymologie n'apparaît qu'en manche II, comme aide. Les lignes qui commencent par # sont ignorées.</span>
           <div><button class="btn small" data-act="resetcards">Rétablir les cartes de la séance</button></div>
         </div>
       </details>
@@ -466,7 +466,7 @@ function viewReady(){
 function viewPlay(){
   const r = ROUNDS[G.round], c = G.cards[G.deck[0]];
   let info = '';
-  if(G.round === 0) info = `${c.forbidden ? `<p class="forbid"><b>Famille interdite :</b> ${esc(c.word)}, ${esc(c.forbidden)}</p><p class="hint">Les synonymes sont permis.</p>` : ''}${c.ety ? `<p class="ety soft">Aide : ${esc(c.ety)}</p>` : ''}`;
+  if(G.round === 0) info = `<p class="forbid">Ni le mot, ni un mot de sa famille.</p><p class="hint">Les synonymes sont permis.</p>`;
   if(G.round === 1) info = `<p class="forbid"><b>Un seul mot !</b></p>${c.ety ? `<p class="ety">Aide : ${esc(c.ety)}</p>` : ''}`;
   if(G.round === 2) info = `<p class="forbid">Pas un son, pas un mot.</p>`;
   return `${masthead()}${scoreChips()}
