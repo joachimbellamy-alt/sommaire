@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arbre *leg- interactif</title>
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  html, body { margin: 0; padding: 0; background: #ffffff; }
+  svg { display: block; width: 210mm; height: 297mm; margin: 0 auto; }
+  text { font-family: "Avenir Next", "Avenir", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+  .greek { font-family: "Georgia", "Times New Roman", serif; }
+  .title { font-weight: 700; font-size: 22px; letter-spacing: 1.5px; }
+  .word { font-weight: 700; font-size: 18px; fill: #2b2b2b; }
+  .gloss { font-size: 19px; fill: #5a5a5a; }
+  .gr { fill: #7b5ea7; }
+  .la { fill: #d6336c; }
+  .branch { fill: none; stroke: #8f5c31; stroke-linecap: round; }
+
+  @media screen {
+    body { background: #f4f1ea; padding: 12px 16px 32px; }
+    svg { width: 100%; max-width: 840px; height: auto; border-radius: 18px; background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,.08); }
+  }
+  .hint { max-width: 840px; margin: 0 auto 10px; font: 600 17px "Avenir Next", "Segoe UI", Arial, sans-serif; color: #4a4a4a; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .hint button { font: inherit; font-size: 14px; border: 1px solid #ccc; background: #fff; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+  .w { cursor: pointer; transition: fill .15s; outline: none; }
+  .w:hover, .w:focus { fill: #000; text-decoration: underline; }
+  .w.seen { fill: #2e7d32; }
+  .w.active { fill: #000; text-decoration: underline; }
+  #pop { position: absolute; display: none; max-width: 300px; background: #fff; border-radius: 14px; padding: 12px 14px 12px; box-shadow: 0 8px 30px rgba(0,0,0,.22); font: 15px/1.45 "Avenir Next", "Segoe UI", Arial, sans-serif; color: #333; z-index: 10; border-top: 5px solid var(--c); }
+  #pop h3 { margin: 0 0 6px; font-size: 18px; color: var(--c); }
+  #pop .x { position: absolute; top: 4px; right: 8px; border: 0; background: none; font-size: 20px; cursor: pointer; color: #999; }
+  @media print { .hint, #pop { display: none !important; } .w.seen { fill: #2b2b2b; } }
+</style>
+</head>
+<body>
+<div class="hint"><a href="index.html" style="color:#7b5ea7;text-decoration:none">← Espace Latin</a><span>👆 Clique sur un mot pour découvrir sa définition.</span><span id="count"></span><button id="reset">Recommencer</button></div>
+<div id="wrap" style="position:relative;max-width:840px;margin:0 auto">
+<svg viewBox="0 0 840 1188" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="leaf" cx="45%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#d9f0a3"/>
+      <stop offset="0.55" stop-color="#a6d96a"/>
+      <stop offset="1" stop-color="#6fb43f"/>
+    </radialGradient>
+    <radialGradient id="leafU" gradientUnits="userSpaceOnUse" cx="380" cy="300" r="560">
+      <stop offset="0" stop-color="#d9f0a3"/>
+      <stop offset="0.55" stop-color="#a6d96a"/>
+      <stop offset="1" stop-color="#6fb43f"/>
+    </radialGradient>
+    <linearGradient id="bark" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#7a4a26"/>
+      <stop offset="0.5" stop-color="#a0673a"/>
+      <stop offset="1" stop-color="#7a4a26"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#9a6236"/>
+      <stop offset="1" stop-color="#6e4220"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#2f4a1a" flood-opacity="0.25"/>
+    </filter>
+    <pattern id="leaves" width="46" height="46" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+      <ellipse cx="12" cy="12" rx="9" ry="4" fill="#ffffff" opacity="0.13"/>
+      <ellipse cx="35" cy="34" rx="8" ry="3.5" fill="#3d7a1f" opacity="0.10"/>
+    </pattern>
+    <path id="arcGr" d="M 40 92 Q 215 -24 390 92"/>
+    <path id="arcLa" d="M 450 92 Q 625 -24 800 92"/>
+  </defs>
+
+  <!-- Tronc et sol -->
+  <path d="M 120 1012 C 330 1004, 393 962, 396 840 L 398 860 L 442 860 L 444 840 C 447 962, 510 1004, 720 1012 Z" fill="#8f5c31"/>
+  <rect x="48" y="1008" width="744" height="160" rx="22" fill="url(#ground)"/>
+  <path d="M 140 1030 C 230 1060, 260 1110, 250 1160 M 690 1030 C 610 1070, 600 1120, 620 1160" fill="none" stroke="#5c3518" stroke-width="2" opacity="0.5"/>
+
+  <!-- Feuillage unique -->
+  <clipPath id="canopy">
+    <ellipse cx="420" cy="460" rx="400" ry="300"/>
+    <circle cx="160" cy="260" r="140"/>
+    <circle cx="680" cy="260" r="140"/>
+    <circle cx="330" cy="200" r="110"/>
+    <circle cx="510" cy="200" r="110"/>
+    <circle cx="420" cy="230" r="120"/>
+    <circle cx="120" cy="520" r="110"/>
+    <circle cx="720" cy="520" r="110"/>
+    <circle cx="250" cy="700" r="120"/>
+    <circle cx="590" cy="700" r="120"/>
+    <circle cx="420" cy="710" r="110"/>
+  </clipPath>
+  <rect x="0" y="60" width="840" height="800" fill="url(#leafU)" clip-path="url(#canopy)"/>
+  <rect x="0" y="60" width="840" height="800" fill="url(#leaves)" clip-path="url(#canopy)"/>
+
+  <!-- Branches dans les feuillages -->
+  <path class="branch" stroke-width="36" d="M 420 900 C 420 740, 225 720, 215 580"/>
+  <path class="branch" stroke-width="36" d="M 420 900 C 420 740, 615 720, 625 580"/>
+  <path class="branch" stroke-width="16" d="M 212 520 Q 216 480 214 440"/>
+  <path class="branch" stroke-width="16" d="M 628 520 Q 624 480 626 440"/>
+
+  <!-- Familles -->
+  <path d="M 52 106 Q 215 -4 378 106" fill="none" stroke="#cdbbe6" stroke-width="10" stroke-linecap="round"/>
+  <path d="M 462 106 Q 625 -4 788 106" fill="none" stroke="#f3a6c4" stroke-width="10" stroke-linecap="round"/>
+  <text class="title gr" font-size="25" letter-spacing="2.5">
+    <textPath href="#arcGr" startOffset="50%" text-anchor="middle">MOTS ISSUS DU GREC</textPath>
+  </text>
+  <text class="title la" font-size="25" letter-spacing="2.5">
+    <textPath href="#arcLa" startOffset="50%" text-anchor="middle">MOTS ISSUS DU LATIN</textPath>
+  </text>
+
+  <!-- GREC : -LOG- / -LEG- -->
+  <g filter="url(#shadow)"><rect x="60" y="170" width="310" height="290" rx="16" fill="#fff"/></g>
+  <text class="title gr" x="215" y="203" text-anchor="middle">-LOG- / -LEG-</text>
+  <line x1="84" y1="218" x2="346" y2="218" stroke="#e4dcf0" stroke-width="2"/>
+  <line x1="215" y1="232" x2="215" y2="442" stroke="#efeaf6" stroke-width="1.5"/>
+  <g class="word">
+    <text x="80" y="250" class="w grw" tabindex="0" role="button" data-word="anthologie" data-num="①"><tspan class="gr">①</tspan> anthologie</text>
+    <text x="80" y="285" class="w grw" tabindex="0" role="button" data-word="prologue" data-num="②"><tspan class="gr">②</tspan> prologue</text>
+    <text x="80" y="320" class="w grw" tabindex="0" role="button" data-word="analogue" data-num="③"><tspan class="gr">③</tspan> analogue</text>
+    <text x="80" y="355" class="w grw" tabindex="0" role="button" data-word="monologue" data-num="④"><tspan class="gr">④</tspan> monologue</text>
+    <text x="80" y="390" class="w grw" tabindex="0" role="button" data-word="syllogisme" data-num="⑤"><tspan class="gr">⑤</tspan> syllogisme</text>
+    <text x="80" y="425" class="w grw" tabindex="0" role="button" data-word="apologie" data-num="⑥"><tspan class="gr">⑥</tspan> apologie</text>
+    <text x="228" y="250" class="w grw" tabindex="0" role="button" data-word="éclectique" data-num="⑦"><tspan class="gr">⑦</tspan> éclectique</text>
+    <text x="228" y="285" class="w grw" tabindex="0" role="button" data-word="logique" data-num="⑧"><tspan class="gr">⑧</tspan> logique</text>
+    <text x="228" y="320" class="w grw" tabindex="0" role="button" data-word="dialogue" data-num="⑨"><tspan class="gr">⑨</tspan> dialogue</text>
+    <text x="228" y="355" class="w grw" tabindex="0" role="button" data-word="épilogue" data-num="⑩"><tspan class="gr">⑩</tspan> épilogue</text>
+    <text x="228" y="390" class="w grw" tabindex="0" role="button" data-word="éloge" data-num="⑪"><tspan class="gr">⑪</tspan> éloge</text>
+    <text x="228" y="425" class="w grw" tabindex="0" role="button" data-word="logorrhée" data-num="⑫"><tspan class="gr">⑫</tspan> logorrhée</text>
+  </g>
+
+  <!-- Source grecque -->
+  <g filter="url(#shadow)"><rect x="95" y="500" width="240" height="104" rx="14" fill="#fff"/></g>
+  <text class="title gr" x="215" y="531" text-anchor="middle">GREC</text>
+  <text class="word greek" x="215" y="561" text-anchor="middle" font-size="24">λέγω · λόγος</text>
+  <text class="gloss" x="215" y="588" text-anchor="middle" font-size="18">dire, choisir · la parole</text>
+
+  <!-- LATIN : -LOC- -->
+  <g filter="url(#shadow)"><rect x="470" y="170" width="310" height="134" rx="16" fill="#fff"/></g>
+  <text class="title la" x="625" y="203" text-anchor="middle">-LOC-</text>
+  <line x1="494" y1="218" x2="756" y2="218" stroke="#f8d6e3" stroke-width="2"/>
+  <g class="word">
+    <text x="488" y="250" class="w law" tabindex="0" role="button" data-word="interlocuteur" data-num="①"><tspan class="la">①</tspan> interlocuteur</text>
+    <text x="488" y="285" class="w law" tabindex="0" role="button" data-word="circonlocution" data-num="③"><tspan class="la">③</tspan> circonlocution</text>
+    <text x="652" y="250" class="w law" tabindex="0" role="button" data-word="allocution" data-num="②"><tspan class="la">②</tspan> allocution</text>
+    <text x="652" y="285" class="w law" tabindex="0" role="button" data-word="élocution" data-num="⑥"><tspan class="la">⑥</tspan> élocution</text>
+  </g>
+
+  <!-- LATIN : -LOQU- -->
+  <g filter="url(#shadow)"><rect x="470" y="326" width="310" height="134" rx="16" fill="#fff"/></g>
+  <text class="title la" x="625" y="359" text-anchor="middle">-LOQU-</text>
+  <line x1="494" y1="374" x2="756" y2="374" stroke="#f8d6e3" stroke-width="2"/>
+  <g class="word">
+    <text x="488" y="406" class="w law" tabindex="0" role="button" data-word="colloque" data-num="④"><tspan class="la">④</tspan> colloque</text>
+    <text x="488" y="441" class="w law" tabindex="0" role="button" data-word="ventriloque" data-num="⑤"><tspan class="la">⑤</tspan> ventriloque</text>
+    <text x="652" y="406" class="w law" tabindex="0" role="button" data-word="loquace" data-num="⑦"><tspan class="la">⑦</tspan> loquace</text>
+    <text x="652" y="441" class="w law" tabindex="0" role="button" data-word="éloquent" data-num="⑧"><tspan class="la">⑧</tspan> éloquent</text>
+  </g>
+
+  <!-- Source latine -->
+  <g filter="url(#shadow)"><rect x="505" y="500" width="240" height="104" rx="14" fill="#fff"/></g>
+  <text class="title la" x="625" y="531" text-anchor="middle">LATIN</text>
+  <text class="word" x="625" y="561" text-anchor="middle" font-size="22">loquor, loqui</text>
+  <text class="gloss" x="625" y="588" text-anchor="middle" font-size="18">parler</text>
+
+  <!-- RACINE -->
+  <text x="420" y="1062" text-anchor="middle" fill="#fff7ec" font-size="50" font-weight="700" letter-spacing="4">RACINE</text>
+  <text x="420" y="1096" text-anchor="middle" fill="#fff7ec" font-size="26" font-weight="700" letter-spacing="2">INDO-EUROPÉENNE</text>
+  <text x="420" y="1130" text-anchor="middle" fill="#ffffff" font-size="30" font-weight="700">*leg- / *log-</text>
+  <text x="420" y="1158" text-anchor="middle" fill="#f6e3cc" font-size="22">« choisir »</text>
+</svg>
+<div id="pop" role="dialog"><button class="x" aria-label="Fermer">×</button><h3></h3><div class="d"></div></div>
+</div>
+<script>
+const DEF = {"anthologie": "Recueil de textes choisis (poèmes, extraits…). <i>anthos</i> « fleur » + <i>legein</i> « cueillir, choisir » : un bouquet de textes.", "prologue": "Partie qui ouvre une œuvre et présente l'action avant qu'elle commence. <i>pro</i> « avant » + <i>logos</i> « discours ».", "analogue": "Semblable, comparable à autre chose. <i>ana</i> « selon » + <i>logos</i> « rapport, proportion ».", "monologue": "Discours d'un personnage seul, qui se parle à lui-même. <i>monos</i> « seul » + <i>logos</i> « parole ».", "syllogisme": "Raisonnement en trois temps : deux propositions entraînent une conclusion (« Tout homme est mortel ; Socrate est un homme ; donc Socrate est mortel »). <i>syn</i> « ensemble » + <i>logos</i> « raisonnement ».", "apologie": "Discours ou écrit qui défend et justifie quelqu'un ou quelque chose. <i>apo</i> « pour écarter » + <i>logos</i> : parler pour se défendre.", "éclectique": "Qui choisit dans des domaines très variés ; qui a des goûts divers. <i>ek</i> « hors de » + <i>legein</i> « choisir ».", "logique": "Manière de raisonner de façon cohérente ; science du raisonnement. <i>logos</i> « raison, parole ».", "dialogue": "Échange de paroles entre deux ou plusieurs personnes. <i>dia</i> « à travers, entre » + <i>logos</i> « parole ».", "épilogue": "Conclusion d'une œuvre, qui raconte ce qui se passe après l'action principale. <i>epi</i> « après, en plus » + <i>logos</i>.", "éloge": "Discours ou paroles qui vantent les qualités de quelqu'un. Du grec <i>eulogia</i> « belle parole » (<i>eu</i> « bien »), par le latin <i>elogium</i>.", "logorrhée": "Flot de paroles excessif, souvent sans grand sens. <i>logos</i> « parole » + <i>rhein</i> « couler ».", "interlocuteur": "Personne avec qui l'on parle, à qui l'on répond. <i>inter</i> « entre » + <i>loqui</i> « parler ».", "allocution": "Discours bref adressé à un public, souvent officiel. <i>ad</i> « vers » + <i>loqui</i> « parler ».", "circonlocution": "Façon détournée de dire quelque chose, en tournant autour du sujet au lieu d'être direct. <i>circum</i> « autour » + <i>loqui</i>.", "élocution": "Manière de parler, d'articuler et de s'exprimer à l'oral. <i>e(x)</i> « hors de » + <i>loqui</i> : faire sortir la parole.", "colloque": "Réunion de spécialistes qui discutent ensemble d'un sujet. <i>cum</i> « avec » + <i>loqui</i> « parler ».", "ventriloque": "Personne qui parle sans remuer les lèvres, la voix semblant sortir de son ventre (ou d'une marionnette). <i>venter</i> « ventre » + <i>loqui</i>.", "loquace": "Qui parle beaucoup, bavard. Du latin <i>loquax</i>, formé sur <i>loqui</i> « parler ».", "éloquent": "Qui sait parler avec talent pour convaincre ou émouvoir. <i>e(x)</i> « hors de » + <i>loqui</i> : qui fait jaillir la parole."};
+const pop = document.getElementById('pop'), wrap = document.getElementById('wrap');
+const words = [...document.querySelectorAll('.w')];
+let current = null;
+function count() {
+  const n = words.filter(w => w.classList.contains('seen')).length;
+  document.getElementById('count').textContent = n + ' / ' + words.length + ' mots découverts';
+}
+function hide() { pop.style.display = 'none'; if (current) current.classList.remove('active'); current = null; }
+function show(w) {
+  if (current === w) return hide();
+  hide(); current = w;
+  w.classList.add('active', 'seen'); count();
+  pop.style.setProperty('--c', w.classList.contains('grw') ? '#7b5ea7' : '#d6336c');
+  pop.querySelector('h3').textContent = w.dataset.num + ' ' + w.dataset.word;
+  pop.querySelector('.d').innerHTML = DEF[w.dataset.word];
+  pop.style.display = 'block';
+  const r = w.getBoundingClientRect(), b = wrap.getBoundingClientRect();
+  const pw = pop.offsetWidth, ph = pop.offsetHeight;
+  let x = r.left - b.left + r.width / 2 - pw / 2;
+  x = Math.max(4, Math.min(x, b.width - pw - 4));
+  let y = r.bottom - b.top + 8;
+  if (r.bottom + ph + 12 > window.innerHeight && r.top - ph - 8 > 0) y = r.top - b.top - ph - 8;
+  pop.style.left = x + 'px'; pop.style.top = y + 'px';
+}
+words.forEach(w => {
+  w.addEventListener('click', e => { e.stopPropagation(); show(w); });
+  w.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(w); } });
+});
+pop.addEventListener('click', e => e.stopPropagation());
+pop.querySelector('.x').addEventListener('click', hide);
+document.addEventListener('click', hide);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
+document.getElementById('reset').addEventListener('click', e => { e.stopPropagation(); hide(); words.forEach(w => w.classList.remove('seen')); count(); });
+count();
+</script>
+</body>
+</html>
