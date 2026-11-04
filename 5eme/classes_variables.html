@@ -263,6 +263,20 @@ table.liste tr.clic:hover{background:#f3f7ff}
   </div>
 </div>
 
+<div id="modale-code" class="modale" hidden>
+  <div class="carte">
+    <h3 style="margin-top:0">Espace enseignant</h3>
+    <label style="display:flex;flex-direction:column;gap:4px;font-weight:600">Code d'accès
+      <input type="password" id="code-prof" autocomplete="off" autocapitalize="off">
+    </label>
+    <p id="code-msg" class="msg"></p>
+    <div class="actions">
+      <button id="code-ok" class="primaire">Entrer</button>
+      <button id="code-annuler" class="secondaire">Annuler</button>
+    </div>
+  </div>
+</div>
+
 <div id="zone-impression"></div>
 
 <script>
@@ -836,7 +850,23 @@ window.addEventListener('afterprint', () => {
 });
 
 /* ---------- Navigation ---------- */
-$('#btn-prof').onclick = () => { montrerEcran('prof'); edRender(); };
+const EMPREINTE_CODE = 'aoir7l';
+const ouvrirProf = () => { $('#modale-code').hidden = true; montrerEcran('prof'); edRender(); };
+function profDeverrouille(){ try { return sessionStorage.getItem('cgv:prof') === EMPREINTE_CODE; } catch(e) { return false; } }
+$('#btn-prof').onclick = () => {
+  if (profDeverrouille()) { ouvrirProf(); return; }
+  $('#code-prof').value = ''; $('#code-msg').textContent = ''; $('#modale-code').hidden = false;
+  setTimeout(() => $('#code-prof').focus(), 50);
+};
+function validerCode(){
+  if (hash('cgv-prof|' + $('#code-prof').value.trim()) === EMPREINTE_CODE) {
+    try { sessionStorage.setItem('cgv:prof', EMPREINTE_CODE); } catch(e) {}
+    ouvrirProf();
+  } else { $('#code-msg').textContent = 'Code incorrect.'; $('#code-prof').select(); }
+}
+$('#code-ok').onclick = validerCode;
+$('#code-annuler').onclick = () => { $('#modale-code').hidden = true; };
+$('#code-prof').addEventListener('keydown', e => { if (e.key === 'Enter') validerCode(); });
 $('#btn-retour').onclick = () => { if (S.ecran === 'eleve' && S.eleve) { montrerEcran('eleve'); renderEleve(); } else { renderAccueil(); montrerEcran('accueil'); } };
 $$('.onglets button[data-onglet]').forEach(b => b.onclick = () => {
   $$('.onglets button[data-onglet]').forEach(x => x.classList.toggle('actif', x === b));
