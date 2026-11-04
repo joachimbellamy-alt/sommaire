@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Classes grammaticales variables</title>
+<style>
+:root{
+  --fond:#f6f3ec; --carte:#ffffff; --texte:#1f1f1f; --doux:#5b5b5b;
+  --orange:#f3c26b; --bleu:#2a6fd1; --vert:#1e8a3a; --rouge:#c62828; --ambre:#d98a00;
+}
+*{box-sizing:border-box; touch-action:manipulation}
+html,body{margin:0}
+body{background:var(--fond); color:var(--texte); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; font-size:17px}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+[hidden]{display:none !important}
+
+.barre{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 16px; flex-wrap:wrap}
+.barre h1{margin:0; background:var(--orange); border-radius:999px; padding:6px 22px; font-size:22px; font-weight:600}
+.barre-droite{display:flex; align-items:center; gap:12px; color:var(--doux); font-size:15px}
+.lien{background:none; border:none; color:var(--bleu); text-decoration:underline; padding:4px}
+
+main{padding:0 16px 24px; max-width:1300px; margin:0 auto}
+.carte{background:var(--carte); border-radius:16px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.08); max-width:720px; margin:12px auto}
+.carte h2{margin-top:0}
+.champs{display:grid; grid-template-columns:1fr 1fr 140px; gap:12px; margin:16px 0}
+.champs label, .form label{display:flex; flex-direction:column; gap:4px; font-weight:600; font-size:15px}
+input[type=text], textarea{border:1.5px solid #bbb; border-radius:10px; padding:10px 12px; background:#fff; width:100%}
+textarea{resize:vertical}
+.actions{display:flex; flex-wrap:wrap; gap:10px; margin:12px 0}
+.bouton, button.primaire, button.secondaire{display:inline-flex; align-items:center; gap:6px; border-radius:10px; padding:10px 16px; border:1.5px solid transparent; font-weight:600; cursor:pointer}
+.primaire{background:var(--bleu); color:#fff}
+.primaire:disabled{background:#9db7df; cursor:default}
+.secondaire{background:#fff; color:var(--bleu); border-color:var(--bleu)}
+.grand{font-size:19px; padding:12px 22px}
+.msg{color:var(--rouge); font-weight:600; min-height:1.2em}
+.exercice-charge{background:#eef4ff; border:1.5px solid #bcd2f5; border-radius:10px; padding:10px 14px}
+.reprise{margin-top:16px; padding-top:12px; border-top:1px solid #eee}
+.aide{color:var(--doux); font-size:15px}
+
+/* Élève */
+.eleve-entete{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin:4px 0 8px}
+.eleve-entete .qui{font-size:15px; color:var(--doux)}
+.eleve-entete .qui strong{color:var(--texte); font-size:18px}
+.outils{display:flex; gap:8px; flex-wrap:wrap}
+.consigne{font-size:14px; color:var(--doux); margin:0 0 4px}
+.tok.sel, .tok.place{padding:3px 4px}
+.texte{background:#fff; border-radius:12px; padding:10px 16px; font-size:21px; line-height:2.05; max-height:24vh; overflow:auto; box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.phrase{margin:0}
+.phrase .num{display:inline-block; min-width:26px; color:#999; font-size:15px}
+.tok{padding:3px 1px; border-radius:7px; cursor:pointer; touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none}
+.tok:hover{background:#eef4ff}
+.tok.place{color:#b9b9b9; background:#f1f1f1}
+.tok.sel{background:var(--bleu); color:#fff}
+.message{min-height:1.6em; margin:8px 2px; font-weight:600}
+.message .ok{color:var(--vert)} .message .err{color:var(--rouge)} .message .info{color:var(--doux); font-weight:500}
+.sauve{color:var(--doux); font-size:14px; margin:8px 2px}
+
+/* Tableau (reprend la fiche papier) */
+.tableau{display:grid; grid-template-columns:2.1fr 1fr; grid-template-rows:3fr 1fr; gap:12px; height:max(380px, calc(100vh - 390px)); height:max(380px, calc(100dvh - 390px))}
+.cadre-gn{grid-row:1; grid-column:1; border:1.5px solid #222; background:#fff; padding:10px; display:grid; grid-template-columns:1fr 1.5fr 1.3fr; gap:14px; min-height:0}
+.cadre-pro{grid-row:2; grid-column:1; border:2px dashed #222; padding:6px; min-height:0}
+.cadre-verbe{grid-row:1 / 3; grid-column:2; border:2px dashed #222; padding:6px; min-height:0}
+.zone{position:relative; border-radius:18px; padding:8px 36px 8px 8px; display:flex; flex-wrap:wrap; align-content:flex-start; gap:6px; overflow:auto; min-height:0}
+.z-det{background:#d9d9d9; border:1.5px dotted #555}
+.col-nom{display:flex; flex-direction:column; background:#a6a6a6; border:1.5px solid #333; border-radius:18px; overflow:hidden; min-height:0}
+.col-nom .zone{border-radius:0}
+.z-nc{flex:4}
+.z-np{flex:1.25; border-top:3px solid #111}
+.z-adj{background:#717171; border:1.5px dotted #333}
+.z-pro{height:100%; background:linear-gradient(90deg,#9c9c9c,#fafafa); border:2px dotted #333; border-radius:22px}
+.z-verbe{height:100%; background:#fff; border:2.5px solid #111; border-radius:22px}
+.tableau.attente .zone{box-shadow:inset 0 0 0 3px rgba(42,111,209,.45); cursor:pointer}
+.zone.survol{box-shadow:inset 0 0 0 4px var(--bleu) !important}
+.crayon{position:absolute; top:6px; right:6px; width:28px; height:28px; border-radius:50%; border:1px solid #555; background:#fff; font-size:15px; line-height:1; padding:0; opacity:.85}
+.etiq{display:none}
+.avec-etiq .zone{padding-top:30px}
+.avec-etiq .etiq{display:block; position:absolute; top:6px; left:10px; font-size:12px; font-weight:700; background:rgba(255,255,255,.9); border-radius:6px; padding:1px 7px}
+
+.chip{display:inline-flex; align-items:center; background:#fff; border:1.5px solid #333; border-radius:8px; padding:4px 9px; font-size:18px; height:fit-content; touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; cursor:grab}
+.chip.libre{border-style:dashed; font-style:italic}
+.chip.sel{outline:3px solid var(--bleu); outline-offset:1px}
+.chip.ok{background:#d9f5dc; border-color:var(--vert)}
+.chip.err{background:#ffdcdc; border-color:var(--rouge)}
+.chip.ok::after{content:"✓"; color:var(--vert); margin-left:5px; font-weight:700}
+.chip.err::after{content:"✗"; color:var(--rouge); margin-left:5px; font-weight:700}
+.retirer{margin-left:7px; border:none; background:var(--rouge); color:#fff; border-radius:50%; width:24px; height:24px; padding:0; font-size:16px; line-height:1}
+.fantome{position:fixed; z-index:1000; pointer-events:none; transform:translate(-50%,-130%); background:#fff; border:2px solid var(--bleu); border-radius:8px; padding:4px 10px; font-size:19px; box-shadow:0 6px 18px rgba(0,0,0,.25)}
+
+/* Fenêtre « écrire un mot » */
+.modale{position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:900; padding:16px}
+.modale .carte{width:100%; max-width:420px}
+
+/* Enseignant */
+.onglets{display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 12px}
+.onglets button{border:1.5px solid #bbb; background:#fff; border-radius:10px; padding:8px 14px; font-weight:600}
+.onglets button.actif{background:var(--texte); color:#fff; border-color:var(--texte)}
+.panneau{background:#fff; border-radius:16px; padding:18px; box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.form{display:grid; gap:12px}
+.case{flex-direction:row !important; align-items:center; font-weight:500 !important}
+.palette{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 8px; position:sticky; top:0; background:#fff; padding:8px 0; z-index:5}
+.palette button{border:2px solid #888; border-radius:10px; padding:8px 12px; font-weight:600; background:#fff}
+.palette button.actif{border-color:#111; box-shadow:0 0 0 2px #111}
+.ed-phrase{font-size:20px; line-height:2.5; margin:4px 0; padding:4px 0; border-bottom:1px solid #f0f0f0}
+.ed-tok{border:1.5px solid #ccc; border-radius:8px; background:#fff; padding:2px 8px; margin:0 2px; font-size:19px; position:relative}
+.ed-tok small{font-size:11px; font-weight:700; margin-left:4px; color:#333}
+.bilan-ed{color:var(--doux); font-size:15px}
+.lien-texte{font-size:13px}
+
+table.liste{width:100%; border-collapse:collapse; margin-top:12px}
+table.liste th, table.liste td{border-bottom:1px solid #e5e5e5; padding:8px; text-align:left}
+table.liste tr.clic{cursor:pointer}
+table.liste tr.clic:hover{background:#f3f7ff}
+.copie{margin-top:16px}
+.copie-entete{display:flex; justify-content:space-between; align-items:flex-start; gap:12px}
+.copie-entete h2{margin:0 0 4px}
+.copie-entete p{margin:0; color:var(--doux)}
+.note{font-size:26px; font-weight:700; border:2px solid #222; border-radius:12px; padding:6px 14px; white-space:nowrap}
+.texte-prof{max-height:none; margin:12px 0; box-shadow:none; border:1px solid #ddd; font-size:18px; line-height:2.3}
+.ann{padding:1px 3px; border-radius:5px; border-bottom:3px solid transparent}
+.ann sub{font-size:10px; font-weight:700; margin-left:2px}
+.ann.ok{border-color:var(--vert)}
+.ann.err{border-color:var(--rouge); background:#ffe6e6}
+.ann.oubli{border-color:var(--ambre); background:#fff1d6}
+.legende{font-size:13px; color:var(--doux); display:flex; gap:14px; flex-wrap:wrap}
+.legende span{border-bottom:3px solid; padding:0 3px}
+.bilan{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin-top:12px; font-size:15px}
+.bilan h3{font-size:15px; margin:0 0 4px}
+.bilan ul{margin:0; padding-left:18px}
+
+@media (max-width:700px){
+  .champs{grid-template-columns:1fr}
+  .tableau{grid-template-columns:1fr; grid-template-rows:auto; height:auto}
+  .cadre-gn{grid-row:auto; grid-column:auto; grid-template-columns:1fr}
+  .cadre-pro,.cadre-verbe{grid-row:auto; grid-column:auto}
+  .zone{min-height:90px}
+  .col-nom .z-nc{min-height:110px}
+}
+
+#zone-impression{display:none}
+@media print{
+  *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+  body{background:#fff; font-size:13px}
+  body.impression > *:not(#zone-impression){display:none !important}
+  body.impression #zone-impression{display:block}
+  .copie{page-break-after:always; break-after:page; margin:0}
+  .tableau{height:105mm}
+  .chip{font-size:13px; padding:2px 6px}
+  .texte-prof{font-size:14px; line-height:2}
+  .crayon,.retirer{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="barre">
+  <h1>Les classes grammaticales variables</h1>
+  <div class="barre-droite">
+    <span id="identite-barre"></span>
+    <button id="btn-prof" class="lien">Espace enseignant</button>
+  </div>
+</header>
+
+<main>
+  <!-- ACCUEIL ÉLÈVE -->
+  <section id="ecran-accueil">
+    <div class="carte">
+      <h2>Bienvenue !</h2>
+      <div id="accueil-corpus"></div>
+      <div class="actions">
+        <label class="bouton secondaire">📂 Ouvrir l'exercice envoyé par le professeur
+          <input type="file" id="file-corpus" accept=".json,application/json" hidden>
+        </label>
+        <button id="btn-exemple" class="secondaire">Essayer avec un exemple</button>
+      </div>
+      <div class="champs">
+        <label>Nom <input type="text" id="in-nom" autocomplete="family-name"></label>
+        <label>Prénom <input type="text" id="in-prenom" autocomplete="given-name"></label>
+        <label>Classe <input type="text" id="in-classe" placeholder="5e B"></label>
+      </div>
+      <button id="btn-commencer" class="primaire grand">Commencer</button>
+      <p id="accueil-msg" class="msg"></p>
+      <div id="accueil-reprise"></div>
+    </div>
+  </section>
+
+  <!-- TRAVAIL ÉLÈVE -->
+  <section id="ecran-eleve" hidden>
+    <div class="eleve-entete">
+      <div class="qui"><strong id="titre-corpus"></strong><br><span id="eleve-nom"></span></div>
+      <div class="outils">
+        <button id="btn-verifier" class="primaire">✔ Vérifier</button>
+        <button id="btn-rendre" class="primaire">📤 Rendre mon travail</button>
+        <button id="btn-effacer" class="secondaire">Tout effacer</button>
+        <button id="btn-quitter" class="secondaire">Quitter</button>
+      </div>
+    </div>
+    <p class="consigne">Touche un mot du texte, puis touche la case du tableau où il doit aller. Tu peux aussi le faire glisser. Le crayon ✎ permet d'écrire un mot dans une case.</p>
+    <div id="texte" class="texte"></div>
+    <div id="message" class="message"></div>
+    <div id="tableau-eleve"></div>
+    <p class="sauve" id="etat-sauvegarde"></p>
+  </section>
+
+  <!-- ENSEIGNANT -->
+  <section id="ecran-prof" hidden>
+    <div class="onglets">
+      <button data-onglet="creer" class="actif">✏️ Créer un exercice</button>
+      <button data-onglet="corriger">✅ Corriger des travaux</button>
+      <button id="btn-retour" class="lien">← Retour à l'espace élève</button>
+    </div>
+
+    <div id="onglet-creer" class="panneau">
+      <div class="form">
+        <label>Titre de l'exercice <input type="text" id="ed-titre" placeholder="Ex. : Yvain, chapitre 3"></label>
+        <label class="case"><input type="checkbox" id="ed-correction" checked>&nbsp;Les élèves peuvent vérifier leurs réponses (bouton « Vérifier »)</label>
+        <label>Phrases (une par ligne)
+          <textarea id="ed-texte" rows="5" placeholder="Le chevalier courageux traverse la forêt sombre."></textarea>
+        </label>
+      </div>
+      <p class="aide">Pour garder plusieurs mots ensemble (« pomme de terre »), reliez-les par _ : pomme_de_terre.<br>
+        Choisissez une classe ci-dessous, puis touchez les mots qui lui appartiennent. Les mots laissés blancs sont invariables : l'élève ne doit pas les ranger.</p>
+      <div id="ed-palette" class="palette"></div>
+      <div id="ed-mots"></div>
+      <p id="ed-bilan" class="bilan-ed"></p>
+      <div class="actions">
+        <button id="ed-telecharger" class="primaire">💾 Télécharger le fichier de l'exercice</button>
+        <button id="ed-lien" class="secondaire">🔗 Copier le lien pour les élèves</button>
+        <button id="ed-tester" class="secondaire">👁 Tester comme un élève</button>
+        <label class="bouton secondaire">📂 Ouvrir un exercice existant
+          <input type="file" id="ed-ouvrir" accept=".json,application/json" hidden>
+        </label>
+        <button id="ed-nouveau" class="secondaire">Nouvel exercice</button>
+      </div>
+      <p id="ed-msg" class="aide"></p>
+      <input type="text" id="ed-lien-texte" class="lien-texte" readonly hidden>
+    </div>
+
+    <div id="onglet-corriger" class="panneau" hidden>
+      <div class="actions">
+        <label class="bouton primaire">📂 Ouvrir des travaux d'élèves (plusieurs à la fois possible)
+          <input type="file" id="corr-fichiers" accept=".json,application/json" multiple hidden>
+        </label>
+        <button id="corr-tout" class="secondaire" hidden>🖨 Exporter toutes les copies en PDF</button>
+        <button id="corr-vider" class="secondaire" hidden>Vider la liste</button>
+      </div>
+      <p id="corr-msg" class="aide">Les fichiers rendus par les élèves s'appellent « travail_classe_nom_prénom.json ».</p>
+      <div id="corr-liste"></div>
+      <div id="corr-detail"></div>
+    </div>
+  </section>
+</main>
+
+<div id="modale" class="modale" hidden>
+  <div class="carte">
+    <h3 style="margin-top:0">Écrire un mot dans cette case</h3>
+    <input type="text" id="modale-mot" autocomplete="off" autocapitalize="off">
+    <div class="actions">
+      <button id="modale-ok" class="primaire">Ajouter</button>
+      <button id="modale-annuler" class="secondaire">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<div id="zone-impression"></div>
+
+<script>
+'use strict';
+/* ---------- Données de base ---------- */
+const CLASSES = {
+  det:   {nom:'Déterminant', abr:'D',   coul:'#cfe3ff'},
+  nc:    {nom:'Nom commun',  abr:'NC',  coul:'#ffe3a3'},
+  np:    {nom:'Nom propre',  abr:'NP',  coul:'#ffc9c9'},
+  adj:   {nom:'Adjectif',    abr:'Adj', coul:'#c9f0c9'},
+  pro:   {nom:'Pronom',      abr:'Pro', coul:'#e4d4ff'},
+  verbe: {nom:'Verbe',       abr:'V',   coul:'#ffd2ad'}
+};
+const L = 'A-Za-zÀ-ÖØ-öø-ÿŒœÆæ0-9';
+const RE_TOK = new RegExp('[' + L + ']+(?:(?:[-_]|[\'’]_)[' + L + ']+)*[\'’]?|[^\\s' + L + ']', 'g');
+const RE_MOT = new RegExp('[' + L + ']');
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get(k){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }catch(e){ return null; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
+};
+const tokenize = t => String(t).match(RE_TOK) || [];
+const estMot = t => RE_MOT.test(t);
+const affiche = t => t.replace(/(['’])_/g, '$1').replace(/_/g, ' ');
+function espace(prev, tok){
+  if (prev == null) return '';
+  if (/^[,.)\]…]/.test(tok)) return '';
+  if (/['’(\[]$/.test(prev)) return '';
+  return ' ';
+}
+const b64e = s => btoa(unescape(encodeURIComponent(s)));
+const b64d = b => decodeURIComponent(escape(atob(b)));
+const b64urlE = s => b64e(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const b64urlD = b => { b = b.replace(/-/g,'+').replace(/_/g,'/'); while (b.length % 4) b += '='; return b64d(b); };
+function hash(s){ let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+const slug = s => String(s||'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'x';
+const clone = o => JSON.parse(JSON.stringify(o));
+const pluriel = (n, s, p) => n + ' ' + (n > 1 ? (p || s + 's') : s);
+
+/* ---------- Format des fichiers ---------- */
+function versFichier(c){
+  return {
+    type:'corpus-classes-variables', version:1, titre:c.titre, correction:!!c.correction,
+    phrases:c.phrases.map(p => ({texte:p.texte, tokens:p.tokens})),
+    cle: b64e(JSON.stringify(c.phrases.map(p => p.classes))).split('').reverse().join('')
+  };
+}
+function depuisFichier(f){
+  if (!f || f.type !== 'corpus-classes-variables' || !Array.isArray(f.phrases)) throw new Error('format');
+  let cl = [];
+  try { cl = JSON.parse(b64d(String(f.cle || '').split('').reverse().join(''))); } catch(e) {}
+  return {
+    titre: String(f.titre || 'Exercice'),
+    correction: !!f.correction,
+    phrases: f.phrases.map((p, i) => {
+      const tokens = Array.isArray(p.tokens) ? p.tokens.map(String) : tokenize(p.texte || '');
+      const c = Array.isArray(cl[i]) ? cl[i] : [];
+      return {texte:String(p.texte || ''), tokens, classes:tokens.map((t, j) => CLASSES[c[j]] ? c[j] : null)};
+    })
+  };
+}
+const signature = c => hash(c.titre + '|' + JSON.stringify(c.phrases.map(p => p.tokens)));
+function infoRef(c, ref){
+  const m = /^s(\d+)t(\d+)$/.exec(ref || '');
+  const p = m && c.phrases[+m[1]];
+  if (!p || p.tokens[+m[2]] == null) return null;
+  return {mot:affiche(p.tokens[+m[2]]), classe:p.classes[+m[2]]};
+}
+function lirePlacements(c, liste){
+  return (Array.isArray(liste) ? liste : []).filter(p => p && CLASSES[p.zone]).map((p, i) =>
+    p.ref ? {id:p.ref, ref:p.ref, zone:p.zone} : {id:p.id || ('l' + i + '_' + Date.now()), texte:String(p.texte || ''), zone:p.zone}
+  ).filter((p, i, a) => !p.ref || (infoRef(c, p.ref) && a.findIndex(q => q.id === p.id) === i));
+}
+function lireJSON(fichier){
+  return new Promise((ok, ko) => {
+    const r = new FileReader();
+    r.onload = () => { try { ok(JSON.parse(r.result)); } catch(e) { ko(e); } };
+    r.onerror = ko;
+    r.readAsText(fichier);
+  });
+}
+function telecharger(nom, contenu){
+  const blob = new Blob([contenu], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = nom;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+/* ---------- Correction ---------- */
+function evaluer(c, placements){
+  const etat = {}, erreurs = [], oublis = [];
+  let bons = 0, total = 0;
+  const places = new Map(placements.filter(p => p.ref).map(p => [p.ref, p]));
+  c.phrases.forEach((ph, s) => ph.tokens.forEach((t, i) => {
+    const ref = 's' + s + 't' + i, cl = ph.classes[i], p = places.get(ref), mot = affiche(t);
+    if (cl) { total++; if (!p) { oublis.push({mot, attendu:cl}); etat[ref] = 'oubli'; } }
+    if (p) {
+      if (p.zone === cl) { bons++; etat[ref] = 'ok'; }
+      else { etat[ref] = 'err'; erreurs.push({mot, zone:p.zone, attendu:cl}); }
+    }
+  }));
+  const libres = placements.filter(p => !p.ref);
+  libres.forEach(p => etat[p.id] = 'libre');
+  return {etat, bons, total, erreurs, oublis, libres};
+}
+
+/* ---------- Affichage commun ---------- */
+function tableauHTML(placements, o){
+  const zone = (z, n) => {
+    const chips = placements.filter(p => p.zone === z).map(p => {
+      const mot = p.ref ? (infoRef(o.corpus, p.ref) || {mot:'?'}).mot : p.texte;
+      let cls = 'chip' + (p.ref ? '' : ' libre');
+      if (o.etat && p.ref && (o.etat[p.id] === 'ok' || o.etat[p.id] === 'err')) cls += ' ' + o.etat[p.id];
+      const sel = o.selId === p.id;
+      if (sel) cls += ' sel';
+      return '<span class="' + cls + '" data-id="' + esc(p.id) + '" data-mot="' + esc(mot) + '">' + esc(mot) +
+        (sel && o.interactif ? '<button class="retirer" aria-label="Remettre ce mot dans le texte">×</button>' : '') + '</span>';
+    }).join('');
+    return '<div class="zone z-' + z + '" data-zone="' + z + '" role="group" aria-label="Case ' + n + '">' +
+      '<span class="etiq">' + CLASSES[z].nom + '</span>' +
+      (o.interactif ? '<button class="crayon" data-zone="' + z + '" aria-label="Écrire un mot dans cette case">✎</button>' : '') +
+      chips + '</div>';
+  };
+  return '<div class="tableau' + (o.etiquettes ? ' avec-etiq' : '') + (o.attente ? ' attente' : '') + '">' +
+    '<div class="cadre-gn">' + zone('det', 1) +
+      '<div class="col-nom">' + zone('nc', 2) + zone('np', 3) + '</div>' + zone('adj', 4) + '</div>' +
+    '<div class="cadre-pro">' + zone('pro', 5) + '</div>' +
+    '<div class="cadre-verbe">' + zone('verbe', 6) + '</div></div>';
+}
+
+/* ---------- Élève ---------- */
+const S = {corpus:null, eleve:null, placements:[], verifs:0, montrer:false, sel:null, ecran:'accueil'};
+
+function montrerEcran(n){
+  ['accueil','eleve','prof'].forEach(x => $('#ecran-' + x).hidden = x !== n);
+  if (n !== 'prof') S.ecran = n;
+  $('#btn-prof').hidden = n === 'prof';
+  $('#identite-barre').textContent = n === 'eleve' && S.eleve ? S.eleve.prenom + ' ' + S.eleve.nom + ' — ' + S.eleve.classe : '';
+  window.scrollTo(0, 0);
+}
+
+function chargerCorpus(c){
+  S.corpus = c; S.placements = []; S.sel = null; S.montrer = false;
+  $('#accueil-msg').textContent = '';
+  renderAccueil(); montrerEcran('accueil');
+}
+
+function renderAccueil(){
+  const box = $('#accueil-corpus');
+  box.innerHTML = S.corpus
+    ? '<div class="exercice-charge">📘 Exercice : <strong>' + esc(S.corpus.titre) + '</strong> — ' + pluriel(S.corpus.phrases.length, 'phrase') + '</div>'
+    : '<p>Ouvre d\'abord l\'exercice envoyé par ton professeur, puis écris ton nom, ton prénom et ta classe.</p>';
+  $('#btn-commencer').disabled = !S.corpus;
+  const rep = $('#accueil-reprise'); rep.innerHTML = '';
+  const d = store.get('cgv:dernier');
+  if (d && d.corpus && d.eleve) {
+    try {
+      const c = depuisFichier(d.corpus);
+      if (!S.corpus || signature(c) !== signature(S.corpus)) {
+        rep.innerHTML = '<div class="reprise"><button class="secondaire" id="btn-reprendre">↩ Reprendre « ' + esc(c.titre) + ' » (' + esc(d.eleve.prenom + ' ' + d.eleve.nom) + ')</button></div>';
+        $('#btn-reprendre').onclick = () => {
+          S.corpus = c;
+          $('#in-nom').value = d.eleve.nom; $('#in-prenom').value = d.eleve.prenom; $('#in-classe').value = d.eleve.classe;
+          demarrer();
+        };
+      }
+    } catch(e) {}
+  }
+}
+
+const cleTravail = () => 'cgv:travail:' + signature(S.corpus) + ':' + slug(S.eleve.classe + '-' + S.eleve.nom + '-' + S.eleve.prenom);
+
+function demarrer(){
+  const e = {nom:$('#in-nom').value.trim(), prenom:$('#in-prenom').value.trim(), classe:$('#in-classe').value.trim()};
+  if (!S.corpus) { $('#accueil-msg').textContent = 'Ouvre d\'abord l\'exercice envoyé par ton professeur.'; return; }
+  if (!e.nom || !e.prenom || !e.classe) { $('#accueil-msg').textContent = 'Écris ton nom, ton prénom et ta classe.'; return; }
+  S.eleve = e; store.set('cgv:eleve', e);
+  const d = store.get(cleTravail());
+  S.placements = d ? lirePlacements(S.corpus, d.placements) : [];
+  S.verifs = d ? (d.verifs | 0) : 0;
+  S.montrer = false; S.sel = null;
+  sauver(); montrerEcran('eleve'); renderEleve();
+}
+
+function sauver(){
+  const ok = store.set(cleTravail(), {placements:S.placements, verifs:S.verifs});
+  store.set('cgv:dernier', {corpus:versFichier(S.corpus), eleve:S.eleve});
+  const h = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+  $('#etat-sauvegarde').textContent = ok
+    ? '✓ Travail enregistré automatiquement sur cet iPad (' + h + ').'
+    : '⚠ Impossible d\'enregistrer sur cet appareil (navigation privée ?). Pense à rendre ton travail avant de fermer la page.';
+}
+
+function texteEleveHTML(){
+  const places = new Set(S.placements.filter(p => p.ref).map(p => p.ref));
+  return S.corpus.phrases.map((ph, s) => {
+    let h = '<p class="phrase"><span class="num">' + (s + 1) + '.</span>';
+    ph.tokens.forEach((t, i) => {
+      h += espace(i ? ph.tokens[i - 1] : null, t);
+      if (!estMot(t)) { h += esc(t); return; }
+      const ref = 's' + s + 't' + i;
+      const sel = S.sel && ((S.sel.kind === 'tok' && S.sel.ref === ref) || (S.sel.kind === 'chip' && S.sel.id === ref));
+      h += '<span class="tok' + (places.has(ref) ? ' place' : '') + (sel ? ' sel' : '') + '" data-ref="' + ref + '" data-mot="' + esc(affiche(t)) + '">' + esc(affiche(t)) + '</span>';
+    });
+    return h + '</p>';
+  }).join('');
+}
+
+function renderEleve(){
+  const c = S.corpus;
+  $('#titre-corpus').textContent = c.titre;
+  $('#eleve-nom').textContent = S.eleve.prenom + ' ' + S.eleve.nom + ' — ' + S.eleve.classe;
+  $('#btn-verifier').hidden = !c.correction;
+  const scroll = $('#texte').scrollTop;
+  $('#texte').innerHTML = texteEleveHTML();
+  $('#texte').scrollTop = scroll;
+  const res = S.montrer ? evaluer(c, S.placements) : null;
+  $('#tableau-eleve').innerHTML = tableauHTML(S.placements, {
+    corpus:c, interactif:true, etat:res ? res.etat : null,
+    selId:S.sel && S.sel.kind === 'chip' ? S.sel.id : null, attente:!!S.sel
+  });
+  const m = $('#message');
+  if (S.sel) {
+    const mot = S.sel.kind === 'tok' ? infoRef(c, S.sel.ref).mot : (S.placements.find(p => p.id === S.sel.id) || {}).texte || (infoRef(c, S.sel.id) || {}).mot;
+    m.innerHTML = '<span class="info">' + (S.sel.kind === 'tok'
+      ? 'Touche maintenant la case où tu veux ranger « ' + esc(mot) + ' ».'
+      : 'Touche une autre case pour déplacer « ' + esc(mot) + ' », ou × pour le remettre dans le texte.') + '</span>';
+  } else if (res) {
+    let h = '<span class="ok">✔ ' + pluriel(res.bons, 'mot bien rangé', 'mots bien rangés') + '.</span> ';
+    h += res.erreurs.length ? '<span class="err">✗ ' + pluriel(res.erreurs.length, 'mot à revoir', 'mots à revoir') + ' (en rouge).</span> ' : '';
+    h += res.oublis.length ? '<span class="info">Il reste ' + pluriel(res.oublis.length, 'mot variable', 'mots variables') + ' à trouver dans le texte.</span>' : '';
+    if (!res.erreurs.length && !res.oublis.length) h += '<span class="ok">Bravo, tout est juste !</span>';
+    m.innerHTML = h;
+  } else {
+    const n = S.placements.length;
+    m.innerHTML = '<span class="info">' + (n ? pluriel(n, 'mot rangé', 'mots rangés') + ' dans le tableau.' : 'Aucun mot rangé pour l\'instant.') + '</span>';
+  }
+}
+
+function placer(it, zone){
+  if (it.kind === 'tok') {
+    if (!S.placements.some(p => p.id === it.ref)) S.placements.push({id:it.ref, ref:it.ref, zone});
+  } else {
+    const i = S.placements.findIndex(p => p.id === it.id);
+    if (i < 0) return;
+    const p = S.placements.splice(i, 1)[0]; p.zone = zone; S.placements.push(p);
+  }
+  S.sel = null; S.montrer = false; sauver(); renderEleve();
+}
+function retirer(id){
+  S.placements = S.placements.filter(p => p.id !== id);
+  S.sel = null; S.montrer = false; sauver(); renderEleve();
+}
+
+/* Toucher / glisser */
+let drag = null, dernierGeste = 0;
+const zoneSous = (x, y) => { const el = document.elementFromPoint(x, y); return el ? el.closest('#tableau-eleve .zone') : null; };
+const nettoyerSurvol = z => $$('.zone.survol').forEach(x => x !== z && x.classList.remove('survol'));
+
+$('#ecran-eleve').addEventListener('pointerdown', e => {
+  if (e.button > 0 || e.target.closest('.retirer, .crayon')) return;
+  const tok = e.target.closest('.tok'), chip = e.target.closest('#tableau-eleve .chip');
+  let item = null, el = null;
+  if (tok) {
+    const ref = tok.dataset.ref;
+    item = S.placements.some(p => p.id === ref) ? {kind:'chip', id:ref} : {kind:'tok', ref};
+    el = tok;
+  } else if (chip) { item = {kind:'chip', id:chip.dataset.id}; el = chip; }
+  if (!item) return;
+  e.preventDefault();
+  drag = {item, mot:el.dataset.mot, x0:e.clientX, y0:e.clientY, started:false, ghost:null, pid:e.pointerId};
+});
+window.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.pid) return;
+  if (!drag.started) {
+    const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+    if (dx * dx + dy * dy < 64) return;
+    drag.started = true;
+    drag.ghost = document.createElement('div');
+    drag.ghost.className = 'fantome'; drag.ghost.textContent = drag.mot;
+    document.body.appendChild(drag.ghost);
+  }
+  drag.ghost.style.left = e.clientX + 'px'; drag.ghost.style.top = e.clientY + 'px';
+  const z = zoneSous(e.clientX, e.clientY); nettoyerSurvol(z); if (z) z.classList.add('survol');
+});
+window.addEventListener('pointerup', e => {
+  if (!drag || e.pointerId !== drag.pid) return;
+  const d = drag; drag = null; dernierGeste = Date.now();
+  if (d.started) {
+    d.ghost.remove(); nettoyerSurvol(null);
+    const z = zoneSous(e.clientX, e.clientY);
+    if (z) { placer(d.item, z.dataset.zone); return; }
+    const sous = document.elementFromPoint(e.clientX, e.clientY);
+    if (sous && sous.closest('#texte') && d.item.kind === 'chip') retirer(d.item.id);
+    return;
+  }
+  const it = d.item, s = S.sel;
+  const meme = s && s.kind === it.kind && (it.kind === 'tok' ? s.ref === it.ref : s.id === it.id);
+  S.sel = meme ? null : it;
+  renderEleve();
+});
+window.addEventListener('pointercancel', () => { if (drag) { if (drag.ghost) drag.ghost.remove(); drag = null; nettoyerSurvol(null); } });
+
+$('#tableau-eleve').addEventListener('click', e => {
+  if (Date.now() - dernierGeste < 350) return;
+  const ret = e.target.closest('.retirer');
+  if (ret) { retirer(ret.closest('.chip').dataset.id); return; }
+  const cr = e.target.closest('.crayon');
+  if (cr) { ouvrirModale(cr.dataset.zone); return; }
+  if (e.target.closest('.chip')) return;
+  const z = e.target.closest('.zone');
+  if (z && S.sel) placer(S.sel, z.dataset.zone);
+});
+
+/* Écrire un mot */
+let zoneModale = null;
+function ouvrirModale(z){
+  zoneModale = z; S.sel = null; renderEleve();
+  $('#modale-mot').value = ''; $('#modale').hidden = false;
+  setTimeout(() => $('#modale-mot').focus(), 50);
+}
+function validerModale(){
+  const t = $('#modale-mot').value.trim();
+  $('#modale').hidden = true;
+  if (!t || !zoneModale) return;
+  S.placements.push({id:'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), texte:t, zone:zoneModale});
+  S.montrer = false; sauver(); renderEleve();
+}
+$('#modale-ok').onclick = validerModale;
+$('#modale-annuler').onclick = () => { $('#modale').hidden = true; };
+$('#modale-mot').addEventListener('keydown', e => { if (e.key === 'Enter') validerModale(); });
+
+/* Boutons élève */
+$('#btn-verifier').onclick = () => { S.verifs++; S.montrer = true; S.sel = null; sauver(); renderEleve(); };
+$('#btn-effacer').onclick = () => {
+  if (!confirm('Effacer tous les mots rangés dans le tableau ?')) return;
+  S.placements = []; S.sel = null; S.montrer = false; sauver(); renderEleve();
+};
+$('#btn-quitter').onclick = () => { S.sel = null; renderAccueil(); montrerEcran('accueil'); };
+$('#btn-rendre').onclick = () => {
+  if (!confirm('As-tu terminé ? Le fichier de ton travail va être enregistré sur l\'iPad.')) return;
+  const f = {
+    type:'travail-classes-variables', version:1, eleve:S.eleve, date:new Date().toISOString(),
+    corpus:versFichier(S.corpus),
+    placements:S.placements.map(p => p.ref ? {ref:p.ref, zone:p.zone} : {texte:p.texte, zone:p.zone}),
+    verifications:S.verifs
+  };
+  const nom = 'travail_' + slug(S.eleve.classe) + '_' + slug(S.eleve.nom) + '_' + slug(S.eleve.prenom) + '.json';
+  telecharger(nom, JSON.stringify(f));
+  $('#message').innerHTML = '<span class="ok">📤 Le fichier « ' + esc(nom) + ' » est dans l\'app Fichiers, dossier « Téléchargements ». Envoie-le à ton professeur par l\'ENT ou Pronote.</span>';
+};
+
+/* Accueil */
+$('#btn-commencer').onclick = demarrer;
+$('#file-corpus').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const j = await lireJSON(f);
+    if (j && j.type === 'travail-classes-variables') {
+      chargerCorpus(depuisFichier(j.corpus));
+      const ref = j.eleve || {};
+      $('#in-nom').value = ref.nom || ''; $('#in-prenom').value = ref.prenom || ''; $('#in-classe').value = ref.classe || '';
+      return;
+    }
+    chargerCorpus(depuisFichier(j));
+  } catch(err) { $('#accueil-msg').textContent = 'Ce fichier n\'est pas un exercice de classes grammaticales.'; }
+});
+$('#btn-exemple').onclick = () => chargerCorpus(exemple());
+['nom','prenom','classe'].forEach(k => $('#in-' + k).addEventListener('change', () => {
+  const v = store.get('cgv:eleve') || {}; v[k] = $('#in-' + k).value.trim(); store.set('cgv:eleve', v);
+}));
+
+function exemple(){
+  const def = [
+    ['Le chevalier courageux traverse la forêt sombre.', ['det','nc','adj','verbe','det','nc','adj',null]],
+    ['Yvain combat le terrible géant et il le tue.', ['np','verbe','det','adj','nc',null,'pro','pro','verbe',null]],
+    ['Ce lion fidèle accompagne son maître dans ses aventures.', ['det','nc','adj','verbe','det','nc',null,'det','nc',null]],
+    ["L'épée brillante protège le jeune chevalier.", ['det','nc','adj','verbe','det','adj','nc',null]],
+    ['Laudine pardonne enfin à son époux.', ['np','verbe',null,null,'det','nc',null]]
+  ];
+  return {titre:'Exemple : Yvain, le chevalier au lion', correction:true,
+    phrases:def.map(([t, c]) => ({texte:t, tokens:tokenize(t), classes:c}))};
+}
+
+/* ---------- Enseignant : création ---------- */
+let ED = {titre:'', correction:true, phrases:[]}, pinceau = 'det';
+
+function edDepuisChamps(){
+  ED.titre = $('#ed-titre').value.trim();
+  ED.correction = $('#ed-correction').checked;
+  const lignes = $('#ed-texte').value.split(/\n+/).map(s => s.trim()).filter(Boolean);
+  const anciennes = new Map(ED.phrases.map(p => [p.texte, p]));
+  ED.phrases = lignes.map(l => {
+    const a = anciennes.get(l), tokens = tokenize(l);
+    return {texte:l, tokens, classes:a ? a.classes.slice() : tokens.map(() => null)};
+  });
+}
+function edVersChamps(){
+  $('#ed-titre').value = ED.titre; $('#ed-correction').checked = ED.correction;
+  $('#ed-texte').value = ED.phrases.map(p => p.texte).join('\n');
+}
+function edSauver(){ store.set('cgv:brouillon', versFichier(ED)); }
+
+function edRender(){
+  $('#ed-palette').innerHTML = Object.keys(CLASSES).map(k =>
+    '<button data-p="' + k + '" class="' + (pinceau === k ? 'actif' : '') + '" style="background:' + CLASSES[k].coul + '">' + CLASSES[k].nom + '</button>'
+  ).join('') + '<button data-p="inv" class="' + (pinceau === 'inv' ? 'actif' : '') + '">Gomme (mot invariable)</button>';
+  $('#ed-mots').innerHTML = ED.phrases.map((ph, s) => {
+    let h = '<div class="ed-phrase"><span class="num" style="color:#999;font-size:14px">' + (s + 1) + '.</span> ';
+    ph.tokens.forEach((t, i) => {
+      if (!estMot(t)) { h += esc(t) + ' '; return; }
+      const c = ph.classes[i];
+      h += '<button class="ed-tok" data-s="' + s + '" data-t="' + i + '"' + (c ? ' style="background:' + CLASSES[c].coul + ';border-color:#777"' : '') + '>' +
+        esc(affiche(t)) + (c ? '<small>' + CLASSES[c].abr + '</small>' : '') + '</button>';
+    });
+    return h + '</div>';
+  }).join('') || '<p class="aide">Écrivez des phrases ci-dessus : les mots apparaîtront ici.</p>';
+  const compte = {}; let inv = 0;
+  ED.phrases.forEach(p => p.tokens.forEach((t, i) => { if (!estMot(t)) return; const c = p.classes[i]; if (c) compte[c] = (compte[c] || 0) + 1; else inv++; }));
+  const total = Object.values(compte).reduce((a, b) => a + b, 0);
+  $('#ed-bilan').textContent = ED.phrases.length
+    ? total + ' mots variables (' + Object.keys(CLASSES).filter(k => compte[k]).map(k => CLASSES[k].nom.toLowerCase() + ' : ' + compte[k]).join(', ') + ') · ' + pluriel(inv, 'mot invariable', 'mots invariables')
+    : '';
+}
+let minuteur = null;
+$('#ed-texte').addEventListener('input', () => { clearTimeout(minuteur); minuteur = setTimeout(() => { edDepuisChamps(); edRender(); edSauver(); }, 350); });
+$('#ed-titre').addEventListener('input', () => { ED.titre = $('#ed-titre').value.trim(); edSauver(); });
+$('#ed-correction').addEventListener('change', () => { ED.correction = $('#ed-correction').checked; edSauver(); });
+$('#ed-palette').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; pinceau = b.dataset.p; edRender(); });
+$('#ed-mots').addEventListener('click', e => {
+  const b = e.target.closest('.ed-tok'); if (!b) return;
+  const p = ED.phrases[+b.dataset.s], i = +b.dataset.t;
+  p.classes[i] = (pinceau === 'inv' || p.classes[i] === pinceau) ? null : pinceau;
+  edRender(); edSauver();
+});
+function edPret(){
+  clearTimeout(minuteur); edDepuisChamps();
+  if (!ED.titre) ED.titre = 'Exercice';
+  if (!ED.phrases.length) { $('#ed-msg').textContent = '⚠ Écrivez au moins une phrase.'; return false; }
+  if (!ED.phrases.some(p => p.classes.some(Boolean))) { $('#ed-msg').textContent = '⚠ Indiquez la classe d\'au moins un mot (choisissez une classe puis touchez les mots).'; return false; }
+  return true;
+}
+$('#ed-telecharger').onclick = () => {
+  if (!edPret()) return;
+  const nom = 'exercice_' + slug(ED.titre) + '.json';
+  telecharger(nom, JSON.stringify(versFichier(ED)));
+  $('#ed-msg').textContent = '✓ Fichier « ' + nom + ' » téléchargé. Envoyez-le aux élèves : ils l\'ouvrent avec le bouton « Ouvrir l\'exercice envoyé par le professeur ».';
+};
+$('#ed-lien').onclick = () => {
+  if (!edPret()) return;
+  const url = location.href.split('#')[0].split('?')[0] + '#c=' + b64urlE(JSON.stringify(versFichier(ED)));
+  const champ = $('#ed-lien-texte'); champ.value = url; champ.hidden = false; champ.select();
+  const fin = ok => { $('#ed-msg').textContent = (ok ? '✓ Lien copié. ' : 'Copiez le lien ci-dessous. ') +
+    'Collez-le dans Pronote ou l\'ENT : en l\'ouvrant, l\'élève arrive directement sur l\'exercice.' +
+    (location.protocol === 'file:' ? ' ⚠ Cette page est ouverte depuis votre ordinateur : créez le lien depuis le site en ligne pour qu\'il fonctionne chez les élèves.' : ''); };
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => fin(true), () => fin(false)); else fin(false);
+};
+$('#ed-tester').onclick = () => {
+  if (!edPret()) return;
+  if (!$('#in-nom').value) { $('#in-nom').value = 'Test'; $('#in-prenom').value = 'Professeur'; $('#in-classe').value = 'Prof'; }
+  chargerCorpus(clone(ED));
+};
+$('#ed-ouvrir').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const j = await lireJSON(f);
+    ED = depuisFichier(j.type === 'travail-classes-variables' ? j.corpus : j);
+    edVersChamps(); edRender(); edSauver();
+    $('#ed-msg').textContent = '✓ Exercice ouvert : vous pouvez le modifier.';
+  } catch(err) { $('#ed-msg').textContent = '⚠ Ce fichier n\'est pas un exercice valide.'; }
+});
+$('#ed-nouveau').onclick = () => {
+  if (ED.phrases.length && !confirm('Effacer l\'exercice en cours de création ?')) return;
+  ED = {titre:'', correction:true, phrases:[]}; edVersChamps(); edRender(); edSauver();
+  $('#ed-msg').textContent = ''; $('#ed-lien-texte').hidden = true;
+};
+
+/* ---------- Enseignant : correction ---------- */
+let COPIES = [], copieOuverte = -1;
+function lireTravail(f){
+  if (!f || f.type !== 'travail-classes-variables') throw new Error('format');
+  const corpus = depuisFichier(f.corpus);
+  const placements = lirePlacements(corpus, f.placements);
+  return {eleve:f.eleve || {}, date:f.date, corpus, placements, verifs:f.verifications | 0, res:evaluer(corpus, placements)};
+}
+const dateFr = d => { const x = new Date(d); return isNaN(x) ? '?' : x.toLocaleDateString('fr-FR') + ' à ' + x.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}); };
+const nomZone = z => CLASSES[z] ? CLASSES[z].nom.toLowerCase() : '?';
+
+function texteCorrigeHTML(w){
+  return w.corpus.phrases.map((ph, s) => {
+    let h = '<p class="phrase"><span class="num">' + (s + 1) + '.</span>';
+    ph.tokens.forEach((t, i) => {
+      h += espace(i ? ph.tokens[i - 1] : null, t);
+      if (!estMot(t)) { h += esc(t); return; }
+      const ref = 's' + s + 't' + i, et = w.res.etat[ref], c = ph.classes[i];
+      h += '<span class="ann ' + (et || '') + '">' + esc(affiche(t)) + (c ? '<sub>' + CLASSES[c].abr + '</sub>' : '') + '</span>';
+    });
+    return h + '</p>';
+  }).join('');
+}
+function copieHTML(w){
+  const r = w.res, e = w.eleve;
+  const li = a => a.length ? '<ul>' + a.join('') + '</ul>' : '<p>Aucun.</p>';
+  return '<article class="copie">' +
+    '<div class="copie-entete"><div><h2>' + esc((e.prenom || '') + ' ' + (e.nom || '').toUpperCase()) + '</h2>' +
+    '<p>Classe : ' + esc(e.classe || '?') + ' · Rendu le ' + dateFr(w.date) + '</p>' +
+    '<p>Exercice : ' + esc(w.corpus.titre) + ' · Correction ' + (w.corpus.correction ? 'visible' : 'masquée') + ' pour l\'élève' +
+    (w.corpus.correction ? ' · bouton « Vérifier » utilisé ' + pluriel(w.verifs, 'fois', 'fois') : '') + '</p></div>' +
+    '<div class="note">' + r.bons + ' / ' + r.total + '</div></div>' +
+    '<p>' + pluriel(r.bons, 'mot bien rangé', 'mots bien rangés') + ' · ' + pluriel(r.erreurs.length, 'erreur') + ' · ' +
+    pluriel(r.oublis.length, 'mot variable oublié', 'mots variables oubliés') + ' · ' + pluriel(r.libres.length, 'mot écrit', 'mots écrits') + ' par l\'élève</p>' +
+    '<div class="legende"><span style="border-color:var(--vert)">bien rangé</span><span style="border-color:var(--rouge)">mal rangé</span><span style="border-color:var(--ambre)">oublié</span><span style="border-color:transparent">D, NC, NP, Adj, Pro, V : classe attendue</span></div>' +
+    '<div class="texte texte-prof">' + texteCorrigeHTML(w) + '</div>' +
+    tableauHTML(w.placements, {corpus:w.corpus, etat:r.etat, etiquettes:true}) +
+    '<div class="bilan">' +
+      '<div><h3>Erreurs</h3>' + li(r.erreurs.map(x => '<li>« ' + esc(x.mot) + ' » rangé en ' + nomZone(x.zone) + ' → ' + (x.attendu ? nomZone(x.attendu) : 'mot invariable') + '</li>')) + '</div>' +
+      '<div><h3>Mots oubliés</h3>' + li(r.oublis.map(x => '<li>« ' + esc(x.mot) + ' » (' + nomZone(x.attendu) + ')</li>')) + '</div>' +
+      '<div><h3>Mots écrits par l\'élève (à vérifier)</h3>' + li(r.libres.map(x => '<li>« ' + esc(x.texte) + ' » en ' + nomZone(x.zone) + '</li>')) + '</div>' +
+    '</div></article>';
+}
+function renderCopies(){
+  COPIES.sort((a, b) => (a.eleve.classe || '').localeCompare(b.eleve.classe || '', 'fr') || (a.eleve.nom || '').localeCompare(b.eleve.nom || '', 'fr') || (a.eleve.prenom || '').localeCompare(b.eleve.prenom || '', 'fr'));
+  $('#corr-tout').hidden = $('#corr-vider').hidden = !COPIES.length;
+  $('#corr-liste').innerHTML = COPIES.length ? '<table class="liste"><thead><tr><th>Classe</th><th>Nom</th><th>Prénom</th><th>Exercice</th><th>Score</th><th>Erreurs</th><th>Oubliés</th></tr></thead><tbody>' +
+    COPIES.map((w, i) => '<tr class="clic" data-i="' + i + '"' + (i === copieOuverte ? ' style="background:#eef4ff"' : '') + '><td>' + esc(w.eleve.classe || '') + '</td><td>' + esc(w.eleve.nom || '') + '</td><td>' + esc(w.eleve.prenom || '') + '</td><td>' + esc(w.corpus.titre) +
+      '</td><td><strong>' + w.res.bons + ' / ' + w.res.total + '</strong></td><td>' + w.res.erreurs.length + '</td><td>' + w.res.oublis.length + '</td></tr>').join('') +
+    '</tbody></table>' : '';
+  const w = COPIES[copieOuverte];
+  $('#corr-detail').innerHTML = w ? '<div class="actions" style="margin-top:16px"><button class="primaire" id="corr-pdf">🖨 Exporter cette copie en PDF</button></div>' + copieHTML(w) : '';
+  if (w) $('#corr-pdf').onclick = () => imprimer(copieHTML(w), 'correction_' + slug(w.eleve.classe) + '_' + slug(w.eleve.nom) + '_' + slug(w.eleve.prenom));
+}
+$('#corr-liste').addEventListener('click', e => {
+  const tr = e.target.closest('tr[data-i]'); if (!tr) return;
+  copieOuverte = +tr.dataset.i; renderCopies();
+  $('#corr-detail').scrollIntoView({behavior:'smooth'});
+});
+$('#corr-fichiers').addEventListener('change', async e => {
+  const fichiers = [...e.target.files]; e.target.value = '';
+  let ok = 0; const ko = [];
+  for (const f of fichiers) {
+    try {
+      const w = lireTravail(await lireJSON(f));
+      const i = COPIES.findIndex(x => x.date === w.date && x.eleve.nom === w.eleve.nom && x.eleve.prenom === w.eleve.prenom);
+      if (i >= 0) COPIES[i] = w; else COPIES.push(w);
+      ok++;
+    } catch(err) { ko.push(f.name); }
+  }
+  copieOuverte = COPIES.length === 1 ? 0 : -1;
+  $('#corr-msg').textContent = pluriel(ok, 'copie ouverte', 'copies ouvertes') + '.' + (ko.length ? ' ⚠ Fichiers ignorés (ce ne sont pas des travaux d\'élèves) : ' + ko.join(', ') : '') + (COPIES.length > 1 ? ' Touchez une ligne pour voir la copie corrigée.' : '');
+  renderCopies();
+});
+$('#corr-tout').onclick = () => imprimer(COPIES.map(copieHTML).join(''), 'corrections_' + slug(COPIES[0] ? COPIES[0].corpus.titre : 'exercice'));
+$('#corr-vider').onclick = () => { COPIES = []; copieOuverte = -1; renderCopies(); $('#corr-msg').textContent = ''; };
+
+let titreAvant = document.title;
+function imprimer(html, titre){
+  $('#zone-impression').innerHTML = html;
+  titreAvant = document.title; document.title = titre;
+  document.body.classList.add('impression');
+  setTimeout(() => window.print(), 80);
+}
+window.addEventListener('afterprint', () => {
+  document.body.classList.remove('impression');
+  $('#zone-impression').innerHTML = ''; document.title = titreAvant;
+});
+
+/* ---------- Navigation ---------- */
+$('#btn-prof').onclick = () => { montrerEcran('prof'); edRender(); };
+$('#btn-retour').onclick = () => { if (S.ecran === 'eleve' && S.eleve) { montrerEcran('eleve'); renderEleve(); } else { renderAccueil(); montrerEcran('accueil'); } };
+$$('.onglets button[data-onglet]').forEach(b => b.onclick = () => {
+  $$('.onglets button[data-onglet]').forEach(x => x.classList.toggle('actif', x === b));
+  $('#onglet-creer').hidden = b.dataset.onglet !== 'creer';
+  $('#onglet-corriger').hidden = b.dataset.onglet !== 'corriger';
+});
+
+/* ---------- Démarrage ---------- */
+(function init(){
+  const e = store.get('cgv:eleve');
+  if (e) { $('#in-nom').value = e.nom || ''; $('#in-prenom').value = e.prenom || ''; $('#in-classe').value = e.classe || ''; }
+  const b = store.get('cgv:brouillon');
+  if (b) { try { ED = depuisFichier(b); edVersChamps(); } catch(err) {} }
+  renderAccueil();
+  const m = location.hash.match(/[#&]c=([^&]+)/);
+  if (m) {
+    try { chargerCorpus(depuisFichier(JSON.parse(b64urlD(m[1])))); }
+    catch(err) { $('#accueil-msg').textContent = 'Le lien de l\'exercice est incomplet. Demande à ton professeur de le renvoyer.'; }
+  } else {
+    const q = new URLSearchParams(location.search).get('corpus');
+    if (q) fetch(q).then(r => r.json()).then(j => chargerCorpus(depuisFichier(j)))
+      .catch(() => { $('#accueil-msg').textContent = 'Impossible de charger l\'exercice.'; });
+  }
+})();
+</script>
+</body>
+</html>
