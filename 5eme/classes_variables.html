@@ -107,6 +107,16 @@ textarea{resize:vertical}
 .ed-tok small{font-size:11px; font-weight:700; margin-left:4px; color:#333}
 .bilan-ed{color:var(--doux); font-size:15px}
 .lien-texte{font-size:13px}
+.ia{border:1.5px solid #d8c9f3; background:#faf7ff; border-radius:12px; padding:10px 14px; margin:14px 0}
+.ia summary{font-weight:700; cursor:pointer}
+.ia-reglages{display:grid; grid-template-columns:2fr 1fr 1fr; gap:10px; margin-top:10px}
+.ia-reglages label{display:flex; flex-direction:column; gap:4px; font-weight:600; font-size:15px}
+.ia input[type=number], .ia select{border:1.5px solid #bbb; border-radius:10px; padding:9px 10px; background:#fff; font:inherit}
+.ia-titre{font-weight:600; font-size:15px; margin:12px 0 4px}
+.ia-classes{display:flex; flex-wrap:wrap; gap:8px}
+.ia-classes label{display:flex; align-items:center; gap:5px; border-radius:10px; padding:6px 10px; font-size:15px; border:1px solid #aaa}
+a.bouton{text-decoration:none}
+@media (max-width:700px){ .ia-reglages{grid-template-columns:1fr} }
 
 table.liste{width:100%; border-collapse:collapse; margin-top:12px}
 table.liste th, table.liste td{border-bottom:1px solid #e5e5e5; padding:8px; text-align:left}
@@ -219,6 +229,34 @@ table.liste tr.clic:hover{background:#f3f7ff}
           <textarea id="ed-texte" rows="5" placeholder="Le chevalier courageux traverse la forêt sombre."></textarea>
         </label>
       </div>
+      <details class="ia" id="ia">
+        <summary>✨ Produire des phrases avec l'IA (Claude.ai)</summary>
+        <div class="ia-reglages">
+          <label>Thème / œuvre <input type="text" id="ia-theme" placeholder="Yvain, le chevalier au lion"></label>
+          <label>Nombre de phrases <input type="number" id="ia-nombre" min="1" max="20" value="6"></label>
+          <label>Difficulté
+            <select id="ia-niveau">
+              <option value="facile">Facile</option>
+              <option value="moyen" selected>Moyen</option>
+              <option value="difficile">Difficile</option>
+            </select>
+          </label>
+        </div>
+        <p class="ia-titre">Classes à faire travailler en priorité <span class="aide">(aucune cochée = toutes)</span></p>
+        <div id="ia-classes" class="ia-classes"></div>
+        <p class="aide"><strong>1.</strong> Envoyez la demande à Claude :</p>
+        <div class="actions">
+          <a id="ia-ouvrir" class="bouton primaire" href="https://claude.ai/new" target="_blank" rel="noopener">↗ Ouvrir Claude.ai avec la demande</a>
+          <button id="ia-copier" class="secondaire">📋 Copier la demande</button>
+        </div>
+        <p class="aide"><strong>2.</strong> Copiez la réponse de Claude et collez-la ici :</p>
+        <textarea id="ia-reponse" rows="5" placeholder="Le/D chevalier/NC courageux/ADJ traverse/V la/D forêt/NC sombre/ADJ ."></textarea>
+        <div class="actions">
+          <button id="ia-remplacer" class="primaire">Remplacer les phrases de l'exercice</button>
+          <button id="ia-ajouter" class="secondaire">Ajouter à la suite</button>
+        </div>
+        <p id="ia-msg" class="aide"></p>
+      </details>
       <p class="aide">Pour garder plusieurs mots ensemble (« pomme de terre »), reliez-les par _ : pomme_de_terre.<br>
         Choisissez une classe ci-dessous, puis touchez les mots qui lui appartiennent. Les mots laissés blancs sont invariables : l'élève ne doit pas les ranger.</p>
       <div id="ed-palette" class="palette"></div>
@@ -759,6 +797,80 @@ $('#ed-nouveau').onclick = () => {
   ED = {titre:'', correction:true, phrases:[]}; edVersChamps(); edRender(); edSauver();
   $('#ed-msg').textContent = ''; $('#ed-lien-texte').hidden = true;
 };
+
+/* ---------- Enseignant : phrases produites par l'IA ---------- */
+const CODES_IA = {D:'det', NC:'nc', NP:'np', ADJ:'adj', PRO:'pro', V:'verbe'};
+const NIVEAUX_IA = {
+  facile:'courtes (5 à 8 mots) et simples, sans pronoms compléments',
+  moyen:'de longueur moyenne (8 à 12 mots), avec quelques pronoms',
+  difficile:'plus longues (10 à 16 mots), avec des pièges : « le, la, les, l\' » tantôt déterminants tantôt pronoms, adjectifs placés avant le nom, noms propres, temps composés'
+};
+$('#ia-classes').innerHTML = Object.keys(CLASSES).map(k =>
+  '<label style="background:' + CLASSES[k].coul + '"><input type="checkbox" value="' + k + '"> ' + CLASSES[k].nom + '</label>').join('');
+
+function demandeIA(){
+  const theme = $('#ia-theme').value.trim() || 'Yvain, le chevalier au lion (Chrétien de Troyes)';
+  const n = Math.min(20, Math.max(1, parseInt($('#ia-nombre').value, 10) || 6));
+  const prio = $$('#ia-classes input:checked').map(c => CLASSES[c.value].nom.toLowerCase());
+  return 'Tu es professeur de français en classe de 5e. Écris ' + n + ' phrases ' + NIVEAUX_IA[$('#ia-niveau').value] +
+    ', sur le thème : ' + theme + '. Elles serviront à un exercice où les élèves rangent les mots selon leur classe grammaticale variable.\n' +
+    (prio.length ? 'Fais apparaître surtout ces classes : ' + prio.join(', ') + '.\n' : 'Fais apparaître toutes les classes variables.\n') +
+    '\nCodes à utiliser :\nD = déterminant (y compris l\' élidé et les déterminants contractés au, aux, du, des)\nNC = nom commun\nNP = nom propre\nADJ = adjectif\nPRO = pronom\nV = verbe (chaque mot d\'une forme verbale, auxiliaire compris : a/V combattu/V)\n' +
+    'Les mots invariables (prépositions, conjonctions, adverbes, négations…) restent SANS code.\n' +
+    '\nFormat de réponse, strictement :\n- une phrase par ligne, sans numéro ;\n- chaque mot variable suivi immédiatement de /CODE, par exemple : Le/D chevalier/NC courageux/ADJ traverse/V la/D forêt/NC sombre/ADJ .\n' +
+    '- sépare la ponctuation par une espace ;\n- sépare les mots élidés : L\'/D épée/NC brille/V ; Il/PRO dit/V qu\' il/PRO part/V .\n' +
+    '- relie par _ les groupes qui forment un seul mot : pomme_de_terre/NC ;\n- aucun autre texte que les phrases, dans un seul bloc de code.\n' +
+    'Vérifie soigneusement chaque code avant de répondre.';
+}
+function majLienIA(){ $('#ia-ouvrir').href = 'https://claude.ai/new?q=' + encodeURIComponent(demandeIA()); }
+['#ia-theme','#ia-nombre','#ia-niveau'].forEach(s => $(s).addEventListener('input', majLienIA));
+$('#ia-classes').addEventListener('change', majLienIA);
+majLienIA();
+$('#ia-copier').onclick = () => {
+  const t = demandeIA();
+  const fin = ok => $('#ia-msg').textContent = ok ? '✓ Demande copiée : collez-la dans Claude.ai.' : '⚠ Copie impossible : utilisez plutôt « Ouvrir Claude.ai avec la demande ».';
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(() => fin(true), () => fin(false)); else fin(false);
+};
+
+function lireReponseIA(texte){
+  const phrases = [];
+  texte.split(/\n/).forEach(ligne => {
+    ligne = ligne.replace(/`/g, '').replace(/^\s*(\d+[.)]|[-*•])\s+/, '').trim();
+    if (!ligne || !/\/(D|NC|NP|ADJ|PRO|V)\b/i.test(ligne)) return;
+    const tokens = [], classes = [];
+    ligne.split(/\s+/).forEach(morceau => {
+      const m = /^(.+?)\/(D|NC|NP|ADJ|PRO|V)([,.;:!?…»)]*)$/i.exec(morceau);
+      const mot = m ? m[1] + m[3] : morceau.replace(/\/[A-Za-z]*$/, '');
+      if (!mot) return;
+      const code = m ? CODES_IA[m[2].toUpperCase()] : null;
+      const t = tokenize(mot);
+      const dernier = t.map(estMot).lastIndexOf(true);
+      t.forEach((x, i) => { tokens.push(x); classes.push(i === dernier ? code : null); });
+    });
+    let txt = '';
+    tokens.forEach((t, i) => { txt += espace(i ? tokens[i - 1] : null, t) + t; });
+    const re = tokenize(txt);
+    if (re.length !== tokens.length || re.some((x, i) => x !== tokens[i])) return;
+    phrases.push({texte:txt, tokens, classes});
+  });
+  return phrases;
+}
+function remplirIA(ajouter){
+  const ph = lireReponseIA($('#ia-reponse').value);
+  if (!ph.length) { $('#ia-msg').textContent = '⚠ Je ne trouve aucune phrase codée dans la réponse collée (format attendu : Le/D chevalier/NC …).'; return; }
+  clearTimeout(minuteur); edDepuisChamps();
+  ED.phrases = ajouter ? ED.phrases.concat(ph) : ph;
+  if (!$('#ed-titre').value.trim()) { ED.titre = $('#ia-theme').value.trim() || 'Exercice'; }
+  edVersChamps(); edRender(); edSauver();
+  $('#ia-reponse').value = '';
+  $('#ia-msg').textContent = '✓ ' + pluriel(ph.length, 'phrase ajoutée', 'phrases ajoutées') + '. Vérifiez les classes ci-dessous (touchez un mot pour corriger), puis téléchargez ou copiez le lien.';
+  $('#ed-mots').scrollIntoView({behavior:'smooth'});
+}
+$('#ia-remplacer').onclick = () => {
+  if (ED.phrases.length && !confirm('Remplacer les phrases actuelles de l\'exercice ?')) return;
+  remplirIA(false);
+};
+$('#ia-ajouter').onclick = () => remplirIA(true);
 
 /* ---------- Enseignant : correction ---------- */
 let COPIES = [], copieOuverte = -1;
