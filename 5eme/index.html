@@ -60,7 +60,23 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        .retour { 
+        h2 {
+            color: var(--couleur-classe);
+            font-size: 1.15em;
+            margin: 25px 0 5px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e3eee3;
+        }
+
+        .section-outils {
+            background: #f3f9f3;
+            border-radius: 10px;
+            padding: 5px 15px;
+        }
+
+        .section-outils h2 { margin-top: 12px; border-bottom-color: #cfe3cf; }
+
+        .retour {
             display: block; 
             text-align: center; 
             margin-top: 30px; 
@@ -78,11 +94,15 @@
     <h1>📚 Espace Français 5ème</h1>
     <p>« Celui qui déplace la montagne, c'est celui qui commence par enlever les petites pierres. — Confucius »</p>
     
-    <div class="list">
+    <section class="section-outils">
+        <h2>🧰 Outils grammaticaux</h2>
         <a href="classes_variables.html" class="btn">
             🗂️ Ranger les mots selon leur classe grammaticale <span class="nouveau">nouveau</span>
         </a>
+    </section>
 
+    <h2>📝 Exercices et questionnaires</h2>
+    <div class="list">
         <a href="carte_identite_verbe.html" class="btn">
             🧩 Reconstituer la carte d'identité du verbe <span class="nouveau">nouveau</span>
         </a>
