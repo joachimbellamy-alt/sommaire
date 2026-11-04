@@ -46,6 +46,11 @@ textarea{resize:vertical}
 .outils{display:flex; gap:8px; flex-wrap:wrap}
 .consigne{font-size:14px; color:var(--doux); margin:0 0 4px}
 .tok.sel, .tok.place{padding:3px 4px}
+.tok.ignore{color:#9a9a9a; background:#f1f1f1; text-decoration:line-through; text-decoration-thickness:2px}
+.tok.ignore.ok{background:#d9f5dc; color:var(--vert)}
+.tok.ignore.err{background:#ffdcdc; color:var(--rouge)}
+.tok.ignore.sel{background:var(--bleu); color:#fff}
+.message button.mini{margin-left:8px; border-radius:8px; padding:5px 10px; font-weight:600; border:1.5px solid #555; background:#fff; color:#333}
 .texte{background:#fff; border-radius:12px; padding:10px 16px; font-size:21px; line-height:2.05; max-height:24vh; overflow:auto; box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .phrase{margin:0}
 .phrase .num{display:inline-block; min-width:26px; color:#999; font-size:15px}
@@ -133,6 +138,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
 .ann.ok{border-color:var(--vert)}
 .ann.err{border-color:var(--rouge); background:#ffe6e6}
 .ann.oubli{border-color:var(--ambre); background:#fff1d6}
+.ann.ign{text-decoration:line-through; text-decoration-thickness:2px}
 .legende{font-size:13px; color:var(--doux); display:flex; gap:14px; flex-wrap:wrap}
 .legende span{border-bottom:3px solid; padding:0 3px}
 .bilan{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin-top:12px; font-size:15px}
@@ -206,7 +212,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
         <button id="btn-quitter" class="secondaire">Quitter</button>
       </div>
     </div>
-    <p class="consigne">Touche un mot du texte, puis touche la case du tableau où il doit aller. Tu peux aussi le faire glisser. Le crayon ✎ permet d'écrire un mot dans une case.</p>
+    <p class="consigne">Touche un mot du texte, puis touche la case du tableau où il doit aller. Tu peux aussi le faire glisser. Le crayon ✎ permet d'écrire un mot dans une case. Si un mot est invariable, touche-le puis « Ignorer ce mot ».</p>
     <div id="texte" class="texte"></div>
     <div id="message" class="message"></div>
     <div id="tableau-eleve"></div>
@@ -387,7 +393,7 @@ function infoRef(c, ref){
   return {mot:affiche(p.tokens[+m[2]]), classe:p.classes[+m[2]]};
 }
 function lirePlacements(c, liste){
-  return (Array.isArray(liste) ? liste : []).filter(p => p && CLASSES[p.zone]).map((p, i) =>
+  return (Array.isArray(liste) ? liste : []).filter(p => p && (CLASSES[p.zone] || (p.zone === 'ign' && p.ref))).map((p, i) =>
     p.ref ? {id:p.ref, ref:p.ref, zone:p.zone} : {id:p.id || ('l' + i + '_' + Date.now()), texte:String(p.texte || ''), zone:p.zone}
   ).filter((p, i, a) => !p.ref || (infoRef(c, p.ref) && a.findIndex(q => q.id === p.id) === i));
 }
@@ -410,19 +416,22 @@ function telecharger(nom, contenu){
 /* ---------- Correction ---------- */
 function evaluer(c, placements){
   const etat = {}, erreurs = [], oublis = [];
-  let bons = 0, total = 0;
+  let bons = 0, total = 0, invTotal = 0, ignOk = 0;
   const places = new Map(placements.filter(p => p.ref).map(p => [p.ref, p]));
   c.phrases.forEach((ph, s) => ph.tokens.forEach((t, i) => {
+    if (!estMot(t)) return;
     const ref = 's' + s + 't' + i, cl = ph.classes[i], p = places.get(ref), mot = affiche(t);
     if (cl) { total++; if (!p) { oublis.push({mot, attendu:cl}); etat[ref] = 'oubli'; } }
+    else invTotal++;
     if (p) {
-      if (p.zone === cl) { bons++; etat[ref] = 'ok'; }
+      if (p.zone === 'ign' && !cl) { ignOk++; etat[ref] = 'ok'; }
+      else if (p.zone === cl) { bons++; etat[ref] = 'ok'; }
       else { etat[ref] = 'err'; erreurs.push({mot, zone:p.zone, attendu:cl}); }
     }
   }));
   const libres = placements.filter(p => !p.ref);
   libres.forEach(p => etat[p.id] = 'libre');
-  return {etat, bons, total, erreurs, oublis, libres};
+  return {etat, bons, total, erreurs, oublis, libres, invTotal, ignOk};
 }
 
 /* ---------- Affichage commun ---------- */
@@ -513,7 +522,9 @@ function sauver(){
 }
 
 function texteEleveHTML(){
-  const places = new Set(S.placements.filter(p => p.ref).map(p => p.ref));
+  const places = new Set(S.placements.filter(p => p.ref && p.zone !== 'ign').map(p => p.ref));
+  const ignores = new Set(S.placements.filter(p => p.zone === 'ign').map(p => p.ref));
+  const etat = S.montrer ? evaluer(S.corpus, S.placements).etat : {};
   return S.corpus.phrases.map((ph, s) => {
     let h = '<p class="phrase"><span class="num">' + (s + 1) + '.</span>';
     ph.tokens.forEach((t, i) => {
@@ -521,7 +532,7 @@ function texteEleveHTML(){
       if (!estMot(t)) { h += esc(t); return; }
       const ref = 's' + s + 't' + i;
       const sel = S.sel && ((S.sel.kind === 'tok' && S.sel.ref === ref) || (S.sel.kind === 'chip' && S.sel.id === ref));
-      h += '<span class="tok' + (places.has(ref) ? ' place' : '') + (sel ? ' sel' : '') + '" data-ref="' + ref + '" data-mot="' + esc(affiche(t)) + '">' + esc(affiche(t)) + '</span>';
+      h += '<span class="tok' + (places.has(ref) ? ' place' : '') + (ignores.has(ref) ? ' ignore ' + (etat[ref] || '') : '') + (sel ? ' sel' : '') + '" data-ref="' + ref + '" data-mot="' + esc(affiche(t)) + '">' + esc(affiche(t)) + '</span>';
     });
     return h + '</p>';
   }).join('');
@@ -542,19 +553,27 @@ function renderEleve(){
   });
   const m = $('#message');
   if (S.sel) {
-    const mot = S.sel.kind === 'tok' ? infoRef(c, S.sel.ref).mot : (S.placements.find(p => p.id === S.sel.id) || {}).texte || (infoRef(c, S.sel.id) || {}).mot;
-    m.innerHTML = '<span class="info">' + (S.sel.kind === 'tok'
-      ? 'Touche maintenant la case où tu veux ranger « ' + esc(mot) + ' ».'
-      : 'Touche une autre case pour déplacer « ' + esc(mot) + ' », ou × pour le remettre dans le texte.') + '</span>';
+    const pl = S.sel.kind === 'chip' ? S.placements.find(p => p.id === S.sel.id) : null;
+    const mot = S.sel.kind === 'tok' ? infoRef(c, S.sel.ref).mot : (pl || {}).texte || (infoRef(c, S.sel.id) || {}).mot;
+    const ignore = pl && pl.zone === 'ign';
+    const peutIgnorer = S.sel.kind === 'tok' || (pl && pl.ref && !ignore);
+    m.innerHTML = '<span class="info">' + (ignore
+      ? 'Tu as ignoré « ' + esc(mot) + ' ». Touche une case pour le ranger quand même.'
+      : S.sel.kind === 'tok'
+        ? 'Touche maintenant la case où tu veux ranger « ' + esc(mot) + ' ».'
+        : 'Touche une autre case pour déplacer « ' + esc(mot) + ' », ou × pour le remettre dans le texte.') + '</span>' +
+      (peutIgnorer ? '<button class="mini" data-action="ignorer">🚫 Ignorer ce mot (invariable)</button>' : '') +
+      (ignore ? '<button class="mini" data-action="retablir">↩ Ne plus l\'ignorer</button>' : '');
   } else if (res) {
-    let h = '<span class="ok">✔ ' + pluriel(res.bons, 'mot bien rangé', 'mots bien rangés') + '.</span> ';
+    let h = '<span class="ok">✔ ' + pluriel(res.bons, 'mot bien rangé', 'mots bien rangés') + (res.ignOk ? ', ' + pluriel(res.ignOk, 'mot invariable bien ignoré', 'mots invariables bien ignorés') : '') + '.</span> ';
     h += res.erreurs.length ? '<span class="err">✗ ' + pluriel(res.erreurs.length, 'mot à revoir', 'mots à revoir') + ' (en rouge).</span> ' : '';
     h += res.oublis.length ? '<span class="info">Il reste ' + pluriel(res.oublis.length, 'mot variable', 'mots variables') + ' à trouver dans le texte.</span>' : '';
     if (!res.erreurs.length && !res.oublis.length) h += '<span class="ok">Bravo, tout est juste !</span>';
     m.innerHTML = h;
   } else {
-    const n = S.placements.length;
-    m.innerHTML = '<span class="info">' + (n ? pluriel(n, 'mot rangé', 'mots rangés') + ' dans le tableau.' : 'Aucun mot rangé pour l\'instant.') + '</span>';
+    const ni = S.placements.filter(p => p.zone === 'ign').length, n = S.placements.length - ni;
+    m.innerHTML = '<span class="info">' + (n ? pluriel(n, 'mot rangé', 'mots rangés') + ' dans le tableau' : 'Aucun mot rangé pour l\'instant') +
+      (ni ? ', ' + pluriel(ni, 'mot ignoré', 'mots ignorés') : '') + '.</span>';
   }
 }
 
@@ -631,6 +650,14 @@ $('#tableau-eleve').addEventListener('click', e => {
   if (e.target.closest('.chip')) return;
   const z = e.target.closest('.zone');
   if (z && S.sel) placer(S.sel, z.dataset.zone);
+});
+
+/* Ignorer un mot invariable */
+$('#message').addEventListener('click', e => {
+  const b = e.target.closest('button[data-action]');
+  if (!b || !S.sel) return;
+  if (b.dataset.action === 'ignorer') placer(S.sel, 'ign');
+  else if (b.dataset.action === 'retablir') retirer(S.sel.id);
 });
 
 /* Écrire un mot */
@@ -726,7 +753,7 @@ function edSauver(){ store.set('cgv:brouillon', versFichier(ED)); }
 function edRender(){
   $('#ed-palette').innerHTML = Object.keys(CLASSES).map(k =>
     '<button data-p="' + k + '" class="' + (pinceau === k ? 'actif' : '') + '" style="background:' + CLASSES[k].coul + '">' + CLASSES[k].nom + '</button>'
-  ).join('') + '<button data-p="inv" class="' + (pinceau === 'inv' ? 'actif' : '') + '">Gomme (mot invariable)</button>';
+  ).join('') + '<button data-p="inv" class="' + (pinceau === 'inv' ? 'actif' : '') + '">🚫 Ignorer ce mot (invariable)</button>';
   $('#ed-mots').innerHTML = ED.phrases.map((ph, s) => {
     let h = '<div class="ed-phrase"><span class="num" style="color:#999;font-size:14px">' + (s + 1) + '.</span> ';
     ph.tokens.forEach((t, i) => {
@@ -881,16 +908,17 @@ function lireTravail(f){
   return {eleve:f.eleve || {}, date:f.date, corpus, placements, verifs:f.verifications | 0, res:evaluer(corpus, placements)};
 }
 const dateFr = d => { const x = new Date(d); return isNaN(x) ? '?' : x.toLocaleDateString('fr-FR') + ' à ' + x.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}); };
-const nomZone = z => CLASSES[z] ? CLASSES[z].nom.toLowerCase() : '?';
+const nomZone = z => CLASSES[z] ? CLASSES[z].nom.toLowerCase() : z === 'ign' ? 'mots ignorés' : '?';
 
 function texteCorrigeHTML(w){
+  const ignores = new Set(w.placements.filter(p => p.zone === 'ign').map(p => p.ref));
   return w.corpus.phrases.map((ph, s) => {
     let h = '<p class="phrase"><span class="num">' + (s + 1) + '.</span>';
     ph.tokens.forEach((t, i) => {
       h += espace(i ? ph.tokens[i - 1] : null, t);
       if (!estMot(t)) { h += esc(t); return; }
       const ref = 's' + s + 't' + i, et = w.res.etat[ref], c = ph.classes[i];
-      h += '<span class="ann ' + (et || '') + '">' + esc(affiche(t)) + (c ? '<sub>' + CLASSES[c].abr + '</sub>' : '') + '</span>';
+      h += '<span class="ann ' + (et || '') + (ignores.has(ref) ? ' ign' : '') + '">' + esc(affiche(t)) + (c ? '<sub>' + CLASSES[c].abr + '</sub>' : '') + '</span>';
     });
     return h + '</p>';
   }).join('');
@@ -905,12 +933,13 @@ function copieHTML(w){
     (w.corpus.correction ? ' · bouton « Vérifier » utilisé ' + pluriel(w.verifs, 'fois', 'fois') : '') + '</p></div>' +
     '<div class="note">' + r.bons + ' / ' + r.total + '</div></div>' +
     '<p>' + pluriel(r.bons, 'mot bien rangé', 'mots bien rangés') + ' · ' + pluriel(r.erreurs.length, 'erreur') + ' · ' +
-    pluriel(r.oublis.length, 'mot variable oublié', 'mots variables oubliés') + ' · ' + pluriel(r.libres.length, 'mot écrit', 'mots écrits') + ' par l\'élève</p>' +
-    '<div class="legende"><span style="border-color:var(--vert)">bien rangé</span><span style="border-color:var(--rouge)">mal rangé</span><span style="border-color:var(--ambre)">oublié</span><span style="border-color:transparent">D, NC, NP, Adj, Pro, V : classe attendue</span></div>' +
+    pluriel(r.oublis.length, 'mot variable oublié', 'mots variables oubliés') + ' · ' + pluriel(r.libres.length, 'mot écrit', 'mots écrits') + ' par l\'élève' +
+    ' · mots invariables bien ignorés : ' + r.ignOk + ' / ' + r.invTotal + '</p>' +
+    '<div class="legende"><span style="border-color:var(--vert)">bien rangé ou bien ignoré</span><span style="border-color:var(--rouge)">erreur</span><span style="border-color:var(--ambre)">oublié</span><span style="border-color:transparent;text-decoration:line-through">ignoré par l\'élève</span><span style="border-color:transparent">D, NC, NP, Adj, Pro, V : classe attendue</span></div>' +
     '<div class="texte texte-prof">' + texteCorrigeHTML(w) + '</div>' +
     tableauHTML(w.placements, {corpus:w.corpus, etat:r.etat, etiquettes:true}) +
     '<div class="bilan">' +
-      '<div><h3>Erreurs</h3>' + li(r.erreurs.map(x => '<li>« ' + esc(x.mot) + ' » rangé en ' + nomZone(x.zone) + ' → ' + (x.attendu ? nomZone(x.attendu) : 'mot invariable') + '</li>')) + '</div>' +
+      '<div><h3>Erreurs</h3>' + li(r.erreurs.map(x => '<li>« ' + esc(x.mot) + ' » ' + (x.zone === 'ign' ? 'ignoré alors qu\'il est variable' : 'rangé en ' + nomZone(x.zone)) + ' → ' + (x.attendu ? nomZone(x.attendu) : 'mot invariable') + '</li>')) + '</div>' +
       '<div><h3>Mots oubliés</h3>' + li(r.oublis.map(x => '<li>« ' + esc(x.mot) + ' » (' + nomZone(x.attendu) + ')</li>')) + '</div>' +
       '<div><h3>Mots écrits par l\'élève (à vérifier)</h3>' + li(r.libres.map(x => '<li>« ' + esc(x.texte) + ' » en ' + nomZone(x.zone) + '</li>')) + '</div>' +
     '</div></article>';
@@ -918,9 +947,9 @@ function copieHTML(w){
 function renderCopies(){
   COPIES.sort((a, b) => (a.eleve.classe || '').localeCompare(b.eleve.classe || '', 'fr') || (a.eleve.nom || '').localeCompare(b.eleve.nom || '', 'fr') || (a.eleve.prenom || '').localeCompare(b.eleve.prenom || '', 'fr'));
   $('#corr-tout').hidden = $('#corr-vider').hidden = !COPIES.length;
-  $('#corr-liste').innerHTML = COPIES.length ? '<table class="liste"><thead><tr><th>Classe</th><th>Nom</th><th>Prénom</th><th>Exercice</th><th>Score</th><th>Erreurs</th><th>Oubliés</th></tr></thead><tbody>' +
+  $('#corr-liste').innerHTML = COPIES.length ? '<table class="liste"><thead><tr><th>Classe</th><th>Nom</th><th>Prénom</th><th>Exercice</th><th>Score</th><th>Erreurs</th><th>Oubliés</th><th>Invariables ignorés</th></tr></thead><tbody>' +
     COPIES.map((w, i) => '<tr class="clic" data-i="' + i + '"' + (i === copieOuverte ? ' style="background:#eef4ff"' : '') + '><td>' + esc(w.eleve.classe || '') + '</td><td>' + esc(w.eleve.nom || '') + '</td><td>' + esc(w.eleve.prenom || '') + '</td><td>' + esc(w.corpus.titre) +
-      '</td><td><strong>' + w.res.bons + ' / ' + w.res.total + '</strong></td><td>' + w.res.erreurs.length + '</td><td>' + w.res.oublis.length + '</td></tr>').join('') +
+      '</td><td><strong>' + w.res.bons + ' / ' + w.res.total + '</strong></td><td>' + w.res.erreurs.length + '</td><td>' + w.res.oublis.length + '</td><td>' + w.res.ignOk + ' / ' + w.res.invTotal + '</td></tr>').join('') +
     '</tbody></table>' : '';
   const w = COPIES[copieOuverte];
   $('#corr-detail').innerHTML = w ? '<div class="actions" style="margin-top:16px"><button class="primaire" id="corr-pdf">🖨 Exporter cette copie en PDF</button></div>' + copieHTML(w) : '';
