@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Émotions et sentiments – 5e</title>
+<style>
+  /* Mise en page pensée pour les élèves dys : Arial, lettres espacées,
+     interligne 1,6, fond crème, grandes zones tactiles (iPad). */
+  :root {
+    --paper: #fdf6e3;
+    --surface: #fffdf5;
+    --border: #e0d8c0;
+    --ink: #2c2416;
+    --ink-2: #6b5e44;
+    --accent: #2a6fb0;
+    --accent-bg: #e3effa;
+    --ok: #1a6e3a;
+    --ok-bg: #dcf1e3;
+    --ko: #a33a00;
+    --ko-bg: #fde3d2;
+    --mid: #8a5d00;
+    --mid-bg: #fdf0c8;
+    --chip: #ffffff;
+    --radius: 14px;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { font-size: 19px; }
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    letter-spacing: 0.08em;
+    word-spacing: 0.12em;
+    line-height: 1.6;
+    background: var(--paper);
+    color: var(--ink);
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input, textarea { -webkit-user-select: text; user-select: text; }
+  #app { max-width: 980px; margin: 0 auto; padding: 18px 16px 120px; }
+
+  .retour5 { display: inline-block; margin-bottom: 10px; color: var(--accent); font-weight: bold; text-decoration: none; min-height: 44px; padding: 8px 0; }
+  header h1 { font-size: 1.45rem; margin: 0 0 4px; }
+  header p { margin: 0 0 14px; color: var(--ink-2); }
+
+  /* Onglets = pages */
+  nav.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  nav.tabs button {
+    flex: 1 1 140px; min-height: 56px; padding: 8px 10px;
+    font: inherit; font-size: 0.85rem; letter-spacing: 0.05em;
+    border: 2px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); color: var(--ink); cursor: pointer; text-align: left;
+  }
+  nav.tabs button b { display: block; font-size: 0.95rem; }
+  nav.tabs button.active { border-color: var(--accent); background: var(--accent-bg); }
+  nav.tabs button .st { float: right; }
+
+  section.page { display: none; background: var(--surface); border: 2px solid var(--border);
+    border-radius: 18px; padding: 18px 18px 22px; }
+  section.page.active { display: block; }
+  section.page h2 { margin: 0 0 6px; font-size: 1.25rem; }
+  .consigne { font-weight: bold; margin: 6px 0 4px; }
+  .aide { font-style: italic; color: var(--ink-2); margin: 0 0 14px; font-size: 0.9rem; }
+
+  .bar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; align-items: center; }
+  .btn {
+    min-height: 54px; padding: 10px 20px; font: inherit; font-weight: bold;
+    border-radius: var(--radius); border: 2px solid var(--accent);
+    background: var(--accent); color: #fff; cursor: pointer;
+  }
+  .btn.sec { background: var(--surface); color: var(--accent); }
+  .score { font-weight: bold; padding: 8px 14px; border-radius: var(--radius); display: none; }
+  .score.show { display: inline-block; }
+  .score.good { background: var(--ok-bg); color: var(--ok); }
+  .score.part { background: var(--mid-bg); color: var(--mid); }
+
+  /* Étiquettes déplaçables */
+  .pool {
+    display: flex; flex-wrap: wrap; gap: 10px; min-height: 70px; padding: 12px;
+    border: 2px dashed var(--border); border-radius: var(--radius); background: #fbf7ea;
+  }
+  .chip {
+    display: inline-flex; align-items: center; min-height: 50px; padding: 8px 16px;
+    border: 2px solid #b9ad8c; border-radius: 12px; background: var(--chip);
+    cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none;
+    font-weight: bold;
+  }
+  .chip.sel { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+  .chip.ghost { position: fixed; z-index: 1000; pointer-events: none; opacity: 0.9;
+    box-shadow: 0 6px 18px rgba(0,0,0,.2); }
+  .chip.dragging-src { opacity: 0.35; }
+  .slot {
+    min-height: 58px; min-width: 170px; padding: 4px; border: 2px dashed #b9ad8c;
+    border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    background: #fff;
+  }
+  .slot.over, .pool.over { border-color: var(--accent); background: var(--accent-bg); }
+  .slot .chip { width: 100%; justify-content: center; text-align: center; padding: 6px 8px; }
+  .ok-mark, .ko-mark { font-weight: bold; margin-left: 6px; }
+  .is-ok { border-color: var(--ok) !important; background: var(--ok-bg) !important; }
+  .is-ko { border-color: var(--ko) !important; background: var(--ko-bg) !important; }
+  .is-mid { border-color: var(--mid) !important; background: var(--mid-bg) !important; }
+
+  /* Page 1 : gradation */
+  .grad-row { display: grid; grid-template-columns: 170px 1fr; gap: 12px; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .grad-row .fam { font-weight: bold; }
+  .grad-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .grad-slots .lab { font-size: 0.8rem; color: var(--ink-2); text-align: center; }
+  .scale { display: grid; grid-template-columns: 170px 1fr; gap: 12px; margin-top: 14px; }
+  .scale div:last-child { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;
+    text-align: center; font-weight: bold; color: var(--ink-2); font-size: 0.9rem; }
+
+  /* Pages 2 et 5 : relier */
+  .match { position: relative; display: grid; grid-template-columns: 1fr 90px 1.4fr; gap: 0; }
+  .match .col { display: flex; flex-direction: column; gap: 12px; position: relative; z-index: 2; }
+  .match .item {
+    min-height: 56px; padding: 8px 14px; border: 2px solid #b9ad8c; border-radius: 12px;
+    background: #fff; cursor: pointer; display: flex; align-items: center; gap: 10px;
+  }
+  .match .item .dot { width: 16px; height: 16px; border-radius: 50%; background: #b9ad8c; flex: none; }
+  .match .left .item { justify-content: space-between; font-weight: bold; }
+  .match .item.sel { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+  .match .item.linked .dot { background: var(--accent); }
+  .match svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+
+  /* Pages 3 et 4 : exemples */
+  .ex { display: grid; grid-template-columns: 1fr 230px; gap: 12px; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .ex p { margin: 0; }
+  .ex input {
+    width: 100%; min-height: 54px; font: inherit; padding: 8px 12px;
+    border: 2px solid #b9ad8c; border-radius: 12px; background: #fff;
+  }
+  .fb { grid-column: 1 / -1; font-size: 0.9rem; display: none; padding: 6px 12px; border-radius: 10px; }
+  .fb.show { display: block; }
+
+  /* Page 6 : définitions */
+  .def-card { border: 2px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; background: #fff; }
+  .def-card h3 { margin: 0 0 8px; font-size: 1.1rem; }
+  .def-card textarea {
+    width: 100%; min-height: 90px; font: inherit; padding: 10px 12px; resize: vertical;
+    border: 2px solid #b9ad8c; border-radius: 12px; background: var(--surface);
+  }
+  .model { display: none; margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--accent-bg); }
+  .model.show { display: block; }
+
+  footer.pager { display: flex; justify-content: space-between; margin-top: 18px; gap: 10px; }
+
+  @media (max-width: 640px) {
+    html { font-size: 17px; }
+    .grad-row, .scale { grid-template-columns: 1fr; }
+    .scale div:first-child { display: none; }
+    .ex { grid-template-columns: 1fr; }
+    .match { grid-template-columns: 1fr 40px 1.2fr; }
+    .slot { min-width: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <a href="index.html" class="retour5">◀ Retour à l'espace 5e</a>
+    <h1>Les émotions et les sentiments – Je m'entraîne</h1>
+    <p>Séquence 2 : La fabrique des héros – Français 5e. Six activités : choisis une page avec les boutons.</p>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+
+  <!-- PAGE 1 -->
+  <section class="page" id="p1">
+    <h2>1. Ranger les sentiments du plus léger au plus fort</h2>
+    <p class="consigne">➜ Déplace chaque sentiment dans sa famille, à la bonne place : léger, moyen ou fort.</p>
+    <p class="aide">💡 Fais glisser une étiquette avec le doigt, ou touche l'étiquette puis touche la case.</p>
+    <div class="pool" id="g-pool" data-pool></div>
+    <div class="scale"><div></div><div><span>léger</span><span>moyen</span><span>fort</span></div></div>
+    <div id="g-rows"></div>
+    <div class="bar">
+      <button class="btn" data-check="1">Vérifier</button>
+      <button class="btn sec" data-new="1">Nouvelle série</button>
+      <span class="score" id="s1"></span>
+    </div>
+  </section>
+
+  <!-- PAGE 2 -->
+  <section class="page" id="p2">
+    <h2>2. Relier une émotion à un sentiment de sa famille</h2>
+    <p class="consigne">➜ Relie chaque émotion à un sentiment qui lui est rattaché.</p>
+    <p class="aide">💡 Touche une émotion, puis le sentiment qui va avec. Touche un trait pour l'effacer.</p>
+    <div class="match" id="m2"></div>
+    <div class="bar">
+      <button class="btn" data-check="2">Vérifier</button>
+      <button class="btn sec" data-new="2">Nouvelle série</button>
+      <span class="score" id="s2"></span>
+    </div>
+  </section>
+
+  <!-- PAGE 3 -->
+  <section class="page" id="p3">
+    <h2>3. Trouver le sentiment d'un personnage (avec une liste)</h2>
+    <p class="consigne">➜ Pour chaque exemple, dépose le sentiment exprimé, choisi dans la liste.</p>
+    <p class="aide">💡 Attention : 2 mots de la liste sont en trop.</p>
+    <div class="pool" id="l-pool" data-pool></div>
+    <div id="l-list"></div>
+    <div class="bar">
+      <button class="btn" data-check="3">Vérifier</button>
+      <button class="btn sec" data-new="3">Nouvelle série</button>
+      <span class="score" id="s3"></span>
+    </div>
+  </section>
+
+  <!-- PAGE 4 -->
+  <section class="page" id="p4">
+    <h2>4. Trouver le sentiment d'un personnage (sans liste)</h2>
+    <p class="consigne">➜ Pour chaque exemple, écris le sentiment exprimé.</p>
+    <p class="aide">💡 Trouve d'abord la famille (joie, confiance, peur, surprise, tristesse, dégoût, colère), puis le sentiment précis.</p>
+    <div id="w-list"></div>
+    <div class="bar">
+      <button class="btn" data-check="4">Vérifier</button>
+      <button class="btn sec" data-new="4">Nouvelle série</button>
+      <span class="score" id="s4"></span>
+    </div>
+  </section>
+
+  <!-- PAGE 5 -->
+  <section class="page" id="p5">
+    <h2>5. Relier un sentiment à sa définition</h2>
+    <p class="consigne">➜ Relie chaque sentiment à sa définition.</p>
+    <p class="aide">💡 Touche un sentiment, puis sa définition. Touche un trait pour l'effacer.</p>
+    <div class="match" id="m5"></div>
+    <div class="bar">
+      <button class="btn" data-check="5">Vérifier</button>
+      <button class="btn sec" data-new="5">Nouvelle série</button>
+      <span class="score" id="s5"></span>
+    </div>
+  </section>
+
+  <!-- PAGE 6 -->
+  <section class="page" id="p6">
+    <h2>6. Écrire la définition d'un sentiment</h2>
+    <p class="consigne">➜ Écris la définition de chaque mot avec tes propres mots.</p>
+    <p class="aide">💡 Commence par : « C'est un sentiment de… » ou « C'est une … très forte… ». Puis compare avec la fiche.</p>
+    <div id="d-list"></div>
+    <div class="bar">
+      <button class="btn" data-check="6">Vérifier</button>
+      <button class="btn sec" data-new="6">Nouvelle série</button>
+      <span class="score" id="s6"></span>
+    </div>
+  </section>
+
+  <footer class="pager">
+    <button class="btn sec" id="prev">◀ Page précédente</button>
+    <button class="btn sec" id="next">Page suivante ▶</button>
+  </footer>
+</div>
+
+<script>
+/* ═════════ Données : fiche « Les émotions et les sentiments » ═════════ */
+const FAMILLES = [
+  { e: "la joie", grad: true, s: ["le contentement", "l'enthousiasme", "l'euphorie"] },
+  { e: "la confiance", grad: false, s: ["le soulagement", "la sécurité", "l'admiration"] },
+  { e: "la peur", grad: true, s: ["l'appréhension", "l'anxiété", "la terreur"] },
+  { e: "la surprise", grad: true, s: ["l'étonnement", "la stupéfaction", "la sidération"] },
+  { e: "la tristesse", grad: true, s: ["la déception", "le chagrin", "le désespoir"] },
+  { e: "le dégoût", grad: true, s: ["la réticence", "l'aversion", "la répulsion"] },
+  { e: "la colère", grad: true, s: ["l'agacement", "la frustration", "la fureur"] },
+];
+
+// mot : [définition, exemple, mots-clés (groupes d'alternatives)]
+const SENT = {
+  "le contentement": ["Satisfaction calme, quand les choses se passent comme on le souhaite.",
+    "Philémon et Baucis vivent heureux dans leur petite cabane, sans rien désirer de plus.",
+    [["satisf", "content", "heureu"], ["calme", "souhait", "comme on veut", "tranquil"]]],
+  "l'enthousiasme": ["Joie vive qui donne envie de s'investir dans quelque chose.",
+    "Les Argonautes se pressent autour de Jason, impatients de partir conquérir la Toison d'or.",
+    [["joie", "content", "heureu"], ["envie", "investir", "vive", "motiv", "impatien"]]],
+  "l'euphorie": ["Joie très intense, presque incontrôlable.",
+    "Croyant la guerre finie, les Troyens font la fête toute la nuit après avoir fait entrer le cheval dans la ville.",
+    [["joie", "heureu"], ["intense", "tres fort", "incontrol", "extreme", "enorme"]]],
+  "le soulagement": ["Détente ressentie après la disparition d'une inquiétude.",
+    "Cachés sous les moutons, Ulysse et ses compagnons sortent enfin vivants de la grotte du Cyclope.",
+    [["detente", "detend", "calme", "soulag", "rassur"], ["inquiet", "peur", "danger", "disparit", "fini", "apres"]]],
+  "la sécurité": ["Sentiment d'être protégé(e), sans danger.",
+    "Télémaque voyage sans crainte, car la déesse Athéna, déguisée en Mentor, l'accompagne.",
+    [["protege", "protection", "abri"], ["danger", "risque", "crainte", "peur"]]],
+  "l'admiration": ["Grande estime pour quelqu'un ou quelque chose.",
+    "Les Phéaciens regardent Ulysse lancer le disque plus loin que tous leurs champions.",
+    [["estime", "admir", "respect", "impression"], ["quelqu", "personne", "chose"]]],
+  "l'appréhension": ["Légère inquiétude avant un évènement à venir.",
+    "Avant de passer près de l'île des Sirènes, Ulysse sait que leur chant est dangereux et se fait attacher au mât.",
+    [["inquiet", "peur", "crainte", "stress"], ["avant", "venir", "futur", "arriver"]]],
+  "l'anxiété": ["Tension et malaise face à une menace incertaine, difficile à calmer.",
+    "Pénélope attend Ulysse depuis des années sans savoir s'il est encore vivant.",
+    [["tension", "malaise", "inquiet", "stress", "angoiss"], ["menace", "incertain", "ne sait pas", "sans savoir", "calmer", "longtemps"]]],
+  "la terreur": ["Peur extrême, qui pousse à fuir ou à se figer complètement.",
+    "Les marins d'Ulysse hurlent quand le monstre Scylla saisit six d'entre eux.",
+    [["peur", "effroi", "epouvant"], ["extreme", "tres fort", "fuir", "fige", "intense", "enorme"]]],
+  "l'étonnement": ["Réaction légère face à quelque chose d'inattendu.",
+    "Nausicaa et ses servantes jouent à la balle quand un inconnu, Ulysse, sort soudain des buissons.",
+    [["leger", "petit", "un peu", "surpri"], ["inattendu", "imprevu", "pas prevu", "soudain"]]],
+  "la stupéfaction": ["Surprise forte qui laisse sans réaction pendant un moment.",
+    "Les prétendants restent sans voix quand le vieux mendiant réussit à tendre l'arc d'Ulysse.",
+    [["surpri", "inattendu", "etonn"], ["fort", "sans reaction", "sans voix", "bloque", "fige", "immobile"]]],
+  "la sidération": ["Surprise si intense qu'elle empêche un instant de penser ou d'agir.",
+    "Ceux qui croisent le regard de Méduse restent figés, changés en pierre.",
+    [["surpri", "inattendu", "choc"], ["intense", "empech", "penser", "agir", "fige", "paralys", "bloque"]]],
+  "la déception": ["Sentiment désagréable quand la réalité ne correspond pas à ce qu'on espérait.",
+    "Ithaque est en vue quand les compagnons d'Ulysse ouvrent l'outre d'Éole : les vents les repoussent loin de chez eux.",
+    [["desagreable", "triste", "decu"], ["realite", "espera", "espoir", "attend", "voulait", "pas comme"]]],
+  "le chagrin": ["Tristesse profonde liée à une perte ou une séparation.",
+    "Achille apprend la mort de son ami Patrocle : il se couvre de cendres et gémit.",
+    [["triste", "peine", "pleur"], ["profond", "perte", "perd", "separ", "mort", "deuil"]]],
+  "le désespoir": ["Tristesse extrême, avec l'impression qu'aucune solution n'est possible.",
+    "Voyant revenir le bateau de Thésée avec des voiles noires, Égée croit son fils mort et se jette dans la mer.",
+    [["triste", "peine"], ["extreme", "solution", "espoir", "tres fort", "plus rien", "impossible"]]],
+  "la réticence": ["Léger refus ou hésitation face à quelque chose de déplaisant.",
+    "Ulysse se méfie des fruits du lotus que lui offrent les Lotophages et refuse d'y goûter.",
+    [["refus", "hesit", "mefi", "pas envie"], ["leger", "deplais", "desagreable", "un peu"]]],
+  "l'aversion": ["Rejet net de quelque chose jugé désagréable ou injuste.",
+    "Ulysse rejette les prétendants qui pillent sa maison et maltraitent ses serviteurs.",
+    [["rejet", "rejett", "refus", "deteste"], ["net", "desagreable", "injuste", "fort"]]],
+  "la répulsion": ["Dégoût très fort, presque physique.",
+    "Ulysse voit le Cyclope dévorer ses compagnons.",
+    [["degout", "ecoeur", "rejet"], ["tres fort", "physique", "extreme", "intense", "nausee"]]],
+  "l'agacement": ["Irritation légère provoquée par une gêne répétée.",
+    "Chaque jour, les prétendants envahissent le palais et pressent Pénélope de choisir un mari.",
+    [["irrit", "enerv", "agac", "colere"], ["leger", "gene", "repet", "souvent", "petit"]]],
+  "la frustration": ["Sentiment désagréable quand on est empêché(e) d'atteindre un but.",
+    "Aux Enfers, Tantale a de l'eau jusqu'au menton et des fruits au-dessus de la tête, mais tout recule dès qu'il veut boire ou manger.",
+    [["empech", "bloque", "pas pouvoir", "ne peut pas", "impossible"], ["but", "objectif", "obtenir", "atteindre", "desagreable", "veut"]]],
+  "la fureur": ["Colère extrême, très difficile à contrôler.",
+    "Après la mort de Patrocle, Achille tue Hector et traîne son corps derrière son char.",
+    [["colere", "rage", "enerv"], ["extreme", "control", "tres fort", "intense", "violent"]]],
+};
+const FAMILLE_DE = {};
+FAMILLES.forEach(f => f.s.forEach(s => FAMILLE_DE[s] = f.e));
+const TOUS = Object.keys(SENT);
+
+/* ═════════ Outils ═════════ */
+const $ = (sel, root = document) => root.querySelector(sel);
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = (a, n) => shuffle(a).slice(0, n);
+const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+  .replace(/[’`]/g, "'").replace(/\s+/g, " ").trim();
+const sansArticle = s => norm(s).replace(/^(le |la |les |l'|l |un |une |de la |du |de l')/, "").trim();
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+
+function showScore(n, ok, total, extra = "") {
+  const s = $("#s" + n);
+  s.textContent = `${ok === total ? "🌟 " : ""}${ok} / ${total}${extra}`;
+  s.className = "score show " + (ok === total ? "good" : "part");
+  pageDone[n] = ok === total;
+  drawTabs();
+}
+function hideScore(n) { $("#s" + n).className = "score"; }
+
+/* ═════════ Glisser-déposer (souris + doigt) et toucher-toucher ═════════ */
+let selectedChip = null;
+function makeChip(text, value) {
+  const c = el("div", "chip", text);
+  c.dataset.val = value ?? text;
+  let start = null, ghost = null;
+  c.addEventListener("pointerdown", e => {
+    if (c.closest(".locked")) return;
+    start = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    c.setPointerCapture(e.pointerId);
+  });
+  c.addEventListener("pointermove", e => {
+    if (!start) return;
+    if (!ghost && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8) {
+      ghost = c.cloneNode(true); ghost.classList.add("ghost"); ghost.classList.remove("sel");
+      document.body.appendChild(ghost); c.classList.add("dragging-src");
+    }
+    if (ghost) {
+      ghost.style.left = (e.clientX - ghost.offsetWidth / 2) + "px";
+      ghost.style.top = (e.clientY - ghost.offsetHeight / 2) + "px";
+      document.querySelectorAll(".over").forEach(o => o.classList.remove("over"));
+      const t = dropTargetAt(e.clientX, e.clientY);
+      if (t) t.classList.add("over");
+    }
+  });
+  const end = e => {
+    if (!start) return;
+    if (ghost) {
+      const t = dropTargetAt(e.clientX, e.clientY);
+      ghost.remove(); ghost = null; c.classList.remove("dragging-src");
+      document.querySelectorAll(".over").forEach(o => o.classList.remove("over"));
+      if (t) placeChip(c, t);
+    } else {
+      // simple toucher : sélectionner
+      if (selectedChip === c) { c.classList.remove("sel"); selectedChip = null; }
+      else { if (selectedChip) selectedChip.classList.remove("sel"); selectedChip = c; c.classList.add("sel"); }
+    }
+    start = null;
+  };
+  c.addEventListener("pointerup", end);
+  c.addEventListener("pointercancel", () => { if (ghost) { ghost.remove(); ghost = null; } c.classList.remove("dragging-src"); start = null; });
+  return c;
+}
+function dropTargetAt(x, y) {
+  const under = document.elementFromPoint(x, y);
+  return under ? under.closest(".slot, [data-pool]") : null;
+}
+function placeChip(chip, target) {
+  const page = chip.closest("section.page");
+  if (!target || target.closest("section.page") !== page) return;
+  chip.classList.remove("sel"); selectedChip = null;
+  if (target.classList.contains("slot")) {
+    const old = target.querySelector(".chip");
+    if (old && old !== chip) {
+      // échange : l'ancienne étiquette repart d'où vient la nouvelle (ou dans la réserve)
+      const from = chip.parentElement;
+      if (from.classList.contains("slot")) from.appendChild(old);
+      else page.querySelector("[data-pool]").appendChild(old);
+    }
+    target.appendChild(chip);
+    target.classList.remove("is-ok", "is-ko", "is-mid");
+  } else {
+    target.appendChild(chip);
+  }
+  const n = page.id.slice(1); hideScore(n);
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest(".slot, [data-pool]");
+  if (t && selectedChip && !e.target.closest(".chip")) placeChip(selectedChip, t);
+});
+
+/* ═════════ Relier (pages 2 et 5) ═════════ */
+function buildMatch(root, pairs, opts = {}) {
+  // pairs : [{key, left, right}]
+  root.innerHTML = "";
+  const L = el("div", "col left"), M = el("div"), R = el("div", "col right");
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  root.append(L, M, R, svg);
+  const state = { links: {}, sel: null, checked: false };
+  const leftEls = {}, rightEls = {};
+  pairs.forEach(p => {
+    const it = el("div", "item"); it.append(el("span", null, p.left), el("span", "dot"));
+    it.dataset.key = p.key; it.dataset.side = "L"; L.appendChild(it); leftEls[p.key] = it;
+  });
+  shuffle(pairs).forEach(p => {
+    const it = el("div", "item"); it.append(el("span", "dot"), el("span", null, p.right));
+    it.dataset.key = p.key; it.dataset.side = "R"; R.appendChild(it); rightEls[p.key] = it;
+  });
+  function draw() {
+    const box = root.getBoundingClientRect();
+    svg.innerHTML = "";
+    Object.entries(state.links).forEach(([lk, rk]) => {
+      const a = leftEls[lk].querySelector(".dot").getBoundingClientRect();
+      const b = rightEls[rk].querySelector(".dot").getBoundingClientRect();
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", a.left + a.width / 2 - box.left); line.setAttribute("y1", a.top + a.height / 2 - box.top);
+      line.setAttribute("x2", b.left + b.width / 2 - box.left); line.setAttribute("y2", b.top + b.height / 2 - box.top);
+      let col = "#2a6fb0";
+      if (state.checked) col = lk === rk ? "#1a6e3a" : "#a33a00";
+      line.setAttribute("stroke", col); line.setAttribute("stroke-width", "4"); line.setAttribute("stroke-linecap", "round");
+      if (state.checked && lk !== rk) line.setAttribute("stroke-dasharray", "10 7");
+      svg.appendChild(line);
+    });
+    Object.values(leftEls).forEach(e => e.classList.toggle("linked", e.dataset.key in state.links));
+    const used = new Set(Object.values(state.links));
+    Object.values(rightEls).forEach(e => e.classList.toggle("linked", used.has(e.dataset.key)));
+  }
+  function clearMarks() {
+    state.checked = false;
+    root.querySelectorAll(".item").forEach(i => { i.classList.remove("is-ok", "is-ko"); i.querySelector(".mk")?.remove(); });
+    hideScore(opts.n);
+  }
+  root.addEventListener("click", e => {
+    const it = e.target.closest(".item"); if (!it) return;
+    clearMarks();
+    const side = it.dataset.side, key = it.dataset.key;
+    // toucher un élément déjà relié efface son trait
+    if (!state.sel) {
+      if (side === "L" && state.links[key]) { delete state.links[key]; draw(); return; }
+      if (side === "R") { const lk = Object.keys(state.links).find(k => state.links[k] === key); if (lk) { delete state.links[lk]; draw(); return; } }
+    }
+    if (!state.sel) { state.sel = it; it.classList.add("sel"); return; }
+    const a = state.sel; a.classList.remove("sel"); state.sel = null;
+    if (a === it) return;
+    if (a.dataset.side === side) { state.sel = it; it.classList.add("sel"); return; }
+    const lk = side === "L" ? key : a.dataset.key;
+    const rk = side === "R" ? key : a.dataset.key;
+    Object.keys(state.links).forEach(k => { if (state.links[k] === rk) delete state.links[k]; });
+    state.links[lk] = rk; draw();
+  });
+  new ResizeObserver(draw).observe(root);
+  return {
+    check() {
+      state.checked = true; let ok = 0;
+      pairs.forEach(p => {
+        const le = leftEls[p.key]; const good = state.links[p.key] === p.key;
+        if (good) ok++;
+        le.classList.add(good ? "is-ok" : "is-ko");
+        const mk = el("span", "mk " + (good ? "ok-mark" : "ko-mark"), good ? "✔" : "✖");
+        le.firstChild.after(mk);
+      });
+      draw(); return ok;
+    },
+    total: pairs.length,
+  };
+}
+
+/* ═════════ Page 1 : gradation ═════════ */
+function newP1() {
+  hideScore(1);
+  const fams = pick(FAMILLES.filter(f => f.grad), 3);
+  const pool = $("#g-pool"); pool.innerHTML = "";
+  const rows = $("#g-rows"); rows.innerHTML = "";
+  shuffle(fams.flatMap(f => f.s)).forEach(s => pool.appendChild(makeChip(s)));
+  fams.forEach(f => {
+    const r = el("div", "grad-row"); r.appendChild(el("div", "fam", f.e));
+    const g = el("div", "grad-slots");
+    f.s.forEach(s => { const sl = el("div", "slot"); sl.dataset.want = s; g.appendChild(sl); });
+    r.appendChild(g); rows.appendChild(r);
+  });
+}
+function checkP1() {
+  let ok = 0, tot = 0, wrongFam = 0;
+  document.querySelectorAll("#g-rows .slot").forEach(sl => {
+    tot++; sl.classList.remove("is-ok", "is-ko", "is-mid");
+    const c = sl.querySelector(".chip");
+    if (c && c.dataset.val === sl.dataset.want) { ok++; sl.classList.add("is-ok"); }
+    else if (c && FAMILLE_DE[c.dataset.val] === FAMILLE_DE[sl.dataset.want]) { sl.classList.add("is-mid"); }
+    else { sl.classList.add("is-ko"); if (c) wrongFam++; }
+  });
+  showScore(1, ok, tot, ok < tot ? "  – jaune : bonne famille, mauvaise place" : "");
+}
+
+/* ═════════ Page 2 : émotion → sentiment ═════════ */
+let m2;
+function newP2() {
+  hideScore(2);
+  const pairs = FAMILLES.map(f => ({ key: f.e, left: f.e, right: pick(f.s, 1)[0] }));
+  m2 = buildMatch($("#m2"), pairs, { n: 2 });
+}
+
+/* ═════════ Page 3 : avec liste ═════════ */
+function newP3() {
+  hideScore(3);
+  const answers = pick(TOUS, 5);
+  const intrus = pick(TOUS.filter(s => !answers.includes(s)), 2);
+  const pool = $("#l-pool"); pool.innerHTML = "";
+  shuffle([...answers, ...intrus]).forEach(s => pool.appendChild(makeChip(s)));
+  const list = $("#l-list"); list.innerHTML = "";
+  answers.forEach((s, i) => {
+    const row = el("div", "ex");
+    row.appendChild(el("p", null, `${String.fromCharCode(97 + i)}. ${SENT[s][1]}`));
+    const sl = el("div", "slot"); sl.dataset.want = s; row.appendChild(sl);
+    row.appendChild(el("div", "fb"));
+    list.appendChild(row);
+  });
+}
+function checkP3() {
+  let ok = 0;
+  document.querySelectorAll("#l-list .ex").forEach(row => {
+    const sl = row.querySelector(".slot"), c = sl.querySelector(".chip"), fb = row.querySelector(".fb");
+    sl.classList.remove("is-ok", "is-ko", "is-mid"); fb.className = "fb";
+    if (c && c.dataset.val === sl.dataset.want) { ok++; sl.classList.add("is-ok"); }
+    else if (c && FAMILLE_DE[c.dataset.val] === FAMILLE_DE[sl.dataset.want]) {
+      sl.classList.add("is-mid"); fb.textContent = `Presque : c'est bien la famille de ${FAMILLE_DE[sl.dataset.want].replace(/^(la |le |l')/, "")}, mais un autre mot convient mieux.`; fb.className = "fb show is-mid";
+    } else { sl.classList.add("is-ko"); }
+  });
+  showScore(3, ok, 5);
+}
+
+/* ═════════ Page 4 : sans liste ═════════ */
+function newP4() {
+  hideScore(4);
+  const answers = pick(TOUS, 5);
+  const list = $("#w-list"); list.innerHTML = "";
+  answers.forEach((s, i) => {
+    const row = el("div", "ex"); row.dataset.want = s;
+    row.appendChild(el("p", null, `${String.fromCharCode(97 + i)}. ${SENT[s][1]}`));
+    const inp = el("input"); inp.type = "text"; inp.placeholder = "le sentiment…";
+    inp.autocomplete = "off"; inp.spellcheck = false;
+    inp.addEventListener("input", () => { inp.classList.remove("is-ok", "is-ko", "is-mid"); row.querySelector(".fb").className = "fb"; hideScore(4); });
+    row.appendChild(inp);
+    row.appendChild(el("div", "fb"));
+    list.appendChild(row);
+  });
+}
+function checkP4() {
+  let ok = 0;
+  document.querySelectorAll("#w-list .ex").forEach(row => {
+    const want = row.dataset.want, inp = row.querySelector("input"), fb = row.querySelector(".fb");
+    const v = sansArticle(inp.value);
+    inp.classList.remove("is-ok", "is-ko", "is-mid"); fb.className = "fb";
+    if (!v) { inp.classList.add("is-ko"); fb.textContent = "Écris un mot."; fb.className = "fb show is-ko"; return; }
+    const famille = FAMILLE_DE[want];
+    const nomFam = famille.replace(/^(la |le |l')/, "");
+    if (v === sansArticle(want)) { ok++; inp.classList.add("is-ok"); fb.textContent = "✔ Bravo !"; fb.className = "fb show is-ok"; }
+    else if (v === sansArticle(famille) || FAMILLE_DE[TOUS.find(t => sansArticle(t) === v)] === famille) {
+      inp.classList.add("is-mid");
+      fb.textContent = `Presque : c'est bien la famille de ${nomFam}. Cherche le sentiment le plus précis.`;
+      fb.className = "fb show is-mid";
+    } else {
+      inp.classList.add("is-ko");
+      fb.textContent = `✖ Ce n'est pas ça. Indice : c'est la famille de ${nomFam}.`;
+      fb.className = "fb show is-ko";
+    }
+  });
+  showScore(4, ok, 5);
+}
+
+/* ═════════ Page 5 : sentiment → définition ═════════ */
+let m5;
+function newP5() {
+  hideScore(5);
+  const pairs = pick(TOUS, 5).map(s => ({ key: s, left: s, right: SENT[s][0] }));
+  m5 = buildMatch($("#m5"), pairs, { n: 5 });
+}
+
+/* ═════════ Page 6 : écrire la définition ═════════ */
+function newP6() {
+  hideScore(6);
+  const list = $("#d-list"); list.innerHTML = "";
+  pick(TOUS, 3).forEach((s, i) => {
+    const card = el("div", "def-card"); card.dataset.mot = s;
+    card.appendChild(el("h3", null, `${String.fromCharCode(97 + i)}. ${s}`));
+    const ta = el("textarea"); ta.placeholder = "C'est…"; ta.spellcheck = false;
+    ta.addEventListener("input", () => { ta.classList.remove("is-ok", "is-ko", "is-mid"); card.querySelector(".model").className = "model"; hideScore(6); });
+    card.appendChild(ta);
+    card.appendChild(el("div", "model"));
+    list.appendChild(card);
+  });
+}
+function checkP6() {
+  let ok = 0;
+  document.querySelectorAll("#d-list .def-card").forEach(card => {
+    const s = card.dataset.mot, ta = card.querySelector("textarea"), m = card.querySelector(".model");
+    const v = norm(ta.value);
+    const groupes = SENT[s][2];
+    const trouves = groupes.filter(g => g.some(k => v.includes(k))).length;
+    ta.classList.remove("is-ok", "is-ko", "is-mid");
+    let msg;
+    if (!v) { ta.classList.add("is-ko"); msg = "✖ Tu n'as rien écrit."; }
+    else if (trouves === groupes.length) { ok++; ta.classList.add("is-ok"); msg = "✔ Ta définition contient les idées importantes."; }
+    else if (trouves > 0) { ta.classList.add("is-mid"); msg = "◐ Il manque une idée importante. Compare avec la fiche."; }
+    else { ta.classList.add("is-ko"); msg = "✖ Ta définition est trop éloignée. Relis la fiche."; }
+    m.innerHTML = "";
+    m.append(el("div", null, msg));
+    const d = el("div"); d.innerHTML = "<b>Définition de la fiche :</b> "; d.append(SENT[s][0]); m.append(d);
+    const ex = el("div"); ex.innerHTML = "<b>Exemple :</b> "; ex.append(SENT[s][1]); m.append(ex);
+    const f = el("div"); f.innerHTML = "<b>Famille :</b> "; f.append(FAMILLE_DE[s]); m.append(f);
+    m.className = "model show";
+  });
+  showScore(6, ok, 3);
+}
+
+/* ═════════ Pages et navigation ═════════ */
+const PAGES = [
+  ["Gradation", "Du plus léger au plus fort"],
+  ["Émotion → sentiment", "Relier"],
+  ["Avec une liste", "Trouver le sentiment"],
+  ["Sans liste", "Trouver le sentiment"],
+  ["Définitions", "Relier"],
+  ["Écrire", "La définition"],
+];
+const pageDone = {};
+let current = 1;
+function drawTabs() {
+  const nav = $("#tabs"); nav.innerHTML = "";
+  PAGES.forEach(([t, sub], i) => {
+    const b = el("button"); const n = i + 1;
+    b.innerHTML = `<span class="st">${pageDone[n] ? "🌟" : ""}</span><b>${n}. ${t}</b>${sub}`;
+    if (n === current) b.classList.add("active");
+    b.onclick = () => go(n);
+    nav.appendChild(b);
+  });
+}
+function go(n) {
+  current = Math.max(1, Math.min(6, n));
+  document.querySelectorAll("section.page").forEach(p => p.classList.toggle("active", p.id === "p" + current));
+  $("#prev").style.visibility = current === 1 ? "hidden" : "visible";
+  $("#next").style.visibility = current === 6 ? "hidden" : "visible";
+  drawTabs();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+$("#prev").onclick = () => go(current - 1);
+$("#next").onclick = () => go(current + 1);
+
+const NEW = { 1: newP1, 2: newP2, 3: newP3, 4: newP4, 5: newP5, 6: newP6 };
+const CHECK = {
+  1: checkP1,
+  2: () => showScore(2, m2.check(), m2.total),
+  3: checkP3, 4: checkP4,
+  5: () => showScore(5, m5.check(), m5.total),
+  6: checkP6,
+};
+document.querySelectorAll("[data-check]").forEach(b => b.onclick = () => CHECK[b.dataset.check]());
+document.querySelectorAll("[data-new]").forEach(b => b.onclick = () => { pageDone[b.dataset.new] = false; NEW[b.dataset.new](); drawTabs(); });
+
+Object.values(NEW).forEach(f => f());
+go(1);
+</script>
+</body>
+</html>
