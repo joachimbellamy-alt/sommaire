@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fiche : les classes variables</title>
+<style>
+:root{ --texte:#1f1f1f; --doux:#555; --orange:#f3c26b; --vert:#1e7a35; --rouge:#b3261e; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#f6f3ec; color:var(--texte); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; font-size:15px; line-height:1.35}
+.page{max-width:1180px; margin:0 auto; padding:14px 16px 24px}
+.outils-haut{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px}
+.outils-haut a, .outils-haut button{font:inherit; font-weight:600; color:#2a6fd1; background:#fff; border:1.5px solid #2a6fd1; border-radius:10px; padding:8px 14px; text-decoration:none; cursor:pointer}
+h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 22px; font-size:24px; font-weight:600; text-align:center}
+
+/* Tableau : même disposition que la fiche d'exercice */
+.tableau{display:grid; grid-template-columns:2.1fr 1fr; grid-template-rows:auto auto; gap:12px}
+.cadre-gn{grid-row:1; grid-column:1; border:1.5px solid #222; background:#fff; padding:26px 10px 10px; display:grid; grid-template-columns:1fr 1.25fr 1.1fr; gap:12px; position:relative}
+.cadre-pro{grid-row:2; grid-column:1; border:2px dashed #222; padding:6px; position:relative}
+.cadre-verbe{grid-row:1 / 3; grid-column:2; border:2px dashed #222; padding:6px}
+.etiq-cadre{position:absolute; top:4px; left:12px; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#333}
+
+.zone{border-radius:16px; padding:10px 12px}
+.z-det{background:#d9d9d9; border:1.5px dotted #555}
+.col-nom{display:flex; flex-direction:column; background:#a6a6a6; border:1.5px solid #333; border-radius:16px; overflow:hidden}
+.col-nom .zone{border-radius:0}
+.z-np{border-top:3px solid #111}
+.z-adj{background:#717171; border:1.5px dotted #333; color:#fff}
+.z-pro{height:100%; background:linear-gradient(90deg,#a3a3a3,#fafafa); border:2px dotted #333; border-radius:22px}
+.z-verbe{height:100%; background:#fff; border:2.5px solid #111; border-radius:22px}
+
+.nom-classe{display:inline-block; font-size:17px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; background:#fff; color:#111; border:2px solid #111; border-radius:8px; padding:2px 10px; margin-bottom:6px}
+.zone p{margin:5px 0}
+.zone ul{margin:4px 0; padding-left:18px}
+.zone li{margin:2px 0}
+.varie{font-weight:700}
+.varie::before{content:"↔ "; }
+.ex{font-style:italic}
+.ex b{font-style:normal; background:#fff6c2; color:#111; padding:0 3px; border-radius:4px}
+.test{background:rgba(255,255,255,.75); color:#111; border-radius:8px; padding:4px 8px; font-size:14px}
+.test::before{content:"🔍 Test : "; font-weight:700}
+.z-adj .ex b{background:#fff6c2}
+.pro-contenu{display:grid; grid-template-columns:1.1fr 1fr; gap:4px 18px; align-items:start}
+.fleche{font-weight:800}
+
+/* Bas de fiche */
+.bas{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px}
+.encadre{background:#fff; border:1.5px solid #bbb; border-radius:12px; padding:10px 14px}
+.encadre h2{font-size:16px; margin:0 0 4px}
+.encadre p{margin:4px 0}
+
+@media (max-width:800px){
+  .tableau{grid-template-columns:1fr}
+  .cadre-gn{grid-template-columns:1fr}
+  .cadre-pro,.cadre-verbe{grid-row:auto; grid-column:auto}
+  .pro-contenu,.bas{grid-template-columns:1fr}
+}
+
+@page{size:A4 landscape; margin:7mm}
+@media print{
+  *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+  body{background:#fff; font-size:12.4px; line-height:1.3}
+  .page{max-width:none; padding:0}
+  .outils-haut{display:none}
+  h1{font-size:20px; padding:3px 16px; margin-bottom:7px}
+  .tableau{gap:7px}
+  .cadre-gn{padding:20px 7px 7px; gap:7px}
+  .zone{padding:6px 8px}
+  .nom-classe{font-size:14px; padding:1px 7px; margin-bottom:3px}
+  .test{font-size:11.6px; padding:3px 6px}
+  .zone p{margin:3px 0}
+  .bas{margin-top:7px; gap:7px}
+  .encadre{padding:5px 9px}
+  .encadre h2{font-size:13.5px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="outils-haut">
+    <a href="index.html">← Espace Français 5e</a>
+    <button onclick="window.print()">🖨 Imprimer / PDF</button>
+  </div>
+
+  <h1>Les classes grammaticales variables</h1>
+
+  <div class="tableau">
+    <!-- Groupe nominal -->
+    <div class="cadre-gn">
+      <span class="etiq-cadre">Le groupe nominal</span>
+
+      <div class="zone z-det">
+        <span class="nom-classe">Déterminant</span>
+        <p>Il se place <strong>devant le nom</strong> et l'annonce.</p>
+        <p class="varie">Varie en genre et en nombre : le / la / les</p>
+        <ul>
+          <li><strong>articles</strong> : le, la, l', les, un, une, des, du, au, aux</li>
+          <li><strong>possessifs</strong> : mon, ton, son, sa, ses, notre, leur…</li>
+          <li><strong>démonstratifs</strong> : ce, cet, cette, ces</li>
+        </ul>
+        <p class="ex"><b>le</b> chevalier, <b>ses</b> aventures</p>
+        <p class="test">je peux le remplacer par <em>ce</em> ou <em>un</em>.</p>
+      </div>
+
+      <div class="col-nom">
+        <div class="zone z-nc">
+          <span class="nom-classe">Nom commun</span>
+          <p>Il désigne un être, une chose, un lieu ou une idée. C'est le <strong>noyau</strong> du groupe nominal.</p>
+          <p class="varie">Varie en nombre : un chevalier → des chevaliers</p>
+          <p>Son genre est fixe : <em>le</em> lion, <em>la</em> forêt.</p>
+          <p class="ex">le <b>chevalier</b>, la <b>forêt</b>, le <b>courage</b></p>
+          <p class="test">je peux mettre <em>le</em> ou <em>un</em> devant.</p>
+        </div>
+        <div class="zone z-np">
+          <span class="nom-classe">Nom propre</span>
+          <p>Il commence par une <strong>majuscule</strong> et désigne une personne, un lieu ou un animal précis. Souvent sans déterminant.</p>
+          <p class="ex"><b>Yvain</b>, <b>Laudine</b>, <b>Brocéliande</b></p>
+          <p class="test">il peut remplacer tout un groupe : <em>le chevalier</em> → <em>Yvain</em>.</p>
+        </div>
+      </div>
+
+      <div class="zone z-adj">
+        <span class="nom-classe">Adjectif</span>
+        <p>Il <strong>précise le nom</strong> : il dit comment est l'être ou la chose.</p>
+        <p class="varie">S'accorde en genre et en nombre avec le nom</p>
+        <p>courageux → courageus<strong>e</strong> → courageus<strong>es</strong></p>
+        <p class="ex">le chevalier <b>courageux</b>, la <b>sombre</b> forêt</p>
+        <p class="test">je peux le remplacer par un autre adjectif (<em>fier, fidèle</em>) ou l'enlever.</p>
+      </div>
+    </div>
+
+    <!-- Pronom -->
+    <div class="cadre-pro">
+      <div class="zone z-pro">
+        <span class="nom-classe">Pronom</span>
+        <div class="pro-contenu">
+          <div>
+            <p>Il <strong>remplace tout un groupe nominal</strong> (ou un nom propre) pour éviter une répétition.</p>
+            <p class="varie">Varie en genre, en nombre et en personne</p>
+            <p>je, tu, il, elle, nous, vous, ils, elles · le, la, les, lui, leur · me, te, se</p>
+          </div>
+          <div>
+            <p class="ex"><span class="fleche">Le chevalier courageux</span> combat <span class="fleche">le géant</span>.<br>→ <b>Il</b> <b>le</b> combat.</p>
+            <p class="test"><em>il</em> remplace tout le groupe, pas un seul mot. Attention : <em>le, la, les</em> pronoms se placent <strong>devant le verbe</strong>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Verbe -->
+    <div class="cadre-verbe">
+      <div class="zone z-verbe">
+        <span class="nom-classe">Verbe</span>
+        <p>Il exprime une <strong>action</strong> ou un <strong>état</strong>. C'est le <strong>noyau de la phrase</strong>.</p>
+        <p class="varie">Se conjugue : il change selon la personne, le nombre, le temps et le mode</p>
+        <p>je combat<strong>s</strong>, nous combatt<strong>ons</strong>, il combatt<strong>it</strong>, il <strong>a</strong> combatt<strong>u</strong></p>
+        <p>Il s'accorde avec son <strong>sujet</strong> : le lion <b>suit</b> / les lions <b>suivent</b>.</p>
+        <p class="ex">Yvain <b>combat</b>. Laudine <b>pardonne</b>. Le lion <b>est</b> fidèle.</p>
+        <p class="test">je peux le mettre à un autre temps (<em>hier, demain</em>) ou l'encadrer par <em>ne… pas</em>.</p>
+        <p>Dans un temps composé, les deux mots forment le verbe : <em>il <b>a</b> <b>combattu</b></em>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bas">
+    <div class="encadre">
+      <h2>🔒 Et les mots invariables ?</h2>
+      <p>Ils ne changent <strong>jamais</strong> de forme : <em>à, de, dans, avec, et, mais, ou, puis, enfin, très, bien, ne… pas</em>.</p>
+      <p>Ils n'ont pas de place dans ce tableau : dans l'exercice, on les <strong>ignore</strong>.</p>
+    </div>
+    <div class="encadre">
+      <h2>🔄 Astuce : la commutation</h2>
+      <p>Pour trouver la classe d'un mot, je le <strong>remplace</strong> par un autre à la même place. Si la phrase reste correcte, les deux mots sont souvent de la <strong>même classe</strong>.</p>
+      <p><em>Le</em> chevalier → <em>Ce</em> chevalier : <em>le</em> est un déterminant.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
