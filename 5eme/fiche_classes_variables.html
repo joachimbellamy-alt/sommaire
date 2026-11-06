@@ -50,12 +50,23 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
 .encadre{background:#fff; border:1.5px solid #bbb; border-radius:12px; padding:10px 14px}
 .encadre h2{font-size:16px; margin:0 0 4px}
 .encadre p{margin:4px 0}
+.bas{grid-template-columns:1fr 1.9fr}
+.principe{background:#e8f0ff; border:2.5px solid #2a6fd1; border-radius:12px; padding:10px 14px}
+.principe h2{font-size:17px; margin:0 0 6px; color:#1d4f9c}
+.principe-grille{display:grid; grid-template-columns:1fr auto; gap:14px; align-items:center}
+.regle{margin:0; font-size:1.05em}
+.regle strong{color:#1d4f9c}
+.axe{display:flex; gap:6px}
+.axe .col{display:flex; flex-direction:column; align-items:center; gap:2px; background:#fff; border:1.5px solid #9dbbe8; border-radius:8px; padding:3px 8px; font-size:.95em}
+.axe .col span{color:#1d4f9c}
+.axe .phrase-mot{font-weight:800; color:#111 !important; border-bottom:2px solid #2a6fd1; padding-bottom:1px}
 
 @media screen and (max-width:800px){
   .tableau{grid-template-columns:1fr}
   .cadre-gn{grid-template-columns:1fr}
   .cadre-pro,.cadre-verbe{grid-row:auto; grid-column:auto}
-  .pro-contenu,.bas{grid-template-columns:1fr}
+  .pro-contenu,.bas,.principe-grille{grid-template-columns:1fr}
+  .axe{flex-wrap:wrap}
 }
 
 @page{size:A4 landscape; margin:7mm}
@@ -74,6 +85,9 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
   .bas{margin-top:7px; gap:7px}
   .encadre{padding:5px 9px}
   .encadre h2{font-size:13.5px}
+  .principe{padding:6px 10px}
+  .principe h2{font-size:14px; margin-bottom:3px}
+  .axe .col{padding:2px 6px}
 }
 </style>
 </head>
@@ -104,7 +118,7 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
           <li><strong>démonstratifs</strong> : ce, cet, cette, ces</li>
         </ul>
         <p class="ex"><b>le</b> chevalier, <b>ses</b> aventures</p>
-        <p class="test">je peux le remplacer par <em>ce</em> ou <em>un</em>.</p>
+        <p class="test">je le remplace par <em>un, une</em> ou <em>des</em> : <em><b>le</b> chevalier → <b>un</b> chevalier</em>.</p>
       </div>
 
       <div class="col-nom">
@@ -114,13 +128,13 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
           <p class="varie">Varie en nombre : un chevalier → des chevaliers</p>
           <p>Son genre est fixe : <em>le</em> lion, <em>la</em> forêt.</p>
           <p class="ex">le <b>chevalier</b>, la <b>forêt</b>, le <b>courage</b></p>
-          <p class="test">je peux mettre <em>le</em> ou <em>un</em> devant.</p>
+          <p class="test">je le remplace par un autre nom : <em>le <b>chevalier</b> → le <b>lion</b></em>.</p>
         </div>
         <div class="zone z-np">
           <span class="nom-classe">Nom propre</span>
           <p>Il commence par une <strong>majuscule</strong> et désigne une personne, un lieu ou un animal précis. Souvent sans déterminant.</p>
           <p class="ex"><b>Yvain</b>, <b>Laudine</b>, <b>Brocéliande</b></p>
-          <p class="test">il peut remplacer tout un groupe : <em>le chevalier</em> → <em>Yvain</em>.</p>
+          <p class="test">je le remplace par un autre nom propre : <em><b>Yvain</b> combat → <b>Gauvain</b> combat</em>.</p>
         </div>
       </div>
 
@@ -130,7 +144,7 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
         <p class="varie">S'accorde en genre et en nombre avec le nom</p>
         <p>courageux → courageus<strong>e</strong> → courageus<strong>es</strong></p>
         <p class="ex">le chevalier <b>courageux</b>, la <b>sombre</b> forêt</p>
-        <p class="test">je peux le remplacer par un autre adjectif (<em>fier, fidèle</em>) ou l'enlever.</p>
+        <p class="test">je le remplace par un autre adjectif : <em>le chevalier <b>courageux</b> → le chevalier <b>fidèle</b></em>.</p>
       </div>
     </div>
 
@@ -146,7 +160,7 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
           </div>
           <div>
             <p class="ex"><span class="fleche">Le chevalier courageux</span> combat <span class="fleche">le géant</span>.<br>→ <b>Il</b> <b>le</b> combat.</p>
-            <p class="test"><em>il</em> remplace tout le groupe, pas un seul mot. Attention : <em>le, la, les</em> pronoms se placent <strong>devant le verbe</strong>.</p>
+            <p class="test">je remplace <strong>tout le groupe nominal</strong> par un pronom : <em><b>Le chevalier courageux</b> combat → <b>Il</b> combat</em>.<br>Attention : <em>le, la, les</em> pronoms se placent <strong>devant le verbe</strong>.</p>
           </div>
         </div>
       </div>
@@ -161,7 +175,7 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
         <p>je combat<strong>s</strong>, nous combatt<strong>ons</strong>, il combatt<strong>it</strong>, il <strong>a</strong> combatt<strong>u</strong></p>
         <p>Il s'accorde avec son <strong>sujet</strong> : le lion <b>suit</b> / les lions <b>suivent</b>.</p>
         <p class="ex">Yvain <b>combat</b>. Laudine <b>pardonne</b>. Le lion <b>est</b> fidèle.</p>
-        <p class="test">je peux le mettre à un autre temps (<em>hier, demain</em>) ou l'encadrer par <em>ne… pas</em>.</p>
+        <p class="test">je le remplace par un autre verbe : <em>Yvain <b>combat</b> → Yvain <b>attaque</b></em>,<br>ou je change le temps : <em>Yvain <b>combat</b> → Yvain <b>combattra</b></em>.</p>
         <p>Dans un temps composé, les deux mots forment le verbe : <em>il <b>a</b> <b>combattu</b></em>.</p>
       </div>
     </div>
@@ -173,10 +187,18 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
       <p>Ils ne changent <strong>jamais</strong> de forme : <em>à, de, dans, avec, et, mais, ou, puis, enfin, très, bien, ne… pas</em>.</p>
       <p>Ils n'ont pas de place dans ce tableau : dans l'exercice, on les <strong>ignore</strong>.</p>
     </div>
-    <div class="encadre">
-      <h2>🔄 Astuce : la commutation</h2>
-      <p>Pour trouver la classe d'un mot, je le <strong>remplace</strong> par un autre à la même place. Si la phrase reste correcte, les deux mots sont souvent de la <strong>même classe</strong>.</p>
-      <p><em>Le</em> chevalier → <em>Ce</em> chevalier : <em>le</em> est un déterminant.</p>
+    <div class="principe">
+      <h2>🔄 Le principe de substitution (la commutation)</h2>
+      <div class="principe-grille">
+        <p class="regle">Je <strong>remplace</strong> un mot par un autre mot, <strong>à la même place</strong>.<br>
+          Si la phrase reste correcte, les deux mots sont de la <strong>même classe grammaticale</strong>.</p>
+        <div class="axe" aria-label="Exemple : chaque colonne contient des mots qui peuvent se remplacer">
+          <div class="col"><span class="phrase-mot">Le</span><span>Un</span><span>Ce</span></div>
+          <div class="col"><span class="phrase-mot">chevalier</span><span>lion</span><span>roi</span></div>
+          <div class="col"><span class="phrase-mot">courageux</span><span>fidèle</span><span>fier</span></div>
+          <div class="col"><span class="phrase-mot">combat</span><span>attaque</span><span>combattra</span></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
