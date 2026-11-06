@@ -12,6 +12,7 @@ body{background:#f6f3ec; color:var(--texte); font-family:-apple-system,BlinkMacS
 .page{max-width:1180px; margin:0 auto; padding:14px 16px 24px}
 .outils-haut{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px}
 .outils-haut a, .outils-haut button{font:inherit; font-weight:600; color:#2a6fd1; background:#fff; border:1.5px solid #2a6fd1; border-radius:10px; padding:8px 14px; text-decoration:none; cursor:pointer}
+.boutons{display:flex; gap:8px; flex-wrap:wrap}
 h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 22px; font-size:24px; font-weight:600; text-align:center}
 
 /* Tableau : même disposition que la fiche d'exercice */
@@ -50,7 +51,7 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
 .encadre h2{font-size:16px; margin:0 0 4px}
 .encadre p{margin:4px 0}
 
-@media (max-width:800px){
+@media screen and (max-width:800px){
   .tableau{grid-template-columns:1fr}
   .cadre-gn{grid-template-columns:1fr}
   .cadre-pro,.cadre-verbe{grid-row:auto; grid-column:auto}
@@ -80,7 +81,10 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
 <div class="page">
   <div class="outils-haut">
     <a href="index.html">← Espace Français 5e</a>
-    <button onclick="window.print()">🖨 Imprimer / PDF</button>
+    <span class="boutons">
+      <a href="fiche_classes_variables.pdf" download="Fiche_classes_grammaticales_variables.pdf">⬇ Télécharger (PDF)</a>
+      <button onclick="window.print()">🖨 Imprimer</button>
+    </span>
   </div>
 
   <h1>Les classes grammaticales variables</h1>
