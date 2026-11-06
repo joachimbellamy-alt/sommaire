@@ -67,30 +67,32 @@ textarea{resize:vertical}
 .cadre-gn{grid-row:1; grid-column:1; border:1.5px solid #222; background:#fff; padding:10px; display:grid; grid-template-columns:1fr 1.5fr 1.3fr; gap:14px; min-height:0}
 .cadre-pro{grid-row:2; grid-column:1; border:2px dashed #222; padding:6px; min-height:0}
 .cadre-verbe{grid-row:1 / 3; grid-column:2; border:2px dashed #222; padding:6px; min-height:0}
-.zone{position:relative; border-radius:18px; padding:8px 36px 8px 8px; display:flex; flex-wrap:wrap; align-content:flex-start; gap:6px; overflow:auto; min-height:0}
+.zone{position:relative; border-radius:18px; padding:7px; display:flex; flex-wrap:wrap; align-content:flex-start; align-items:center; gap:calc(var(--taille,18px) * .3); overflow:auto; min-height:0; min-width:0}
 .z-det{background:#d9d9d9; border:1.5px dotted #555}
 .col-nom{display:flex; flex-direction:column; background:#a6a6a6; border:1.5px solid #333; border-radius:18px; overflow:hidden; min-height:0}
 .col-nom .zone{border-radius:0}
 .z-nc{flex:4}
-.z-np{flex:1.25; border-top:3px solid #111}
+.z-nc{min-height:35%}
+.z-np{flex:0 0 auto; min-height:22%; max-height:60%; border-top:3px solid #111}
 .z-adj{background:#717171; border:1.5px dotted #333}
 .z-pro{height:100%; background:linear-gradient(90deg,#9c9c9c,#fafafa); border:2px dotted #333; border-radius:22px}
 .z-verbe{height:100%; background:#fff; border:2.5px solid #111; border-radius:22px}
 .tableau.attente .zone{box-shadow:inset 0 0 0 3px rgba(42,111,209,.45); cursor:pointer}
 .zone.survol{box-shadow:inset 0 0 0 4px var(--bleu) !important}
-.crayon{position:absolute; top:6px; right:6px; width:28px; height:28px; border-radius:50%; border:1px solid #555; background:#fff; font-size:15px; line-height:1; padding:0; opacity:.85}
+.crayon{flex:none; width:calc(var(--taille,18px) * 1.5); height:calc(var(--taille,18px) * 1.5); border-radius:50%; border:1px solid #555; background:#fff; font-size:calc(var(--taille,18px) * .8); line-height:1; padding:0; opacity:.8}
 .etiq{display:none}
 .avec-etiq .zone{padding-top:30px}
 .avec-etiq .etiq{display:block; position:absolute; top:6px; left:10px; font-size:12px; font-weight:700; background:rgba(255,255,255,.9); border-radius:6px; padding:1px 7px}
 
-.chip{display:inline-flex; align-items:center; background:#fff; border:1.5px solid #333; border-radius:8px; padding:4px 9px; font-size:18px; height:fit-content; touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; cursor:grab}
+.chip{display:inline-flex; align-items:center; background:#fff; border:1.5px solid #333; border-radius:7px; padding:calc(var(--taille,18px) * .2) calc(var(--taille,18px) * .45); font-size:var(--taille,18px); white-space:nowrap; max-width:100%; height:fit-content; touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; cursor:grab}
 .chip.libre{border-style:dashed; font-style:italic}
 .chip.sel{outline:3px solid var(--bleu); outline-offset:1px}
 .chip.ok{background:#d9f5dc; border-color:var(--vert)}
 .chip.err{background:#ffdcdc; border-color:var(--rouge)}
 .chip.ok::after{content:"✓"; color:var(--vert); margin-left:5px; font-weight:700}
 .chip.err::after{content:"✗"; color:var(--rouge); margin-left:5px; font-weight:700}
-.retirer{margin-left:7px; border:none; background:var(--rouge); color:#fff; border-radius:50%; width:24px; height:24px; padding:0; font-size:16px; line-height:1}
+.retirer{margin-left:6px; border:none; background:var(--rouge); color:#fff; border-radius:50%; width:22px; height:22px; padding:0; font-size:15px; line-height:1; flex:none}
+.zone.serre .chip{white-space:normal; overflow-wrap:anywhere}
 .fantome{position:fixed; z-index:1000; pointer-events:none; transform:translate(-50%,-130%); background:#fff; border:2px solid var(--bleu); border-radius:8px; padding:4px 10px; font-size:19px; box-shadow:0 6px 18px rgba(0,0,0,.25)}
 
 /* Fenêtre « écrire un mot » */
@@ -162,7 +164,6 @@ table.liste tr.clic:hover{background:#f3f7ff}
   body.impression #zone-impression{display:block}
   .copie{page-break-after:always; break-after:page; margin:0}
   .tableau{height:105mm}
-  .chip{font-size:13px; padding:2px 6px}
   .texte-prof{font-size:14px; line-height:2}
   .crayon,.retirer{display:none}
 }
@@ -448,8 +449,9 @@ function tableauHTML(placements, o){
     }).join('');
     return '<div class="zone z-' + z + '" data-zone="' + z + '" role="group" aria-label="Case ' + n + '">' +
       '<span class="etiq">' + CLASSES[z].nom + '</span>' +
+      chips +
       (o.interactif ? '<button class="crayon" data-zone="' + z + '" aria-label="Écrire un mot dans cette case">✎</button>' : '') +
-      chips + '</div>';
+      '</div>';
   };
   return '<div class="tableau' + (o.etiquettes ? ' avec-etiq' : '') + (o.attente ? ' attente' : '') + '">' +
     '<div class="cadre-gn">' + zone('det', 1) +
@@ -457,6 +459,25 @@ function tableauHTML(placements, o){
     '<div class="cadre-pro">' + zone('pro', 5) + '</div>' +
     '<div class="cadre-verbe">' + zone('verbe', 6) + '</div></div>';
 }
+
+/* Rapetisse les mots d'une case jusqu'à ce qu'ils tiennent tous dedans */
+const TAILLE_MAX = 18, TAILLE_MIN = 10;
+function ajusterZones(racine){
+  $$('.zone', racine).forEach(z => {
+    if (!z.clientHeight || !z.clientWidth) return;
+    z.classList.remove('serre');
+    const deborde = () => z.scrollHeight > z.clientHeight + 1 || z.scrollWidth > z.clientWidth + 1;
+    let t = TAILLE_MAX;
+    z.style.setProperty('--taille', t + 'px');
+    while (t > TAILLE_MIN && deborde()) { t -= 1; z.style.setProperty('--taille', t + 'px'); }
+    if (deborde()) z.classList.add('serre');
+  });
+}
+let minuteurAjuste = null;
+window.addEventListener('resize', () => {
+  clearTimeout(minuteurAjuste);
+  minuteurAjuste = setTimeout(() => { ajusterZones($('#tableau-eleve')); ajusterZones($('#corr-detail')); }, 150);
+});
 
 /* ---------- Élève ---------- */
 const S = {corpus:null, eleve:null, placements:[], verifs:0, montrer:false, sel:null, ecran:'accueil'};
@@ -551,6 +572,7 @@ function renderEleve(){
     corpus:c, interactif:true, etat:res ? res.etat : null,
     selId:S.sel && S.sel.kind === 'chip' ? S.sel.id : null, attente:!!S.sel
   });
+  ajusterZones($('#tableau-eleve'));
   const m = $('#message');
   if (S.sel) {
     const pl = S.sel.kind === 'chip' ? S.placements.find(p => p.id === S.sel.id) : null;
@@ -953,6 +975,7 @@ function renderCopies(){
     '</tbody></table>' : '';
   const w = COPIES[copieOuverte];
   $('#corr-detail').innerHTML = w ? '<div class="actions" style="margin-top:16px"><button class="primaire" id="corr-pdf">🖨 Exporter cette copie en PDF</button></div>' + copieHTML(w) : '';
+  ajusterZones($('#corr-detail'));
   if (w) $('#corr-pdf').onclick = () => imprimer(copieHTML(w), 'correction_' + slug(w.eleve.classe) + '_' + slug(w.eleve.nom) + '_' + slug(w.eleve.prenom));
 }
 $('#corr-liste').addEventListener('click', e => {
