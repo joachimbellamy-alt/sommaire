@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Survivre à l'hiver</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#1d2b3a;--mute:#5d6b7a;--acc:#2f6fb0;--ok:#2e8b57;--ko:#c0392b;--line:#d8e1ea}
+@media (prefers-color-scheme:dark){:root{--bg:#10171f;--card:#1a2430;--ink:#e8eef5;--mute:#9aa9b8;--acc:#6aa8e6;--ok:#4cc38a;--ko:#ef7b6e;--line:#2c3a49}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink)}
+main{max-width:860px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:1.5rem;margin:.2em 0}
+.sub{color:var(--mute);margin:0 0 16px}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:10px}
+button:hover{border-color:var(--acc)}
+button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.card h3{margin:0 0 4px;font-size:1.05rem}
+.emoji{font-size:1.8rem}
+.tag{display:inline-block;font-size:.75rem;padding:2px 9px;border-radius:99px;background:var(--acc);color:#fff;margin-bottom:6px}
+.hide{display:none}
+.flash{min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;cursor:pointer;font-size:1.15rem;padding:24px}
+.flash .big{font-size:3rem}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.opts{display:grid;gap:8px;margin-top:12px}
+.opts button{text-align:left}
+.ok{border-color:var(--ok)!important;background:color-mix(in srgb,var(--ok) 18%,var(--card))!important}
+.ko{border-color:var(--ko)!important;background:color-mix(in srgb,var(--ko) 18%,var(--card))!important}
+.mute{color:var(--mute);font-size:.9rem}
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden}
+td,th{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:color-mix(in srgb,var(--acc) 15%,var(--card))}
+@media(max-width:560px){td,th{padding:7px 8px;font-size:.92rem}}
+</style>
+</head>
+<body>
+<main>
+<h1>❄️ Survivre à l'hiver</h1>
+<p class="sub">Séquence 1 – Activité 5 : la stratégie de chaque être vivant pour passer la mauvaise saison.</p>
+
+<nav>
+  <button data-v="fiches" class="on">Fiches</button>
+  <button data-v="cartes">Cartes mémo</button>
+  <button data-v="quiz">Quiz</button>
+  <button data-v="tableau">Tableau</button>
+</nav>
+
+<section id="fiches"><div class="grid" id="grid"></div></section>
+
+<section id="cartes" class="hide">
+  <div class="card flash" id="flash"></div>
+  <div class="row">
+    <button id="prev">← Précédent</button>
+    <button id="flip">Retourner</button>
+    <button id="next">Suivant →</button>
+    <button id="shuf">🔀 Mélanger</button>
+  </div>
+  <p class="mute" id="count" style="text-align:center"></p>
+</section>
+
+<section id="quiz" class="hide">
+  <div class="card">
+    <div class="mute" id="qn"></div>
+    <h3 id="qt" style="font-size:1.2rem"></h3>
+    <div class="opts" id="qo"></div>
+    <div class="row"><button id="qnext" class="hide">Suivant →</button></div>
+  </div>
+</section>
+
+<section id="tableau" class="hide">
+  <table id="tab"></table>
+</section>
+</main>
+
+<script>
+const D=[
+ {e:"🌳",n:"Marronnier",t:"Perd ses feuilles",s:"Il perd ses feuilles et prépare ses futures feuilles dans des bourgeons."},
+ {e:"🦌",n:"Cerf",t:"Change de régime",s:"Il change de régime alimentaire."},
+ {e:"🐇",n:"Lièvre variable",t:"Mue",s:"Il mue pour changer de couleur de pelage."},
+ {e:"🥔",n:"Pomme de terre",t:"Tubercule",s:"Elle résiste sous forme de tubercule enfoui dans le sol."},
+ {e:"🦋",n:"Papillon",t:"Stades de développement",s:"Il passe par différents stades de développement ; ceux adaptés à l'hiver sont le stade « œuf » et le stade « chrysalide »."},
+ {e:"🐦",n:"Hirondelle",t:"Migration",s:"Elle migre vers les pays chauds."},
+ {e:"🍓",n:"Fraisier",t:"Stolons",s:"Il survit en formant des stolons."},
+ {e:"🦔",n:"Hérisson",t:"Hibernation",s:"Il hiberne."},
+ {e:"🌺",n:"Coquelicot",t:"Graine",s:"Il résiste sous forme de graine enfouie dans le sol."},
+ {e:"🌼",n:"Jonquille",t:"Bulbe",s:"Elle résiste sous forme de bulbe enfoui dans le sol."}
+];
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+
+// Fiches
+$("grid").innerHTML=D.map(d=>`<div class="card"><div class="emoji">${d.e}</div><h3>${d.n}</h3><span class="tag">${d.t}</span><div>${d.s}</div></div>`).join("");
+
+// Tableau
+$("tab").innerHTML="<tr><th>Être vivant</th><th>Stratégie</th><th>Mot-clé</th></tr>"+D.map(d=>`<tr><td>${d.e} ${d.n}</td><td>${d.s}</td><td><b>${d.t}</b></td></tr>`).join("");
+
+// Cartes
+let deck=[...D],ci=0,back=false;
+function showCard(){
+  const d=deck[ci];
+  $("flash").innerHTML=back?`<div class="big">${d.e}</div><div><span class="tag">${d.t}</span></div><div>${d.s}</div>`
+    :`<div class="big">${d.e}</div><div><b>${d.n}</b></div><div class="mute">Comment survit-il/elle à l'hiver ?</div>`;
+  $("count").textContent=`${ci+1} / ${deck.length}`;
+}
+$("flash").onclick=$("flip").onclick=()=>{back=!back;showCard()};
+$("next").onclick=()=>{ci=(ci+1)%deck.length;back=false;showCard()};
+$("prev").onclick=()=>{ci=(ci-1+deck.length)%deck.length;back=false;showCard()};
+$("shuf").onclick=()=>{deck=shuffle(D);ci=0;back=false;showCard()};
+showCard();
+
+// Quiz
+let qs=[],qi=0,score=0;
+function startQuiz(){
+  qs=shuffle(D).map(d=>({d,mode:Math.random()<.5}));
+  qi=0;score=0;askQ();
+}
+function askQ(){
+  if(qi>=qs.length){
+    $("qn").textContent="Terminé";
+    $("qt").textContent=`Score : ${score} / ${qs.length}`;
+    $("qo").innerHTML="";
+    $("qnext").textContent="Recommencer";$("qnext").classList.remove("hide");
+    $("qnext").onclick=startQuiz;return;
+  }
+  const {d,mode}=qs[qi];
+  $("qn").textContent=`Question ${qi+1} / ${qs.length}`;
+  $("qnext").classList.add("hide");
+  let right,wrong,label;
+  if(mode){ // nom -> stratégie (mot-clé)
+    $("qt").textContent=`${d.e} ${d.n} : comment survit-il/elle à l'hiver ?`;
+    right=d.s;wrong=D.filter(x=>x.s!==d.s).map(x=>x.s);label=x=>x;
+  }else{ // stratégie -> nom
+    $("qt").textContent=`Qui est-ce ? « ${d.s} »`;
+    right=d.n;wrong=D.filter(x=>x.n!==d.n).map(x=>x.n);label=x=>x;
+  }
+  const opts=shuffle([right,...shuffle(wrong).slice(0,3)]);
+  $("qo").innerHTML="";
+  opts.forEach(o=>{
+    const b=document.createElement("button");b.textContent=label(o);
+    b.onclick=()=>{
+      [...$("qo").children].forEach(c=>{c.disabled=true;if(c.textContent===right)c.classList.add("ok")});
+      if(o===right)score++;else b.classList.add("ko");
+      $("qnext").textContent="Suivant →";$("qnext").classList.remove("hide");
+      $("qnext").onclick=()=>{qi++;askQ()};
+    };
+    $("qo").appendChild(b);
+  });
+}
+startQuiz();
+
+// Navigation
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  ["fiches","cartes","quiz","tableau"].forEach(id=>$(id).classList.toggle("hide",id!==b.dataset.v));
+});
+</script>
+</body>
+</html>
