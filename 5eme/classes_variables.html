@@ -955,7 +955,7 @@ $('#ed-lien').onclick = () => {
   const url = location.href.split('#')[0].split('?')[0] + '#c=' + b64urlE(JSON.stringify(versFichier(ED)));
   const champ = $('#ed-lien-texte'); champ.value = url; champ.hidden = false; champ.select();
   const fin = ok => { $('#ed-msg').textContent = (ok ? '✓ Lien copié. ' : 'Copiez le lien ci-dessous. ') +
-    'Collez-le dans Pronote ou l\'ENT : en l\'ouvrant, l\'élève arrive directement sur l\'exercice.' +
+    'Collez-le dans École Directe : en l\'ouvrant, l\'élève arrive directement sur l\'exercice.' +
     (location.protocol === 'file:' ? ' ⚠ Cette page est ouverte depuis votre ordinateur : créez le lien depuis le site en ligne pour qu\'il fonctionne chez les élèves.' : ''); };
   if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => fin(true), () => fin(false)); else fin(false);
 };
