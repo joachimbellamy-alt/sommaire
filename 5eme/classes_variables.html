@@ -773,7 +773,7 @@ async function bibliothequesPDF(){
   if (!window.jspdf) await chargerScript('lib/jspdf.umd.min.js');
 }
 function feuilleHTML(){
-  const montrer = S.corpus.correction, res = evaluer(S.corpus, S.placements);
+  const montrer = true, res = evaluer(S.corpus, S.placements);
   const ignores = new Set(S.placements.filter(p => p.zone === 'ign').map(p => p.ref));
   const texte = S.corpus.phrases.map((ph, s) => {
     let h = '<p class="phrase"><span class="num">' + (s + 1) + '.</span>';
