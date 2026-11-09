@@ -226,6 +226,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
       <button data-onglet="creer" class="actif">✏️ Créer un exercice</button>
       <button data-onglet="corriger">✅ Corriger des travaux</button>
       <button id="btn-retour" class="lien">← Retour à l'espace élève</button>
+      <button id="btn-deconnexion" style="margin-left:auto">🔒 Se déconnecter</button>
     </div>
 
     <div id="onglet-creer" class="panneau">
@@ -1034,6 +1035,12 @@ function validerCode(){
   } else { $('#code-msg').textContent = 'Code incorrect.'; $('#code-prof').select(); }
 }
 $('#code-ok').onclick = validerCode;
+$('#btn-deconnexion').onclick = () => {
+  try { sessionStorage.removeItem('cgv:prof'); } catch(e) {}
+  $('#ia').hidden = true;
+  COPIES = []; copieOuverte = -1; renderCopies(); $('#corr-msg').textContent = '';
+  $('#btn-retour').click();
+};
 $('#code-annuler').onclick = () => { $('#modale-code').hidden = true; };
 $('#code-prof').addEventListener('keydown', e => { if (e.key === 'Enter') validerCode(); });
 $('#btn-retour').onclick = () => { if (S.ecran === 'eleve' && S.eleve) { montrerEcran('eleve'); renderEleve(); } else { renderAccueil(); montrerEcran('accueil'); } };
