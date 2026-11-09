@@ -339,6 +339,7 @@ const CLASSES = {
 const L = 'A-Za-zÀ-ÖØ-öø-ÿŒœÆæ0-9';
 const RE_TOK = new RegExp('[' + L + ']+(?:(?:[-_]|[\'’]_)[' + L + ']+)*[\'’]?|[^\\s' + L + ']', 'g');
 const RE_MOT = new RegExp('[' + L + ']');
+const RE_PHRASE_CODEE = /\S\/(D|NC|NP|ADJ|PRO|V)(?=[\s,.;:!?…»)]|$)/i;
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -373,7 +374,7 @@ function versFichier(c){
     cle: b64e(JSON.stringify(c.phrases.map(p => p.classes))).split('').reverse().join('')
   };
 }
-function depuisFichier(f){
+function depuisFichier(f, brut){
   if (!f || f.type !== 'corpus-classes-variables' || !Array.isArray(f.phrases)) throw new Error('format');
   let cl = [];
   try { cl = JSON.parse(b64d(String(f.cle || '').split('').reverse().join(''))); } catch(e) {}
@@ -381,6 +382,10 @@ function depuisFichier(f){
     titre: String(f.titre || 'Exercice'),
     correction: !!f.correction,
     phrases: f.phrases.map((p, i) => {
+      if (!brut && RE_PHRASE_CODEE.test(String(p.texte || ''))) {
+        const reparee = lireReponseIA(String(p.texte));
+        if (reparee.length) return reparee[0];
+      }
       const tokens = Array.isArray(p.tokens) ? p.tokens.map(String) : tokenize(p.texte || '');
       const c = Array.isArray(cl[i]) ? cl[i] : [];
       return {texte:String(p.texte || ''), tokens, classes:tokens.map((t, j) => CLASSES[c[j]] ? c[j] : null)};
@@ -762,10 +767,16 @@ function edDepuisChamps(){
   ED.correction = $('#ed-correction').checked;
   const lignes = $('#ed-texte').value.split(/\n+/).map(s => s.trim()).filter(Boolean);
   const anciennes = new Map(ED.phrases.map(p => [p.texte, p]));
+  let converti = false;
   ED.phrases = lignes.map(l => {
+    if (RE_PHRASE_CODEE.test(l)) {
+      const r = lireReponseIA(l);
+      if (r.length) { converti = true; return r[0]; }
+    }
     const a = anciennes.get(l), tokens = tokenize(l);
     return {texte:l, tokens, classes:a ? a.classes.slice() : tokens.map(() => null)};
   });
+  if (converti) $('#ed-texte').value = ED.phrases.map(p => p.texte).join('\n');
 }
 function edVersChamps(){
   $('#ed-titre').value = ED.titre; $('#ed-correction').checked = ED.correction;
@@ -926,7 +937,7 @@ $('#ia-ajouter').onclick = () => remplirIA(true);
 let COPIES = [], copieOuverte = -1;
 function lireTravail(f){
   if (!f || f.type !== 'travail-classes-variables') throw new Error('format');
-  const corpus = depuisFichier(f.corpus);
+  const corpus = depuisFichier(f.corpus, true);
   const placements = lirePlacements(corpus, f.placements);
   return {eleve:f.eleve || {}, date:f.date, corpus, placements, verifs:f.verifications | 0, res:evaluer(corpus, placements)};
 }
