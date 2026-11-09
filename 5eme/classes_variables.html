@@ -833,7 +833,7 @@ async function creerRendu(){
     const nom = 'travail_' + slug(S.eleve.classe) + '_' + slug(S.eleve.nom) + '_' + slug(S.eleve.prenom) + '.pdf';
     etapeRendu('<h3>✅ Ton PDF est prêt</h3><p class="rendu-nom">' + esc(nom) + '</p>' +
       '<a class="bouton primaire grand rendu-dl" href="' + lienPDF + '" download="' + esc(nom) + '">📥 Télécharger mon PDF</a>' +
-      '<p class="aide">Tu le retrouveras dans l\'app Fichiers, dossier « Téléchargements ». Envoie-le ensuite à ton professeur par l\'ENT ou Pronote.</p>' +
+      '<p class="aide">Tu le retrouveras dans l\'app Fichiers, dossier « Téléchargements ». Envoie-le ensuite sur École Directe.</p>' +
       '<div class="actions"><button class="secondaire" data-r="fermer">Fermer</button></div>');
   } catch(err) {
     etapeRendu('<h3>Le PDF n\'a pas pu être créé</h3><p>Vérifie ta connexion à Internet, recharge la page puis réessaie. Ton travail est conservé.</p>' +
