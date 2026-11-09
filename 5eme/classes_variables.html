@@ -236,7 +236,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
           <textarea id="ed-texte" rows="5" placeholder="Le chevalier courageux traverse la forêt sombre."></textarea>
         </label>
       </div>
-      <details class="ia" id="ia">
+      <details class="ia" id="ia" hidden>
         <summary>✨ Produire des phrases avec l'IA (Claude.ai)</summary>
         <div class="ia-reglages">
           <label>Thème / œuvre <input type="text" id="ia-theme" placeholder="Yvain, le chevalier au lion"></label>
@@ -1015,17 +1015,22 @@ window.addEventListener('afterprint', () => {
 
 /* ---------- Navigation ---------- */
 const EMPREINTE_CODE = 'aoir7l';
-const ouvrirProf = () => { $('#modale-code').hidden = true; montrerEcran('prof'); edRender(); };
-function profDeverrouille(){ try { return sessionStorage.getItem('cgv:prof') === EMPREINTE_CODE; } catch(e) { return false; } }
+const EMPREINTE_COLLEGUE = '1d49jbl';
+const ouvrirProf = complet => { $('#ia').hidden = !complet; $('#modale-code').hidden = true; montrerEcran('prof'); edRender(); };
+function accesMemorise(){ try { return sessionStorage.getItem('cgv:prof'); } catch(e) { return null; } }
+function retenirAcces(v){ try { sessionStorage.setItem('cgv:prof', v); } catch(e) {} }
 $('#btn-prof').onclick = () => {
-  if (profDeverrouille()) { ouvrirProf(); return; }
+  const acces = accesMemorise();
+  if (acces === EMPREINTE_CODE || acces === EMPREINTE_COLLEGUE) { ouvrirProf(acces === EMPREINTE_CODE); return; }
   $('#code-prof').value = ''; $('#code-msg').textContent = ''; $('#modale-code').hidden = false;
   setTimeout(() => $('#code-prof').focus(), 50);
 };
 function validerCode(){
-  if (hash('cgv-prof|' + $('#code-prof').value.trim()) === EMPREINTE_CODE) {
-    try { sessionStorage.setItem('cgv:prof', EMPREINTE_CODE); } catch(e) {}
-    ouvrirProf();
+  const saisi = $('#code-prof').value.trim();
+  if (hash('cgv-prof|' + saisi) === EMPREINTE_CODE) {
+    retenirAcces(EMPREINTE_CODE); ouvrirProf(true);
+  } else if (hash('cgv-prof|' + saisi.toLowerCase()) === EMPREINTE_COLLEGUE) {
+    retenirAcces(EMPREINTE_COLLEGUE); ouvrirProf(false);
   } else { $('#code-msg').textContent = 'Code incorrect.'; $('#code-prof').select(); }
 }
 $('#code-ok').onclick = validerCode;
