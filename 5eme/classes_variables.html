@@ -96,6 +96,17 @@ textarea{resize:vertical}
 .fantome{position:fixed; z-index:1000; pointer-events:none; transform:translate(-50%,-130%); background:#fff; border:2px solid var(--bleu); border-radius:8px; padding:4px 10px; font-size:19px; box-shadow:0 6px 18px rgba(0,0,0,.25)}
 
 /* Fenêtre « écrire un mot » */
+.feuille-pdf{position:absolute; left:-10000px; top:0; width:1100px; background:#fff; color:#111; padding:14px; font-size:16px}
+.feuille-pdf h2{margin:6px 0; font-size:21px; text-align:center}
+.feuille-tete{display:flex; justify-content:space-between; font-size:17px}
+.feuille-texte{font-size:17px; line-height:1.55; border:1px solid #bbb; border-radius:10px; padding:6px 12px; margin-bottom:10px}
+.feuille-texte .num{display:inline-block; min-width:24px; color:#777; font-size:14px}
+.barre-mot{text-decoration:line-through; color:#777}
+.feuille-pdf .tableau{grid-template-columns:2.1fr 1fr; grid-template-rows:3fr 1fr; height:500px}
+.feuille-pdf .cadre-gn{grid-row:1; grid-column:1; grid-template-columns:1fr 1.5fr 1.3fr}
+.feuille-pdf .cadre-pro{grid-row:2; grid-column:1}
+.feuille-pdf .cadre-verbe{grid-row:1 / 3; grid-column:2}
+.feuille-pdf .zone{min-height:0}
 .modale{position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:900; padding:16px}
 .modale .carte{width:100%; max-width:420px}
 
@@ -286,12 +297,12 @@ table.liste tr.clic:hover{background:#f3f7ff}
     <div id="onglet-corriger" class="panneau" hidden>
       <div class="actions">
         <label class="bouton primaire">📂 Ouvrir des travaux d'élèves (plusieurs à la fois possible)
-          <input type="file" id="corr-fichiers" accept=".json,application/json" multiple hidden>
+          <input type="file" id="corr-fichiers" accept=".pdf,application/pdf,.json,application/json" multiple hidden>
         </label>
         <button id="corr-tout" class="secondaire" hidden>🖨 Exporter toutes les copies en PDF</button>
         <button id="corr-vider" class="secondaire" hidden>Vider la liste</button>
       </div>
-      <p id="corr-msg" class="aide">Les fichiers rendus par les élèves s'appellent « travail_classe_nom_prénom.json ».</p>
+      <p id="corr-msg" class="aide">Les fichiers rendus par les élèves s'appellent « travail_classe_nom_prénom.pdf ». Ouvrez-les ici pour obtenir la correction automatique.</p>
       <div id="corr-liste"></div>
       <div id="corr-detail"></div>
     </div>
@@ -407,9 +418,20 @@ function lirePlacements(c, liste){
 function lireJSON(fichier){
   return new Promise((ok, ko) => {
     const r = new FileReader();
-    r.onload = () => { try { ok(JSON.parse(r.result)); } catch(e) { ko(e); } };
+    r.onload = () => {
+      try {
+        const o = new Uint8Array(r.result);
+        let txt = '';
+        for (let i = 0; i < o.length; i += 32768) txt += String.fromCharCode.apply(null, o.subarray(i, i + 32768));
+        if (txt.slice(0, 5) === '%PDF-') {
+          const m = /CGVTRAVAIL1\.([A-Za-z0-9_-]+)\.FIN/.exec(txt);
+          if (!m) throw new Error('pdf sans travail');
+          ok(JSON.parse(b64urlD(m[1])));
+        } else ok(JSON.parse(decodeURIComponent(escape(txt))));
+      } catch(e) { ko(e); }
+    };
     r.onerror = ko;
-    r.readAsText(fichier);
+    r.readAsArrayBuffer(fichier);
   });
 }
 function telecharger(nom, contenu){
@@ -713,17 +735,73 @@ $('#btn-effacer').onclick = () => {
   S.placements = []; S.sel = null; S.montrer = false; sauver(); renderEleve();
 };
 $('#btn-quitter').onclick = () => { S.sel = null; renderAccueil(); montrerEcran('accueil'); };
-$('#btn-rendre').onclick = () => {
-  if (!confirm('As-tu terminé ? Le fichier de ton travail va être enregistré sur l\'iPad.')) return;
+function chargerScript(src){
+  return new Promise((ok, ko) => {
+    const e = document.createElement('script');
+    e.src = src; e.onload = ok; e.onerror = ko;
+    document.head.appendChild(e);
+  });
+}
+async function bibliothequesPDF(){
+  if (!window.html2canvas) await chargerScript('lib/html2canvas.min.js');
+  if (!window.jspdf) await chargerScript('lib/jspdf.umd.min.js');
+}
+function feuilleHTML(){
+  const ignores = new Set(S.placements.filter(p => p.zone === 'ign').map(p => p.ref));
+  const texte = S.corpus.phrases.map((ph, s) => {
+    let h = '<p class="phrase"><span class="num">' + (s + 1) + '.</span>';
+    ph.tokens.forEach((t, i) => {
+      h += espace(i ? ph.tokens[i - 1] : null, t);
+      h += ignores.has('s' + s + 't' + i) ? '<span class="barre-mot">' + esc(affiche(t)) + '</span>' : esc(affiche(t));
+    });
+    return h + '</p>';
+  }).join('');
+  const e = S.eleve;
+  return '<div class="feuille-tete"><div><strong>' + esc(e.prenom + ' ' + e.nom.toUpperCase()) + '</strong> — ' + esc(e.classe) + '</div><div>' + esc(new Date().toLocaleDateString('fr-FR')) + '</div></div>' +
+    '<h2>' + esc(S.corpus.titre) + '</h2><div class="feuille-texte">' + texte + '</div>' +
+    tableauHTML(S.placements.filter(p => p.zone !== 'ign'), {corpus:S.corpus});
+}
+async function genererPDF(){
+  await bibliothequesPDF();
   const f = {
     type:'travail-classes-variables', version:1, eleve:S.eleve, date:new Date().toISOString(),
     corpus:versFichier(S.corpus),
     placements:S.placements.map(p => p.ref ? {ref:p.ref, zone:p.zone} : {texte:p.texte, zone:p.zone}),
     verifications:S.verifs
   };
-  const nom = 'travail_' + slug(S.eleve.classe) + '_' + slug(S.eleve.nom) + '_' + slug(S.eleve.prenom) + '.json';
-  telecharger(nom, JSON.stringify(f));
-  $('#message').innerHTML = '<span class="ok">📤 Le fichier « ' + esc(nom) + ' » est dans l\'app Fichiers, dossier « Téléchargements ». Envoie-le à ton professeur par l\'ENT ou Pronote.</span>';
+  const div = document.createElement('div');
+  div.className = 'feuille-pdf';
+  div.innerHTML = feuilleHTML();
+  document.body.appendChild(div);
+  try {
+    ajusterZones(div);
+    const canvas = await html2canvas(div, {scale:2, backgroundColor:'#ffffff', windowWidth:1200, logging:false});
+    const pdf = new jspdf.jsPDF({orientation:'landscape', unit:'mm', format:'a4', compress:true});
+    const L = 297, H = 210, marge = 7;
+    const k = Math.min((L - 2 * marge) / canvas.width, (H - 2 * marge) / canvas.height);
+    const l = canvas.width * k, h = canvas.height * k;
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', (L - l) / 2, marge, l, h);
+    pdf.setProperties({title:'Travail de ' + slug(S.eleve.prenom + ' ' + S.eleve.nom), keywords:'CGVTRAVAIL1.' + b64urlE(JSON.stringify(f)) + '.FIN'});
+    return {blob:pdf.output('blob'), canvas};
+  } finally { div.remove(); }
+}
+let lienPDF = null;
+$('#btn-rendre').onclick = async () => {
+  if (!confirm('As-tu terminé ? Ton travail va être transformé en PDF.')) return;
+  const b = $('#btn-rendre'), m = $('#message');
+  b.disabled = true; S.sel = null; renderEleve();
+  $('#message').innerHTML = '<span class="info">Préparation du PDF…</span>';
+  try {
+    const {blob} = await genererPDF();
+    if (lienPDF) URL.revokeObjectURL(lienPDF);
+    lienPDF = URL.createObjectURL(blob);
+    const nom = 'travail_' + slug(S.eleve.classe) + '_' + slug(S.eleve.nom) + '_' + slug(S.eleve.prenom) + '.pdf';
+    m.innerHTML = '<a class="bouton primaire" href="' + lienPDF + '" download="' + esc(nom) + '">📥 Télécharger mon PDF</a> ' +
+      '<span class="ok">Touche ce bouton, puis envoie « ' + esc(nom) + ' » (app Fichiers, dossier Téléchargements) à ton professeur par l\'ENT ou Pronote.</span>';
+  } catch(err) {
+    m.innerHTML = '<span class="err">⚠ Le PDF n\'a pas pu être créé. Vérifie ta connexion à Internet, recharge la page puis réessaie : ton travail est conservé.</span>';
+  }
+  b.disabled = false;
 };
 
 /* Accueil */
