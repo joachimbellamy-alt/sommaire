@@ -97,11 +97,33 @@ textarea{resize:vertical}
 
 /* Fenêtre « écrire un mot » */
 .feuille-pdf{position:absolute; left:-10000px; top:0; width:1100px; background:#fff; color:#111; padding:14px; font-size:16px}
-.feuille-pdf h2{margin:6px 0; font-size:21px; text-align:center}
-.feuille-tete{display:flex; justify-content:space-between; font-size:17px}
-.feuille-texte{font-size:17px; line-height:1.55; border:1px solid #bbb; border-radius:10px; padding:6px 12px; margin-bottom:10px}
+.rendu h3{margin:0 0 8px; font-size:22px}
+.rendu p{margin:6px 0}
+.rendu-nom{color:var(--doux); font-size:14px; overflow-wrap:anywhere}
+.rendu-dl{justify-content:center; width:100%; margin:10px 0}
+.feuille-bandeau{background:var(--orange); border-radius:999px; padding:5px 20px; text-align:center}
+.feuille-pdf h2{margin:0; font-size:22px; font-weight:600}
+.feuille-tete{display:flex; justify-content:space-between; align-items:center; font-size:17px; margin:8px 4px}
+.feuille-score{display:flex; align-items:center; gap:14px; font-size:15px}
+.feuille-score strong{font-size:21px; border:2px solid #222; border-radius:9px; padding:1px 11px}
+.leg-ok{color:var(--vert); font-weight:700}
+.leg-err{color:#d11a1a; font-weight:700}
+.feuille-texte{font-size:17px; line-height:1.55; border:1.5px solid #e5c98f; background:#fffaf0; border-radius:10px; padding:6px 12px; margin-bottom:10px}
+.feuille-texte .phrase{margin:0}
 .feuille-texte .num{display:inline-block; min-width:24px; color:#777; font-size:14px}
 .barre-mot{text-decoration:line-through; color:#777}
+.mot-ok{color:var(--vert)}
+.mot-err{color:#d11a1a; font-weight:700; background:#ffe1e1; border-radius:4px; padding:0 3px}
+.feuille-pdf .cadre-gn{border-color:#5c6b80}
+.feuille-pdf .z-det{background:#cfe3ff}
+.feuille-pdf .col-nom{background:#ffe3a3}
+.feuille-pdf .z-np{background:#ffc9c9}
+.feuille-pdf .z-adj{background:#c9f0c9}
+.feuille-pdf .z-pro{background:#e4d4ff}
+.feuille-pdf .z-verbe{background:#ffe6d1}
+.feuille-pdf .chip.ok{background:#e5f9e8; border-color:var(--vert); color:#12612a}
+.feuille-pdf .chip.err{background:#d11a1a; border-color:#8f0f0f; color:#fff; font-weight:700}
+.feuille-pdf .chip.err::after{color:#fff}
 .feuille-pdf .tableau{grid-template-columns:2.1fr 1fr; grid-template-rows:3fr 1fr; height:500px}
 .feuille-pdf .cadre-gn{grid-row:1; grid-column:1; grid-template-columns:1fr 1.5fr 1.3fr}
 .feuille-pdf .cadre-pro{grid-row:2; grid-column:1}
@@ -219,7 +241,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
       <div class="qui"><strong id="titre-corpus"></strong><br><span id="eleve-nom"></span></div>
       <div class="outils">
         <button id="btn-verifier" class="primaire">✔ Vérifier</button>
-        <button id="btn-rendre" class="primaire">📤 Rendre mon travail</button>
+        <button id="btn-rendre" class="primaire">📤 Rendre mon travail en PDF</button>
         <button id="btn-effacer" class="secondaire">Tout effacer</button>
         <button id="btn-quitter" class="secondaire">Quitter</button>
       </div>
@@ -318,6 +340,10 @@ table.liste tr.clic:hover{background:#f3f7ff}
       <button id="modale-annuler" class="secondaire">Annuler</button>
     </div>
   </div>
+</div>
+
+<div id="modale-pdf" class="modale" hidden>
+  <div class="carte rendu" id="rendu-contenu"></div>
 </div>
 
 <div id="modale-code" class="modale" hidden>
@@ -747,19 +773,25 @@ async function bibliothequesPDF(){
   if (!window.jspdf) await chargerScript('lib/jspdf.umd.min.js');
 }
 function feuilleHTML(){
+  const montrer = S.corpus.correction, res = evaluer(S.corpus, S.placements);
   const ignores = new Set(S.placements.filter(p => p.zone === 'ign').map(p => p.ref));
   const texte = S.corpus.phrases.map((ph, s) => {
     let h = '<p class="phrase"><span class="num">' + (s + 1) + '.</span>';
     ph.tokens.forEach((t, i) => {
       h += espace(i ? ph.tokens[i - 1] : null, t);
-      h += ignores.has('s' + s + 't' + i) ? '<span class="barre-mot">' + esc(affiche(t)) + '</span>' : esc(affiche(t));
+      if (!estMot(t)) { h += esc(t); return; }
+      const ref = 's' + s + 't' + i, et = res.etat[ref];
+      const cls = (ignores.has(ref) ? ' barre-mot' : '') + (montrer && et === 'ok' ? ' mot-ok' : '') + (montrer && et === 'err' ? ' mot-err' : '');
+      h += '<span class="' + cls.trim() + '">' + esc(affiche(t)) + '</span>';
     });
     return h + '</p>';
   }).join('');
   const e = S.eleve;
-  return '<div class="feuille-tete"><div><strong>' + esc(e.prenom + ' ' + e.nom.toUpperCase()) + '</strong> — ' + esc(e.classe) + '</div><div>' + esc(new Date().toLocaleDateString('fr-FR')) + '</div></div>' +
-    '<h2>' + esc(S.corpus.titre) + '</h2><div class="feuille-texte">' + texte + '</div>' +
-    tableauHTML(S.placements.filter(p => p.zone !== 'ign'), {corpus:S.corpus});
+  return '<div class="feuille-bandeau"><h2>' + esc(S.corpus.titre) + '</h2></div>' +
+    '<div class="feuille-tete"><div><strong>' + esc(e.prenom + ' ' + e.nom.toUpperCase()) + '</strong> · ' + esc(e.classe) + ' · ' + esc(new Date().toLocaleDateString('fr-FR')) + '</div>' +
+    (montrer ? '<div class="feuille-score"><span class="leg-ok">✓ bien rangé</span><span class="leg-err">✗ erreur</span><strong>' + res.bons + ' / ' + res.total + '</strong></div>' : '') + '</div>' +
+    '<div class="feuille-texte">' + texte + '</div>' +
+    tableauHTML(S.placements.filter(p => p.zone !== 'ign'), {corpus:S.corpus, etat:montrer ? res.etat : null});
 }
 async function genererPDF(){
   await bibliothequesPDF();
@@ -786,23 +818,34 @@ async function genererPDF(){
   } finally { div.remove(); }
 }
 let lienPDF = null;
-$('#btn-rendre').onclick = async () => {
-  if (!confirm('As-tu terminé ? Ton travail va être transformé en PDF.')) return;
-  const b = $('#btn-rendre'), m = $('#message');
-  b.disabled = true; S.sel = null; renderEleve();
-  $('#message').innerHTML = '<span class="info">Préparation du PDF…</span>';
+const etapeRendu = html => { $('#rendu-contenu').innerHTML = html; $('#modale-pdf').hidden = false; };
+function demanderRendu(){
+  S.sel = null; renderEleve();
+  etapeRendu('<h3>As-tu terminé ?</h3><p>Ton travail va être transformé en PDF, à envoyer à ton professeur.</p>' +
+    '<div class="actions"><button class="primaire grand" data-r="creer">Créer mon PDF</button><button class="secondaire" data-r="fermer">Continuer à travailler</button></div>');
+}
+async function creerRendu(){
+  etapeRendu('<h3>Préparation du PDF…</h3><p>Quelques secondes.</p>');
   try {
     const {blob} = await genererPDF();
     if (lienPDF) URL.revokeObjectURL(lienPDF);
     lienPDF = URL.createObjectURL(blob);
     const nom = 'travail_' + slug(S.eleve.classe) + '_' + slug(S.eleve.nom) + '_' + slug(S.eleve.prenom) + '.pdf';
-    m.innerHTML = '<a class="bouton primaire" href="' + lienPDF + '" download="' + esc(nom) + '">📥 Télécharger mon PDF</a> ' +
-      '<span class="ok">Touche ce bouton, puis envoie « ' + esc(nom) + ' » (app Fichiers, dossier Téléchargements) à ton professeur par l\'ENT ou Pronote.</span>';
+    etapeRendu('<h3>✅ Ton PDF est prêt</h3><p class="rendu-nom">' + esc(nom) + '</p>' +
+      '<a class="bouton primaire grand rendu-dl" href="' + lienPDF + '" download="' + esc(nom) + '">📥 Télécharger mon PDF</a>' +
+      '<p class="aide">Tu le retrouveras dans l\'app Fichiers, dossier « Téléchargements ». Envoie-le ensuite à ton professeur par l\'ENT ou Pronote.</p>' +
+      '<div class="actions"><button class="secondaire" data-r="fermer">Fermer</button></div>');
   } catch(err) {
-    m.innerHTML = '<span class="err">⚠ Le PDF n\'a pas pu être créé. Vérifie ta connexion à Internet, recharge la page puis réessaie : ton travail est conservé.</span>';
+    etapeRendu('<h3>Le PDF n\'a pas pu être créé</h3><p>Vérifie ta connexion à Internet, recharge la page puis réessaie. Ton travail est conservé.</p>' +
+      '<div class="actions"><button class="secondaire" data-r="fermer">Fermer</button></div>');
   }
-  b.disabled = false;
-};
+}
+$('#btn-rendre').onclick = demanderRendu;
+$('#rendu-contenu').addEventListener('click', e => {
+  const b = e.target.closest('button[data-r]');
+  if (!b) return;
+  if (b.dataset.r === 'creer') creerRendu(); else $('#modale-pdf').hidden = true;
+});
 
 /* Accueil */
 $('#btn-commencer').onclick = demarrer;
