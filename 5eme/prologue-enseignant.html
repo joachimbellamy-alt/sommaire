@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atelier du maître — Prologue d'Yvain</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=UnifrakturCook:wght@700&display=swap">
+<style>
+  :root { --parchemin:#f1e4c4; --clair:#fbf4e0; --encre:#3a2814; --douce:#6e5638; --or:#b8892b; --rubrique:#8e1f1f;
+          --titre:'UnifrakturCook','Cinzel',Georgia,serif; --caps:'Cinzel',Georgia,serif; --texte:'Cormorant Garamond',Georgia,serif; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:var(--texte); font-size:18px; color:var(--encre); background:var(--parchemin); }
+  .page { max-width: 860px; margin: 0 auto; padding: 0 14px 60px; }
+  header { text-align:center; padding: 18px 0 6px; }
+  h1 { font-family:var(--titre); font-size:clamp(28px,6vw,40px); margin:0; color:var(--rubrique); }
+  header p { margin:2px 0 0; font-style:italic; color:var(--douce); }
+
+  #barre { position:sticky; top:0; z-index:20; margin:10px -14px 18px; padding:10px 14px; background:var(--parchemin); border-bottom:1px solid var(--or); box-shadow:0 3px 8px rgba(80,50,10,.15); display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  #statut { margin-left:auto; font-size:15px; font-style:italic; color:var(--douce); }
+
+  button, .bouton { font-family:var(--caps); font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:9px 14px; color:var(--encre); background:var(--clair); border:1px solid var(--or); border-radius:3px; cursor:pointer; text-decoration:none; display:inline-block; }
+  button:hover, .bouton:hover { background:#fff8e4; }
+  button.primaire { background:var(--rubrique); color:#fff; border-color:#5c1010; }
+  button.primaire:hover { background:#a02424; }
+  button.petit { padding:5px 9px; font-size:11px; }
+  button.danger { color:var(--rubrique); }
+
+  section { background:var(--clair); border:1px solid #c9ad74; border-radius:4px; box-shadow:inset 0 0 0 4px var(--clair), inset 0 0 0 5px #d9c28a; padding:20px 22px; margin-bottom:20px; }
+  h2 { font-family:var(--caps); font-size:16px; letter-spacing:.1em; text-transform:uppercase; color:var(--rubrique); margin:0 0 4px; }
+  .aide { margin:0 0 14px; font-size:16px; font-style:italic; color:var(--douce); }
+  label { display:block; font-family:var(--caps); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--douce); margin:10px 0 3px; }
+  input[type=text], input[type=password], input[type=number], textarea, select { width:100%; font-family:var(--texte); font-size:18px; color:var(--encre); padding:7px 10px; background:#fffdf5; border:1px solid #c9ad74; border-radius:3px; }
+  textarea { resize:vertical; min-height:56px; }
+  input:focus, textarea:focus, select:focus { outline:2px solid rgba(184,137,43,.55); border-color:var(--or); }
+  .ligne { display:flex; gap:12px; flex-wrap:wrap; }
+  .ligne > div { flex:1 1 220px; }
+
+  .carte { border:2px solid var(--bord, #999); background:var(--bg, #fff); border-radius:4px; padding:12px 14px 12px; margin-bottom:12px; }
+  .carte .tete { display:flex; align-items:center; gap:8px; margin-bottom:2px; }
+  .carte .tete .nb { font-family:var(--caps); font-size:12px; color:var(--txt, #333); }
+  .carte .tete .espace { flex:1; }
+  .carte .nb.alerte { color:var(--rubrique); font-weight:700; }
+  .pastilles { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+  .pastille { width:30px; height:30px; border-radius:50%; border:2px solid var(--c); background:var(--f); cursor:pointer; padding:0; }
+  .pastille.sel { box-shadow:0 0 0 3px var(--clair), 0 0 0 5px var(--c); }
+
+  .cite { display:grid; grid-template-columns: 1fr 240px auto; gap:10px; align-items:start; padding:10px 0; border-top:1px dotted #c9ad74; }
+  .cite:first-of-type { border-top:none; }
+  @media (max-width: 680px) { .cite { grid-template-columns: 1fr; } }
+  .cite .filtre { margin-bottom:12px; }
+  .vide { color:var(--douce); font-style:italic; padding:8px 0; }
+</style>
+</head>
+<body>
+<div id="portail" style="position:fixed;inset:0;z-index:100;background:#f1e4c4;display:flex;align-items:center;justify-content:center;padding:20px">
+  <form id="form-mdp" style="max-width:360px;width:100%;text-align:center;background:#fbf4e0;border:2px solid #b8892b;box-shadow:inset 0 0 0 5px #fbf4e0,inset 0 0 0 6px #b8892b;padding:28px 24px;border-radius:4px">
+    <div style="font-size:34px;color:#b8892b">⚜</div>
+    <h1 style="font-family:var(--titre);color:var(--rubrique);margin:0 0 6px;font-size:32px">Accès réservé</h1>
+    <p style="margin:0 0 14px;font-style:italic;color:var(--douce)">Atelier du maître</p>
+    <input type="password" id="mdp" placeholder="Mot de passe" autocomplete="off" autofocus>
+    <p id="mdp-err" style="color:var(--rubrique);min-height:22px;margin:8px 0 6px"></p>
+    <button class="primaire" type="submit">Entrer</button>
+  </form>
+</div>
+<div class="page" id="contenu" hidden>
+  <header>
+    <h1>L'atelier du maître</h1>
+    <p>Interface enseignant — modifiez les catégories et les citations du jeu « Prologue d'Yvain »</p>
+  </header>
+
+  <div id="barre">
+    <a id="lien-apercu" class="bouton primaire" target="_blank" rel="noopener" style="background:#8e1f1f;color:#fff;border-color:#5c1010">▶ Aperçu du jeu</a>
+    <button id="btn-export">⬇ Exporter (donnees-prologue.js)</button>
+    <button id="btn-import">⬆ Importer</button>
+    <button id="btn-reset" class="danger">↺ Réinitialiser</button>
+    <input type="file" id="fichier" accept=".js,.json,application/json,text/javascript" hidden>
+    <span id="statut"></span>
+  </div>
+
+  <section>
+    <h2>Le jeu</h2>
+    <div class="ligne">
+      <div><label for="g-titre">Titre</label><input type="text" id="g-titre"></div>
+      <div style="flex:0 0 140px"><label for="g-vies">Nombre de cœurs</label><input type="number" id="g-vies" min="1" max="20"></div>
+    </div>
+    <label for="g-consigne">Consigne affichée aux élèves</label>
+    <input type="text" id="g-consigne">
+  </section>
+
+  <section>
+    <h2>Catégories — fonctions du prologue</h2>
+    <p class="aide">Le titre est la fonction à trouver ; la précision (facultative) s'affiche en italique sous le titre pour guider les élèves.</p>
+    <div id="liste-cats"></div>
+    <button id="ajout-cat">＋ Ajouter une catégorie</button>
+  </section>
+
+  <section>
+    <h2>Citations à classer</h2>
+    <p class="aide">Chaque citation appartient à une seule catégorie. L'ordre importe peu : le jeu les mélange.</p>
+    <div id="liste-cites"></div>
+    <button id="ajout-cite">＋ Ajouter une citation</button>
+  </section>
+
+  <section>
+    <h2>Pour publier</h2>
+    <p class="aide" style="margin:0">1. Cliquez sur « Exporter » : un fichier <b>donnees-prologue.js</b> est téléchargé.<br>
+    2. Placez-le dans le même dossier que <b>prologue-jeu.html</b> en remplaçant l'ancien.<br>
+    3. Le jeu utilisera automatiquement ces nouvelles données. (Vos modifications sont aussi gardées en brouillon dans ce navigateur.)</p>
+  </section>
+</div>
+
+<script src="donnees-prologue.js"></script>
+<script>
+  const PALETTE = {
+    gueules: { nom:'Gueules (rouge)',  bg:'#f6e0da', bord:'#a8322d', txt:'#6b1a17' },
+    azur:    { nom:'Azur (bleu)',      bg:'#dde7f2', bord:'#2f5d93', txt:'#17355c' },
+    sinople: { nom:'Sinople (vert)',   bg:'#e0ecd9', bord:'#4a7a3c', txt:'#25461b' },
+    or:      { nom:'Or (jaune)',       bg:'#f6ebc8', bord:'#b8892b', txt:'#5e4208' },
+    pourpre: { nom:'Pourpre (violet)', bg:'#eadcf0', bord:'#7a4a94', txt:'#3f2252' },
+    sable:   { nom:'Sable (gris)',     bg:'#e4e0d8', bord:'#4a4540', txt:'#2a2622' },
+    orange:  { nom:'Orangé',           bg:'#f8e2cc', bord:'#c06a1f', txt:'#6b3508' },
+    rose:    { nom:'Rose',             bg:'#f5dfe6', bord:'#b5486c', txt:'#6a2039' }
+  };
+
+  const DEFAUT = {
+    titre: "Le Prologue d'Yvain",
+    consigne: "Touchez une citation, puis la fonction du prologue qu'elle remplit.",
+    vies: 7,
+    categories: [
+      { id:'c1', titre:"Présenter l'auteur", explication:"Le poète signe son œuvre et affirme son autorité.", couleur:'azur' },
+      { id:'c2', titre:"Rendre hommage au mécène", explication:"Le roman est dédié à sa protectrice : on la remercie et on la flatte.", couleur:'or' },
+      { id:'c3', titre:"Annoncer le sujet : personnages et lieux", explication:"Informer le public : poser le cadre du récit, son époque, son héros, son monde.", couleur:'sinople' },
+      { id:'c4', titre:"Divertir", explication:"Plaire au public de la cour en promettant un beau récit.", couleur:'orange' },
+      { id:'c5', titre:"Apprendre", explication:"Instruire : le roman a aussi une valeur d'enseignement.", couleur:'pourpre' },
+      { id:'c6', titre:"Émouvoir", explication:"Toucher le cœur du public et capter son attention grâce à l'idéal de l'amour courtois.", couleur:'gueules' }
+    ],
+    citations: []
+  };
+
+  const CLE = 'yvain-prologue-brouillon';
+  const clone = o => JSON.parse(JSON.stringify(o));
+  const $ = id => document.getElementById(id);
+  function el(tag, props, ...enfants) {
+    const e = document.createElement(tag);
+    Object.entries(props || {}).forEach(([k, v]) => {
+      if (k === 'class') e.className = v;
+      else if (k === 'style') e.style.cssText = v;
+      else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v);
+    });
+    enfants.forEach(c => e.append(c));
+    return e;
+  }
+  const nouvelId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+
+  function depart() {
+    try { const s = localStorage.getItem(CLE); if (s) return JSON.parse(s); } catch (e) {}
+    return clone(window.JEU_DONNEES || DEFAUT);
+  }
+  let D = depart();
+  let filtre = '';   // filtre de catégorie pour la liste des citations
+
+  let minuteur;
+  function sauver() {
+    try { localStorage.setItem(CLE, JSON.stringify(D)); statut('Brouillon enregistré ✓'); }
+    catch (e) { statut('Enregistrement local impossible — pensez à exporter'); }
+  }
+  function statut(t) { $('statut').textContent = t; clearTimeout(minuteur); minuteur = setTimeout(() => $('statut').textContent = '', 3500); }
+
+  const nbCites = id => D.citations.filter(q => q.categorie === id).length;
+
+  /* ---------- Général ---------- */
+  function rendreGeneral() {
+    $('g-titre').value = D.titre || '';
+    $('g-consigne').value = D.consigne || '';
+    $('g-vies').value = D.vies || 7;
+  }
+  $('g-titre').addEventListener('input', e => { D.titre = e.target.value; sauver(); });
+  $('g-consigne').addEventListener('input', e => { D.consigne = e.target.value; sauver(); });
+  $('g-vies').addEventListener('input', e => { D.vies = Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 7)); sauver(); });
+
+  /* ---------- Catégories ---------- */
+  function rendreCats() {
+    const box = $('liste-cats'); box.textContent = '';
+    D.categories.forEach((c, i) => {
+      const p = PALETTE[c.couleur] || PALETTE.sable;
+      const carte = el('div', { class: 'carte', style: `--bg:${p.bg};--bord:${p.bord};--txt:${p.txt}` });
+      const n = nbCites(c.id);
+      const nb = el('span', { class: 'nb' + (n === 0 ? ' alerte' : '') }, n === 0 ? 'aucune citation' : n + (n > 1 ? ' citations' : ' citation'));
+      carte.append(el('div', { class: 'tete' },
+        el('b', { style: `font-family:var(--caps);color:${p.txt}` }, 'Catégorie ' + (i + 1)),
+        nb, el('span', { class: 'espace' }),
+        el('button', { class: 'petit', title: 'Monter', onclick: () => deplacer(i, -1) }, '↑'),
+        el('button', { class: 'petit', title: 'Descendre', onclick: () => deplacer(i, 1) }, '↓'),
+        el('button', { class: 'petit danger', title: 'Supprimer', onclick: () => supprimerCat(i) }, '✕')
+      ));
+      const titre = el('input', { type: 'text', value: c.titre || '' });
+      titre.addEventListener('input', () => { c.titre = titre.value; majOptions(c.id, c.titre); sauver(); });
+      const expl = el('textarea', { rows: 2 }); expl.value = c.explication || '';
+      expl.addEventListener('input', () => { c.explication = expl.value; sauver(); });
+      carte.append(el('label', {}, 'Fonction (titre)'), titre, el('label', {}, 'Précision affichée (facultatif)'), expl, el('label', {}, 'Couleur du blason'));
+      const pastilles = el('div', { class: 'pastilles' });
+      Object.entries(PALETTE).forEach(([cle, pc]) => {
+        const b = el('button', { class: 'pastille' + (c.couleur === cle ? ' sel' : ''), title: pc.nom, style: `--c:${pc.bord};--f:${pc.bg}`, 'aria-label': pc.nom,
+          onclick: () => { c.couleur = cle; sauver(); rendreCats(); } });
+        pastilles.append(b);
+      });
+      carte.append(pastilles);
+      box.append(carte);
+    });
+    if (!D.categories.length) box.append(el('p', { class: 'vide' }, 'Aucune catégorie. Ajoutez-en une pour commencer.'));
+  }
+  function majOptions(id, titre) {
+    document.querySelectorAll(`select.cat-select option[value="${id}"], #filtre option[value="${id}"]`).forEach(o => o.textContent = titre || '(sans titre)');
+  }
+  function deplacer(i, d) {
+    const j = i + d; if (j < 0 || j >= D.categories.length) return;
+    [D.categories[i], D.categories[j]] = [D.categories[j], D.categories[i]];
+    sauver(); rendre();
+  }
+  function supprimerCat(i) {
+    const c = D.categories[i], n = nbCites(c.id);
+    const msg = n ? `Supprimer « ${c.titre || 'cette catégorie'} » et ses ${n} citation(s) ?` : `Supprimer « ${c.titre || 'cette catégorie'} » ?`;
+    if (!confirm(msg)) return;
+    D.categories.splice(i, 1);
+    D.citations = D.citations.filter(q => q.categorie !== c.id);
+    if (filtre === c.id) filtre = '';
+    sauver(); rendre();
+  }
+  $('ajout-cat').addEventListener('click', () => {
+    const utilisees = D.categories.map(c => c.couleur);
+    const libre = Object.keys(PALETTE).find(k => !utilisees.includes(k)) || 'sable';
+    D.categories.push({ id: nouvelId(), titre: 'Nouvelle fonction', explication: '', couleur: libre });
+    sauver(); rendre();
+  });
+
+  /* ---------- Citations ---------- */
+  function rendreCites() {
+    const box = $('liste-cites'); box.textContent = '';
+    // filtre
+    const f = el('select', { id: 'filtre' });
+    f.append(el('option', { value: '' }, 'Toutes les catégories'));
+    D.categories.forEach(c => f.append(el('option', { value: c.id }, c.titre || '(sans titre)')));
+    f.value = filtre;
+    f.addEventListener('change', () => { filtre = f.value; rendreCites(); });
+    box.append(el('div', { class: 'filtre cite-filtre' }, el('label', {}, 'Afficher'), f));
+
+    const liste = D.citations.map((q, i) => ({ q, i })).filter(x => !filtre || x.q.categorie === filtre);
+    liste.forEach(({ q, i }) => {
+      const ta = el('textarea', { rows: 2 }); ta.value = q.texte || '';
+      ta.addEventListener('input', () => { q.texte = ta.value; sauver(); });
+      const sel = el('select', { class: 'cat-select' });
+      D.categories.forEach(c => sel.append(el('option', { value: c.id }, c.titre || '(sans titre)')));
+      sel.value = q.categorie;
+      sel.addEventListener('change', () => { q.categorie = sel.value; sauver(); rendreCats(); if (filtre) rendreCites(); });
+      box.append(el('div', { class: 'cite' }, ta, sel,
+        el('button', { class: 'petit danger', title: 'Supprimer', onclick: () => { D.citations.splice(i, 1); sauver(); rendre(); } }, '✕')));
+    });
+    if (!liste.length) box.append(el('p', { class: 'vide' }, 'Aucune citation ici.'));
+  }
+  $('ajout-cite').addEventListener('click', () => {
+    if (!D.categories.length) { alert("Créez d'abord une catégorie."); return; }
+    D.citations.push({ texte: '', categorie: filtre || D.categories[0].id });
+    sauver(); rendre();
+    const tas = document.querySelectorAll('#liste-cites textarea'); if (tas.length) tas[tas.length - 1].focus();
+  });
+
+  function rendre() { rendreGeneral(); rendreCats(); rendreCites(); }
+
+  /* ---------- Aperçu / export / import / reset ---------- */
+  $('lien-apercu').href = 'prologue-jeu.html?apercu=1';
+  $('lien-apercu').addEventListener('click', sauver);
+
+  function nettoye() {
+    const ids = new Set(D.categories.map(c => c.id));
+    return {
+      titre: D.titre || '', consigne: D.consigne || '', vies: D.vies || 7,
+      categories: D.categories.map(c => ({ id: c.id, titre: c.titre || '', explication: c.explication || '', couleur: c.couleur })),
+      citations: D.citations.filter(q => q.texte && q.texte.trim() && ids.has(q.categorie)).map(q => ({ texte: q.texte.trim(), categorie: q.categorie }))
+    };
+  }
+  $('btn-export').addEventListener('click', () => {
+    const txt = 'window.JEU_DONNEES = ' + JSON.stringify(nettoye(), null, 2) + ';\n';
+    const a = el('a', { href: URL.createObjectURL(new Blob([txt], { type: 'text/javascript' })), download: 'donnees-prologue.js' });
+    document.body.append(a); a.click(); a.remove();
+    statut('Fichier exporté — à placer à côté de prologue-jeu.html');
+  });
+  $('btn-import').addEventListener('click', () => $('fichier').click());
+  $('fichier').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const t = String(r.result); const d = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));
+        if (!Array.isArray(d.categories) || !Array.isArray(d.citations)) throw new Error('format');
+        D = d; sauver(); rendre(); statut('Fichier importé ✓');
+      } catch (err) { alert("Ce fichier n'a pas le bon format (attendu : donnees-prologue.js)."); }
+    };
+    r.readAsText(f); e.target.value = '';
+  });
+  $('btn-reset').addEventListener('click', () => {
+    if (!confirm("Abandonner le brouillon et revenir aux données du fichier donnees-prologue.js ?")) return;
+    try { localStorage.removeItem(CLE); } catch (e) {}
+    D = clone(window.JEU_DONNEES || DEFAUT); filtre = ''; rendre(); statut('Brouillon réinitialisé');
+  });
+
+  rendre();
+
+  /* ---------- Portail mot de passe (empreinte SHA-256, pas le mot de passe en clair) ---------- */
+  const EMPREINTE = 'e0f11a1ae16da6d6855263d0c5b75bb8eab0b0fcb9379e9b651fbbb5b3d6428d';
+  function ouvrir() { $('portail').remove(); $('contenu').hidden = false; }
+  try { if (sessionStorage.getItem('yvain-ens-ok') === '1') ouvrir(); } catch (e) {}
+  $('form-mdp').addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode($('mdp').value));
+      const h = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+      if (h === EMPREINTE) { try { sessionStorage.setItem('yvain-ens-ok', '1'); } catch (x) {} ouvrir(); }
+      else { $('mdp-err').textContent = 'Mot de passe incorrect.'; $('mdp').select(); }
+    } catch (err) { $('mdp-err').textContent = 'Navigateur non compatible (crypto indisponible).'; }
+  });
+</script>
+</body>
+</html>

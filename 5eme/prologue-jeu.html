@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le Prologue d'Yvain — Jeu de classement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=UnifrakturCook:wght@700&display=swap">
+<style>
+  :root {
+    --parchemin: #f1e4c4;
+    --parchemin-clair: #fbf4e0;
+    --encre: #3a2814;
+    --encre-douce: #6e5638;
+    --or: #b8892b;
+    --rubrique: #8e1f1f;
+    --titre: 'UnifrakturCook', 'Cinzel', Georgia, serif;
+    --capitales: 'Cinzel', Georgia, serif;
+    --texte: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: var(--texte);
+    font-size: 18px;
+    color: var(--encre);
+    background-color: var(--parchemin);
+    background-image:
+      radial-gradient(ellipse at center, rgba(255,250,235,.7) 0%, rgba(255,250,235,0) 60%),
+      radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 55%, rgba(110,70,20,.28) 100%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .45  0 0 0 0 .32  0 0 0 0 .15  0 0 0 .13 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  .page { max-width: 760px; margin: 0 auto; padding: 0 14px 40px; }
+
+  /* En-tête */
+  header { text-align: center; padding: 22px 8px 6px; }
+  .ornement { color: var(--or); font-size: 26px; line-height: 1; }
+  h1 { font-family: var(--titre); font-weight: 700; font-size: clamp(30px, 8vw, 46px); margin: 2px 0 4px; color: var(--rubrique); text-shadow: 1px 1px 0 rgba(184,137,43,.35); }
+  .filet { display: flex; align-items: center; gap: 10px; color: var(--or); margin: 4px 0 8px; }
+  .filet::before, .filet::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--or), transparent); }
+  #consigne { margin: 0; font-style: italic; color: var(--encre-douce); font-size: 19px; }
+
+  /* Bandeau vies / progression */
+  #bandeau {
+    position: sticky; top: 0; z-index: 10;
+    margin: 10px -14px 14px; padding: 8px 18px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(var(--parchemin), rgba(241,228,196,.94));
+    border-bottom: 1px solid var(--or);
+    box-shadow: 0 3px 8px rgba(80,50,10,.15);
+  }
+  #vies { display: flex; gap: 3px; font-size: 22px; line-height: 1; }
+  .coeur.plein { color: #a3191f; text-shadow: 0 1px 0 rgba(255,255,255,.4); }
+  .coeur.vide { color: #b9a67f; }
+  .coeur.perdu { animation: perte .5s; }
+  @keyframes perte { 0% { transform: scale(1.5); } 100% { transform: scale(1); } }
+  #progression { font-family: var(--capitales); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--encre-douce); text-align: right; }
+
+  /* Catégories (blasons) */
+  #categories { display: flex; flex-direction: column; gap: 12px; }
+  .categorie {
+    position: relative;
+    background: var(--bg);
+    border: 2px solid var(--bord);
+    box-shadow: inset 0 0 0 4px var(--bg), inset 0 0 0 5px var(--bord), 0 2px 6px rgba(80,50,10,.18);
+    border-radius: 4px;
+    padding: 14px 18px 12px;
+    cursor: pointer;
+    min-height: 74px;
+    transition: transform .12s, box-shadow .12s;
+  }
+  body.tuile-choisie .categorie:hover, body.tuile-choisie .categorie:active {
+    transform: translateY(-2px);
+    box-shadow: inset 0 0 0 4px var(--bg), inset 0 0 0 5px var(--bord), 0 6px 14px rgba(80,50,10,.28);
+  }
+  .categorie h3 { margin: 0; font-family: var(--capitales); font-weight: 700; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; color: var(--txt); }
+  .categorie .expl { margin: 3px 0 0; font-style: italic; font-size: 16px; color: var(--txt); opacity: .85; line-height: 1.25; }
+  .categorie .compteur { position: absolute; top: 12px; right: 16px; font-family: var(--capitales); font-size: 12px; color: var(--txt); opacity: .8; }
+  .categorie.complete .compteur::after { content: " ✦"; color: var(--or); }
+  .placees { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .placees:empty { display: none; }
+  .placee {
+    background: var(--tuile); color: var(--tuile-txt);
+    padding: 7px 11px; font-size: 16px; line-height: 1.3;
+    border-left: 4px solid var(--bord);
+    border-radius: 2px 8px 2px 8px;
+    animation: apparition .35s ease-out;
+  }
+  @keyframes apparition { from { opacity: 0; transform: translateY(-6px) scale(.97); } to { opacity: 1; transform: none; } }
+  .categorie.erreur { animation: secousse .4s; }
+  @keyframes secousse { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-7px); } 75% { transform: translateX(7px); } }
+
+  /* Parchemins à classer */
+  #sous-titre-cites { margin: 22px 0 8px; text-align: center; font-family: var(--capitales); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--encre-douce); }
+  #citations { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .tuile {
+    padding: 11px 15px; max-width: 100%;
+    font-size: 18px; line-height: 1.3;
+    background: var(--parchemin-clair);
+    border: 1px solid #b59a68;
+    border-radius: 3px 14px 3px 14px;
+    box-shadow: 0 2px 4px rgba(80,50,10,.22), inset 0 0 14px rgba(184,137,43,.14);
+    cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation;
+    transition: transform .12s, border-color .12s, box-shadow .12s;
+  }
+  .tuile:hover { border-color: var(--or); }
+  .tuile.active { border-color: var(--rubrique); transform: scale(1.04) rotate(-.4deg); box-shadow: 0 0 0 3px rgba(142,31,31,.28), 0 5px 12px rgba(80,50,10,.3); }
+
+  /* Fin de partie */
+  #fin { display: none; text-align: center; margin-top: 26px; padding: 26px 18px; border: 2px solid var(--or); border-radius: 4px; background: var(--parchemin-clair); box-shadow: inset 0 0 0 5px var(--parchemin-clair), inset 0 0 0 6px var(--or); }
+  #fin .grand { font-size: 44px; color: var(--or); line-height: 1; }
+  #fin h2 { font-family: var(--titre); font-size: 30px; margin: 6px 0; color: var(--rubrique); }
+  #fin p { margin: 4px 0 14px; font-size: 19px; }
+  #fin button { font-family: var(--capitales); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; padding: 10px 20px; color: var(--parchemin-clair); background: var(--rubrique); border: 1px solid #5c1010; border-radius: 3px; cursor: pointer; }
+  .apercu { text-align: center; font-family: var(--capitales); font-size: 11px; letter-spacing: .1em; background: var(--rubrique); color: #fff; padding: 4px; }
+</style>
+</head>
+<body>
+<div id="bandeau-apercu"></div>
+<div class="page">
+  <header>
+    <div class="ornement">❦</div>
+    <h1 id="titre"></h1>
+    <div class="filet">⚜</div>
+    <p id="consigne"></p>
+  </header>
+
+  <div id="bandeau">
+    <div id="vies" aria-label="Vies restantes"></div>
+    <div id="progression"></div>
+  </div>
+
+  <div id="categories"></div>
+
+  <div id="sous-titre-cites">Parchemins à classer</div>
+  <div id="citations"></div>
+
+  <div id="fin"></div>
+</div>
+
+<!-- Données modifiables via l'interface enseignant (fichier à côté de cette page) -->
+<script src="donnees-prologue.js"></script>
+<script>
+  const PALETTE = {
+    gueules: { bg:'#f6e0da', bord:'#a8322d', txt:'#6b1a17', tuile:'#ecbdb4', tt:'#4a100e' },
+    azur:    { bg:'#dde7f2', bord:'#2f5d93', txt:'#17355c', tuile:'#b4cbe6', tt:'#0f2641' },
+    sinople: { bg:'#e0ecd9', bord:'#4a7a3c', txt:'#25461b', tuile:'#bcd6ae', tt:'#17300f' },
+    or:      { bg:'#f6ebc8', bord:'#b8892b', txt:'#5e4208', tuile:'#ecd48e', tt:'#3d2a04' },
+    pourpre: { bg:'#eadcf0', bord:'#7a4a94', txt:'#3f2252', tuile:'#cfb4de', tt:'#2b1538' },
+    sable:   { bg:'#e4e0d8', bord:'#4a4540', txt:'#2a2622', tuile:'#c4beb2', tt:'#1b1814' },
+    orange:  { bg:'#f8e2cc', bord:'#c06a1f', txt:'#6b3508', tuile:'#efc095', tt:'#46230a' },
+    rose:    { bg:'#f5dfe6', bord:'#b5486c', txt:'#6a2039', tuile:'#e8b7c8', tt:'#451326' }
+  };
+
+  // Données de secours si donnees-prologue.js est absent
+  const DEFAUT = {
+    titre: "Le Prologue d'Yvain",
+    consigne: "Touchez une citation, puis la fonction du prologue qu'elle remplit.",
+    vies: 7,
+    categories: [
+      { id:'c1', titre:"Présenter l'auteur", explication:"Le poète signe son œuvre.", couleur:'azur' },
+      { id:'c2', titre:"Rendre hommage au mécène", explication:"Le roman est dédié à sa protectrice.", couleur:'or' },
+      { id:'c3', titre:"Annoncer le sujet : personnages et lieux", explication:"Poser le cadre du récit.", couleur:'sinople' },
+      { id:'c4', titre:"Divertir", explication:"Plaire au public de la cour.", couleur:'orange' },
+      { id:'c5', titre:"Apprendre", explication:"Instruire le public.", couleur:'pourpre' },
+      { id:'c6', titre:"Émouvoir", explication:"Toucher le cœur du public.", couleur:'gueules' }
+    ],
+    citations: [
+      { texte:"Moi, Chrétien de Troyes", categorie:'c1' },
+      { texte:"Madame, la comtesse de Champagne, veut que j'entreprenne de faire un nouveau roman.", categorie:'c2' },
+      { texte:"au temps du roi Arthur", categorie:'c3' },
+      { texte:"écrire un beau récit d'aventure et d'amour", categorie:'c4' },
+      { texte:"Mon histoire est pleine d'enseignement", categorie:'c5' },
+      { texte:"Ouvrez donc bien grand vos oreilles et vos cœurs !", categorie:'c6' }
+    ]
+  };
+
+  const CLE_BROUILLON = 'yvain-prologue-brouillon';
+  const apercu = new URLSearchParams(location.search).has('apercu');
+
+  function charger() {
+    let d = window.JEU_DONNEES || DEFAUT;
+    if (apercu) {
+      try { const s = localStorage.getItem(CLE_BROUILLON); if (s) d = JSON.parse(s); } catch (e) {}
+    }
+    return d;
+  }
+
+  const D = charger();
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+
+  let viesMax = Math.max(1, parseInt(D.vies, 10) || 7);
+  let vies = viesMax;
+  let selection = null;
+  const compte = {};   // id -> nb placées
+  const total = {};    // id -> nb à placer
+
+  document.getElementById('titre').textContent = D.titre || '';
+  document.getElementById('consigne').textContent = D.consigne || '';
+  document.title = (D.titre || 'Jeu de classement');
+  if (apercu) {
+    const b = el('div', 'apercu', 'Aperçu enseignant — ceci est votre brouillon, pas encore publié');
+    document.getElementById('bandeau-apercu').appendChild(b);
+  }
+
+  // Catégories
+  const conteneur = document.getElementById('categories');
+  D.categories.forEach(c => {
+    compte[c.id] = 0;
+    total[c.id] = D.citations.filter(q => q.categorie === c.id && q.texte && q.texte.trim()).length;
+    const p = PALETTE[c.couleur] || PALETTE.sable;
+    const div = el('div', 'categorie');
+    div.dataset.id = c.id;
+    div.style.setProperty('--bg', p.bg); div.style.setProperty('--bord', p.bord); div.style.setProperty('--txt', p.txt);
+    div.style.setProperty('--tuile', p.tuile); div.style.setProperty('--tuile-txt', p.tt);
+    div.appendChild(el('h3', null, c.titre));
+    if (c.explication) div.appendChild(el('p', 'expl', c.explication));
+    const cpt = el('span', 'compteur', '0 / ' + total[c.id]); cpt.id = 'cpt-' + c.id;
+    div.appendChild(cpt);
+    const pl = el('div', 'placees'); pl.id = 'placees-' + c.id;
+    div.appendChild(pl);
+    div.addEventListener('click', () => essayer(div, c.id));
+    if (total[c.id] === 0) div.classList.add('complete');
+    conteneur.appendChild(div);
+  });
+
+  // Citations (mélangées)
+  const zone = document.getElementById('citations');
+  const valides = D.citations.filter(q => q.texte && q.texte.trim() && compte.hasOwnProperty(q.categorie));
+  for (let i = valides.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [valides[i], valides[j]] = [valides[j], valides[i]]; }
+  valides.forEach(q => {
+    const t = el('div', 'tuile', q.texte);
+    t.dataset.cat = q.categorie;
+    t.addEventListener('click', () => choisir(t));
+    zone.appendChild(t);
+  });
+  let restantes = valides.length;
+
+  function choisir(t) {
+    document.querySelectorAll('.tuile').forEach(x => x.classList.remove('active'));
+    if (selection === t) { selection = null; document.body.classList.remove('tuile-choisie'); return; }
+    t.classList.add('active'); selection = t;
+    document.body.classList.add('tuile-choisie');
+  }
+
+  function essayer(carte, id) {
+    if (!selection || vies <= 0) return;
+    if (selection.dataset.cat === id) {
+      const s = el('div', 'placee', selection.textContent);
+      document.getElementById('placees-' + id).appendChild(s);
+      selection.remove(); selection = null; restantes--;
+      document.body.classList.remove('tuile-choisie');
+      compte[id]++;
+      document.getElementById('cpt-' + id).textContent = compte[id] + ' / ' + total[id];
+      if (compte[id] >= total[id]) carte.classList.add('complete');
+      majProgression();
+      if (restantes === 0) victoire();
+    } else {
+      vies--; majVies(true);
+      carte.classList.add('erreur'); setTimeout(() => carte.classList.remove('erreur'), 450);
+      if (vies <= 0) setTimeout(defaite, 350);
+    }
+  }
+
+  function majVies(perte) {
+    const box = document.getElementById('vies'); box.textContent = '';
+    for (let i = 0; i < viesMax; i++) {
+      const h = el('span', 'coeur ' + (i < vies ? 'plein' : 'vide'), i < vies ? '♥' : '♡');
+      if (perte && i === vies) h.classList.add('perdu');
+      box.appendChild(h);
+    }
+  }
+
+  function majProgression() {
+    const r = Object.keys(total).filter(k => compte[k] < total[k]).length;
+    document.getElementById('progression').textContent = r === 0 ? 'Quête accomplie' : r + (r > 1 ? ' blasons à compléter' : ' blason à compléter');
+  }
+
+  function fin(symbole, titre, texte) {
+    document.getElementById('citations').style.display = 'none';
+    document.getElementById('sous-titre-cites').style.display = 'none';
+    const f = document.getElementById('fin'); f.textContent = ''; f.style.display = 'block';
+    f.appendChild(el('div', 'grand', symbole));
+    f.appendChild(el('h2', null, titre));
+    f.appendChild(el('p', null, texte));
+    const b = el('button', null, 'Rejouer'); b.addEventListener('click', () => location.reload());
+    f.appendChild(b);
+    f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function victoire() { fin('⚜', 'Bravo, noble chevalier !', 'Toutes les citations sont bien classées. Il vous reste ' + vies + (vies > 1 ? ' cœurs.' : ' cœur.')); }
+  function defaite() {
+    document.querySelectorAll('.categorie').forEach(c => c.style.pointerEvents = 'none');
+    fin('✠', 'Votre cœur est brisé…', 'Vous avez épuisé tous vos cœurs. Réessayez, la quête n\'est pas finie !');
+  }
+
+  majVies(); majProgression();
+</script>
+</body>
+</html>
