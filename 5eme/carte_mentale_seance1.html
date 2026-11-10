@@ -31,7 +31,7 @@
   .noeud.cache.revele .q { opacity:0; }
   .noeud.cache.revele .r { opacity:1; }
   .noeud.cache.revele::before { content:""; position:absolute; left:0; bottom:0; height:4px; background:var(--c); width:100%;
-    animation:barre 5s linear forwards; }
+    animation:barre 10s linear forwards; }
   body.tout .noeud.cache.revele::before { display:none; }
   @keyframes barre { from { width:100%; } to { width:0; } }
 </style>
@@ -46,7 +46,7 @@
 <div id="vue"><div id="monde"><svg id="liens"></svg></div></div>
 
 <script>
-const DELAI = 5000; // durée d'affichage d'une réponse (ms)
+const DELAI = 10000; // durée d'affichage d'une réponse (ms)
 const COULEURS = [
   {c:'#2f6fd6',clair:'#e4eefc',txt:'#173a73'},
   {c:'#e0662a',clair:'#fde9dc',txt:'#7a3410'},
