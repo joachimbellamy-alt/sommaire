@@ -31,7 +31,7 @@
   .noeud.cache.revele .q { opacity:0; }
   .noeud.cache.revele .r { opacity:1; }
   .noeud.cache.revele::before { content:""; position:absolute; left:0; bottom:0; height:4px; background:var(--c); width:100%;
-    animation:barre 3s linear forwards; }
+    animation:barre 5s linear forwards; }
   body.tout .noeud.cache.revele::before { display:none; }
   @keyframes barre { from { width:100%; } to { width:0; } }
 </style>
@@ -39,14 +39,14 @@
 <body>
 <div id="bar">
   <span class="titre">🗺️ Carte mentale – réponds de mémoire</span>
-  <button id="bMoins">−</button><button id="bPlus">＋</button><button id="bFit">Tout voir</button>
+  <button id="bFit">Tout voir</button>
   <button id="bTout">👁 Tout montrer</button>
   <span class="score" id="compteur"></span>
 </div>
 <div id="vue"><div id="monde"><svg id="liens"></svg></div></div>
 
 <script>
-const DELAI = 3000; // durée d'affichage d'une réponse (ms)
+const DELAI = 5000; // durée d'affichage d'une réponse (ms)
 const COULEURS = [
   {c:'#2f6fd6',clair:'#e4eefc',txt:'#173a73'},
   {c:'#e0662a',clair:'#fde9dc',txt:'#7a3410'},
@@ -76,7 +76,7 @@ const arbre = {
     { "t": "XII ème siècle(12)", "q": "À quelle période cette œuvre a-t-elle été écrite ?" },
     { "t": "la religion catholique rythme chaque instant dela vie des gens ", "q": "Quelle était l’importance de la religion chrétienne à cette époque ?" } ] },
   { "t": "Transmission des textes", "c": 3, "kids": [
-    { "t": "À l'oral : les troubadours lisent et chantent les histoires en public", "q": "De quelle manière les textes se transmettent-ils à l’oral ? Comment désigne-t-on ceux qui les racontent ?" },
+    { "t": "À l'oral : les troubadours lisent et chantent les histoires en public", "q": "De quelle manière les textes se transmettent-ils ? Comment désigne-t-on ceux qui les racontent ?" },
     { "t": "À l'écrit : manuscrits recopiés à la main par les moines copistes", "q": "Pourquoi les moines ont-ils un rôle important ?" } ] }
  ]
 };
@@ -152,12 +152,24 @@ function ajuster(){ const W=vue.clientWidth,Hh=vue.clientHeight, m=40, b=bbox;
   scale=Math.min(1.2,(W-2*m)/(b.maxX-b.minX),(Hh-2*m)/(b.maxY-b.minY));
   tx=W/2-((b.minX+b.maxX)/2)*scale; ty=Hh/2-((b.minY+b.maxY)/2)*scale; appliquer(); }
 function zoom(f,cx=vue.clientWidth/2,cy=vue.clientHeight/2){ const ns=Math.max(.2,Math.min(3,scale*f)); tx=cx-(cx-tx)*ns/scale; ty=cy-(cy-ty)*ns/scale; scale=ns; appliquer(); }
-bPlus.onclick=()=>zoom(1.2); bMoins.onclick=()=>zoom(1/1.2); bFit.onclick=ajuster;
-let drag=null;
-vue.addEventListener('pointerdown',e=>{ drag={x:e.clientX,y:e.clientY,tx,ty}; vue.setPointerCapture(e.pointerId); });
-vue.addEventListener('pointermove',e=>{ if(!drag) return; tx=drag.tx+e.clientX-drag.x; ty=drag.ty+e.clientY-drag.y; appliquer(); });
-vue.addEventListener('pointerup',()=>{ drag=null; });
-vue.addEventListener('wheel',e=>{ e.preventDefault(); if(e.ctrlKey||e.metaKey) zoom(e.deltaY<0?1.1:1/1.1,e.clientX,e.clientY-50); else { tx-=e.deltaX; ty-=e.deltaY; appliquer(); } },{passive:false});
+bFit.onclick=ajuster;
+const ptrs=new Map(); let drag=null, pinch=null;
+const dist=()=>{ const [a,b]=[...ptrs.values()]; return Math.hypot(a.x-b.x,a.y-b.y); };
+const milieu=()=>{ const [a,b]=[...ptrs.values()]; return {x:(a.x+b.x)/2, y:(a.y+b.y)/2-50}; };
+vue.addEventListener('pointerdown',e=>{
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); vue.setPointerCapture(e.pointerId);
+  if(ptrs.size===1) drag={x:e.clientX,y:e.clientY,tx,ty};
+  else if(ptrs.size===2){ drag=null; pinch={d:dist(),s:scale}; }
+});
+vue.addEventListener('pointermove',e=>{
+  if(!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2 && pinch){ const m=milieu(); zoom((pinch.s*dist()/pinch.d)/scale,m.x,m.y); }
+  else if(drag){ tx=drag.tx+e.clientX-drag.x; ty=drag.ty+e.clientY-drag.y; appliquer(); }
+});
+const fin=e=>{ ptrs.delete(e.pointerId); pinch=null; drag=null; if(ptrs.size===1){ const [p]=[...ptrs.values()]; drag={x:p.x,y:p.y,tx,ty}; } };
+vue.addEventListener('pointerup',fin); vue.addEventListener('pointercancel',fin);
+vue.addEventListener('wheel',e=>{ e.preventDefault(); zoom(Math.exp(-e.deltaY*(e.ctrlKey?0.01:0.002)),e.clientX,e.clientY-50); },{passive:false});
+vue.addEventListener('dblclick',e=>{ if(e.target===vue||e.target===monde||e.target===svg) zoom(1.6,e.clientX,e.clientY-50); });
 disposer(); ajuster(); addEventListener('resize',ajuster);
 </script>
 </body>
