@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catilina – 3 niveaux</title>
+<style>
+  body{font-family:Georgia,"Times New Roman",serif;max-width:1300px;margin:2rem auto;padding:0 1rem;color:#222;line-height:1.4}
+  h1{font-size:1.4rem;margin:0 0 .6rem;font-family:Arial,Helvetica,sans-serif}
+  .activite{margin-bottom:1.6rem;font-family:Arial,Helvetica,sans-serif;line-height:1.6}
+  .activite p{margin:.4rem 0}
+  .blanc{display:inline-block;min-width:7rem;border-bottom:1px solid #222;margin:0 .2rem}
+  .sub{color:#666;margin-bottom:2rem}
+  section{border:1px solid #ccc;border-radius:8px;padding:1rem 1.4rem;margin-bottom:1.6rem;page-break-inside:avoid}
+  h2{font-size:1.1rem;margin:0 0 .2rem}
+  .niv{color:#666;font-size:.9rem;margin:0 0 1rem}
+  .latin{font-style:italic;font-size:1.25rem;line-height:2.4}
+  .n{background:#ffff00}
+  .a{background:#00ff00}
+  .g{background:#ff0000}
+  .legende{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1rem;font-size:1rem;font-style:normal}
+  .legende span{padding:.15rem .7rem;border-radius:4px}
+  .split{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:1.6rem;align-items:start}
+  .vocab{position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow-y:auto;background:#fafafa}
+  .vocab ul{list-style:none;padding:0;margin:0;font-size:.95rem}
+  .vocab li{margin-bottom:.3rem;break-inside:avoid}
+  @media(max-width:800px){.split{grid-template-columns:1fr}.vocab{position:static;max-height:none}}
+  .tabs{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap}
+  .tabs button{font:inherit;cursor:pointer;border:1px solid #ccc;background:#f4f4f4;border-radius:8px;padding:.5rem 1rem;display:flex;flex-direction:column;align-items:flex-start;color:#222}
+  .tabs button small{color:#666;font-size:.75rem}
+  .tabs button.on{background:#fff;border-color:#222;box-shadow:0 2px 0 #222}
+  .panel{display:none}.panel.on{display:block}
+  @media print{.tabs{display:none}.panel{display:block!important}}
+  @media print{body{margin:0}section{border-color:#999}.n,.a,.g{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<header class="activite">
+  <h1>Activité 2 : traduire</h1>
+  <p class="objectif"><b>Objectif : découvrir ce qui est reproché à Catilina</b></p>
+  <p class="contexte"><i>Contexte : en cet automne –63, Lucius Sergius Catilina, leader des populares (= <span class="blanc"></span>), a été battu à l’élection des consuls par Cicéron soutenu par la noblesse romaine. Le 8 novembre, le Sénat est réuni dans le temple de Jupiter Stator. Découvrons le début (exorde) du discours de Cicéron pour comprendre ce qui est reproché à Catilina et qui secoue la République.</i></p>
+  <p class="cite">« Jusqu'à quand enfin abuseras-tu, Catilina, de notre patience&nbsp;?<br>
+  Combien de temps encore ton espèce de frénésie nous bernera-t-elle&nbsp;?<br>
+  Jusqu'à quel point ton audace effrénée ira-t-elle&nbsp;?</p>
+</header>
+
+<div class="split">
+<div class="textes">
+<div class="tabs" role="tablist">
+  <button role="tab" data-t="v1" class="on">Version 1<small>sans étayage</small></button>
+  <button role="tab" data-t="v2">Version 2<small>couleurs</small></button>
+  <button role="tab" data-t="v3">Version 3<small>couleurs + légende</small></button>
+</div>
+<section class="panel" id="v1" role="tabpanel">
+  <h2>Version 1 – sans étayage</h2>
+  <p class="niv">Texte original, sans couleur</p>
+  <p class="latin">Nihilne te nocturnum praesidium Palatii, nihil urbis vigiliae, nihil timor populi, nihil concursus bonorum, nihil munitissimus locus, nihil ora et vultus moverunt&nbsp;? Patere tua consilia non sentis, constrictam conjurationem tuam non vides&nbsp;? »</p>
+</section>
+
+<section class="panel" id="v2" role="tabpanel">
+  <h2>Version 2 – moyennement étayée</h2>
+  <p class="niv">Mots surlignés par cas, sans légende (à retrouver par l'élève)</p>
+  <p class="latin">Nihilne <span class="a">te</span> <span class="n">nocturnum praesidium</span> <span class="g">Palatii</span>, nihil <span class="g">urbis</span> <span class="n">vigiliae</span>, nihil <span class="n">timor</span> <span class="g">populi</span>, nihil <span class="n">concursus</span> <span class="g">bonorum</span>, nihil <span class="n">munitissimus locus</span>, nihil <span class="n">ora</span> et <span class="n">vultus</span> moverunt&nbsp;? Patere <span class="a">tua consilia</span> non sentis, <span class="a">constrictam conjurationem tuam</span> non vides&nbsp;? »</p>
+</section>
+
+<section class="panel" id="v3" role="tabpanel">
+  <h2>Version 3 – la plus étayée</h2>
+  <p class="niv">Mots surlignés par cas + légende</p>
+  <p class="latin">Nihilne <span class="a">te</span> <span class="n">nocturnum praesidium</span> <span class="g">Palatii</span>, nihil <span class="g">urbis</span> <span class="n">vigiliae</span>, nihil <span class="n">timor</span> <span class="g">populi</span>, nihil <span class="n">concursus</span> <span class="g">bonorum</span>, nihil <span class="n">munitissimus locus</span>, nihil <span class="n">ora</span> et <span class="n">vultus</span> moverunt&nbsp;? Patere <span class="a">tua consilia</span> non sentis, <span class="a">constrictam conjurationem tuam</span> non vides&nbsp;? »</p>
+  <div class="legende">
+    <span class="n">Jaune : nominatif</span>
+    <span class="a">Vert : accusatif</span>
+    <span class="g">Rouge : génitif</span>
+  </div>
+</section>
+</div>
+
+<section class="vocab">
+  <h2>Vocabula</h2>
+  <p class="niv">Commun aux trois versions</p>
+  <ul>
+    <li><b>Ne</b> : est-ce que</li>
+    <li><b>nĭhĭl, <i>pron.</i></b> : traduire par « en rien »</li>
+    <li><b>te <i>sing. pron.</i></b> : te</li>
+    <li><b>nōctūrnus, a, um</b> : nocturne</li>
+    <li><b>prāesĭdĭŭm, ii, n.</b> : garnison armée (= police)</li>
+    <li><b>Pălātĭŭm, ii, n.</b> : le Palatin</li>
+    <li><b>ūrbs, urbis, f.</b> : ville</li>
+    <li><b>vĭgĭlĭa, ae, f.</b> : une ronde (= surveillance)</li>
+    <li><b>tĭmŏr, oris, m.</b> : peur</li>
+    <li><b>pŏpŭlus, i, m.</b> : peuple</li>
+    <li><b>cōncūrsus, us, m.</b> : rassemblement</li>
+    <li><b>bŏni, orum, m., cf. <i>bonus</i></b> : ici, les sénateurs</li>
+    <li><b>mūnītus, a, um</b> : protégé</li>
+    <li><b>lŏcus mūnītissimus, i, m.</b> : lieu hyper protégé</li>
+    <li><b>ōs, oris, n.</b> : visage (ici, nominatif pluriel)</li>
+    <li><b>vūltus, us, m.</b> : regard (ici, nominatif pluriel)</li>
+    <li><b>mŏvĕo, es, ere, moui, motum</b> : impressionner (passé composé)</li>
+    <li><b>pătĕo, es, ere, patui</b> : être découvert</li>
+    <li><b>tŭus, a, um</b> : ton, tien</li>
+    <li><b>cōnsĭlĭŭm, ii, n.</b> : projet</li>
+    <li><b>sēntĭo, is, ire, sensi, sensum</b> : s'apercevoir que</li>
+    <li><b>cōnstrīctus, a, um</b> : pris au piège</li>
+    <li><b>cōnjūrātĭō, onis, f.</b> : conjuration, complot</li>
+    <li><b>vĭdĕo, es, ere, uidi, uisum</b> : voir que</li>
+  </ul>
+</section>
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tabs button,.panel').forEach(e=>e.classList.remove('on'));
+  b.classList.add('on');document.getElementById(b.dataset.t).classList.add('on');
+});
+document.getElementById('v1').classList.add('on');
+</script>
+</body>
+</html>
