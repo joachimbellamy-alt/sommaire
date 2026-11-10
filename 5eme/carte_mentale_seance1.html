@@ -96,7 +96,7 @@ info.forEach(({d},n)=>{
   e.style.setProperty('--c',col.c); e.style.setProperty('--c-clair',col.clair); e.style.setProperty('--c-txt',col.txt);
   e.style.width = d===0 ? '230px' : d===1 ? '210px' : '240px';
   if(d>=2){ e.classList.add('cache'); nbCaches++;
-    e.textContent=''; const q=document.createElement('span'); q.className='q'; q.textContent='❓ '+n.q; const r=document.createElement('span'); r.className='r'; r.textContent=n.t; e.append(q,r);
+    e.textContent=''; const q=document.createElement('span'); q.className='q'; q.textContent=n.q; const r=document.createElement('span'); r.className='r'; r.textContent=n.t; e.append(q,r);
     e.addEventListener('click',()=>reveler(n,e)); }
   e.addEventListener('pointerdown',ev=>ev.stopPropagation());
   monde.appendChild(e); els.set(n,e);
