@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carte mentale – Réponses cachées</title>
+<style>
+  :root { --fond:#fbf7ee; --encre:#2b2433; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; overflow:hidden; background:var(--fond); color:var(--encre);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; -webkit-user-select:none; user-select:none; }
+  #bar { position:fixed; top:0; left:0; right:0; height:50px; z-index:20; display:flex; gap:6px; align-items:center;
+    padding:8px 12px; background:rgba(255,255,255,.95); border-bottom:1px solid #e3dccb; }
+  #bar button { font:inherit; font-size:14px; padding:7px 12px; border:1px solid #d6cdb8; border-radius:8px; background:#fff; cursor:pointer; }
+  #bar .titre { font-weight:700; margin-right:8px; }
+  #bar .score { margin-left:auto; font-size:13px; color:#6c6379; }
+  #vue { position:absolute; inset:0; top:50px; overflow:hidden; cursor:grab; touch-action:none; }
+  #monde { position:absolute; left:0; top:0; transform-origin:0 0; }
+  svg#liens { position:absolute; left:0; top:0; overflow:visible; pointer-events:none; }
+  .noeud { position:absolute; padding:8px 12px; border-radius:12px; line-height:1.3; font-size:14px;
+    background:var(--c-clair); border:2px solid var(--c); color:var(--c-txt); white-space:pre-wrap; word-break:break-word;
+    box-shadow:0 1px 3px rgba(0,0,0,.12); overflow:hidden; }
+  .noeud.niv1 { font-weight:700; font-size:16px; background:var(--c); color:#fff; border-radius:16px; padding:10px 16px; }
+  .noeud.niv0 { font-weight:800; font-size:21px; text-align:center; background:#2b2433; border-color:#2b2433; color:#fff; border-radius:24px; padding:16px 20px; }
+  /* réponses cachées */
+  .noeud.cache { cursor:pointer; color:transparent; transition:color .3s; }
+  .noeud.cache::after { content:"❓ Clique pour voir"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:var(--c); font-weight:600; font-size:14px; background:var(--c-clair); transition:opacity .3s; }
+  .noeud.cache:hover { background:#fff; }
+  .noeud.cache.revele { color:var(--c-txt); }
+  .noeud.cache.revele::after { opacity:0; pointer-events:none; }
+  .noeud.cache.revele::before { content:""; position:absolute; left:0; bottom:0; height:4px; background:var(--c); width:100%;
+    animation:barre 3s linear forwards; }
+  body.tout .noeud.cache.revele::before { display:none; }
+  @keyframes barre { from { width:100%; } to { width:0; } }
+</style>
+</head>
+<body>
+<div id="bar">
+  <span class="titre">🗺️ Carte mentale – à retrouver</span>
+  <button id="bMoins">−</button><button id="bPlus">＋</button><button id="bFit">Tout voir</button>
+  <button id="bTout">👁 Tout montrer</button>
+  <span class="score" id="compteur"></span>
+</div>
+<div id="vue"><div id="monde"><svg id="liens"></svg></div></div>
+
+<script>
+const DELAI = 3000; // durée d'affichage d'une réponse (ms)
+const COULEURS = [
+  {c:'#2f6fd6',clair:'#e4eefc',txt:'#173a73'},
+  {c:'#e0662a',clair:'#fde9dc',txt:'#7a3410'},
+  {c:'#1f9d63',clair:'#dff4e9',txt:'#0f4f31'},
+  {c:'#8a47c9',clair:'#efe3fa',txt:'#47206b'},
+  {c:'#d6336c',clair:'#fce4ed',txt:'#7a1237'},
+  {c:'#c99a00',clair:'#fbf1cc',txt:'#5e4600'}
+];
+const arbre = {
+ "t": "Le roman courtois et son contexte (Yvain, le chevalier au lion)",
+ "kids": [
+  { "t": "L'auteur : Chrétien de Troyes", "c": 0, "kids": [
+    { "t": "Est un clerc : homme instruit qui sait lire et écrire le latin, souvent lié au clergé" },
+    { "t": "Sert des personnages puissants( = mécènes) : Marie, comtesse de Champagne, et Philippe d'Alsace, comte de Flandre" },
+    { "t": "Autres œuvres : Lancelot, Perceval" } ] },
+  { "t": "Le roman courtois", "c": 1, "kids": [
+    { "t": "Récit écrit en langue romane :" },
+    { "t": "Raconte les Aventures d'un chevalier amoureux de sa dame" },
+    { "t": "Personnages : des chevaliers (Lancelot, Perceval) et  leurs dames" },
+    { "t": "Succès durable : diffusé dans toute l'Europe, il a inspiré auteurs et artistes" } ] },
+  { "t": "Le contexte historique", "c": 2, "kids": [
+    { "t": "Système féodal : liens de fidélité entre un seigneur (suzerain) et son vassal" },
+    { "t": "Langues romanes : issues du latin, comme le français" },
+    { "t": "Genres populaires : chanson de geste (= exploits)  et roman" },
+    { "t": "XII ème siècle(12)" },
+    { "t": "la religion catholique rythme chaque instant dela vie des gens " } ] },
+  { "t": "Transmission des textes", "c": 3, "kids": [
+    { "t": "À l'oral : les troubadours lisent et chantent les histoires en public" },
+    { "t": "À l'écrit : manuscrits recopiés à la main par les moines copistes" } ] }
+ ]
+};
+
+const monde = document.getElementById('monde'), svg = document.getElementById('liens'), vue = document.getElementById('vue');
+let scale = 1, tx = 0, ty = 0, toutMontre = false;
+function parents(n, p=null, d=0, out=new Map()){ out.set(n,{p,d}); (n.kids||[]).forEach(k=>parents(k,n,d+1,out)); return out; }
+function couleurDe(n, info){ while(n){ if(n.c!=null) return COULEURS[n.c]; n=info.get(n).p; } return COULEURS[0]; }
+
+const info = parents(arbre), els = new Map(), minuteurs = new Map();
+let nbCaches = 0, nbVus = new Set();
+info.forEach(({d},n)=>{
+  const e = document.createElement('div');
+  e.className = 'noeud niv'+Math.min(d,2);
+  e.textContent = n.t;
+  const col = couleurDe(n,info);
+  e.style.setProperty('--c',col.c); e.style.setProperty('--c-clair',col.clair); e.style.setProperty('--c-txt',col.txt);
+  e.style.width = d===0 ? '230px' : d===1 ? '210px' : '240px';
+  if(d>=2){ e.classList.add('cache'); nbCaches++;
+    e.addEventListener('click',()=>reveler(n,e)); }
+  e.addEventListener('pointerdown',ev=>ev.stopPropagation());
+  monde.appendChild(e); els.set(n,e);
+});
+function majCompteur(){ document.getElementById('compteur').textContent = nbVus.size+' / '+nbCaches+' réponses vues'; }
+function reveler(n,e){
+  if(toutMontre) return;
+  clearTimeout(minuteurs.get(n));
+  e.classList.remove('revele'); void e.offsetWidth; e.classList.add('revele'); // relance la barre de temps
+  nbVus.add(n); majCompteur();
+  minuteurs.set(n, setTimeout(()=>e.classList.remove('revele'), DELAI));
+}
+document.getElementById('bTout').onclick = ev=>{
+  toutMontre = !toutMontre;
+  document.body.classList.toggle('tout',toutMontre);
+  els.forEach((e,n)=>{ if(e.classList.contains('cache')){ clearTimeout(minuteurs.get(n)); e.classList.toggle('revele',toutMontre); } });
+  ev.target.textContent = toutMontre ? '🙈 Tout cacher' : '👁 Tout montrer';
+};
+majCompteur();
+
+const ECART_X = 70, ECART_Y = 12;
+let bbox;
+function disposer(){
+  const H = new Map(), pos = new Map();
+  const hauteur = n => { const own = els.get(n).offsetHeight; const ks=n.kids||[];
+    const sum = ks.reduce((s,k)=>s+hauteur(k),0) + Math.max(0,ks.length-1)*ECART_Y; const h=Math.max(own,sum); H.set(n,h); return h; };
+  hauteur(arbre);
+  const rw = els.get(arbre).offsetWidth, rh = els.get(arbre).offsetHeight;
+  pos.set(arbre,{x:-rw/2,y:-rh/2,w:rw,h:rh});
+  const ks = arbre.kids||[], moitie = Math.ceil(ks.length/2);
+  [ks.slice(0,moitie), ks.slice(moitie)].forEach((g,gi)=>{
+    const dir = gi===0 ? 1 : -1;
+    const total = g.reduce((s,k)=>s+H.get(k),0)+Math.max(0,g.length-1)*ECART_Y;
+    let y = -total/2;
+    g.forEach(k=>{ place(k,dir,rw/2+ECART_X,y); y+=H.get(k)+ECART_Y; });
+  });
+  function place(n,dir,x,y){
+    const e=els.get(n), w=e.offsetWidth, h=e.offsetHeight, bloc=H.get(n), cy=y+bloc/2;
+    pos.set(n,{x: dir===1 ? x : -x-w, y: cy-h/2, w, h, dir});
+    const ns = n.kids||[]; const tot = ns.reduce((s,k)=>s+H.get(k),0)+Math.max(0,ns.length-1)*ECART_Y;
+    let yy = cy-tot/2; ns.forEach(k=>{ place(k,dir,x+w+ECART_X,yy); yy+=H.get(k)+ECART_Y; });
+  }
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9, d='';
+  pos.forEach((p,n)=>{ const e=els.get(n); e.style.left=p.x+'px'; e.style.top=p.y+'px';
+    minX=Math.min(minX,p.x);minY=Math.min(minY,p.y);maxX=Math.max(maxX,p.x+p.w);maxY=Math.max(maxY,p.y+p.h); });
+  pos.forEach((p,n)=>{ if(n===arbre) return; const pr=pos.get(info.get(n).p), dir=p.dir;
+    const x1 = dir===1 ? pr.x+pr.w : pr.x, y1=pr.y+pr.h/2, x2 = dir===1 ? p.x : p.x+p.w, y2=p.y+p.h/2, mx=(x1+x2)/2;
+    d+=`<path d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}" fill="none" stroke="${couleurDe(n,info).c}" stroke-width="${info.get(n).d===1?5:2.5}" stroke-linecap="round"/>`; });
+  svg.innerHTML = d; bbox={minX,minY,maxX,maxY};
+}
+function appliquer(){ monde.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`; }
+function ajuster(){ const W=vue.clientWidth,Hh=vue.clientHeight, m=40, b=bbox;
+  scale=Math.min(1.2,(W-2*m)/(b.maxX-b.minX),(Hh-2*m)/(b.maxY-b.minY));
+  tx=W/2-((b.minX+b.maxX)/2)*scale; ty=Hh/2-((b.minY+b.maxY)/2)*scale; appliquer(); }
+function zoom(f,cx=vue.clientWidth/2,cy=vue.clientHeight/2){ const ns=Math.max(.2,Math.min(3,scale*f)); tx=cx-(cx-tx)*ns/scale; ty=cy-(cy-ty)*ns/scale; scale=ns; appliquer(); }
+bPlus.onclick=()=>zoom(1.2); bMoins.onclick=()=>zoom(1/1.2); bFit.onclick=ajuster;
+let drag=null;
+vue.addEventListener('pointerdown',e=>{ drag={x:e.clientX,y:e.clientY,tx,ty}; vue.setPointerCapture(e.pointerId); });
+vue.addEventListener('pointermove',e=>{ if(!drag) return; tx=drag.tx+e.clientX-drag.x; ty=drag.ty+e.clientY-drag.y; appliquer(); });
+vue.addEventListener('pointerup',()=>{ drag=null; });
+vue.addEventListener('wheel',e=>{ e.preventDefault(); if(e.ctrlKey||e.metaKey) zoom(e.deltaY<0?1.1:1/1.1,e.clientX,e.clientY-50); else { tx-=e.deltaX; ty-=e.deltaY; appliquer(); } },{passive:false});
+disposer(); ajuster(); addEventListener('resize',ajuster);
+</script>
+</body>
+</html>
