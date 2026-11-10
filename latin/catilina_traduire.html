@@ -3,41 +3,80 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Catilina – 3 niveaux</title>
+<title>Catilina – traduire l'exorde</title>
 <style>
-  body{font-family:Georgia,"Times New Roman",serif;max-width:1300px;margin:2rem auto;padding:0 1rem;color:#222;line-height:1.4}
-  h1{font-size:1.4rem;margin:0 0 .6rem;font-family:Arial,Helvetica,sans-serif}
-  .activite{margin-bottom:1.6rem;font-family:Arial,Helvetica,sans-serif;line-height:1.6}
-  .activite p{margin:.4rem 0}
-  .blanc{display:inline-block;min-width:7rem;border-bottom:1px solid #222;margin:0 .2rem}
-  .sub{color:#666;margin-bottom:2rem}
-  section{border:1px solid #ccc;border-radius:8px;padding:1rem 1.4rem;margin-bottom:1.6rem;page-break-inside:avoid}
-  h2{font-size:1.1rem;margin:0 0 .2rem}
-  .niv{color:#666;font-size:.9rem;margin:0 0 1rem}
-  .latin{font-style:italic;font-size:1.25rem;line-height:2.4}
-  .n{background:#ffff00}
-  .a{background:#00ff00}
-  .g{background:#ff0000}
-  .legende{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1rem;font-size:1rem;font-style:normal}
-  .legende span{padding:.15rem .7rem;border-radius:4px}
+  :root{
+    --parchemin:#f6efe0; --papier:#fffdf7; --encre:#2b2118; --pourpre:#7a1f2b; --or:#b8892b;
+    --trait:#dccfb2; --doux:#7b6a55;
+    --nom:#ffe44d; --acc:#79e27a; --gen:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--parchemin);background-image:radial-gradient(circle at 20% 0,#fff8e8 0,transparent 55%);color:var(--encre);
+       font-family:"Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;line-height:1.6}
+  .page{max-width:1240px;margin:0 auto;padding:1.5rem 1.2rem 3rem}
+
+  /* ---------- en-tête ---------- */
+  .activite{background:var(--papier);border:1px solid var(--trait);border-top:6px solid var(--pourpre);border-radius:6px 6px 14px 14px;
+            padding:1.6rem 2rem 1.4rem;margin-bottom:1.6rem;box-shadow:0 6px 18px rgba(80,50,20,.08)}
+  .etiquette{display:inline-block;font:700 .72rem/1 "Helvetica Neue",Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;
+             color:var(--or);margin-bottom:.5rem}
+  h1{margin:0 0 .8rem;font-size:2rem;color:var(--pourpre);letter-spacing:.01em}
+  .objectif{display:inline-block;margin:0 0 1rem;padding:.35rem .9rem;background:#f3e3c3;border-left:4px solid var(--or);border-radius:0 6px 6px 0;font-weight:700}
+  .contexte{margin:0 0 1rem;color:#43352a}
+  .blanc{display:inline-block;min-width:8rem;border-bottom:1.5px dotted var(--pourpre);margin:0 .2rem}
+  .cite{margin:0;padding:.8rem 1.2rem;border-left:3px solid var(--pourpre);background:#fbf5e6;font-style:italic;font-size:1.05rem;border-radius:0 8px 8px 0}
+
+  /* ---------- mise en page ---------- */
   .split{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:1.6rem;align-items:start}
-  .vocab{position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow-y:auto;background:#fafafa}
-  .vocab ul{list-style:none;padding:0;margin:0;font-size:.95rem}
-  .vocab li{margin-bottom:.3rem;break-inside:avoid}
-  @media(max-width:800px){.split{grid-template-columns:1fr}.vocab{position:static;max-height:none}}
-  .tabs{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap}
-  .tabs button{font:inherit;cursor:pointer;border:1px solid #ccc;background:#f4f4f4;border-radius:8px;padding:.5rem 1rem;display:flex;flex-direction:column;align-items:flex-start;color:#222}
-  .tabs button small{color:#666;font-size:.75rem}
-  .tabs button.on{background:#fff;border-color:#222;box-shadow:0 2px 0 #222}
-  .panel{display:none}.panel.on{display:block}
-  @media print{.tabs{display:none}.panel{display:block!important}}
-  @media print{body{margin:0}section{border-color:#999}.n,.a,.g{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+  /* ---------- onglets ---------- */
+  .tabs{display:flex;gap:.5rem;margin-bottom:-1px;flex-wrap:wrap;position:relative;z-index:1}
+  .tabs button{font:inherit;cursor:pointer;border:1px solid var(--trait);border-bottom:none;background:#ecdfc3;color:var(--doux);
+               border-radius:10px 10px 0 0;padding:.6rem 1.1rem .5rem;display:flex;flex-direction:column;align-items:flex-start;
+               transition:background .15s,color .15s}
+  .tabs button b{font-size:1rem}
+  .tabs button small{font-size:.74rem;font-family:"Helvetica Neue",Arial,sans-serif;opacity:.9}
+  .tabs button:hover{background:#f3e8cf;color:var(--encre)}
+  .tabs button.on{background:var(--papier);color:var(--pourpre);box-shadow:inset 0 3px 0 var(--or)}
+
+  .panel{display:none;background:var(--papier);border:1px solid var(--trait);border-radius:0 12px 12px 12px;padding:1.4rem 1.8rem 1.6rem;
+         box-shadow:0 6px 18px rgba(80,50,20,.08)}
+  .panel.on{display:block}
+  .panel h2{margin:0;font-size:1.25rem;color:var(--pourpre)}
+  .niv{margin:.1rem 0 1.2rem;color:var(--doux);font-size:.9rem;font-family:"Helvetica Neue",Arial,sans-serif}
+  .latin{font-style:italic;font-size:1.4rem;line-height:2.5;margin:0;padding:.4rem .2rem;border-top:1px solid var(--trait);border-bottom:1px solid var(--trait)}
+
+  /* surlignages */
+  .n,.a,.g{padding:.12em .28em;border-radius:5px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+  .n{background:var(--nom)} .a{background:var(--acc)} .g{background:var(--gen)}
+  .legende{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1.2rem;font:600 .95rem "Helvetica Neue",Arial,sans-serif}
+  .legende span{padding:.3rem .9rem;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+
+  /* ---------- vocabulaire ---------- */
+  .vocab{position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow-y:auto;background:var(--papier);border:1px solid var(--trait);
+         border-top:6px solid var(--or);border-radius:6px 6px 14px 14px;padding:1.1rem 1.4rem 1.2rem;box-shadow:0 6px 18px rgba(80,50,20,.08)}
+  .vocab h2{margin:0;font-size:1.25rem;color:var(--pourpre);letter-spacing:.04em}
+  .vocab ul{list-style:none;padding:0;margin:0;font-size:.97rem}
+  .vocab li{padding:.38rem 0;border-bottom:1px dashed var(--trait)}
+  .vocab li:last-child{border-bottom:none}
+  .vocab b{color:var(--pourpre)}
+  .vocab::-webkit-scrollbar{width:8px}.vocab::-webkit-scrollbar-thumb{background:var(--trait);border-radius:4px}
+
+  @media(max-width:850px){.split{grid-template-columns:1fr}.vocab{position:static;max-height:none}h1{font-size:1.6rem}.activite{padding:1.2rem}.latin{font-size:1.2rem}}
+  @media print{
+    body{background:#fff}.tabs{display:none}.panel{display:block!important;box-shadow:none;border-radius:8px;margin-bottom:1rem;page-break-inside:avoid}
+    .activite,.vocab{box-shadow:none}.vocab{position:static;max-height:none}
+    .n,.a,.g,.legende span{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
 </style>
 </head>
 <body>
+<div class="page">
+
 <header class="activite">
+  <span class="etiquette">Cicéron · In Catilinam I</span>
   <h1>Activité 2 : traduire</h1>
-  <p class="objectif"><b>Objectif : découvrir ce qui est reproché à Catilina</b></p>
+  <p class="objectif">Objectif : découvrir ce qui est reproché à Catilina</p>
   <p class="contexte"><i>Contexte : en cet automne –63, Lucius Sergius Catilina, leader des populares (= <span class="blanc"></span>), a été battu à l’élection des consuls par Cicéron soutenu par la noblesse romaine. Le 8 novembre, le Sénat est réuni dans le temple de Jupiter Stator. Découvrons le début (exorde) du discours de Cicéron pour comprendre ce qui est reproché à Catilina et qui secoue la République.</i></p>
   <p class="cite">« Jusqu'à quand enfin abuseras-tu, Catilina, de notre patience&nbsp;?<br>
   Combien de temps encore ton espèce de frénésie nous bernera-t-elle&nbsp;?<br>
@@ -47,10 +86,11 @@
 <div class="split">
 <div class="textes">
 <div class="tabs" role="tablist">
-  <button role="tab" data-t="v1" class="on">Version 1<small>sans étayage</small></button>
-  <button role="tab" data-t="v2">Version 2<small>couleurs</small></button>
-  <button role="tab" data-t="v3">Version 3<small>couleurs + légende</small></button>
+  <button role="tab" data-t="v1" class="on"><b>Version 1</b><small>sans étayage</small></button>
+  <button role="tab" data-t="v2"><b>Version 2</b><small>couleurs</small></button>
+  <button role="tab" data-t="v3"><b>Version 3</b><small>couleurs + légende</small></button>
 </div>
+
 <section class="panel" id="v1" role="tabpanel">
   <h2>Version 1 – sans étayage</h2>
   <p class="niv">Texte original, sans couleur</p>
@@ -75,7 +115,7 @@
 </section>
 </div>
 
-<section class="vocab">
+<aside class="vocab">
   <h2>Vocabula</h2>
   <p class="niv">Commun aux trois versions</p>
   <ul>
@@ -104,7 +144,9 @@
     <li><b>cōnjūrātĭō, onis, f.</b> : conjuration, complot</li>
     <li><b>vĭdĕo, es, ere, uidi, uisum</b> : voir que</li>
   </ul>
-</section>
+</aside>
+</div>
+
 </div>
 <script>
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
