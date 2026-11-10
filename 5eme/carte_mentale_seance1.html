@@ -22,13 +22,14 @@
     box-shadow:0 1px 3px rgba(0,0,0,.12); overflow:hidden; }
   .noeud.niv1 { font-weight:700; font-size:16px; background:var(--c); color:#fff; border-radius:16px; padding:10px 16px; }
   .noeud.niv0 { font-weight:800; font-size:21px; text-align:center; background:#2b2433; border-color:#2b2433; color:#fff; border-radius:24px; padding:16px 20px; }
-  /* réponses cachées */
-  .noeud.cache { cursor:pointer; color:transparent; transition:color .3s; }
-  .noeud.cache::after { content:"❓ Clique pour voir"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    color:var(--c); font-weight:600; font-size:14px; background:var(--c-clair); transition:opacity .3s; }
+  /* questions visibles, réponses cachées */
+  .noeud.cache { cursor:pointer; display:grid; }
+  .noeud.cache > span { grid-area:1/1; transition:opacity .3s; }
+  .noeud.cache .q { color:var(--c); font-weight:600; }
+  .noeud.cache .r { opacity:0; }
   .noeud.cache:hover { background:#fff; }
-  .noeud.cache.revele { color:var(--c-txt); }
-  .noeud.cache.revele::after { opacity:0; pointer-events:none; }
+  .noeud.cache.revele .q { opacity:0; }
+  .noeud.cache.revele .r { opacity:1; }
   .noeud.cache.revele::before { content:""; position:absolute; left:0; bottom:0; height:4px; background:var(--c); width:100%;
     animation:barre 3s linear forwards; }
   body.tout .noeud.cache.revele::before { display:none; }
@@ -37,7 +38,7 @@
 </head>
 <body>
 <div id="bar">
-  <span class="titre">🗺️ Carte mentale – à retrouver</span>
+  <span class="titre">🗺️ Carte mentale – réponds de mémoire</span>
   <button id="bMoins">−</button><button id="bPlus">＋</button><button id="bFit">Tout voir</button>
   <button id="bTout">👁 Tout montrer</button>
   <span class="score" id="compteur"></span>
@@ -58,23 +59,23 @@ const arbre = {
  "t": "Le roman courtois et son contexte (Yvain, le chevalier au lion)",
  "kids": [
   { "t": "L'auteur : Chrétien de Troyes", "c": 0, "kids": [
-    { "t": "Est un clerc : homme instruit qui sait lire et écrire le latin, souvent lié au clergé" },
-    { "t": "Sert des personnages puissants( = mécènes) : Marie, comtesse de Champagne, et Philippe d'Alsace, comte de Flandre" },
-    { "t": "Autres œuvres : Lancelot, Perceval" } ] },
+    { "t": "Est un clerc : homme instruit qui sait lire et écrire le latin, souvent lié au clergé", "q": "Chrétien de Troyes était un clerc : que désigne ce terme ?" },
+    { "t": "Sert des personnages puissants( = mécènes) : Marie, comtesse de Champagne, et Philippe d'Alsace, comte de Flandre", "q": "Quelles personnes puissantes Chrétien de Troyes a-t-il servies ?" },
+    { "t": "Autres œuvres : Lancelot, Perceval", "q": "Quelles autres œuvres Chrétien de Troyes a-t-il écrites ?" } ] },
   { "t": "Le roman courtois", "c": 1, "kids": [
-    { "t": "Récit écrit en langue romane :" },
-    { "t": "Raconte les Aventures d'un chevalier amoureux de sa dame" },
-    { "t": "Personnages : des chevaliers (Lancelot, Perceval) et  leurs dames" },
-    { "t": "Succès durable : diffusé dans toute l'Europe, il a inspiré auteurs et artistes" } ] },
+    { "t": "Récit écrit en langue romane :", "q": "Qu’appelle-t-on le roman courtois ? (dans quelle langue est-il écrit ?)" },
+    { "t": "Raconte les Aventures d'un chevalier amoureux de sa dame", "q": "Qu’appelle-t-on le roman courtois ? (que raconte-t-il ?)" },
+    { "t": "Personnages : des chevaliers (Lancelot, Perceval) et  leurs dames", "q": "Quels personnages le roman courtois met-il en scène ?" },
+    { "t": "Succès durable : diffusé dans toute l'Europe, il a inspiré auteurs et artistes", "q": "Pourquoi peut-on dire que Yvain, le chevalier au lion a eu un succès durable ?" } ] },
   { "t": "Le contexte historique", "c": 2, "kids": [
-    { "t": "Système féodal : liens de fidélité entre un seigneur (suzerain) et son vassal" },
-    { "t": "Langues romanes : issues du latin, comme le français" },
-    { "t": "Genres populaires : chanson de geste (= exploits)  et roman" },
-    { "t": "XII ème siècle(12)" },
-    { "t": "la religion catholique rythme chaque instant dela vie des gens " } ] },
+    { "t": "Système féodal : liens de fidélité entre un seigneur (suzerain) et son vassal", "q": "Qu’appelle-t-on le système féodal ?" },
+    { "t": "Langues romanes : issues du latin, comme le français", "q": "Quel adjectif désigne les langues venues du latin comme le français ?" },
+    { "t": "Genres populaires : chanson de geste (= exploits)  et roman", "q": "Quels sont les deux genres populaires à l’époque de Chrétien de Troyes ?" },
+    { "t": "XII ème siècle(12)", "q": "À quelle période cette œuvre a-t-elle été écrite ?" },
+    { "t": "la religion catholique rythme chaque instant dela vie des gens ", "q": "Quelle était l’importance de la religion chrétienne à cette époque ?" } ] },
   { "t": "Transmission des textes", "c": 3, "kids": [
-    { "t": "À l'oral : les troubadours lisent et chantent les histoires en public" },
-    { "t": "À l'écrit : manuscrits recopiés à la main par les moines copistes" } ] }
+    { "t": "À l'oral : les troubadours lisent et chantent les histoires en public", "q": "De quelle manière les textes se transmettent-ils à l’oral ? Comment désigne-t-on ceux qui les racontent ?" },
+    { "t": "À l'écrit : manuscrits recopiés à la main par les moines copistes", "q": "Pourquoi les moines ont-ils un rôle important ?" } ] }
  ]
 };
 
@@ -93,6 +94,7 @@ info.forEach(({d},n)=>{
   e.style.setProperty('--c',col.c); e.style.setProperty('--c-clair',col.clair); e.style.setProperty('--c-txt',col.txt);
   e.style.width = d===0 ? '230px' : d===1 ? '210px' : '240px';
   if(d>=2){ e.classList.add('cache'); nbCaches++;
+    e.textContent=''; const q=document.createElement('span'); q.className='q'; q.textContent='❓ '+n.q; const r=document.createElement('span'); r.className='r'; r.textContent=n.t; e.append(q,r);
     e.addEventListener('click',()=>reveler(n,e)); }
   e.addEventListener('pointerdown',ev=>ev.stopPropagation());
   monde.appendChild(e); els.set(n,e);
