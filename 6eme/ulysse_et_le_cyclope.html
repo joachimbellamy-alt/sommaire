@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ulysse et le Cyclope</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Andika:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sea1:#0b2240; --sea2:#123c63; --sea3:#1c5a86;
+    --terra:#c4622d; --terra-dark:#8e3f1a; --black:#1b120c;
+    --papyrus:#f7ecd2; --papyrus2:#efdfba; --ink:#2a1d12; --muted:#6f5a40;
+    --gold:#c9a24a; --line:#d8c296;
+    --meander:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M0 21.5H24M21.5 21.5V2.5H5.5V15.5H15.5V8.5H11' fill='none' stroke='%231b120c' stroke-width='3'/%3E%3C/svg%3E");
+  }
+  *{box-sizing:border-box}
+  html{background:var(--sea1)}
+  body{
+    margin:0;min-height:100vh;color:var(--ink);
+    font-family:"Andika",system-ui,sans-serif;font-size:18px;line-height:1.5;
+    background:
+      radial-gradient(1.5px 1.5px at 12% 8%, #fff8 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 78% 5%, #fff9 50%, transparent 51%),
+      radial-gradient(1px 1px at 55% 12%, #fff7 50%, transparent 51%),
+      radial-gradient(1px 1px at 30% 18%, #fff6 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 90% 20%, #fff8 50%, transparent 51%),
+      radial-gradient(ellipse at 50% -10%, #2b5f8f 0%, transparent 55%),
+      linear-gradient(180deg,var(--sea1) 0%,var(--sea2) 55%,var(--sea3) 100%);
+    background-attachment:fixed;
+  }
+  /* vagues en bas de l'écran */
+  .waves{position:fixed;left:0;right:0;bottom:0;height:120px;pointer-events:none;z-index:0;opacity:.55}
+  .waves svg{width:100%;height:100%;display:block}
+  .page{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:28px 16px 140px}
+
+  /* bandeau façon vase grec à figures noires */
+  .banner{
+    position:relative;background:linear-gradient(180deg,#d2733c,var(--terra) 60%,#b2552a);
+    border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.4);
+    padding:34px 18px 30px;text-align:center;
+  }
+  .banner::before,.banner::after{content:"";position:absolute;left:0;right:0;height:24px;background:var(--meander) repeat-x;background-size:24px 24px}
+  .banner::before{top:6px}
+  .banner::after{bottom:6px;transform:scaleY(-1)}
+  .banner .eyebrow{font-family:"Cinzel",serif;font-weight:700;letter-spacing:.3em;font-size:13px;color:var(--black);opacity:.8;margin:6px 0 0}
+  .banner h1{font-family:"Cinzel",serif;font-size:clamp(28px,6vw,46px);margin:2px 0 4px;color:var(--black);letter-spacing:.05em}
+  .banner .sub{margin:0;color:#2b1608;font-style:italic}
+  .ship{display:block;width:min(360px,80%);height:auto;margin:6px auto 0}
+
+  .card{
+    margin-top:26px;background:linear-gradient(180deg,var(--papyrus),var(--papyrus2));
+    border-radius:14px;padding:26px 24px 24px;box-shadow:0 10px 30px rgba(0,0,0,.35);
+    border:3px solid var(--terra-dark);position:relative;
+  }
+  .card::before{content:"";position:absolute;inset:8px;border:1px solid var(--terra-dark);border-radius:9px;opacity:.35;pointer-events:none}
+  h2{font-family:"Cinzel",serif;font-size:22px;margin:0 0 10px;display:flex;align-items:center;gap:12px;color:var(--terra-dark)}
+  h2 .num{background:var(--black);color:var(--papyrus);border-radius:50%;width:36px;height:36px;display:inline-grid;place-items:center;font-size:18px;flex:none}
+  .q{padding:16px 0;border-top:1px dashed var(--line)}
+  .q:first-of-type{border-top:none}
+  .q > p{margin:0 0 8px;font-weight:700}
+  .q > p::before{content:"◆";color:var(--terra);margin-right:10px;font-size:12px;vertical-align:2px}
+  .q > p.hint{font-size:15px;font-weight:400;font-style:italic;color:var(--muted);margin:-4px 0 10px}
+  .q > p.hint::before{content:none}
+  label.opt{display:flex;gap:10px;align-items:flex-start;padding:6px 10px;border-radius:8px;cursor:pointer}
+  label.opt:hover{background:rgba(196,98,45,.12)}
+  label.opt input{width:20px;height:20px;margin-top:3px;accent-color:var(--terra-dark);flex:none}
+
+  /* liste à réordonner */
+  .sortable{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+  .sortable li{
+    display:flex;align-items:center;gap:12px;padding:10px 10px 10px 8px;
+    background:#fffaf0;border:2px solid var(--line);border-radius:12px;
+    cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;
+    transition:box-shadow .15s,border-color .15s,transform .15s;
+  }
+  .sortable li:hover{border-color:var(--terra)}
+  .sortable li.dragging{cursor:grabbing;border-color:var(--terra-dark);box-shadow:0 10px 22px rgba(0,0,0,.25);transform:scale(1.02);background:#fff}
+  .grip{color:var(--muted);font-size:22px;line-height:1;padding:0 2px}
+  .rank{flex:none;width:34px;height:34px;border-radius:50%;background:var(--terra);color:#fff;font-family:"Cinzel",serif;font-weight:700;display:grid;place-items:center}
+  .txt{flex:1}
+  .arrows{display:flex;flex-direction:column;gap:2px}
+  .arrows button{width:30px;height:24px;padding:0;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--terra-dark);font-size:13px;cursor:pointer}
+  .arrows button:hover{background:var(--papyrus2)}
+
+  textarea{width:100%;min-height:128px;font:inherit;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:repeating-linear-gradient(#fffaf0,#fffaf0 31px,#e3d0aa 32px);line-height:32px;resize:vertical;color:var(--ink)}
+  .tools{display:flex;gap:10px;justify-content:center;margin-top:24px;flex-wrap:wrap}
+  .tools button{font:inherit;font-weight:700;padding:10px 18px;border-radius:10px;border:2px solid var(--gold);background:var(--black);color:var(--papyrus);cursor:pointer}
+  .tools button.ghost{background:transparent;color:var(--papyrus)}
+
+  @media (max-width:520px){ .card{padding:22px 14px} .arrows{display:none} }
+  @media print{
+    html,body{background:#fff}
+    .waves,.tools,.arrows,.grip,.retour{display:none}
+    .page{padding:0}
+    .banner,.card{box-shadow:none}
+    .banner{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .q{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="waves" aria-hidden="true">
+  <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+    <path d="M0,60 C100,30 200,90 300,60 C400,30 500,90 600,60 C700,30 800,90 900,60 C1000,30 1100,90 1200,60 V120 H0Z" fill="#2a6f9e"/>
+    <path d="M0,85 C120,60 240,110 360,85 C480,60 600,110 720,85 C840,60 960,110 1080,85 C1140,72 1170,80 1200,85 V120 H0Z" fill="#0d2c4c"/>
+  </svg>
+</div>
+
+<div class="page">
+  <header class="banner">
+    <p class="eyebrow">HOMÈRE · L’ODYSSÉE · CHANT IX</p>
+    <h1>Ulysse et le Cyclope</h1>
+    <p class="sub">Dans l’antre de Polyphème</p>
+    <!-- navire grec en silhouette noire, style céramique -->
+    <svg class="ship" viewBox="0 0 360 90" aria-hidden="true">
+      <path d="M0,74 q30,-8 60,0 t60,0 t60,0 t60,0 t60,0 t60,0" fill="none" stroke="#1b120c" stroke-width="3"/>
+      <path d="M40,58 L300,58 Q320,58 334,36 L342,40 Q328,70 300,72 L70,72 Q50,72 40,58Z" fill="#1b120c"/>
+      <path d="M40,58 Q30,50 34,38 Q42,46 46,58Z" fill="#1b120c"/>
+      <circle cx="318" cy="62" r="3" fill="#d2733c"/>
+      <rect x="168" y="6" width="5" height="52" fill="#1b120c"/>
+      <path d="M120,12 L222,12 Q226,34 220,50 L122,50 Q116,32 120,12Z" fill="#1b120c"/>
+      <path d="M134,16 V46 M150,16 V46 M166,16 V46 M182,16 V46 M198,16 V46 M212,16 V46" stroke="#d2733c" stroke-width="1.5" opacity=".6"/>
+      <path d="M80,72 l-14,14 M110,72 l-14,14 M140,72 l-14,14 M170,72 l-14,14 M200,72 l-14,14 M230,72 l-14,14 M260,72 l-14,14" stroke="#1b120c" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+  </header>
+
+  <section class="card">
+    <h2><span class="num">1</span> Ai-je bien compris le texte ?</h2>
+
+    <div class="q">
+      <p>Ulysse est :</p>
+      <label class="opt"><input type="radio" name="q1"> un cyclope</label>
+      <label class="opt"><input type="radio" name="q1"> un humain</label>
+    </div>
+
+    <div class="q">
+      <p>Polyphème est :</p>
+      <label class="opt"><input type="radio" name="q2"> un cyclope</label>
+      <label class="opt"><input type="radio" name="q2"> un humain</label>
+    </div>
+
+    <div class="q">
+      <p>Dans quel endroit l’action a-t-elle lieu ?</p>
+      <label class="opt"><input type="radio" name="q3"> un château</label>
+      <label class="opt"><input type="radio" name="q3"> une grotte</label>
+      <label class="opt"><input type="radio" name="q3"> un bateau</label>
+    </div>
+
+    <div class="q">
+      <p>Le Cyclope est :</p>
+      <label class="opt"><input type="radio" name="q4"> un pêcheur</label>
+      <label class="opt"><input type="radio" name="q4"> un berger</label>
+      <label class="opt"><input type="radio" name="q4"> un cultivateur</label>
+    </div>
+
+    <div class="q">
+      <p>Qu’arrive-t-il au Cyclope ?</p>
+      <label class="opt"><input type="radio" name="q5"> Ulysse fait boire du vin au cyclope qui s’endort et il en profite pour le tuer.</label>
+      <label class="opt"><input type="radio" name="q5"> Ulysse fait boire du vin au cyclope qui s’endort et il en profite pour lui crever l’œil.</label>
+      <label class="opt"><input type="radio" name="q5"> Ulysse crève l’œil du cyclope et lui donne du vin pour le faire dormir.</label>
+    </div>
+
+    <div class="q">
+      <p>Voici les ruses employées par Ulysse contre le cyclope. À toi de les remettre dans l’ordre dans lequel elles se déroulent.</p>
+      <p class="hint">Fais glisser les étiquettes avec la souris ou le doigt (ou utilise les flèches ▲▼). Les numéros se mettent à jour tout seuls.</p>
+      <ol class="sortable" id="ruses">
+        <li><span class="grip" aria-hidden="true">⠿</span><span class="rank"></span><span class="txt">Ulysse fait boire du vin à Polyphème pour qu’il s’endorme.</span><span class="arrows"><button type="button" data-dir="-1" aria-label="Monter">▲</button><button type="button" data-dir="1" aria-label="Descendre">▼</button></span></li>
+        <li><span class="grip" aria-hidden="true">⠿</span><span class="rank"></span><span class="txt">Ulysse se fait appeler Personne.</span><span class="arrows"><button type="button" data-dir="-1" aria-label="Monter">▲</button><button type="button" data-dir="1" aria-label="Descendre">▼</button></span></li>
+        <li><span class="grip" aria-hidden="true">⠿</span><span class="rank"></span><span class="txt">Ulysse prépare un pieu qu’il cache dans la grotte.</span><span class="arrows"><button type="button" data-dir="-1" aria-label="Monter">▲</button><button type="button" data-dir="1" aria-label="Descendre">▼</button></span></li>
+      </ol>
+    </div>
+
+    <div class="q">
+      <p>Les autres cyclopes aident-ils ou non Polyphème à capturer Ulysse et ses compagnons ? Pourquoi ?</p>
+      <textarea aria-label="Ta réponse"></textarea>
+    </div>
+  </section>
+
+  <div class="tools">
+    <button type="button" onclick="window.print()">Imprimer</button>
+    <button type="button" class="ghost" id="reset">Effacer mes réponses</button>
+  </div>
+  <p style="text-align:center;margin-top:22px"><a class="retour" href="index.html" style="color:var(--papyrus);font-weight:700">← Retour à l’espace Français 6ème</a></p>
+</div>
+
+<script>
+(function(){
+  const list = document.getElementById('ruses');
+  const original = Array.from(list.children);
+
+  function renumber(){
+    Array.from(list.children).forEach((li,i)=>{ li.querySelector('.rank').textContent = i+1; });
+  }
+  renumber();
+
+  // Flèches ▲▼
+  list.addEventListener('click', e=>{
+    const b = e.target.closest('button[data-dir]'); if(!b) return;
+    const li = b.closest('li');
+    if(b.dataset.dir === '-1' && li.previousElementSibling) list.insertBefore(li, li.previousElementSibling);
+    if(b.dataset.dir === '1' && li.nextElementSibling) list.insertBefore(li.nextElementSibling, li);
+    renumber();
+  });
+
+  // Glisser-déposer (souris + tactile)
+  let dragged = null;
+  list.addEventListener('pointerdown', e=>{
+    if(e.target.closest('button')) return;
+    const li = e.target.closest('li'); if(!li) return;
+    dragged = li; li.classList.add('dragging');
+    li.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  list.addEventListener('pointermove', e=>{
+    if(!dragged) return;
+    const others = Array.from(list.children).filter(li=>li!==dragged);
+    let before = null;
+    for(const li of others){
+      const r = li.getBoundingClientRect();
+      if(e.clientY < r.top + r.height/2){ before = li; break; }
+    }
+    if(before !== dragged.nextElementSibling || (!before && list.lastElementChild !== dragged)){
+      list.insertBefore(dragged, before);
+      renumber();
+    }
+  });
+  function drop(){ if(dragged){ dragged.classList.remove('dragging'); dragged = null; renumber(); } }
+  list.addEventListener('pointerup', drop);
+  list.addEventListener('pointercancel', drop);
+
+  // Effacer
+  document.getElementById('reset').addEventListener('click', ()=>{
+    if(!confirm('Effacer toutes les réponses ?')) return;
+    document.querySelectorAll('input[type=radio]').forEach(i=>i.checked=false);
+    document.querySelector('textarea').value='';
+    original.forEach(li=>list.appendChild(li));
+    renumber();
+  });
+})();
+</script>
+</body>
+</html>
