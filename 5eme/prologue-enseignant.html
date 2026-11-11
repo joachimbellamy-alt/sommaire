@@ -89,7 +89,7 @@
 
   <section>
     <h2>Catégories — fonctions du prologue</h2>
-    <p class="aide">Le titre est la fonction à trouver ; la précision (facultative) s'affiche en italique sous le titre pour guider les élèves.</p>
+    <p class="aide">Le titre est la fonction à trouver ; l'indice (facultatif) n'apparaît que si l'élève clique sur « Indice » : cela lui coûte un cœur.</p>
     <div id="liste-cats"></div>
     <button id="ajout-cat">＋ Ajouter une catégorie</button>
   </section>
@@ -198,7 +198,7 @@
       titre.addEventListener('input', () => { c.titre = titre.value; majOptions(c.id, c.titre); sauver(); });
       const expl = el('textarea', { rows: 2 }); expl.value = c.explication || '';
       expl.addEventListener('input', () => { c.explication = expl.value; sauver(); });
-      carte.append(el('label', {}, 'Fonction (titre)'), titre, el('label', {}, 'Précision affichée (facultatif)'), expl, el('label', {}, 'Couleur du blason'));
+      carte.append(el('label', {}, 'Fonction (titre)'), titre, el('label', {}, "Indice (affiché à la demande de l'élève, contre un cœur)"), expl, el('label', {}, 'Couleur du blason'));
       const pastilles = el('div', { class: 'pastilles' });
       Object.entries(PALETTE).forEach(([cle, pc]) => {
         const b = el('button', { class: 'pastille' + (c.couleur === cle ? ' sel' : ''), title: pc.nom, style: `--c:${pc.bord};--f:${pc.bg}`, 'aria-label': pc.nom,

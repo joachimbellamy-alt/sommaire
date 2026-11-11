@@ -77,6 +77,10 @@
   }
   .categorie h3 { margin: 0; font-family: var(--capitales); font-weight: 700; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; color: var(--txt); }
   .categorie .expl { margin: 3px 0 0; font-style: italic; font-size: 16px; color: var(--txt); opacity: .85; line-height: 1.25; }
+  .categorie .indice { margin-top: 6px; font-family: var(--capitales); font-size: 11px; letter-spacing: .06em; padding: 4px 10px; color: var(--txt); background: rgba(255,255,255,.55); border: 1px dashed var(--bord); border-radius: 12px; cursor: pointer; }
+  .categorie .indice:hover { background: rgba(255,255,255,.9); }
+  .categorie .indice:disabled { opacity: .4; cursor: not-allowed; }
+  .categorie .expl[hidden] { display: none; }
   .categorie .compteur { position: absolute; top: 12px; right: 16px; font-family: var(--capitales); font-size: 12px; color: var(--txt); opacity: .8; }
   .categorie.complete .compteur::after { content: " ✦"; color: var(--or); }
   .placees { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
@@ -230,7 +234,17 @@
     div.style.setProperty('--bg', p.bg); div.style.setProperty('--bord', p.bord); div.style.setProperty('--txt', p.txt);
     div.style.setProperty('--tuile', p.tuile); div.style.setProperty('--tuile-txt', p.tt);
     div.appendChild(el('h3', null, c.titre));
-    if (c.explication) div.appendChild(el('p', 'expl', c.explication));
+    if (c.explication) {
+      const ind = el('p', 'expl', c.explication); ind.hidden = true;
+      const bt = el('button', 'indice', '💡 Indice (−1 cœur)'); bt.type = 'button';
+      bt.addEventListener('click', ev => {
+        ev.stopPropagation();
+        if (vies <= 1 || !ind.hidden) return;
+        ind.hidden = false; bt.remove();
+        vies--; majVies(true); majIndices();
+      });
+      div.appendChild(bt); div.appendChild(ind);
+    }
     const cpt = el('span', 'compteur', '0 / ' + total[c.id]); cpt.id = 'cpt-' + c.id;
     div.appendChild(cpt);
     const pl = el('div', 'placees'); pl.id = 'placees-' + c.id;
@@ -272,7 +286,7 @@
       majProgression();
       if (restantes === 0) victoire();
     } else {
-      vies--; majVies(true);
+      vies--; majVies(true); majIndices();
       carte.classList.add('erreur'); setTimeout(() => carte.classList.remove('erreur'), 450);
       if (vies <= 0) setTimeout(defaite, 350);
     }
@@ -285,6 +299,10 @@
       if (perte && i === vies) h.classList.add('perdu');
       box.appendChild(h);
     }
+  }
+
+  function majIndices() {
+    document.querySelectorAll('.indice').forEach(b => b.disabled = vies <= 1);
   }
 
   function majProgression() {
@@ -309,7 +327,7 @@
     fin('✠', 'Votre cœur est brisé…', 'Vous avez épuisé tous vos cœurs. Réessayez, la quête n\'est pas finie !');
   }
 
-  majVies(); majProgression();
+  majVies(); majProgression(); majIndices();
 </script>
 </body>
 </html>
