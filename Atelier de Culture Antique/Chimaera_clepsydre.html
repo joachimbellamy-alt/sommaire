@@ -245,7 +245,7 @@ function construire(){
           <div class="temps" id="tps${i}">2:00</div>
           <div class="boutons">
             <button data-act="go">▶ Départ</button>
-            <button data-act="raz" class="raz">↺</button>
+            <button data-act="raz" class="raz">↺ Recommencer</button>
           </div>
           <div class="message" id="msg${i}"></div>
         </div>
@@ -259,7 +259,7 @@ function construire(){
     s.querySelectorAll("[data-aller]").forEach(b=>b.onclick=()=>{
       const k=+b.dataset.aller; afficher(k<0?"enigme":k>=N?"fin":k);});
     s.querySelector("[data-act=go]").onclick=()=>basculer(i);
-    s.querySelector("[data-act=raz]").onclick=()=>raz(i);
+    s.querySelector("[data-act=raz]").onclick=()=>{ raz(i); basculer(i); };
     if(reussi[i]) marquerReussi(i,false);
     dessiner(i);
   });
@@ -334,6 +334,8 @@ function afficher(page){
   courant=page;
   document.querySelectorAll(".onglet").forEach(s=>s.classList.toggle("actif",s.id==="p-"+page));
   if(page==="fin") remplirFin();
+  // La clepsydre démarre dès que la vignette s'affiche (sauf si déjà validée ou temps écoulé)
+  if(typeof page==="number" && !reussi[page] && minuteurs[page].reste>0) basculer(page);
   majNav(); window.scrollTo({top:0,behavior:"smooth"});
 }
 
