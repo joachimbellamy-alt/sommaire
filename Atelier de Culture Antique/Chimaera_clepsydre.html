@@ -202,8 +202,8 @@ function construire(){
   e.innerHTML=`
     <div class="parchemin">
       <h2>L'énigme du sphinx de Lycie</h2>
-      <p class="voix">« De ma mort est né… »</p>
-      <p>Qui est-il ? Pour le découvrir, traduis l'histoire de Bellérophon et de la Chimère.</p>
+      <p class="voix">« Grâce à moi… »</p>
+      <p>Qui suis-je ? Pour le découvrir, traduis l'histoire de Bellérophon et de la Chimère.</p>
       <ul class="regle">
         <li>Quand ton professeur valide ta traduction, tu gagnes <b>une lettre</b> du mot mystère.</li>
         <li>La dernière vignette te donne la <b>clé 🔑</b> qui ouvre l'énigme finale.</li>
@@ -350,7 +350,7 @@ function remplirFin(){
     const manque=VIGNETTES.map((_,i)=>reussi[i]?null:i+1).filter(Boolean);
     f.innerHTML=`<div class="parchemin">
       <div class="verrou">🔒</div>
-      <p class="voix">« De ma mort est né… »</p>
+      <p class="voix">« Grâce à moi… »</p>
       <p>L'énigme est encore verrouillée. Il te manque ${cle?"":"<b>la clé 🔑</b> et "}des lettres.</p>
       <p>Vignette${manque.length>1?"s":""} à réussir : <b>${manque.join(", ")}</b></p>
       ${recap}
@@ -360,7 +360,7 @@ function remplirFin(){
     if(!lettresDispo) lettresDispo=lettres.slice();
     f.innerHTML=`<div class="parchemin">
       <div class="verrou">🔓</div>
-      <p class="voix">« De ma mort est né… »</p>
+      <p class="voix">« Grâce à moi… »</p>
       <p>Clique sur les lettres pour les remettre dans l'ordre. Clique sur une case pour retirer sa lettre.</p>
       <div class="cases" id="cases"></div>
       <div class="lettres-dispo" id="dispo"></div>
@@ -405,7 +405,7 @@ function dessinerAnagramme(){
     const mot=placees.map(i=>lettresDispo[i]).join("");
     if(mot===SOLUTION){
       cases.classList.add("gagne"); verdict.className="verdict ok";
-      verdict.innerHTML="PEGASUS ! Bravo ! De la mort de Méduse, tranchée par Persée, est né Pégase, le cheval ailé.";
+      verdict.innerHTML="PEGASUS ! Bravo ! Grâce à Pégase, le cheval ailé, Bellérophon a pu vaincre la Chimère.";
       dispo.innerHTML=""; fanfare();
     } else { verdict.className="verdict ko"; verdict.textContent="Ce n'est pas le bon mot… Clique sur une case pour retirer une lettre."; }
   } else { verdict.className="verdict"; verdict.textContent=""; }
