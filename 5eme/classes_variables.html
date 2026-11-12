@@ -35,6 +35,10 @@ textarea{resize:vertical}
 .secondaire{background:#fff; color:var(--bleu); border-color:var(--bleu)}
 .grand{font-size:19px; padding:12px 22px}
 .msg{color:var(--rouge); font-weight:600; min-height:1.2em}
+.exercice-pret{background:#e9f8ec; border:2px solid #1e8a3a; border-radius:12px; padding:12px 16px}
+.exercice-pret .pret-titre{margin:0 0 6px; font-size:19px}
+.exercice-pret ol{margin:4px 0 6px; padding-left:22px; font-size:17px; line-height:1.6}
+.exercice-pret .lien{font-size:14px; padding:0}
 .exercice-charge{background:#eef4ff; border:1.5px solid #bcd2f5; border-radius:10px; padding:10px 14px}
 .reprise{margin-top:16px; padding-top:12px; border-top:1px solid #eee}
 .aide{color:var(--doux); font-size:15px}
@@ -218,7 +222,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
     <div class="carte">
       <h2>Bienvenue !</h2>
       <div id="accueil-corpus"></div>
-      <div class="actions">
+      <div class="actions" id="accueil-ouvrir">
         <label class="bouton secondaire">📂 Ouvrir l'exercice envoyé par le professeur
           <input type="file" id="file-corpus" accept=".json,application/json" hidden>
         </label>
@@ -229,7 +233,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
         <label>Prénom <input type="text" id="in-prenom" autocomplete="given-name"></label>
         <label>Classe <input type="text" id="in-classe" placeholder="5e B"></label>
       </div>
-      <button id="btn-commencer" class="primaire grand">Commencer</button>
+      <button id="btn-commencer" class="primaire grand">▶ Commencer l'exercice</button>
       <p id="accueil-msg" class="msg"></p>
       <div id="accueil-reprise"></div>
     </div>
@@ -553,10 +557,16 @@ function chargerCorpus(c){
 function renderAccueil(){
   const box = $('#accueil-corpus');
   box.innerHTML = S.corpus
-    ? '<div class="exercice-charge">📘 Exercice : <strong>' + esc(S.corpus.titre) + '</strong> — ' + pluriel(S.corpus.phrases.length, 'phrase') + '</div>'
+    ? '<div class="exercice-pret"><p class="pret-titre">✅ Ton exercice est prêt : <strong>' + esc(S.corpus.titre) + '</strong></p>' +
+      '<ol><li>Écris ton <strong>nom</strong>, ton <strong>prénom</strong> et ta <strong>classe</strong> ci-dessous.</li>' +
+      '<li>Appuie sur le bouton bleu <strong>« Commencer l\'exercice »</strong>.</li></ol>' +
+      '<button class="lien" id="btn-autre-exercice">Ce n\'est pas le bon exercice ? Ouvrir un autre fichier</button></div>'
     : '<p>Ouvre d\'abord l\'exercice envoyé par ton professeur, puis écris ton nom, ton prénom et ta classe.</p>';
-  $('#btn-commencer').disabled = !S.corpus;
+  $('#accueil-ouvrir').hidden = !!S.corpus;
+  $('#btn-commencer').hidden = !S.corpus;
+  if (S.corpus) $('#btn-autre-exercice').onclick = () => { $('#accueil-ouvrir').hidden = false; $('#btn-autre-exercice').hidden = true; };
   const rep = $('#accueil-reprise'); rep.innerHTML = '';
+  if (S.corpus) return;
   const d = store.get('cgv:dernier');
   if (d && d.corpus && d.eleve) {
     try {
