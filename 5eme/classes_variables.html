@@ -1183,17 +1183,26 @@ $$('.onglets button[data-onglet]').forEach(b => b.onclick = () => {
 });
 
 /* ---------- Démarrage ---------- */
+/* Lien élève : #c=… (lu à l'ouverture, et aussi quand on colle un lien dans un onglet où l'outil est déjà ouvert) */
+function chargerDepuisLien(){
+  const m = location.hash.match(/[#&]c=([^&]+)/);
+  if (!m) return false;
+  $$('.modale').forEach(x => x.hidden = true);
+  try { chargerCorpus(depuisFichier(JSON.parse(b64urlD(m[1])))); }
+  catch(err) {
+    renderAccueil(); montrerEcran('accueil');
+    $('#accueil-msg').textContent = 'Le lien de l\'exercice est incomplet. Demande à ton professeur de le renvoyer.';
+  }
+  return true;
+}
+window.addEventListener('hashchange', chargerDepuisLien);
 (function init(){
   const e = store.get('cgv:eleve');
   if (e) { $('#in-nom').value = e.nom || ''; $('#in-prenom').value = e.prenom || ''; $('#in-classe').value = e.classe || ''; }
   const b = store.get('cgv:brouillon');
   if (b) { try { ED = depuisFichier(b); edVersChamps(); } catch(err) {} }
   renderAccueil();
-  const m = location.hash.match(/[#&]c=([^&]+)/);
-  if (m) {
-    try { chargerCorpus(depuisFichier(JSON.parse(b64urlD(m[1])))); }
-    catch(err) { $('#accueil-msg').textContent = 'Le lien de l\'exercice est incomplet. Demande à ton professeur de le renvoyer.'; }
-  } else {
+  if (!chargerDepuisLien()) {
     const q = new URLSearchParams(location.search).get('corpus');
     if (q) fetch(q).then(r => r.json()).then(j => chargerCorpus(depuisFichier(j)))
       .catch(() => { $('#accueil-msg').textContent = 'Impossible de charger l\'exercice.'; });
