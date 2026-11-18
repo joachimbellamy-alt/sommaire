@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Fiche Monstre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@500;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --papyrus: #f1e3c2;
+    --papyrus-fonce: #e3cd9c;
+    --encre: #2a1d14;
+    --terre: #a8431f;      /* rouge céramique */
+    --terre-fonce: #7a2c12;
+    --ocre: #c8902f;
+    --noir-vase: #1d1712;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: #3b2a1e radial-gradient(circle at 50% 0%, #5a3f2a 0%, #2b1e15 100%) fixed;
+    color: var(--encre);
+    font-family: "EB Garamond", Georgia, "Times New Roman", serif;
+    font-size: 19px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* ---------- Barre d'outils ---------- */
+  .barre {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    padding: 10px 16px;
+    padding-top: max(10px, env(safe-area-inset-top));
+    background: var(--noir-vase);
+    border-bottom: 3px solid var(--ocre);
+  }
+  .barre select {
+    flex: 1 1 200px; min-width: 0;
+    font: 600 17px "EB Garamond", serif;
+    padding: 9px 10px; border-radius: 8px;
+    background: var(--papyrus); color: var(--encre); border: 2px solid var(--ocre);
+  }
+  .btn {
+    font: 700 14px "Cinzel", serif; letter-spacing: .04em;
+    padding: 10px 14px; border-radius: 8px; cursor: pointer;
+    background: var(--terre); color: #fff6e6; border: 2px solid var(--ocre);
+    -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+  }
+  .btn:active { transform: translateY(1px); background: var(--terre-fonce); }
+  .btn.clair { background: var(--papyrus); color: var(--encre); }
+  .btn.sombre { background: #3a2c22; }
+  .etat {
+    width: 100%; text-align: right; color: var(--ocre);
+    font-style: italic; font-size: 15px; min-height: 1em;
+  }
+
+  /* ---------- La fiche ---------- */
+  .fiche {
+    max-width: 1000px;
+    margin: 20px auto 40px;
+    padding: 34px 34px 40px;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(255,255,255,.35), transparent 60%),
+      radial-gradient(ellipse at 80% 90%, rgba(140,90,30,.18), transparent 60%),
+      var(--papyrus);
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0,0,0,.5);
+    border-radius: 4px;
+  }
+  /* frise grecque haut et bas */
+  .frise {
+    height: 26px;
+    background-repeat: repeat-x; background-size: 26px 26px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Crect width='26' height='26' fill='%231d1712'/%3E%3Cpath d='M0 22H20V6H8V16H14V12' fill='none' stroke='%23c8902f' stroke-width='3'/%3E%3Cpath d='M20 22H26' stroke='%23c8902f' stroke-width='3'/%3E%3C/svg%3E");
+    border-top: 2px solid var(--ocre); border-bottom: 2px solid var(--ocre);
+    margin: 0 -34px;
+  }
+  .frise.haut { margin-top: -34px; margin-bottom: 22px; border-radius: 4px 4px 0 0; }
+  .frise.bas  { margin-bottom: -40px; margin-top: 30px; transform: scaleY(-1); border-radius: 0 0 4px 4px; }
+
+  .entete { text-align: center; margin-bottom: 18px; }
+  .entete .sur-titre {
+    font: 500 15px "Cinzel", serif; letter-spacing: .35em;
+    color: var(--terre); text-transform: uppercase;
+  }
+  .entete h1 {
+    font: 700 clamp(30px, 5vw, 46px) "Cinzel Decorative", "Cinzel", serif;
+    margin: 4px 0 2px; color: var(--noir-vase);
+    letter-spacing: .04em;
+  }
+  .entete .grec { font-size: 18px; color: var(--terre-fonce); letter-spacing: .3em; }
+
+  .grille {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 22px;
+  }
+  .pleine { grid-column: 1 / -1; }
+
+  .cartouche {
+    position: relative;
+    border: 2px solid var(--encre);
+    outline: 1px solid var(--encre); outline-offset: 4px;
+    background: rgba(255, 250, 235, .45);
+    padding: 26px 16px 14px;
+    margin-top: 14px;
+  }
+  .cartouche > .etiquette {
+    position: absolute; top: -16px; left: 14px;
+    background: var(--terre); color: #fff4df;
+    font: 700 15px "Cinzel", serif; letter-spacing: .12em; text-transform: uppercase;
+    padding: 5px 14px;
+    border: 2px solid var(--encre);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .etiquette .num { color: var(--ocre); font-family: "Cinzel Decorative", serif; }
+
+  textarea, input[type=text] {
+    width: 100%;
+    font: 400 20px/1.55 "EB Garamond", Georgia, serif;
+    color: var(--encre);
+    background:
+      repeating-linear-gradient(to bottom, transparent 0, transparent calc(1.55em - 1px), rgba(42,29,20,.25) calc(1.55em - 1px), rgba(42,29,20,.25) 1.55em);
+    border: none; outline: none; resize: none;
+    padding: 0 2px; margin: 0;
+    overflow: hidden;
+    -webkit-appearance: none; border-radius: 0;
+  }
+  textarea::placeholder, input::placeholder { color: rgba(42,29,20,.38); font-style: italic; }
+  textarea:focus, input:focus { background-color: rgba(200,144,47,.12); }
+  input.nom {
+    font: 700 30px/1.5 "Cinzel", serif; text-align: center; letter-spacing: .06em;
+    background: none; border-bottom: 2px dotted rgba(42,29,20,.4);
+  }
+
+  /* ---------- Illustration ---------- */
+  .illus-cadre {
+    position: relative;
+    background: #fbf3df;
+    border: 1px solid rgba(42,29,20,.35);
+    aspect-ratio: 4 / 3;
+    width: 100%;
+  }
+  .illus-cadre canvas { width: 100%; height: 100%; display: block; }
+  .illus-cadre.dessin canvas { touch-action: none; cursor: crosshair; }
+  .illus-cadre.dessin { box-shadow: 0 0 0 3px var(--ocre); }
+  .illus-vide {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 20px; pointer-events: none;
+    color: rgba(42,29,20,.4); font-style: italic;
+  }
+  .outils-illus { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; align-items: center; }
+  .outils-illus .btn { font-size: 12px; padding: 8px 10px; }
+  .pastille {
+    width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+    border: 2px solid var(--papyrus); box-shadow: 0 0 0 2px var(--encre);
+    -webkit-tap-highlight-color: transparent; padding: 0;
+  }
+  .pastille.actif { box-shadow: 0 0 0 3px var(--ocre); transform: scale(1.12); }
+  .epaisseur { width: 90px; accent-color: var(--terre); }
+  .outils-dessin { display: none; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .dessin-actif .outils-dessin { display: flex; }
+
+  .auteur {
+    display: flex; gap: 14px; margin-top: 26px; flex-wrap: wrap;
+    font: 500 15px "Cinzel", serif; letter-spacing: .06em; color: var(--terre-fonce);
+  }
+  .auteur label { flex: 1 1 220px; display: flex; align-items: baseline; gap: 8px; }
+  .auteur input { flex: 1; font-size: 19px; }
+
+  /* ---------- Onglets ---------- */
+  .onglets { width: 100%; display: flex; gap: 6px; }
+  .onglet {
+    flex: 1; font: 700 15px "Cinzel", serif; letter-spacing: .04em;
+    padding: 10px 8px; border-radius: 8px 8px 0 0; cursor: pointer;
+    background: #3a2c22; color: var(--papyrus); border: 2px solid #5a4632; border-bottom: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .onglet.actif { background: var(--papyrus); color: var(--terre-fonce); border-color: var(--ocre); }
+  body.vue-bestiaire .barre > :not(.onglets) { display: none; }
+
+  /* ---------- Bestiaire ---------- */
+  .bestiaire .intro { text-align: center; max-width: 680px; margin: 6px auto 4px; line-height: 1.45; }
+  .bestiaire .intro.petit { font-size: 16px; margin-top: 26px; }
+  .bestiaire a { color: var(--terre-fonce); }
+  .niveau {
+    font: 700 17px "Cinzel", serif; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--terre-fonce); margin: 26px 0 10px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .niveau::after { content: ""; flex: 1; border-top: 2px solid var(--encre); }
+  .niveau .etoiles { color: var(--ocre); letter-spacing: 0; }
+  .cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+  .carte {
+    border: 2px solid var(--encre); outline: 1px solid var(--encre); outline-offset: 3px;
+    background: rgba(255, 250, 235, .55); padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .carte h3 { margin: 0; font: 700 20px "Cinzel", serif; color: var(--noir-vase); }
+  .carte p { margin: 0; font-style: italic; line-height: 1.35; flex: 1; }
+  .carte .liens { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .carte .liens a, .carte .liens button {
+    font: 700 13px "Cinzel", serif; padding: 8px 10px; border-radius: 6px;
+    text-decoration: none; border: 2px solid var(--ocre); cursor: pointer;
+  }
+  .carte .liens a { background: var(--papyrus); color: var(--encre); }
+  .carte .liens button { background: var(--terre); color: #fff6e6; }
+
+  /* ---------- Message anti copier-coller ---------- */
+  .bulle {
+    position: fixed; left: 50%; transform: translateX(-50%) translateY(-6px);
+    z-index: 60; max-width: calc(100% - 32px);
+    background: var(--terre); color: #fff6e6; border: 2px solid var(--ocre);
+    font: 600 17px "EB Garamond", serif; padding: 10px 16px; border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.4);
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+  }
+  .bulle.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+  @media print { .bulle { display: none !important; } }
+
+  /* ---------- Fenêtre d'aide ---------- */
+  .modale {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px;
+  }
+  .modale.ouverte { display: flex; }
+  .modale .boite {
+    background: var(--papyrus); max-width: 520px; padding: 24px; border: 3px solid var(--ocre);
+    border-radius: 6px;
+  }
+  .modale h2 { font-family: "Cinzel", serif; margin-top: 0; color: var(--terre-fonce); }
+
+  /* ---------- Portrait iPad / téléphone ---------- */
+  @media (max-width: 820px) {
+    .fiche { margin: 12px; padding: 26px 18px 34px; }
+    .frise { margin-left: -18px; margin-right: -18px; }
+    .frise.haut { margin-top: -26px; }
+    .frise.bas { margin-bottom: -34px; }
+  }
+  @media (max-width: 640px) {
+    .grille { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Impression ---------- */
+  /* Mise en page A4 paysage (activée juste avant l'impression) :
+     illustration | nom, parents, lieu | apparence, célèbre pour */
+  @page { size: A4 landscape; margin: 8mm; }
+  body.paysage .fiche {
+    width: 1062px; max-width: none; margin: 0 auto; padding: 14px 20px 18px;
+    box-shadow: none; border-radius: 0;
+    min-height: 710px; display: flex; flex-direction: column; /* remplit la page A4 */
+  }
+  body.paysage .fiche .grille { flex: 1; align-items: stretch; }
+  body.paysage .grille > :nth-child(2) { display: flex; flex-direction: column; }
+  body.paysage .grille > :nth-child(2) > :last-child { flex: 1; }
+  body.paysage .frise { height: 18px; background-size: 18px 18px; margin-left: -20px; margin-right: -20px; border-radius: 0; }
+  body.paysage .frise.haut { margin-top: -14px; margin-bottom: 6px; }
+  body.paysage .frise.bas { margin-top: 10px; margin-bottom: -18px; }
+  body.paysage .entete { margin-bottom: 0; }
+  body.paysage .entete .sur-titre { font-size: 11px; }
+  body.paysage .entete h1 { font-size: 28px; margin: 0; }
+  body.paysage .entete .grec { font-size: 12px; }
+  body.paysage .grille { grid-template-columns: 1.15fr 1fr 1.1fr; gap: 0 16px; }
+  body.paysage .grille > :nth-child(1) { grid-column: 1; grid-row: 1 / 3; }
+  body.paysage .grille > :nth-child(2) { grid-column: 2; grid-row: 1 / 3; }
+  body.paysage .grille > :nth-child(3) { grid-column: 3; grid-row: 1; }
+  body.paysage .grille > :nth-child(4) { grid-column: 3; grid-row: 2; }
+  body.paysage .cartouche { margin-top: 16px; padding: 18px 10px 8px; }
+  body.paysage .cartouche > .etiquette { top: -13px; left: 10px; font-size: 12px; padding: 3px 10px; }
+  body.paysage textarea { font-size: 15px; }
+  body.paysage input.nom { font-size: 22px; }
+  body.paysage .auteur { margin-top: 10px; font-size: 12px; }
+  body.paysage .auteur input { font-size: 15px; }
+
+  @media print {
+    body { background: none; }
+    .barre, .outils-illus, .illus-vide, .modale, .no-print { display: none !important; }
+    .fiche { box-shadow: none; }
+    .cartouche { break-inside: avoid; }
+    textarea:focus, input:focus { background-color: transparent; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="barre">
+  <nav class="onglets" role="tablist">
+    <button class="onglet actif" data-vue="fiche" role="tab">📜 Ma fiche</button>
+    <button class="onglet" data-vue="bestiaire" role="tab">🏛 Bestiaire : choisir un monstre</button>
+  </nav>
+  <select id="liste" aria-label="Mes fiches enregistrées"></select>
+  <button class="btn" id="bNouvelle">＋ Nouvelle</button>
+  <button class="btn clair" id="bImprimer">🖨 Imprimer</button>
+  <button class="btn clair" id="bPdf" title="Enregistrer la fiche en PDF">📄 PDF</button>
+  <button class="btn sombre" id="bExporter" title="Enregistrer une copie dans Fichiers">⤓ Exporter</button>
+  <button class="btn sombre" id="bImporter" title="Ouvrir une fiche exportée">⤒ Importer</button>
+  <button class="btn sombre" id="bSupprimer">✕</button>
+  <input type="file" id="fImport" accept=".json,application/json" hidden>
+  <div class="etat" id="etat"></div>
+</div>
+
+<main class="fiche" id="fiche">
+  <div class="frise haut"></div>
+
+  <header class="entete">
+    <div class="sur-titre">Bestiaire de l'Antiquité</div>
+    <h1>Fiche Monstre</h1>
+    <div class="grec">ΤΕΡΑΣ · MONSTRUM</div>
+  </header>
+
+  <div class="grille">
+    <!-- Illustration -->
+    <section class="cartouche" id="zoneIllus">
+      <div class="etiquette"><span class="num">I</span> Illustration</div>
+      <div class="illus-cadre" id="cadre">
+        <canvas id="toile" width="1200" height="900"></canvas>
+        <div class="illus-vide" id="illusVide">Dessine ton monstre<br>ou ajoute une image</div>
+      </div>
+      <div class="outils-illus">
+        <button class="btn" id="bDessin">✏️ Dessiner</button>
+        <button class="btn clair" id="bImage">🖼 Image</button>
+        <div class="outils-dessin">
+          <button class="pastille actif" data-c="#1d1712" style="background:#1d1712" aria-label="noir"></button>
+          <button class="pastille" data-c="#a8431f" style="background:#a8431f" aria-label="rouge"></button>
+          <button class="pastille" data-c="#c8902f" style="background:#c8902f" aria-label="ocre"></button>
+          <button class="pastille" data-c="#3f6b4f" style="background:#3f6b4f" aria-label="vert"></button>
+          <button class="pastille" data-c="#2f4f7a" style="background:#2f4f7a" aria-label="bleu"></button>
+          <button class="pastille" data-c="gomme" style="background:#fbf3df" aria-label="gomme" title="Gomme">⌫</button>
+          <input type="range" class="epaisseur" id="epaisseur" min="2" max="30" value="6" aria-label="Épaisseur">
+          <button class="btn sombre" id="bAnnuler">↶</button>
+          <button class="btn sombre" id="bEffacer">Tout effacer</button>
+        </div>
+        <input type="file" id="fImage" accept="image/*" hidden>
+      </div>
+    </section>
+
+    <!-- Identité -->
+    <div>
+      <section class="cartouche">
+        <div class="etiquette"><span class="num">II</span> Nom</div>
+        <input type="text" class="nom" data-champ="nom" placeholder="Nom du monstre" autocomplete="off" list="monstres">
+        <datalist id="monstres">
+          <option value="Méduse"><option value="Le Minotaure"><option value="La Chimère"><option value="L'Hydre de Lerne">
+          <option value="Cerbère"><option value="Polyphème le Cyclope"><option value="Le Sphinx"><option value="Scylla">
+          <option value="Charybde"><option value="Les Sirènes"><option value="Les Harpies"><option value="Typhon">
+          <option value="Python"><option value="Le Lion de Némée"><option value="Échidna"><option value="Géryon">
+          <option value="Ladon"><option value="Les Oiseaux du lac Stymphale"><option value="Le Sanglier d'Érymanthe">
+          <option value="Le Centaure Nessos"><option value="Argos aux cent yeux"><option value="Le Dragon de Colchide">
+        </datalist>
+      </section>
+      <section class="cartouche">
+        <div class="etiquette"><span class="num">III</span> Parents</div>
+        <textarea data-champ="parents" rows="3" placeholder="Qui sont ses parents ? Sa famille ?"></textarea>
+      </section>
+      <section class="cartouche">
+        <div class="etiquette"><span class="num">IV</span> Lieu</div>
+        <textarea data-champ="lieu" rows="3" placeholder="Où vit-il ? Où le rencontre-t-on ?"></textarea>
+      </section>
+    </div>
+
+    <section class="cartouche pleine">
+      <div class="etiquette"><span class="num">V</span> Apparence</div>
+      <textarea data-champ="apparence" rows="4" placeholder="À quoi ressemble-t-il ? (corps, têtes, couleurs, taille, pouvoirs…)"></textarea>
+    </section>
+
+    <section class="cartouche pleine">
+      <div class="etiquette"><span class="num">VI</span> Je suis célèbre pour…</div>
+      <textarea data-champ="celebre" rows="4" placeholder="Quelle est son histoire ? Quel héros l'a affronté ?"></textarea>
+    </section>
+  </div>
+
+  <div class="auteur">
+    <label>Fiche réalisée par <input type="text" data-champ="eleve" autocomplete="off"></label>
+    <label>Classe <input type="text" data-champ="classe" autocomplete="off" style="max-width:120px"></label>
+  </div>
+
+  <div class="frise bas"></div>
+</main>
+
+<section class="fiche bestiaire" id="bestiaire" hidden>
+  <div class="frise haut"></div>
+  <header class="entete">
+    <div class="sur-titre">Bestiaire de l'Antiquité</div>
+    <h1>Choisis ton monstre</h1>
+    <div class="grec">ΘΗΡΙΑ · BESTIAE</div>
+  </header>
+  <p class="intro">Voici quinze monstres de la mythologie grecque, des plus célèbres aux plus mystérieux.
+    Lis l'article sur <b>Vikidia</b>, l'encyclopédie des jeunes, puis appuie sur <b>« Faire ma fiche »</b>.</p>
+  <div id="groupes"></div>
+  <p class="intro petit">Pour aller plus loin :
+    <a href="https://fr.vikidia.org/wiki/Douze_travaux_d%27H%C3%A9racl%C3%A8s" target="_blank" rel="noopener">Les douze travaux d'Héraclès</a> ·
+    <a href="https://fr.vikidia.org/wiki/Odyss%C3%A9e" target="_blank" rel="noopener">L'Odyssée d'Ulysse</a> ·
+    <a href="https://fr.vikidia.org/wiki/Pers%C3%A9e" target="_blank" rel="noopener">Persée</a> ·
+    <a href="https://fr.vikidia.org/wiki/%C3%89chidna" target="_blank" rel="noopener">Échidna, la mère des monstres</a></p>
+  <div class="frise bas"></div>
+</section>
+
+<div class="modale" id="modale">
+  <div class="boite">
+    <h2 id="mTitre"></h2>
+    <div id="mTexte"></div>
+    <p style="text-align:right;margin-bottom:0"><button class="btn" id="mOk">D'accord</button></p>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var CLE = "fichesMonstres_v1";
+  var CLE_COURANTE = "fichesMonstres_courante";
+  var fiches = [];
+  var courante = null;
+  var stockageOK = true;
+
+  // ---------- Stockage ----------
+  function lireStockage() {
+    try {
+      fiches = JSON.parse(localStorage.getItem(CLE) || "[]");
+      return localStorage.getItem(CLE_COURANTE);
+    } catch (e) { stockageOK = false; fiches = []; return null; }
+  }
+  function ecrireStockage() {
+    try {
+      localStorage.setItem(CLE, JSON.stringify(fiches));
+      if (courante) localStorage.setItem(CLE_COURANTE, courante.id);
+      etat("✓ Enregistré sur cet appareil");
+      return true;
+    } catch (e) {
+      etat("⚠ Enregistrement impossible — utilise « Exporter »");
+      return false;
+    }
+  }
+  var minuteur = null;
+  function sauverBientot() {
+    etat("…");
+    clearTimeout(minuteur);
+    minuteur = setTimeout(function () { lireFormulaire(); ecrireStockage(); majListe(); }, 600);
+  }
+  function etat(t) { document.getElementById("etat").textContent = t; }
+
+  // ---------- Fiches ----------
+  function nouvelleFiche() {
+    return { id: "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+             nom: "", parents: "", lieu: "", apparence: "", celebre: "", eleve: "", classe: "",
+             image: "", maj: Date.now() };
+  }
+  var champs = document.querySelectorAll("[data-champ]");
+  function lireFormulaire() {
+    if (!courante) return;
+    champs.forEach(function (el) { courante[el.dataset.champ] = el.value; });
+    courante.maj = Date.now();
+  }
+  function remplirFormulaire() {
+    champs.forEach(function (el) { el.value = courante[el.dataset.champ] || ""; });
+    champs.forEach(ajuster);
+    chargerImage(courante.image);
+    historique = [];
+  }
+  function majListe() {
+    var sel = document.getElementById("liste");
+    sel.innerHTML = "";
+    fiches.slice().sort(function (a, b) { return b.maj - a.maj; }).forEach(function (f) {
+      var o = document.createElement("option");
+      o.value = f.id;
+      var titre = f.nom.trim() || "Monstre sans nom";
+      if (f.eleve && f.eleve.trim()) titre += " — " + f.eleve.trim();
+      o.textContent = "📜 " + titre;
+      if (courante && f.id === courante.id) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+  function ouvrir(id) {
+    lireFormulaire();
+    courante = fiches.find(function (f) { return f.id === id; }) || fiches[0];
+    remplirFormulaire();
+    try { localStorage.setItem(CLE_COURANTE, courante.id); } catch (e) {}
+    majListe();
+  }
+
+  // ---------- Zones de texte qui s'agrandissent ----------
+  function ajuster(el) {
+    if (el.tagName !== "TEXTAREA") return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }
+  champs.forEach(function (el) {
+    el.addEventListener("input", function () { ajuster(el); sauverBientot(); });
+  });
+  window.addEventListener("resize", function () { champs.forEach(ajuster); });
+
+  // ---------- Limiter le copier-coller ----------
+  // Un collage de plus de COLLAGE_MAX caractères est refusé (on peut coller un nom, pas un paragraphe).
+  var COLLAGE_MAX = 20;
+  var bulle = document.createElement("div");
+  bulle.className = "bulle";
+  document.body.appendChild(bulle);
+  var minuteurBulle = null;
+  function avertir(el) {
+    bulle.textContent = "✍ Pas de copier-coller : écris avec tes propres mots !";
+    var r = el.getBoundingClientRect();
+    bulle.style.top = Math.max(70, r.top - 54) + "px";
+    bulle.classList.add("visible");
+    clearTimeout(minuteurBulle);
+    minuteurBulle = setTimeout(function () { bulle.classList.remove("visible"); }, 2800);
+  }
+  champs.forEach(function (el) {
+    el.addEventListener("paste", function (e) {
+      var texte = (e.clipboardData || window.clipboardData).getData("text") || "";
+      if (texte.length > COLLAGE_MAX) { e.preventDefault(); avertir(el); }
+    });
+    el.addEventListener("drop", function (e) { e.preventDefault(); avertir(el); });
+    // filet de sécurité (iPad) : refuse une grosse insertion venant du presse-papiers
+    el.addEventListener("beforeinput", function (e) {
+      if ((e.inputType === "insertFromPaste" || e.inputType === "insertFromDrop") &&
+          e.data && e.data.length > COLLAGE_MAX) { e.preventDefault(); avertir(el); }
+    });
+  });
+
+  // ---------- Illustration (dessin + image) ----------
+  var toile = document.getElementById("toile");
+  var ctx = toile.getContext("2d");
+  var cadre = document.getElementById("cadre");
+  var zone = document.getElementById("zoneIllus");
+  var couleur = "#1d1712", gomme = false, enDessin = false, trace = null;
+  var historique = [];
+  var FOND = "#fbf3df";
+
+  function fond() { ctx.fillStyle = FOND; ctx.fillRect(0, 0, toile.width, toile.height); }
+  function vide(b) { document.getElementById("illusVide").style.display = b ? "flex" : "none"; }
+  function chargerImage(src) {
+    fond();
+    if (!src) { vide(true); return; }
+    var img = new Image();
+    img.onload = function () { ctx.drawImage(img, 0, 0, toile.width, toile.height); vide(false); };
+    img.src = src;
+  }
+  function memoriserIllus() {
+    if (!courante) return;
+    courante.image = toile.toDataURL("image/jpeg", 0.82);
+    sauverBientot();
+  }
+
+  document.getElementById("bDessin").addEventListener("click", function () {
+    enDessin = !enDessin;
+    cadre.classList.toggle("dessin", enDessin);
+    zone.classList.toggle("dessin-actif", enDessin);
+    this.textContent = enDessin ? "✓ Terminer" : "✏️ Dessiner";
+  });
+  document.querySelectorAll(".pastille").forEach(function (p) {
+    p.addEventListener("click", function () {
+      document.querySelectorAll(".pastille").forEach(function (q) { q.classList.remove("actif"); });
+      p.classList.add("actif");
+      gomme = p.dataset.c === "gomme";
+      if (!gomme) couleur = p.dataset.c;
+    });
+  });
+  function point(e) {
+    var r = toile.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * toile.width / r.width,
+             y: (e.clientY - r.top) * toile.height / r.height };
+  }
+  toile.addEventListener("pointerdown", function (e) {
+    if (!enDessin) return;
+    e.preventDefault();
+    toile.setPointerCapture(e.pointerId);
+    if (historique.length > 15) historique.shift();
+    historique.push(ctx.getImageData(0, 0, toile.width, toile.height));
+    var ep = +document.getElementById("epaisseur").value;
+    trace = point(e);
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.strokeStyle = gomme ? FOND : couleur;
+    ctx.lineWidth = (gomme ? ep * 3 : ep) * (e.pressure && e.pointerType === "pen" ? 0.5 + e.pressure : 1);
+    ctx.beginPath(); ctx.arc(trace.x, trace.y, ctx.lineWidth / 2, 0, 7);
+    ctx.fillStyle = ctx.strokeStyle; ctx.fill();
+    vide(false);
+  });
+  toile.addEventListener("pointermove", function (e) {
+    if (!trace) return;
+    e.preventDefault();
+    var p = point(e);
+    if (e.pointerType === "pen" && e.pressure) {
+      var ep = +document.getElementById("epaisseur").value;
+      ctx.lineWidth = (gomme ? ep * 3 : ep) * (0.5 + e.pressure);
+    }
+    ctx.beginPath(); ctx.moveTo(trace.x, trace.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    trace = p;
+  });
+  function finTrace() { if (trace) { trace = null; memoriserIllus(); } }
+  toile.addEventListener("pointerup", finTrace);
+  toile.addEventListener("pointercancel", finTrace);
+
+  document.getElementById("bAnnuler").addEventListener("click", function () {
+    var d = historique.pop();
+    if (d) { ctx.putImageData(d, 0, 0); memoriserIllus(); }
+  });
+  document.getElementById("bEffacer").addEventListener("click", function () {
+    if (!confirm("Effacer toute l'illustration ?")) return;
+    historique.push(ctx.getImageData(0, 0, toile.width, toile.height));
+    fond(); vide(true);
+    courante.image = ""; sauverBientot();
+  });
+
+  document.getElementById("bImage").addEventListener("click", function () {
+    document.getElementById("fImage").click();
+  });
+  document.getElementById("fImage").addEventListener("change", function () {
+    var f = this.files[0]; this.value = "";
+    if (!f) return;
+    var url = URL.createObjectURL(f);
+    var img = new Image();
+    img.onload = function () {
+      historique.push(ctx.getImageData(0, 0, toile.width, toile.height));
+      fond();
+      // image entière centrée dans le cadre
+      var s = Math.min(toile.width / img.width, toile.height / img.height);
+      var w = img.width * s, h = img.height * s;
+      ctx.drawImage(img, (toile.width - w) / 2, (toile.height - h) / 2, w, h);
+      URL.revokeObjectURL(url);
+      vide(false);
+      memoriserIllus();
+    };
+    img.src = url;
+  });
+
+  // ---------- Barre d'outils ----------
+  document.getElementById("liste").addEventListener("change", function () { ouvrir(this.value); });
+
+  document.getElementById("bNouvelle").addEventListener("click", function () {
+    lireFormulaire(); ecrireStockage();
+    courante = nouvelleFiche();
+    fiches.push(courante);
+    remplirFormulaire(); ecrireStockage(); majListe();
+    document.querySelector("input.nom").focus();
+  });
+
+  document.getElementById("bSupprimer").addEventListener("click", function () {
+    var nom = courante.nom.trim() || "ce monstre sans nom";
+    if (!confirm("Supprimer définitivement la fiche « " + nom + " » ?")) return;
+    fiches = fiches.filter(function (f) { return f.id !== courante.id; });
+    if (!fiches.length) fiches.push(nouvelleFiche());
+    courante = fiches[0];
+    remplirFormulaire(); ecrireStockage(); majListe();
+  });
+
+  document.getElementById("bImprimer").addEventListener("click", function () {
+    lireFormulaire(); ecrireStockage();
+    preparerImpression();
+    window.print();
+    // sur iPad, afterprint n'est pas toujours envoyé : on rétablit l'écran au retour
+    setTimeout(finImpression, 1500);
+  });
+
+  function nomFichier() {
+    var n = (courante.nom.trim() || "monstre").normalize("NFD").replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_|_$/g, "");
+    return "fiche_" + n + ".json";
+  }
+  document.getElementById("bExporter").addEventListener("click", function () {
+    lireFormulaire(); ecrireStockage();
+    var donnees = JSON.stringify(Object.assign({ type: "fiche-monstre" }, courante));
+    var fichier = new File([donnees], nomFichier(), { type: "application/json" });
+    if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
+      navigator.share({ files: [fichier], title: "Fiche monstre" }).catch(function () {});
+    } else {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(fichier); a.download = fichier.name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    }
+  });
+  document.getElementById("bImporter").addEventListener("click", function () {
+    document.getElementById("fImport").click();
+  });
+  document.getElementById("fImport").addEventListener("change", function () {
+    var f = this.files[0]; this.value = "";
+    if (!f) return;
+    var lecteur = new FileReader();
+    lecteur.onload = function () {
+      try {
+        var d = JSON.parse(lecteur.result);
+        if (d.type !== "fiche-monstre") throw new Error();
+        lireFormulaire();
+        var existe = fiches.find(function (x) { return x.id === d.id; });
+        if (existe) Object.assign(existe, d); else fiches.push(d);
+        courante = existe || d;
+        remplirFormulaire(); ecrireStockage(); majListe();
+      } catch (e) { alert("Ce fichier n'est pas une fiche monstre."); }
+    };
+    lecteur.readAsText(f);
+  });
+
+  // ---------- PDF (A4 paysage, une page) ----------
+  function chargerScript(src) {
+    return new Promise(function (ok, ko) {
+      var s = document.createElement("script");
+      s.src = src; s.onload = ok; s.onerror = ko;
+      document.head.appendChild(s);
+    });
+  }
+  var libsPdf = null;
+  function chargerLibsPdf() {
+    if (!libsPdf) {
+      libsPdf = Promise.all([
+        chargerScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),
+        chargerScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js")
+      ]).catch(function (e) { libsPdf = null; throw e; });
+    }
+    return libsPdf;
+  }
+  // Dans la copie servant au PDF, les zones de saisie sont remplacées par du texte simple
+  // La frise est un SVG : on la convertit en PNG, mieux reproduit dans le PDF
+  var frisePng = null;
+  function preparerFrise() {
+    if (frisePng) return Promise.resolve();
+    var src = getComputedStyle(document.querySelector(".frise")).backgroundImage.replace(/^url\(["']?|["']?\)$/g, "");
+    return new Promise(function (ok) {
+      var img = new Image();
+      img.onload = function () {
+        var c = document.createElement("canvas"); c.width = c.height = 52;
+        c.getContext("2d").drawImage(img, 0, 0, 52, 52);
+        frisePng = c.toDataURL("image/png"); ok();
+      };
+      img.onerror = function () { ok(); };
+      img.src = src;
+    });
+  }
+  function remplacerChamps(docClone) {
+    docClone.querySelectorAll(".outils-illus, .illus-vide").forEach(function (el) { el.remove(); });
+    if (frisePng) docClone.querySelectorAll(".frise").forEach(function (f) { f.style.backgroundImage = "url(" + frisePng + ")"; });
+    docClone.querySelectorAll("[data-champ]").forEach(function (copie) {
+      var orig = document.querySelector('[data-champ="' + copie.dataset.champ + '"]');
+      var cs = getComputedStyle(orig);
+      var d = docClone.createElement("div");
+      d.textContent = orig.value;
+      ["fontFamily", "fontSize", "fontWeight", "fontStyle", "lineHeight", "letterSpacing", "textAlign",
+       "color", "paddingLeft", "paddingRight", "borderBottom", "flexGrow"].forEach(function (p) {
+        d.style[p] = cs[p];
+      });
+      if (copie.tagName === "TEXTAREA") { // lignes d'écriture
+        var lh = parseFloat(cs.lineHeight);
+        d.style.backgroundImage = "linear-gradient(to bottom, rgba(0,0,0,0) " + (lh - 1) + "px, rgba(42,29,20,0.25) " + (lh - 1) + "px)";
+        d.style.backgroundSize = "100% " + lh + "px";
+      }
+      d.style.whiteSpace = "pre-wrap";
+      d.style.wordWrap = "break-word";
+      d.style.minHeight = orig.offsetHeight + "px";
+      if (copie.tagName === "INPUT" && !copie.classList.contains("nom")) d.style.flex = "1";
+      copie.replaceWith(d);
+    });
+  }
+  async function creerPdf() {
+    var bouton = document.getElementById("bPdf");
+    lireFormulaire(); ecrireStockage();
+    if (document.activeElement) document.activeElement.blur();
+    bouton.disabled = true;
+    etat("Création du PDF…");
+    var fiche = document.getElementById("fiche");
+    try {
+      await chargerLibsPdf();
+      await preparerFrise();
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      document.body.classList.add("paysage");
+      fiche.style.zoom = "";
+      champs.forEach(ajuster);
+      var image = await window.html2canvas(fiche, {
+        scale: 2, backgroundColor: "#f1e3c2", windowWidth: 1120, logging: false,
+        onclone: remplacerChamps
+      });
+      var pdf = new window.jspdf.jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      var largeurMax = 297 - 16, hauteurMax = 210 - 16;
+      var r = Math.min(largeurMax / image.width, hauteurMax / image.height);
+      var w = image.width * r, h = image.height * r;
+      pdf.addImage(image.toDataURL("image/jpeg", 0.92), "JPEG", (297 - w) / 2, (210 - h) / 2, w, h);
+      var nom = nomFichier().replace(/\.json$/, ".pdf");
+      var fichier = new File([pdf.output("blob")], nom, { type: "application/pdf" });
+      if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
+        // iPad : menu Partager → « Enregistrer dans Fichiers », AirDrop, mail…
+        await navigator.share({ files: [fichier], title: nom }).catch(function () {});
+      } else {
+        pdf.save(nom);
+      }
+      etat("✓ PDF prêt");
+    } catch (e) {
+      etat("⚠ PDF impossible (connexion internet nécessaire) — utilise « Imprimer »");
+    } finally {
+      document.body.classList.remove("paysage");
+      champs.forEach(ajuster);
+      bouton.disabled = false;
+    }
+  }
+  document.getElementById("bPdf").addEventListener("click", creerPdf);
+
+  // ---------- Bestiaire (2e onglet) ----------
+  var VK = "https://fr.vikidia.org/wiki/";
+  var BESTIAIRE = [
+    { niveau: "Les plus célèbres", etoiles: "★★★", monstres: [
+      ["Méduse", "Méduse_(mythologie)", "Mieux vaut ne pas croiser son regard…"],
+      ["Le Minotaure", "Minotaure", "Il attend ses victimes au fond d'un labyrinthe."],
+      ["Cerbère", "Cerbère_(mythologie)", "Le gardien des Enfers. Combien de têtes ?"],
+      ["Polyphème le Cyclope", "Ulysse_et_le_cyclope", "Un géant avec un seul œil, qui a piégé Ulysse."],
+      ["L'Hydre de Lerne", "Héraclès_et_l'hydre_de_Lerne", "Coupe une tête… il en repousse deux !"] ]},
+    { niveau: "Bien connus", etoiles: "★★", monstres: [
+      ["Les Sirènes", "Sirène_(mythologie)", "Leur chant attire les marins vers la mort."],
+      ["Le Sphinx", "Œdipe_et_le_Sphinx", "Il pose une énigme. Ne te trompe pas de réponse !"],
+      ["La Chimère", "Chimère_(mythologie)", "Un monstre fait de plusieurs animaux, qui crache du feu."],
+      ["Les Centaures", "Centaure", "Mi-hommes, mi-chevaux : sauvages ou sages ?"],
+      ["Le Lion de Némée", "Héraclès_et_le_lion_de_Némée", "Aucune arme ne peut percer sa peau."] ]},
+    { niveau: "Plus mystérieux", etoiles: "★", monstres: [
+      ["Scylla et Charybde", "Ulysse_entre_Charybde_et_Scylla", "Deux monstres marins de chaque côté d'un détroit."],
+      ["Les Harpies", "Harpies", "Des voleuses ailées aux serres crochues."],
+      ["Typhon", "Typhon_(mythologie)", "Le plus terrible ennemi de Zeus."],
+      ["Python", "Python_(mythologie)", "Le serpent géant de Delphes, combattu par Apollon."],
+      ["Géryon", "Géryon", "Un géant à trois corps, au bout du monde."] ]}
+  ];
+  var groupes = document.getElementById("groupes");
+  BESTIAIRE.forEach(function (g) {
+    var h = document.createElement("h2");
+    h.className = "niveau";
+    h.innerHTML = '<span class="etoiles">' + g.etoiles + "</span> " + g.niveau;
+    groupes.appendChild(h);
+    var grille = document.createElement("div");
+    grille.className = "cartes";
+    g.monstres.forEach(function (m) {
+      var c = document.createElement("article");
+      c.className = "carte";
+      var h3 = document.createElement("h3"); h3.textContent = m[0];
+      var p = document.createElement("p"); p.textContent = m[2];
+      var liens = document.createElement("div"); liens.className = "liens";
+      var a = document.createElement("a");
+      a.href = VK + encodeURIComponent(m[1]).replace(/%2F/g, "/");
+      a.target = "_blank"; a.rel = "noopener"; a.textContent = "📖 Lire sur Vikidia";
+      var b = document.createElement("button"); b.textContent = "✍ Faire ma fiche";
+      b.addEventListener("click", function () { ficheDepuis(m[0]); });
+      liens.appendChild(a); liens.appendChild(b);
+      c.appendChild(h3); c.appendChild(p); c.appendChild(liens);
+      grille.appendChild(c);
+    });
+    groupes.appendChild(grille);
+  });
+
+  function ficheVide(f) {
+    return !f.image && ["nom", "parents", "lieu", "apparence", "celebre"].every(function (k) { return !(f[k] || "").trim(); });
+  }
+  function ficheDepuis(nom) {
+    lireFormulaire();
+    var existe = fiches.find(function (f) { return f.nom.trim() === nom; });
+    if (existe) {
+      courante = existe;
+    } else if (!ficheVide(courante)) {
+      courante = nouvelleFiche();
+      fiches.push(courante);
+    }
+    courante.nom = nom;
+    remplirFormulaire(); ecrireStockage(); majListe();
+    montrer("fiche");
+    window.scrollTo(0, 0);
+  }
+
+  var onglets = document.querySelectorAll(".onglet");
+  function montrer(vue) {
+    var bestiaire = vue === "bestiaire";
+    document.getElementById("fiche").hidden = bestiaire;
+    document.getElementById("bestiaire").hidden = !bestiaire;
+    document.body.classList.toggle("vue-bestiaire", bestiaire);
+    onglets.forEach(function (o) { o.classList.toggle("actif", o.dataset.vue === vue); });
+    if (!bestiaire) champs.forEach(ajuster);
+  }
+  onglets.forEach(function (o) {
+    o.addEventListener("click", function () { montrer(o.dataset.vue); window.scrollTo(0, 0); });
+  });
+
+  // ---------- Démarrage ----------
+  var idCourant = lireStockage();
+  if (!fiches.length) fiches.push(nouvelleFiche());
+  courante = fiches.find(function (f) { return f.id === idCourant; }) || fiches[0];
+  remplirFormulaire();
+  majListe();
+  if (!stockageOK) {
+    etat("⚠ Navigation privée : pense à « Exporter » ta fiche");
+  } else {
+    etat(fiches.length > 1 || courante.nom ? "Fiche reprise ✓" : "");
+  }
+  // ajuste les hauteurs une fois les polices chargées
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { champs.forEach(ajuster); });
+  // Impression : passe en A4 paysage et réduit si besoin pour tenir sur UNE page
+  var HAUTEUR_PAGE = 715; // ≈ 194 mm utiles en px (A4 paysage, marges 8 mm)
+  function preparerImpression() {
+    var f = document.getElementById("fiche");
+    document.body.classList.add("paysage");
+    f.style.zoom = "";
+    champs.forEach(ajuster);
+    var h = f.offsetHeight;
+    if (h > HAUTEUR_PAGE) f.style.zoom = (HAUTEUR_PAGE / h).toFixed(3);
+  }
+  function finImpression() {
+    document.body.classList.remove("paysage");
+    document.getElementById("fiche").style.zoom = "";
+    champs.forEach(ajuster);
+  }
+  window.addEventListener("beforeprint", preparerImpression);
+  window.addEventListener("afterprint", finImpression);
+  window.addEventListener("pagehide", function () { lireFormulaire(); ecrireStockage(); });
+})();
+</script>
+</body>
+</html>
