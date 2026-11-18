@@ -94,6 +94,25 @@
     opacity: 0; transition: opacity .2s; pointer-events: none;
   }
   .toast.on { opacity: 1; }
+  /* Liste d'élèves */
+  section.liste { border: 2px dashed #9DB7D3; background: #f8fbff; }
+  section.liste.survol { border-color: var(--accent); background: #eef5ff; }
+  .liste .ligne-btn { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .btn {
+    font: inherit; font-size: 14px; font-weight: 600; border-radius: 9px; padding: 8px 14px;
+    cursor: pointer; border: 1px solid var(--bord); background: #fff; color: var(--texte);
+  }
+  .btn.bleu { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .lien { background: none; border: none; color: var(--accent); cursor: pointer; font: inherit; font-size: 13px; padding: 0; text-decoration: underline; }
+  .liste .petit { font-size: 13px; color: var(--gris); margin: 8px 0 0; }
+  .liste textarea { margin-top: 8px; font-size: 14px; }
+  .choix { display: flex; gap: 6px; align-items: center; }
+  .choix select { flex: 1; font-weight: 600; }
+  .choix .btn { padding: 8px 12px; }
+  .compteur { font-size: 13px; color: var(--gris); margin-top: 6px; }
+  .compteur b { color: #1e8e3e; }
+  [hidden] { display: none !important; }
+
   a.retour { display: inline-block; margin-top: 8px; font-size: 13px; color: #8e8e93; text-decoration: none; }
 
   @media (max-width: 620px) {
@@ -133,8 +152,40 @@
   <div class="aide">
     <b>Comment faire :</b> remplissez la fiche puis cliquez sur <b>Télécharger en PDF</b> ou <b>Télécharger en Word</b>.
     Rien n'est obligatoire et <b>rien n'est envoyé sur Internet</b> : la fiche reste sur votre ordinateur.
-    Pour imprimer une fiche à remplir à la main, cliquez sur <b>Fiche vierge</b>.
+    Pour imprimer une fiche à remplir à la main, cliquez sur <b>Fiche vierge</b>.<br>
+    <b>Plusieurs élèves ?</b> Déposez votre liste ci-dessous : il suffira ensuite de choisir l'élève pour que l'en-tête se remplisse tout seul.
+    La liste n'est pas conservée : elle s'efface quand vous fermez la page.
   </div>
+
+  <section class="bloc liste" id="zoneListe">
+    <h2>Ma liste d'élèves <small>facultatif : évite de retaper l'en-tête pour chaque élève</small></h2>
+
+    <div id="etapeDepot">
+      <div class="ligne-btn">
+        <button type="button" class="btn bleu" id="btnFichier">📂 Déposer ma liste (Excel ou CSV)</button>
+        <button type="button" class="btn" id="btnColler">📋 Coller ma liste</button>
+        <input type="file" id="inputFichier" accept=".xlsx,.xls,.csv,.txt,.ods" hidden>
+      </div>
+      <p class="petit">
+        Vous pouvez aussi glisser le fichier dans ce cadre. Colonnes reconnues : <b>Nom</b>, <b>Prénom</b>, <b>Classe</b>,
+        <b>Professeur principal</b>, <b>Ancienneté</b> (1, 2 ou 3). Seul le nom est indispensable.
+        <button type="button" class="lien" id="btnModele">Télécharger un modèle de liste</button>
+      </p>
+      <div id="zoneColler" hidden>
+        <textarea id="texteColle" rows="5" placeholder="Copiez les cellules depuis Excel ou Pronote et collez-les ici.&#10;Ou écrivez un élève par ligne, par exemple :&#10;DUPONT Léa ; 5e B&#10;MARTIN Tom ; 5e C"></textarea>
+        <button type="button" class="btn bleu" id="btnValiderColle" style="margin-top:6px">Utiliser cette liste</button>
+      </div>
+    </div>
+
+    <div id="etapeChoix" hidden>
+      <div class="choix">
+        <button type="button" class="btn" id="btnPrec" title="Élève précédent">◀</button>
+        <select id="choixEleve"></select>
+        <button type="button" class="btn" id="btnSuiv" title="Élève suivant">▶</button>
+      </div>
+      <div class="compteur"><span id="compteur"></span> · <button type="button" class="lien" id="btnChanger">changer de liste</button></div>
+    </div>
+  </section>
 
   <form id="fiche" autocomplete="off" onsubmit="return false">
     <section class="bloc">
@@ -318,7 +369,7 @@ function imprimer(vierge) {
   document.title = vierge ? "Bilan EBEP - fiche vierge" : nomFichier();  // nom proposé pour le PDF
   window.print();
   document.title = ancien;
-  if (!vierge) modifie = false;
+  if (!vierge) { modifie = false; marquerFait(); }
 }
 
 document.getElementById("btn-pdf").onclick = () => {
@@ -351,19 +402,225 @@ document.getElementById("btn-word").onclick = () => {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   modifie = false;
+  marquerFait();
   toast("Fichier Word téléchargé.");
 };
 
-document.getElementById("btn-nouveau").onclick = () => {
-  if (modifie && !confirm("Effacer cette fiche pour passer à l'élève suivant ?\n(Pensez à la télécharger avant.)")) return;
-  // On garde enseignant, période, date et niveau : ils sont souvent les mêmes d'un élève à l'autre
+// Vide la fiche en gardant enseignant, période, date (et niveau si pas de liste)
+function viderFiche() {
   const garde = { enseignant: val("enseignant"), periode: val("periode"), date: val("date"), niveau: val("niveau") };
   form.reset();
   Object.entries(garde).forEach(([k, v]) => form.elements[k].value = v);
   modifie = false;
+}
+
+function confirmerAbandon() {
+  return !modifie || confirm("Cette fiche n'a pas été téléchargée. Passer quand même à un autre élève ?");
+}
+
+document.getElementById("btn-nouveau").onclick = () => {
+  if (ELEVES.length) {               // avec une liste : on passe à l'élève suivant
+    if (!confirmerAbandon()) return;
+    const suivant = prochainNonFait();
+    if (suivant === -1) { toast("Tous les bilans de la liste sont faits 🎉"); return; }
+    choisir(suivant);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+  if (modifie && !confirm("Effacer cette fiche pour passer à l'élève suivant ?\n(Pensez à la télécharger avant.)")) return;
+  viderFiche();
   window.scrollTo({ top: 0, behavior: "smooth" });
   form.eleve.focus();
   toast("Fiche vidée — enseignant, niveau, période et date conservés.");
+};
+
+/* =====================  LISTE D'ÉLÈVES  ===================== */
+let ELEVES = [];          // [{eleve, classe, niveau, pp, anciennete}]
+let courant = -1;
+const faits = new Set();
+
+const $ = id => document.getElementById(id);
+const normal = s => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
+
+function niveauDepuisClasse(classe) {
+  const m = String(classe || "").match(/([3-6])/);
+  return m ? m[1] + "e" : "";
+}
+function ancienneteDepuis(v) {
+  const s = normal(v);
+  if (!s) return "";
+  if (s.startsWith("1") || s.includes("premiere")) return "1re année";
+  if (s.startsWith("2") || s.includes("deuxieme")) return "2e année";
+  return "3e année ou plus";
+}
+
+// Lecture d'un texte CSV / collé depuis Excel (séparateur détecté automatiquement)
+function lireTexte(texte) {
+  const lignes = texte.replace(/\r/g, "").split("\n").filter(l => l.trim());
+  if (!lignes.length) return [];
+  const prem = lignes[0];
+  const sep = ["\t", ";", ","].map(s => [s, prem.split(s).length]).sort((a, b) => b[1] - a[1])[0];
+  const delim = sep[1] > 1 ? sep[0] : null;
+  return lignes.map(l => {
+    if (!delim) return [l.trim()];
+    const cells = []; let cur = "", q = false;
+    for (let i = 0; i < l.length; i++) {
+      const c = l[i];
+      if (c === '"') { if (q && l[i + 1] === '"') { cur += '"'; i++; } else q = !q; }
+      else if (c === delim && !q) { cells.push(cur.trim()); cur = ""; }
+      else cur += c;
+    }
+    cells.push(cur.trim());
+    return cells;
+  });
+}
+
+// Transforme un tableau de lignes en liste d'élèves, en reconnaissant les en-têtes
+function versEleves(rows) {
+  rows = rows.map(r => r.map(c => String(c ?? "").trim())).filter(r => r.some(c => c));
+  if (!rows.length) return [];
+  const tete = rows[0].map(normal);
+  const trouve = tests => tete.findIndex(h => tests.some(t => typeof t === "string" ? h === t : t.test(h)));
+  const col = {
+    eleve: trouve(["eleve", "eleves", "nomprenom", "nometprenom", "identite", "nomdeleleve"]),
+    nom: trouve(["nom", "nomdefamille", "nomdusage", /^nom(?!.*prenom)/]),
+    prenom: trouve(["prenom", /^prenom/]),
+    classe: trouve(["classe", "div", "division", /^classe/]),
+    niveau: trouve(["niveau"]),
+    pp: trouve(["pp", /principal/]),
+    anc: trouve([/anciennete/, /dispositif/, /^anneeebep/, /^nbannee/])
+  };
+  const aEntete = Object.values(col).some(i => i >= 0);
+  let data = rows;
+  if (aEntete) data = rows.slice(1);
+  else {
+    // Pas d'en-tête : 1re colonne = élève, 2e = classe (ou « Nom Prénom ; Classe » sur une ligne)
+    col.eleve = 0; col.classe = rows[0].length > 1 ? 1 : -1;
+  }
+  const get = (r, i) => (i >= 0 ? (r[i] || "") : "");
+  return data.map(r => {
+    let eleve = get(r, col.eleve) || [get(r, col.nom), get(r, col.prenom)].filter(Boolean).join(" ");
+    let classe = get(r, col.classe);
+    if (!aEntete && !classe && eleve.includes(" - ")) [eleve, classe] = eleve.split(" - ").map(s => s.trim());
+    const niv = get(r, col.niveau);
+    return {
+      eleve: eleve.replace(/\s+/g, " ").trim(),
+      classe,
+      niveau: niveauDepuisClasse(niv) || niveauDepuisClasse(classe),
+      pp: get(r, col.pp),
+      anciennete: ancienneteDepuis(get(r, col.anc))
+    };
+  }).filter(e => e.eleve);
+}
+
+function chargerListe(liste, source) {
+  if (!liste.length) { alert("Je n'ai trouvé aucun élève dans " + source + ".\nVérifiez qu'il y a une colonne « Nom » (ou le nom de l'élève en 1re colonne)."); return; }
+  ELEVES = liste; faits.clear(); courant = -1;
+  $("etapeDepot").hidden = true; $("etapeChoix").hidden = false;
+  $("btn-nouveau").textContent = "▶ Élève suivant";
+  majSelect();
+  choisir(0, true);
+  toast(liste.length + " élève" + (liste.length > 1 ? "s" : "") + " chargé" + (liste.length > 1 ? "s" : "") + ".");
+}
+
+function majSelect() {
+  $("choixEleve").innerHTML = ELEVES.map((e, i) =>
+    `<option value="${i}">${faits.has(i) ? "✅ " : ""}${esc(e.eleve)}${e.classe ? " — " + esc(e.classe) : ""}</option>`).join("");
+  if (courant >= 0) $("choixEleve").value = courant;
+  $("compteur").innerHTML = `<b>${faits.size}</b> / ${ELEVES.length} bilan${ELEVES.length > 1 ? "s" : ""} téléchargé${faits.size > 1 ? "s" : ""}`;
+}
+
+function choisir(i, sansConfirm) {
+  if (i < 0 || i >= ELEVES.length) return;
+  if (!sansConfirm && i !== courant && !confirmerAbandon()) { $("choixEleve").value = courant; return; }
+  viderFiche();
+  const e = ELEVES[i];
+  form.eleve.value = e.eleve;
+  form.classe.value = e.classe;
+  if (e.niveau) form.niveau.value = e.niveau;
+  form.pp.value = e.pp;
+  form.anciennete.value = e.anciennete;
+  courant = i;
+  modifie = false;
+  majSelect();
+}
+
+function prochainNonFait() {
+  for (let k = 1; k <= ELEVES.length; k++) {
+    const i = (courant + k) % ELEVES.length;
+    if (!faits.has(i)) return i;
+  }
+  return -1;
+}
+
+function marquerFait() {
+  if (courant >= 0 && ELEVES.length && normal(val("eleve")) === normal(ELEVES[courant].eleve)) {
+    faits.add(courant);
+    majSelect();
+  }
+}
+
+$("choixEleve").onchange = e => choisir(+e.target.value);
+$("btnPrec").onclick = () => choisir(courant - 1);
+$("btnSuiv").onclick = () => choisir(courant + 1);
+$("btnChanger").onclick = () => {
+  if (!confirmerAbandon()) return;
+  ELEVES = []; courant = -1; faits.clear();
+  $("etapeDepot").hidden = false; $("etapeChoix").hidden = true;
+  $("btn-nouveau").textContent = "🧹 Nouvel élève";
+};
+
+// Coller
+$("btnColler").onclick = () => { $("zoneColler").hidden = !$("zoneColler").hidden; if (!$("zoneColler").hidden) $("texteColle").focus(); };
+$("btnValiderColle").onclick = () => chargerListe(versEleves(lireTexte($("texteColle").value)), "le texte collé");
+
+// Fichier
+$("btnFichier").onclick = () => $("inputFichier").click();
+$("inputFichier").onchange = e => { if (e.target.files[0]) lireFichier(e.target.files[0]); e.target.value = ""; };
+
+const zone = $("zoneListe");
+["dragenter", "dragover"].forEach(t => zone.addEventListener(t, e => { e.preventDefault(); zone.classList.add("survol"); }));
+["dragleave", "drop"].forEach(t => zone.addEventListener(t, e => { e.preventDefault(); zone.classList.remove("survol"); }));
+zone.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) lireFichier(f); });
+
+let xlsxPret = null;
+function chargerXLSX() {
+  // Bibliothèque de lecture Excel, chargée seulement si besoin. Le fichier est lu sur l'ordinateur, rien n'est envoyé.
+  if (!xlsxPret) xlsxPret = new Promise((ok, ko) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+    s.onload = ok; s.onerror = () => { xlsxPret = null; ko(); };
+    document.head.appendChild(s);
+  });
+  return xlsxPret;
+}
+
+async function lireFichier(f) {
+  const nom = f.name.toLowerCase();
+  try {
+    if (/\.(xlsx|xls|ods)$/.test(nom)) {
+      await chargerXLSX();
+      const wb = XLSX.read(await f.arrayBuffer(), { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      chargerListe(versEleves(XLSX.utils.sheet_to_json(ws, { header: 1, defval: "", raw: false })), "ce fichier");
+    } else {
+      const buf = await f.arrayBuffer();
+      let texte = new TextDecoder("utf-8").decode(buf);
+      if (texte.includes("�")) texte = new TextDecoder("windows-1252").decode(buf); // CSV Excel « ANSI »
+      chargerListe(versEleves(lireTexte(texte)), "ce fichier");
+    }
+  } catch (err) {
+    alert("Impossible de lire ce fichier. Essayez de l'enregistrer en CSV, ou copiez-collez la liste avec le bouton « Coller ma liste ».");
+  }
+}
+
+// Modèle de liste (CSV lisible par Excel)
+$("btnModele").onclick = () => {
+  const csv = "Nom;Prénom;Classe;Professeur principal;Ancienneté\nDUPONT;Léa;5e B;M. Martin;1\nMARTIN;Tom;5e C;Mme Leroy;2\n";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+  a.download = "modele-liste-eleves-EBEP.csv";
+  document.body.appendChild(a); a.click(); a.remove();
 };
 </script>
 </body>
