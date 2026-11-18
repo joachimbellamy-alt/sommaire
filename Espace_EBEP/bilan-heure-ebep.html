@@ -112,6 +112,9 @@
   .compteur { font-size: 13px; color: var(--gris); margin-top: 6px; }
   .compteur b { color: #1e8e3e; }
   [hidden] { display: none !important; }
+  section.commun { background: #f7f9fc; }
+  section.commun .oubli { margin: 8px 0 0; text-align: right; }
+  section.eleve { border: 2px solid var(--bleu); }
 
   a.retour { display: inline-block; margin-top: 8px; font-size: 13px; color: #8e8e93; text-decoration: none; }
 
@@ -153,19 +156,24 @@
     <b>Comment faire :</b> remplissez la fiche puis cliquez sur <b>Télécharger en PDF</b> ou <b>Télécharger en Word</b>.
     Rien n'est obligatoire et <b>rien n'est envoyé sur Internet</b> : la fiche reste sur votre ordinateur.
     Pour imprimer une fiche à remplir à la main, cliquez sur <b>Fiche vierge</b>.<br>
-    <b>Plusieurs élèves ?</b> Déposez votre liste ci-dessous : il suffira ensuite de choisir l'élève pour que l'en-tête se remplisse tout seul.
+    <b>Vos élèves :</b> choisissez votre nom dans « Je suis » ; vos élèves EBEP s'affichent et l'en-tête se remplit tout seul.
     La liste n'est pas conservée : elle s'efface quand vous fermez la page.
   </div>
 
   <section class="bloc liste" id="zoneListe">
-    <h2>Ma liste d'élèves <small>facultatif : évite de retaper l'en-tête pour chaque élève</small></h2>
+    <h2>Mes élèves EBEP <small>choisissez votre nom : vos élèves s'affichent</small></h2>
 
+    <p class="petit" id="etatEnLigne" hidden style="margin:0 0 10px"></p>
     <div id="etapeDepot">
       <div class="ligne-btn">
         <button type="button" class="btn bleu" id="btnFichier">📂 Déposer ma liste (Excel ou CSV)</button>
         <button type="button" class="btn" id="btnColler">📋 Coller ma liste</button>
         <input type="file" id="inputFichier" accept=".xlsx,.xls,.csv,.txt,.ods" hidden>
       </div>
+      <p class="petit">
+        <b>Avec le fichier de suivi EBEP (Google Sheets) :</b> dans Google Sheets, faites <i>Fichier › Télécharger › Microsoft Excel (.xlsx)</i>,
+        puis déposez le fichier ici. Choisissez ensuite votre nom : seuls vos élèves EBEP actifs s'affichent.
+      </p>
       <p class="petit">
         Vous pouvez aussi glisser le fichier dans ce cadre. Colonnes reconnues : <b>Nom</b>, <b>Prénom</b>, <b>Classe</b>,
         <b>Professeur principal</b>, <b>Ancienneté</b> (1, 2 ou 3). Seul le nom est indispensable.
@@ -178,32 +186,43 @@
     </div>
 
     <div id="etapeChoix" hidden>
+      <label class="champ" id="zoneFiltre" hidden style="margin-bottom:10px">Je suis
+        <select id="filtreEnseignant"></select>
+      </label>
       <div class="choix">
         <button type="button" class="btn" id="btnPrec" title="Élève précédent">◀</button>
         <select id="choixEleve"></select>
         <button type="button" class="btn" id="btnSuiv" title="Élève suivant">▶</button>
       </div>
-      <div class="compteur"><span id="compteur"></span> · <button type="button" class="lien" id="btnChanger">changer de liste</button></div>
+      <div class="compteur"><span id="compteur"></span> · <button type="button" class="lien" id="btnChanger">utiliser une autre liste</button></div>
     </div>
   </section>
 
   <form id="fiche" autocomplete="off" onsubmit="return false">
-    <section class="bloc">
+    <section class="bloc commun">
+      <h2>À remplir une seule fois <small>gardé pour tous les élèves, et retrouvé à votre prochaine visite</small></h2>
       <div class="ident">
-        <label class="champ">Élève <input type="text" name="eleve" placeholder="Nom Prénom"></label>
+        <label class="champ">Enseignant EBEP <input type="text" name="enseignant" placeholder="Votre nom"></label>
         <label class="champ">Classe <input type="text" name="classe" placeholder="ex. 5e B"></label>
+        <label class="champ">Professeur principal <input type="text" name="pp"></label>
         <label class="champ">Niveau
           <select name="niveau"><option value=""></option><option>6e</option><option>5e</option><option>4e</option><option>3e</option></select>
         </label>
         <label class="champ">Période
           <select name="periode"><option value=""></option><option>Trimestre 1</option><option>Trimestre 2</option><option>Trimestre 3 / fin d'année</option><option>Avant rencontre parents-profs</option></select>
         </label>
-        <label class="champ">Enseignant EBEP <input type="text" name="enseignant"></label>
         <label class="champ">Date <input type="date" name="date"></label>
+      </div>
+      <p class="oubli"><button type="button" class="lien" id="btnOublier">Effacer ces informations</button></p>
+    </section>
+
+    <section class="bloc eleve">
+      <h2>L'élève</h2>
+      <div class="ident">
+        <label class="champ">Élève <input type="text" name="eleve" placeholder="Nom Prénom"></label>
         <label class="champ">Ancienneté dans le dispositif
           <select name="anciennete"><option value=""></option><option>1re année</option><option>2e année</option><option>3e année ou plus</option></select>
         </label>
-        <label class="champ">Professeur principal <input type="text" name="pp"></label>
       </div>
     </section>
 
@@ -298,8 +317,10 @@ function aujourdhui() {
 form.date.value = aujourdhui();
 
 let modifie = false;
-form.addEventListener("input", () => { modifie = true; });
-form.addEventListener("change", () => { modifie = true; });
+// Seules les infos propres à l'élève comptent comme « fiche en cours »
+const marque = e => { if (!COMMUNS.includes(e.target.name)) modifie = true; };
+form.addEventListener("input", marque);
+form.addEventListener("change", marque);
 window.addEventListener("beforeunload", e => { if (modifie) { e.preventDefault(); e.returnValue = ""; } });
 
 // --- lecture des données ---
@@ -406,9 +427,42 @@ document.getElementById("btn-word").onclick = () => {
   toast("Fichier Word téléchargé.");
 };
 
-// Vide la fiche en gardant enseignant, période, date (et niveau si pas de liste)
+/* ---- Informations communes : remplies une seule fois ---- */
+const COMMUNS = ["enseignant", "classe", "pp", "niveau", "periode", "date"];
+const MEMO = "bilanEBEP.communs";   // mémorisé sur cet ordinateur (pas de données d'élève)
+
+function sauverCommuns() {
+  const o = {};
+  COMMUNS.filter(k => k !== "date").forEach(k => o[k] = val(k));
+  try { localStorage.setItem(MEMO, JSON.stringify(o)); } catch (e) {}
+}
+function restaurerCommuns() {
+  try {
+    const o = JSON.parse(localStorage.getItem(MEMO) || "{}");
+    Object.entries(o).forEach(([k, v]) => { if (form.elements[k] && v) form.elements[k].value = v; });
+  } catch (e) {}
+}
+restaurerCommuns();
+COMMUNS.forEach(k => form.elements[k].addEventListener("change", sauverCommuns));
+COMMUNS.forEach(k => form.elements[k].addEventListener("input", sauverCommuns));
+
+// La classe donne le niveau automatiquement
+form.classe.addEventListener("input", () => {
+  const n = niveauDepuisClasse(form.classe.value);
+  if (n) { form.niveau.value = n; sauverCommuns(); }
+});
+
+document.getElementById("btnOublier").onclick = () => {
+  COMMUNS.forEach(k => form.elements[k].value = "");
+  form.date.value = aujourdhui();
+  try { localStorage.removeItem(MEMO); } catch (e) {}
+  form.enseignant.focus();
+};
+
+// Vide la fiche de l'élève en gardant les informations communes
 function viderFiche() {
-  const garde = { enseignant: val("enseignant"), periode: val("periode"), date: val("date"), niveau: val("niveau") };
+  const garde = {};
+  COMMUNS.forEach(k => garde[k] = val(k));
   form.reset();
   Object.entries(garde).forEach(([k, v]) => form.elements[k].value = v);
   modifie = false;
@@ -419,7 +473,8 @@ function confirmerAbandon() {
 }
 
 document.getElementById("btn-nouveau").onclick = () => {
-  if (ELEVES.length) {               // avec une liste : on passe à l'élève suivant
+  if (TOUS.length) {                 // avec une liste : on passe à l'élève suivant
+    if (!ELEVES.length) { toast("Choisissez d'abord votre nom dans la liste « Je suis »."); $("filtreEnseignant").focus(); return; }
     if (!confirmerAbandon()) return;
     const suivant = prochainNonFait();
     if (suivant === -1) { toast("Tous les bilans de la liste sont faits 🎉"); return; }
@@ -431,7 +486,7 @@ document.getElementById("btn-nouveau").onclick = () => {
   viderFiche();
   window.scrollTo({ top: 0, behavior: "smooth" });
   form.eleve.focus();
-  toast("Fiche vidée — enseignant, niveau, période et date conservés.");
+  toast("Fiche vidée — enseignant, classe, professeur principal, période et date conservés.");
 };
 
 /* =====================  LISTE D'ÉLÈVES  ===================== */
@@ -488,7 +543,12 @@ function versEleves(rows) {
     classe: trouve(["classe", "div", "division", /^classe/]),
     niveau: trouve(["niveau"]),
     pp: trouve(["pp", /principal/]),
-    anc: trouve([/anciennete/, /dispositif/, /^anneeebep/, /^nbannee/])
+    anc: trouve([/anciennete/, /dispositif/, /^anneeebep/, /^nbannee/]),
+    // Colonnes du fichier de suivi EBEP
+    statut: trouve(["statut"]),
+    ebep: trouve(["ebep"]),
+    ens1: trouve(["enseignant1", "enseignant", "enseignantebep", "profebep"]),
+    ens2: trouve(["enseignant2"])
   };
   const aEntete = Object.values(col).some(i => i >= 0);
   let data = rows;
@@ -498,6 +558,13 @@ function versEleves(rows) {
     col.eleve = 0; col.classe = rows[0].length > 1 ? 1 : -1;
   }
   const get = (r, i) => (i >= 0 ? (r[i] || "") : "");
+  // Fichier de suivi : on ne garde que les élèves EBEP encore suivis
+  data = data.filter(r => {
+    if (col.statut >= 0 && /sorti/i.test(get(r, col.statut))) return false;
+    if (col.ebep >= 0 && /^non$/i.test(get(r, col.ebep))) return false;
+    return true;
+  });
+  const ens = v => (v && !/^[—\-–\s]*$/.test(v)) ? v.replace(/\s+/g, " ").trim() : "";
   return data.map(r => {
     let eleve = get(r, col.eleve) || [get(r, col.nom), get(r, col.prenom)].filter(Boolean).join(" ");
     let classe = get(r, col.classe);
@@ -508,26 +575,100 @@ function versEleves(rows) {
       classe,
       niveau: niveauDepuisClasse(niv) || niveauDepuisClasse(classe),
       pp: get(r, col.pp),
-      anciennete: ancienneteDepuis(get(r, col.anc))
+      anciennete: ancienneteDepuis(get(r, col.anc)),
+      enseignants: [ens(get(r, col.ens1)), ens(get(r, col.ens2))].filter(Boolean)
     };
   }).filter(e => e.eleve);
 }
 
-function chargerListe(liste, source) {
+// Classeur Excel : onglet « Vue vie scolaire » du fichier de suivi s'il existe,
+// sinon tous les onglets qui ont une colonne « NOM Prénom » / « Nom » (un onglet par classe).
+function lignesClasseur(wb) {
+  const lire = n => XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, defval: "", raw: false });
+  const vue = wb.SheetNames.find(n => /vie\s*scolaire/i.test(n));
+  if (vue) return lire(vue);
+  let entete = null; const lignes = [];
+  wb.SheetNames.forEach(n => {
+    const rows = lire(n);
+    const i = rows.findIndex(r => r.some(c => /^(nom|nom ?pr[ée]nom|[ée]l[èe]ve)$/i.test(String(c).trim())));
+    if (i < 0) return;
+    if (!entete) { entete = rows[i]; lignes.push(entete); }
+    rows.slice(i + 1).forEach(r => {
+      // remet les colonnes dans l'ordre du premier onglet
+      const o = {}; rows[i].forEach((h, k) => o[normal(h)] = r[k]);
+      lignes.push(entete.map(h => o[normal(h)] ?? ""));
+    });
+  });
+  return lignes.length ? lignes : lire(wb.SheetNames[0]);
+}
+
+let TOUS = [];             // liste complète ; ELEVES = liste filtrée (enseignant choisi)
+
+/* Liste publiée depuis le fichier de suivi EBEP (onglet « Liste bilan » publié en CSV).
+   Contient seulement : NOM Prénom, Classe, Enseignant 1, Enseignant 2 des élèves actifs. */
+const LISTE_EN_LIGNE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTN8LsoeBzuhDaAFfOikPJqzjFofoZWoyy8_aMYb6-RG0Q6dzFf2URXuCt9DovliwK5bZGHqXi4km7V/pub?gid=1763523754&single=true&output=csv";
+
+async function chargerEnLigne(url = LISTE_EN_LIGNE) {
+  if (!url) return;
+  const etat = $("etatEnLigne");
+  etat.hidden = false; etat.textContent = "⏳ Chargement de la liste des élèves EBEP…";
+  try {
+    const r = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    const liste = versEleves(lireTexte(await r.text()));
+    if (!liste.length) throw new Error("vide");
+    etat.textContent = "✅ Liste à jour du suivi EBEP (" + liste.length + " élèves).";
+    chargerListe(liste, "la liste en ligne", true);
+  } catch (e) {
+    etat.textContent = "⚠️ La liste en ligne n'a pas pu être chargée. Vous pouvez déposer le fichier de suivi ci-dessous.";
+  }
+}
+const cle = e => normal(e.eleve) + "|" + normal(e.classe);
+
+function chargerListe(liste, source, enLigne) {
   if (!liste.length) { alert("Je n'ai trouvé aucun élève dans " + source + ".\nVérifiez qu'il y a une colonne « Nom » (ou le nom de l'élève en 1re colonne)."); return; }
-  ELEVES = liste; faits.clear(); courant = -1;
+  TOUS = liste; faits.clear();
   $("etapeDepot").hidden = true; $("etapeChoix").hidden = false;
   $("btn-nouveau").textContent = "▶ Élève suivant";
+
+  // Plusieurs enseignants EBEP dans le fichier : chacun choisit son nom
+  const noms = [...new Set(liste.flatMap(e => e.enseignants))].sort((x, y) => x.localeCompare(y, "fr"));
+  const sel = $("filtreEnseignant");
+  $("zoneFiltre").hidden = noms.length === 0;
+  sel.innerHTML = `<option value="">— Choisir mon nom —</option>` +
+    noms.map(n => `<option>${esc(n)}</option>`).join("") +
+    `<option value="*">Tous les élèves (${liste.length})</option>`;
+  const sansCivilite = x => normal(String(x).replace(/^\s*(mme|mlle|mr|m)\.?\s+/i, ""));
+  const moi = val("enseignant") ? noms.find(n => sansCivilite(n) === sansCivilite(val("enseignant"))) : undefined;
+  sel.value = noms.length ? (moi || "") : "*";
+  filtrer(sel.value, true);
+  if (enLigne) { if (noms.length && !moi) toast("Choisissez votre nom dans « Je suis »."); return; }
+  toast(liste.length + " élève" + (liste.length > 1 ? "s" : "") + " EBEP trouvé" + (liste.length > 1 ? "s" : "") +
+        (noms.length && !moi ? " — choisissez votre nom." : "."));
+}
+
+function filtrer(qui, auChargement) {
+  const avecFiltre = !$("zoneFiltre").hidden;
+  if (!avecFiltre || qui === "*") ELEVES = TOUS;
+  else if (!qui) ELEVES = [];
+  else ELEVES = TOUS.filter(e => e.enseignants.includes(qui));
+  if (qui && qui !== "*") { form.enseignant.value = qui; sauverCommuns(); }
+  courant = -1;
+  $("choixEleve").disabled = !ELEVES.length;
   majSelect();
-  choisir(0, true);
-  toast(liste.length + " élève" + (liste.length > 1 ? "s" : "") + " chargé" + (liste.length > 1 ? "s" : "") + ".");
+  const premier = ELEVES.findIndex(e => !faits.has(cle(e)));
+  if (ELEVES.length) choisir(premier >= 0 ? premier : 0, true);
+  else if (!auChargement) viderFiche();
 }
 
 function majSelect() {
-  $("choixEleve").innerHTML = ELEVES.map((e, i) =>
-    `<option value="${i}">${faits.has(i) ? "✅ " : ""}${esc(e.eleve)}${e.classe ? " — " + esc(e.classe) : ""}</option>`).join("");
-  if (courant >= 0) $("choixEleve").value = courant;
-  $("compteur").innerHTML = `<b>${faits.size}</b> / ${ELEVES.length} bilan${ELEVES.length > 1 ? "s" : ""} téléchargé${faits.size > 1 ? "s" : ""}`;
+  const sel = $("choixEleve");
+  sel.innerHTML = ELEVES.length
+    ? ELEVES.map((e, i) => `<option value="${i}">${faits.has(cle(e)) ? "✅ " : ""}${esc(e.eleve)}${e.classe ? " — " + esc(e.classe) : ""}</option>`).join("")
+    : `<option>Choisissez d'abord votre nom ci-dessus</option>`;
+  if (courant >= 0) sel.value = courant;
+  const n = ELEVES.filter(e => faits.has(cle(e))).length;
+  $("compteur").innerHTML = `<b>${n}</b> / ${ELEVES.length} bilan${ELEVES.length > 1 ? "s" : ""} téléchargé${n > 1 ? "s" : ""}`;
 }
 
 function choisir(i, sansConfirm) {
@@ -536,10 +677,11 @@ function choisir(i, sansConfirm) {
   viderFiche();
   const e = ELEVES[i];
   form.eleve.value = e.eleve;
-  form.classe.value = e.classe;
-  if (e.niveau) form.niveau.value = e.niveau;
-  form.pp.value = e.pp;
   form.anciennete.value = e.anciennete;
+  // Classe, niveau et PP : ceux de la liste s'ils y figurent, sinon on garde ceux remplis une fois
+  if (e.classe) form.classe.value = e.classe;
+  if (e.niveau) form.niveau.value = e.niveau;
+  if (e.pp) form.pp.value = e.pp;
   courant = i;
   modifie = false;
   majSelect();
@@ -548,24 +690,25 @@ function choisir(i, sansConfirm) {
 function prochainNonFait() {
   for (let k = 1; k <= ELEVES.length; k++) {
     const i = (courant + k) % ELEVES.length;
-    if (!faits.has(i)) return i;
+    if (!faits.has(cle(ELEVES[i]))) return i;
   }
   return -1;
 }
 
 function marquerFait() {
   if (courant >= 0 && ELEVES.length && normal(val("eleve")) === normal(ELEVES[courant].eleve)) {
-    faits.add(courant);
+    faits.add(cle(ELEVES[courant]));
     majSelect();
   }
 }
 
+$("filtreEnseignant").onchange = e => { if (confirmerAbandon()) filtrer(e.target.value); };
 $("choixEleve").onchange = e => choisir(+e.target.value);
 $("btnPrec").onclick = () => choisir(courant - 1);
 $("btnSuiv").onclick = () => choisir(courant + 1);
 $("btnChanger").onclick = () => {
   if (!confirmerAbandon()) return;
-  ELEVES = []; courant = -1; faits.clear();
+  TOUS = []; ELEVES = []; courant = -1; faits.clear();
   $("etapeDepot").hidden = false; $("etapeChoix").hidden = true;
   $("btn-nouveau").textContent = "🧹 Nouvel élève";
 };
@@ -601,8 +744,7 @@ async function lireFichier(f) {
     if (/\.(xlsx|xls|ods)$/.test(nom)) {
       await chargerXLSX();
       const wb = XLSX.read(await f.arrayBuffer(), { type: "array" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      chargerListe(versEleves(XLSX.utils.sheet_to_json(ws, { header: 1, defval: "", raw: false })), "ce fichier");
+      chargerListe(versEleves(lignesClasseur(wb)), "ce fichier");
     } else {
       const buf = await f.arrayBuffer();
       let texte = new TextDecoder("utf-8").decode(buf);
@@ -622,6 +764,7 @@ $("btnModele").onclick = () => {
   a.download = "modele-liste-eleves-EBEP.csv";
   document.body.appendChild(a); a.click(); a.remove();
 };
+chargerEnLigne();
 </script>
 </body>
 </html>
