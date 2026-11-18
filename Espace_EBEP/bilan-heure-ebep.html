@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bilan de l'heure EBEP</title>
+<style>
+  :root {
+    --bleu: #1F4E79;
+    --bleu-clair: #DEEAF6;
+    --accent: #007AFF;
+    --fond: #f2f2f7;
+    --bord: #d6dbe3;
+    --texte: #1c1c1e;
+    --gris: #6b6b70;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--fond);
+    color: var(--texte);
+    margin: 0;
+    padding: 0 16px 120px;
+    line-height: 1.45;
+  }
+  main { max-width: 860px; margin: 0 auto; }
+  header.titre {
+    background: var(--bleu); color: #fff; border-radius: 0 0 14px 14px;
+    padding: 18px 20px; margin-bottom: 18px;
+  }
+  header.titre h1 { margin: 0; font-size: 24px; }
+  header.titre p { margin: 4px 0 0; font-size: 14px; opacity: .9; }
+
+  .aide {
+    background: #fff; border: 1px solid var(--bord); border-radius: 12px;
+    padding: 12px 16px; font-size: 14px; color: var(--gris); margin-bottom: 18px;
+  }
+  .aide b { color: var(--texte); }
+
+  section.bloc {
+    background: #fff; border: 1px solid var(--bord); border-radius: 12px;
+    padding: 16px; margin-bottom: 16px;
+  }
+  section.bloc h2 {
+    margin: 0 0 12px; font-size: 16px; color: var(--bleu);
+    border-bottom: 2px solid var(--bleu); padding-bottom: 4px;
+  }
+  section.bloc h2 small { font-weight: 400; color: var(--gris); font-style: italic; font-size: 13px; }
+
+  .ident { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 16px; }
+  label.champ { display: flex; flex-direction: column; font-size: 13px; font-weight: 600; gap: 4px; }
+  input[type=text], input[type=date], select, textarea {
+    font: inherit; font-size: 15px; font-weight: 400;
+    border: 1px solid var(--bord); border-radius: 8px; padding: 8px 10px;
+    background: #fbfcfd; color: var(--texte); width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 64px; }
+
+  /* Critères */
+  .critere { border-top: 1px solid #eef0f4; padding: 10px 0; }
+  .critere:first-of-type { border-top: none; }
+  .critere .nom { font-weight: 700; }
+  .critere .ind { font-size: 13px; color: var(--gris); }
+  .critere .ligne { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
+  .pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pills input { position: absolute; opacity: 0; pointer-events: none; }
+  .pills label {
+    border: 1px solid var(--bord); border-radius: 999px; padding: 6px 12px;
+    font-size: 14px; cursor: pointer; user-select: none; background: #fff;
+  }
+  .pills input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .pills input:checked + label { background: var(--bleu); border-color: var(--bleu); color: #fff; }
+  .critere .comm { flex: 1 1 200px; font-size: 14px; padding: 6px 10px; }
+
+  .deux { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Barre d'actions */
+  .actions {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,.96); border-top: 1px solid var(--bord);
+    padding: 10px 16px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    backdrop-filter: blur(6px);
+  }
+  .actions button {
+    font: inherit; font-size: 15px; font-weight: 600; border-radius: 10px;
+    padding: 10px 16px; cursor: pointer; border: 1px solid var(--bord); background: #fff; color: var(--texte);
+  }
+  .actions button.principal { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .actions button:hover { filter: brightness(.96); }
+  .toast {
+    position: fixed; bottom: 78px; left: 50%; transform: translateX(-50%);
+    background: #1c1c1e; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 14px;
+    opacity: 0; transition: opacity .2s; pointer-events: none;
+  }
+  .toast.on { opacity: 1; }
+  a.retour { display: inline-block; margin-top: 8px; font-size: 13px; color: #8e8e93; text-decoration: none; }
+
+  @media (max-width: 620px) {
+    .ident, .deux { grid-template-columns: 1fr; }
+    header.titre h1 { font-size: 20px; }
+  }
+
+  /* ---------- Impression / PDF ---------- */
+  #impression { display: none; }
+  @media print {
+    @page { size: A4; margin: 12mm; }
+    body { background: #fff; padding: 0; }
+    main, .actions, .toast { display: none !important; }
+    #impression { display: block; }
+  }
+  #impression { font-family: Arial, sans-serif; font-size: 10pt; color: #000; }
+  #impression .bandeau { background: #1F4E79; color: #fff; text-align: center; padding: 6px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  #impression .bandeau b { font-size: 14pt; display: block; }
+  #impression table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  #impression td, #impression th { border: 1px solid #9DB7D3; padding: 4px 6px; vertical-align: middle; }
+  #impression th { background: #1F4E79; color: #fff; font-size: 9pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  #impression td.lab { background: #DEEAF6; font-weight: bold; width: 22%; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  #impression td.c { text-align: center; width: 9%; font-size: 12pt; }
+  #impression h3 { color: #1F4E79; font-size: 11pt; border-bottom: 1.5px solid #1F4E79; margin: 10px 0 4px; padding-bottom: 2px; }
+  #impression .txt { min-height: 18mm; white-space: pre-wrap; }
+  #impression .pied { text-align: center; color: #777; font-size: 7.5pt; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<main>
+  <header class="titre">
+    <h1>🧩 Bilan de l'heure EBEP</h1>
+    <p>Version enseignant — Année 2026-2027</p>
+  </header>
+
+  <div class="aide">
+    <b>Comment faire :</b> remplissez la fiche puis cliquez sur <b>Télécharger en PDF</b> ou <b>Télécharger en Word</b>.
+    Rien n'est obligatoire et <b>rien n'est envoyé sur Internet</b> : la fiche reste sur votre ordinateur.
+    Pour imprimer une fiche à remplir à la main, cliquez sur <b>Fiche vierge</b>.
+  </div>
+
+  <form id="fiche" autocomplete="off" onsubmit="return false">
+    <section class="bloc">
+      <div class="ident">
+        <label class="champ">Élève <input type="text" name="eleve" placeholder="Nom Prénom"></label>
+        <label class="champ">Classe <input type="text" name="classe" placeholder="ex. 5e B"></label>
+        <label class="champ">Niveau
+          <select name="niveau"><option value=""></option><option>6e</option><option>5e</option><option>4e</option><option>3e</option></select>
+        </label>
+        <label class="champ">Période
+          <select name="periode"><option value=""></option><option>Trimestre 1</option><option>Trimestre 2</option><option>Trimestre 3 / fin d'année</option><option>Avant rencontre parents-profs</option></select>
+        </label>
+        <label class="champ">Enseignant EBEP <input type="text" name="enseignant"></label>
+        <label class="champ">Date <input type="date" name="date"></label>
+        <label class="champ">Ancienneté dans le dispositif
+          <select name="anciennete"><option value=""></option><option>1re année</option><option>2e année</option><option>3e année ou plus</option></select>
+        </label>
+        <label class="champ">Professeur principal <input type="text" name="pp"></label>
+      </div>
+    </section>
+
+    <section class="bloc">
+      <h2>1 · Critères observés pendant l'heure EBEP <small>une réponse par ligne, commentaire facultatif</small></h2>
+      <div id="criteres"></div>
+    </section>
+
+    <section class="bloc">
+      <h2>2 · Réussites, points d'appui et évolution</h2>
+      <div class="deux">
+        <label class="champ">Points d'appui
+          <textarea name="appui" placeholder="Ex. : à l'oral, travaille bien en binôme, aime les supports visuels…"></textarea>
+        </label>
+        <label class="champ">Progrès depuis la dernière période
+          <textarea name="progres" placeholder="Ex. : apporte désormais son matériel, pose des questions…"></textarea>
+        </label>
+      </div>
+    </section>
+
+    <section class="bloc">
+      <h2>3 · Perspectives</h2>
+      <div class="champ" style="font-size:13px;font-weight:600;margin-bottom:6px">Suite proposée</div>
+      <div class="pills" id="suite" style="margin-bottom:12px"></div>
+      <label class="champ">Objectifs prioritaires pour la suite
+        <textarea name="objectifs"></textarea>
+      </label>
+    </section>
+
+    <section class="bloc">
+      <h2>4 · Commentaire libre <small>facultatif</small></h2>
+      <textarea name="commentaire" rows="4" placeholder="Toute remarque utile…"></textarea>
+    </section>
+  </form>
+
+  <a class="retour" href="index.html">← Retour à l'Espace EBEP</a>
+</main>
+
+<div class="actions">
+  <button type="button" class="principal" id="btn-pdf">📄 Télécharger en PDF</button>
+  <button type="button" class="principal" id="btn-word">📝 Télécharger en Word</button>
+  <button type="button" id="btn-vierge">🖨️ Fiche vierge</button>
+  <button type="button" id="btn-nouveau">🧹 Nouvel élève</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<div id="impression"></div>
+
+<script>
+const CRITERES = [
+  ["Organisation", "A ses affaires et son matériel, agenda / carnet de bord à jour, devoirs notés."],
+  ["Mise au travail", "Se met au travail rapidement, sans relance de l'adulte."],
+  ["Implication et persévérance", "Participe, s'engage dans la tâche, ne renonce pas à la première difficulté."],
+  ["Sollicite de l'aide", "Repère quand il / elle bloque et formule une question précise."],
+  ["Compréhension des consignes", "Reformule ce qui est attendu ; comprend le vocabulaire des consignes."],
+  ["Mémorisation", "Utilise une méthode pour apprendre (fiches, cartes mentales, auto-interrogation…)."]
+];
+const NIVEAUX = ["Rarement", "Parfois", "Souvent", "Acquis"];
+const SUITES = ["Maintien dans le dispositif", "Sortie : objectifs atteints", "À discuter en conseil de classe"];
+
+const form = document.getElementById("fiche");
+
+// --- construction du formulaire ---
+function pills(name, options) {
+  return options.map((o, i) =>
+    `<input type="radio" id="${name}-${i}" name="${name}" value="${o}"><label for="${name}-${i}">${o}</label>`
+  ).join("");
+}
+document.getElementById("criteres").innerHTML = CRITERES.map(([nom, ind], i) => `
+  <div class="critere">
+    <div class="nom">${nom}</div>
+    <div class="ind">${ind}</div>
+    <div class="ligne">
+      <div class="pills">${pills("c" + i, NIVEAUX)}</div>
+      <input type="text" class="comm" name="com${i}" placeholder="Commentaire (facultatif)">
+    </div>
+  </div>`).join("");
+document.getElementById("suite").innerHTML = pills("suite", SUITES);
+
+// Re-cliquer une pastille déjà cochée la décoche (pratique en cas d'erreur)
+form.addEventListener("click", e => {
+  const lab = e.target.closest(".pills label");
+  if (!lab) return;
+  const input = document.getElementById(lab.htmlFor);
+  if (input.checked) { e.preventDefault(); input.checked = false; modifie = true; }
+});
+
+function aujourdhui() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+form.date.value = aujourdhui();
+
+let modifie = false;
+form.addEventListener("input", () => { modifie = true; });
+form.addEventListener("change", () => { modifie = true; });
+window.addEventListener("beforeunload", e => { if (modifie) { e.preventDefault(); e.returnValue = ""; } });
+
+// --- lecture des données ---
+function val(name) { const el = form.elements[name]; return el ? (el.value || "").trim() : ""; }
+function radio(name) { const el = form.querySelector(`input[name="${name}"]:checked`); return el ? el.value : ""; }
+function dateFr(iso) { if (!iso) return ""; const [y, m, d] = iso.split("-"); return `${d}/${m}/${y}`; }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+// --- fiche mise en page (sert au PDF et au Word) ---
+function ficheHTML(vierge) {
+  const v = n => vierge ? "" : esc(val(n));
+  const coche = (actif) => actif ? "☒" : "☐";
+  const ident = [
+    ["Élève", v("eleve"), "Classe", v("classe")],
+    ["Niveau", v("niveau"), "Période", v("periode")],
+    ["Enseignant EBEP", v("enseignant"), "Date", vierge ? "" : dateFr(val("date"))],
+    ["Ancienneté dans le dispositif", v("anciennete"), "Professeur principal", v("pp")]
+  ].map(r => `<tr><td class="lab">${r[0]}</td><td>${r[1]}</td><td class="lab">${r[2]}</td><td>${r[3]}</td></tr>`).join("");
+
+  const crit = CRITERES.map(([nom, ind], i) => {
+    const choix = vierge ? "" : radio("c" + i);
+    return `<tr><td class="lab">${nom}<div style="font-weight:normal;font-size:8pt;color:#444">${ind}</div></td>` +
+      NIVEAUX.map(n => `<td class="c">${coche(choix === n)}</td>`).join("") +
+      `<td>${v("com" + i)}</td></tr>`;
+  }).join("");
+
+  const suite = vierge ? "" : radio("suite");
+  const suites = SUITES.map(s => `${coche(suite === s)} ${s}`).join("&nbsp;&nbsp;&nbsp; ");
+
+  return `
+  <div class="bandeau"><b>BILAN DE L'HEURE EBEP</b>Version enseignant — Année 2026-2027</div>
+  <table>${ident}</table>
+  <h3>1 · Critères observés pendant l'heure EBEP</h3>
+  <table>
+    <tr><th>Critère</th>${NIVEAUX.map(n => `<th>${n}</th>`).join("")}<th style="width:28%">Commentaire</th></tr>
+    ${crit}
+  </table>
+  <h3>2 · Réussites, points d'appui et évolution</h3>
+  <table><tr>
+    <td style="width:50%;vertical-align:top"><b>Points d'appui</b><div class="txt">${v("appui")}</div></td>
+    <td style="vertical-align:top"><b>Progrès depuis la dernière période</b><div class="txt">${v("progres")}</div></td>
+  </tr></table>
+  <h3>3 · Perspectives</h3>
+  <table>
+    <tr><td class="lab">Suite proposée</td><td>${suites}</td></tr>
+    <tr><td class="lab">Objectifs prioritaires pour la suite</td><td><div class="txt">${v("objectifs")}</div></td></tr>
+  </table>
+  <h3>4 · Commentaire libre <span style="font-weight:normal;font-style:italic;font-size:9pt">(facultatif)</span></h3>
+  <table><tr><td><div class="txt">${v("commentaire")}</div></td></tr></table>
+  <div class="pied">Bilan de l'heure EBEP — document confidentiel, à usage de l'équipe pédagogique</div>`;
+}
+
+function nomFichier() {
+  const parts = ["Bilan EBEP", val("eleve"), val("classe"), val("periode")].filter(Boolean);
+  return parts.join(" - ").replace(/[\\/:*?"<>|]/g, "-");
+}
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("on");
+  setTimeout(() => t.classList.remove("on"), 2600);
+}
+
+function imprimer(vierge) {
+  document.getElementById("impression").innerHTML = ficheHTML(vierge);
+  const ancien = document.title;
+  document.title = vierge ? "Bilan EBEP - fiche vierge" : nomFichier();  // nom proposé pour le PDF
+  window.print();
+  document.title = ancien;
+  if (!vierge) modifie = false;
+}
+
+document.getElementById("btn-pdf").onclick = () => {
+  toast("Dans la fenêtre qui s'ouvre, choisissez « Enregistrer en PDF ».");
+  setTimeout(() => imprimer(false), 300);
+};
+document.getElementById("btn-vierge").onclick = () => imprimer(true);
+
+document.getElementById("btn-word").onclick = () => {
+  const css = `body{font-family:Arial,sans-serif;font-size:10pt}
+    table{width:100%;border-collapse:collapse;margin-bottom:8px}
+    td,th{border:1px solid #9DB7D3;padding:4px 6px;vertical-align:middle}
+    th{background:#1F4E79;color:#fff;font-size:9pt}
+    td.lab{background:#DEEAF6;font-weight:bold;width:22%}
+    td.c{text-align:center;font-size:12pt}
+    h3{color:#1F4E79;font-size:11pt;border-bottom:1.5px solid #1F4E79;margin:10px 0 4px}
+    .bandeau{background:#1F4E79;color:#fff;text-align:center;padding:6px}
+    .bandeau b{font-size:14pt;display:block}
+    .txt{white-space:pre-wrap}
+    .pied{text-align:center;color:#777;font-size:7.5pt}`;
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="utf-8"><title>${esc(nomFichier())}</title>
+    <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+    <style>@page{size:21cm 29.7cm;margin:1.5cm}${css}</style></head>
+    <body>${ficheHTML(false).replace(/<div class="txt">([\s\S]*?)<\/div>/g, (m, t) => `<div class="txt">${t.replace(/\n/g, "<br>")}</div>`)}</body></html>`;
+  const blob = new Blob(["﻿", html], { type: "application/msword" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = nomFichier() + ".doc";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  modifie = false;
+  toast("Fichier Word téléchargé.");
+};
+
+document.getElementById("btn-nouveau").onclick = () => {
+  if (modifie && !confirm("Effacer cette fiche pour passer à l'élève suivant ?\n(Pensez à la télécharger avant.)")) return;
+  // On garde enseignant, période, date et niveau : ils sont souvent les mêmes d'un élève à l'autre
+  const garde = { enseignant: val("enseignant"), periode: val("periode"), date: val("date"), niveau: val("niveau") };
+  form.reset();
+  Object.entries(garde).forEach(([k, v]) => form.elements[k].value = v);
+  modifie = false;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  form.eleve.focus();
+  toast("Fiche vidée — enseignant, niveau, période et date conservés.");
+};
+</script>
+</body>
+</html>
