@@ -37,6 +37,7 @@ textarea{resize:vertical}
 .msg{color:var(--rouge); font-weight:600; min-height:1.2em}
 .exercice-pret{background:#e9f8ec; border:2px solid #1e8a3a; border-radius:12px; padding:12px 16px}
 .exercice-pret .pret-titre{margin:0 0 6px; font-size:19px}
+.exercice-pret .pret-source{margin:0 0 6px; color:#3d6b47; font-size:14px}
 .exercice-pret ol{margin:4px 0 6px; padding-left:22px; font-size:17px; line-height:1.6}
 .exercice-pret .lien{font-size:14px; padding:0}
 .exercice-charge{background:#eef4ff; border:1.5px solid #bcd2f5; border-radius:10px; padding:10px 14px}
@@ -336,7 +337,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
       <div id="corr-detail"></div>
     </div>
   </section>
-  <p class="version">Version du 19 novembre 2026</p>
+  <p class="version">Version du 19 novembre 2026 (2)</p>
 </main>
 
 <div id="modale" class="modale" hidden>
@@ -557,8 +558,12 @@ function montrerEcran(n){
   window.scrollTo(0, 0);
 }
 
-function chargerCorpus(c){
-  S.corpus = c; S.placements = []; S.sel = null; S.montrer = false;
+function oublierLienDansAdresse(){
+  if (/[#&]c=/.test(location.hash)) { try { history.replaceState(null, '', location.pathname + location.search); } catch(e) {} }
+}
+function chargerCorpus(c, source){
+  S.corpus = c; S.source = source || ''; S.placements = []; S.sel = null; S.montrer = false;
+  try { sessionStorage.setItem('cgv:charge', JSON.stringify({corpus:versFichier(c), source:S.source})); } catch(e) {}
   $('#accueil-msg').textContent = '';
   renderAccueil(); montrerEcran('accueil');
 }
@@ -567,6 +572,7 @@ function renderAccueil(){
   const box = $('#accueil-corpus');
   box.innerHTML = S.corpus
     ? '<div class="exercice-pret"><p class="pret-titre">✅ Ton exercice est prêt : <strong>' + esc(S.corpus.titre) + '</strong></p>' +
+      (S.source ? '<p class="pret-source">Ouvert depuis : ' + esc(S.source) + '</p>' : '') +
       '<ol><li>Écris ton <strong>nom</strong>, ton <strong>prénom</strong> et ta <strong>classe</strong> ci-dessous.</li>' +
       '<li>Appuie sur le bouton bleu <strong>« Commencer l\'exercice »</strong>.</li></ol>' +
       '<button class="lien" id="btn-autre-exercice">Ce n\'est pas le bon exercice ? Ouvrir un autre fichier</button></div>'
@@ -876,18 +882,18 @@ $('#file-corpus').addEventListener('change', async e => {
   try {
     const j = await lireJSON(f);
     if (j && j.type === 'travail-classes-variables') {
-      chargerCorpus(depuisFichier(j.corpus));
+      oublierLienDansAdresse(); chargerCorpus(depuisFichier(j.corpus), 'fichier « ' + f.name + ' »');
       const ref = j.eleve || {};
       $('#in-nom').value = ref.nom || ''; $('#in-prenom').value = ref.prenom || ''; $('#in-classe').value = ref.classe || '';
       return;
     }
-    chargerCorpus(depuisFichier(j));
+    oublierLienDansAdresse(); chargerCorpus(depuisFichier(j), 'fichier « ' + f.name + ' »');
   } catch(err) {
     renderAccueil();
     $('#accueil-msg').textContent = '« ' + f.name + ' » n\'a pas pu être ouvert (' + (err && (err.name || err.message) || 'erreur') + '). Choisis le fichier « exercice_….json » envoyé par ton professeur.';
   } finally { e.target.value = ''; }
 });
-$('#btn-exemple').onclick = () => chargerCorpus(exemple());
+$('#btn-exemple').onclick = () => { oublierLienDansAdresse(); chargerCorpus(exemple(), 'exemple'); };
 ['nom','prenom','classe'].forEach(k => $('#in-' + k).addEventListener('change', () => {
   const v = store.get('cgv:eleve') || {}; v[k] = $('#in-' + k).value.trim(); store.set('cgv:eleve', v);
 }));
@@ -986,7 +992,7 @@ $('#ed-lien').onclick = () => {
 $('#ed-tester').onclick = () => {
   if (!edPret()) return;
   if (!$('#in-nom').value) { $('#in-nom').value = 'Test'; $('#in-prenom').value = 'Professeur'; $('#in-classe').value = 'Prof'; }
-  chargerCorpus(clone(ED));
+  oublierLienDansAdresse(); chargerCorpus(clone(ED), 'test enseignant');
 };
 $('#ed-ouvrir').addEventListener('change', async e => {
   const f = e.target.files[0];
@@ -1216,7 +1222,7 @@ function chargerDepuisLien(){
   const m = location.hash.match(/[#&]c=([^&]+)/);
   if (!m) return false;
   $$('.modale').forEach(x => x.hidden = true);
-  try { chargerCorpus(depuisFichier(JSON.parse(b64urlD(m[1])))); }
+  try { chargerCorpus(depuisFichier(JSON.parse(b64urlD(m[1]))), 'lien'); oublierLienDansAdresse(); }
   catch(err) {
     renderAccueil(); montrerEcran('accueil');
     $('#accueil-msg').textContent = 'Le lien de l\'exercice est incomplet. Demande à ton professeur de le renvoyer.';
@@ -1231,6 +1237,9 @@ window.addEventListener('hashchange', chargerDepuisLien);
   if (b) { try { ED = depuisFichier(b); edVersChamps(); } catch(err) {} }
   renderAccueil();
   if (!chargerDepuisLien()) {
+    let charge = null;
+    try { charge = JSON.parse(sessionStorage.getItem('cgv:charge') || 'null'); } catch(e) {}
+    if (charge && charge.corpus) { try { chargerCorpus(depuisFichier(charge.corpus), charge.source); } catch(e) {} }
     const q = new URLSearchParams(location.search).get('corpus');
     if (q) fetch(q).then(r => r.json()).then(j => chargerCorpus(depuisFichier(j)))
       .catch(() => { $('#accueil-msg').textContent = 'Impossible de charger l\'exercice.'; });
