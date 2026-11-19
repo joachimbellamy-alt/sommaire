@@ -272,7 +272,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
 
     <div id="onglet-creer" class="panneau">
       <div class="form">
-        <label>Titre de l'exercice <input type="text" id="ed-titre" placeholder="Ex. : Yvain, chapitre 3"></label>
+        <label>Titre de l'exercice <input type="text" id="ed-titre" placeholder="Ex. : Yvain, chapitre 3 — sinon un titre daté est créé"></label>
         <label class="case"><input type="checkbox" id="ed-correction" checked>&nbsp;Les élèves peuvent vérifier leurs réponses (bouton « Vérifier »)</label>
         <label>Phrases (une par ligne)
           <textarea id="ed-texte" rows="5" placeholder="Le chevalier courageux traverse la forêt sombre."></textarea>
@@ -337,7 +337,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
       <div id="corr-detail"></div>
     </div>
   </section>
-  <p class="version">Version du 19 novembre 2026 (2)</p>
+  <p class="version">Version du 19 novembre 2026 (3)</p>
 </main>
 
 <div id="modale" class="modale" hidden>
@@ -572,7 +572,9 @@ function renderAccueil(){
   const box = $('#accueil-corpus');
   box.innerHTML = S.corpus
     ? '<div class="exercice-pret"><p class="pret-titre">✅ Ton exercice est prêt : <strong>' + esc(S.corpus.titre) + '</strong></p>' +
-      (S.source ? '<p class="pret-source">Ouvert depuis : ' + esc(S.source) + '</p>' : '') +
+      '<p class="pret-source">' + pluriel(S.corpus.phrases.length, 'phrase') + ' · commence par « ' +
+        esc(S.corpus.phrases.length ? (t => t.length > 60 ? t.slice(0, 60) + '…' : t)(affiche(S.corpus.phrases[0].texte)) : '') + ' »' +
+        (S.source ? '<br>Ouvert depuis : ' + esc(S.source) : '') + '</p>' +
       '<ol><li>Écris ton <strong>nom</strong>, ton <strong>prénom</strong> et ta <strong>classe</strong> ci-dessous.</li>' +
       '<li>Appuie sur le bouton bleu <strong>« Commencer l\'exercice »</strong>.</li></ol>' +
       '<button class="lien" id="btn-autre-exercice">Ce n\'est pas le bon exercice ? Ouvrir un autre fichier</button></div>'
@@ -969,14 +971,20 @@ $('#ed-mots').addEventListener('click', e => {
 });
 function edPret(){
   clearTimeout(minuteur); edDepuisChamps();
-  if (!ED.titre) ED.titre = 'Exercice';
+  if (!ED.titre) {
+    const debut = ED.phrases.length ? affiche(ED.phrases[0].tokens.filter(estMot).slice(0, 4).join(' ')) : '';
+    ED.titre = 'Exercice du ' + new Date().toLocaleDateString('fr-FR') + (debut ? ' – ' + debut + '…' : '');
+    $('#ed-titre').value = ED.titre; edSauver();
+  }
   if (!ED.phrases.length) { $('#ed-msg').textContent = '⚠ Écrivez au moins une phrase.'; return false; }
   if (!ED.phrases.some(p => p.classes.some(Boolean))) { $('#ed-msg').textContent = '⚠ Indiquez la classe d\'au moins un mot (choisissez une classe puis touchez les mots).'; return false; }
   return true;
 }
 $('#ed-telecharger').onclick = () => {
   if (!edPret()) return;
-  const nom = 'exercice_' + slug(ED.titre) + '.json';
+  const d = new Date(), z = n => String(n).padStart(2, '0');
+  const horodatage = d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + '_' + z(d.getHours()) + 'h' + z(d.getMinutes());
+  const nom = 'exercice_' + slug(ED.titre).slice(0, 50) + '_' + horodatage + '.json';
   telecharger(nom, JSON.stringify(versFichier(ED)));
   $('#ed-msg').textContent = '✓ Fichier « ' + nom + ' » téléchargé. Envoyez-le aux élèves : ils l\'ouvrent avec le bouton « Ouvrir l\'exercice envoyé par le professeur ».';
 };
