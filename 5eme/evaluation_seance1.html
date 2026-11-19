@@ -284,15 +284,13 @@ function pageRecto(ev, rows){
     +  '<div style="font-size:34px;font-weight:800;color:#6a3fb5;line-height:1.1">'+fmt(ev.total)+'<span style="font-size:18px"> / '+fmt(TOTAL)+'</span></div></div></div>'
     +'<div style="margin-top:10px;background:#f3edff;border:1px solid #d9c9f5;border-radius:10px;padding:7px 12px;font-size:12px;line-height:1.35">'
     +  '<strong>Compétence travaillée</strong> — '+esc(COMPETENCE.domaine)+'<br>« '+esc(COMPETENCE.principale)+' »<br>'
-    +  '<span style="color:#6c6379">Appui : « '+esc(COMPETENCE.secondaire)+' » · '+esc(COMPETENCE.programme)+'</span></div>'
-    +'<div style="margin:9px 0 8px;font-size:12.5px"><strong>Consigne :</strong> répondre aux '+NB+' questions de la carte mentale, classées de la plus importante à la moins importante pour comprendre le roman courtois.</div>'
+    +  '<span style="color:#6c6379">Appui : « '+esc(COMPETENCE.secondaire)+' »</span></div>'
+    +'<div style="height:10px"></div>'
     +'<div id="rows">'+rows+'</div>'
     +'<div style="position:absolute;bottom:20px;left:40px;right:40px;font-size:10.5px;color:#6c6379;display:flex;justify-content:space-between;gap:12px"><span>✓ réponse juste · ≈ réponse partielle · ✗ fausse ou absente · ? à corriger par le professeur (correction automatique par mots-clés)</span><span>Recto</span></div>'
     +'</div>';
 }
 function pageVerso(ev, rows){
-  const cases = ['Maîtrise insuffisante','Maîtrise fragile','Maîtrise satisfaisante','Très bonne maîtrise']
-    .map(t=>'<div style="flex:1;border:1.5px solid #8a8396;border-radius:8px;padding:7px 4px;text-align:center;font-size:11.5px"><div style="width:14px;height:14px;border:1.5px solid #333;border-radius:3px;margin:0 auto 4px"></div>'+t+'</div>').join('');
   const ligneG = g=>{
     const nums = ITEMS.map((it,i)=>it.g===g?i+1:null).filter(x=>x);
     if (!nums.length) return '';
@@ -305,10 +303,8 @@ function pageVerso(ev, rows){
     +'<div id="bilan" style="margin-top:8px">'
     +'<div style="font-size:17px;font-weight:800;margin-bottom:5px">Bilan de l’évaluation · '+esc(S.prenom+' '+S.nom.toUpperCase())+' · '+esc(S.classe)+'</div>'
     +'<table style="width:100%;border-collapse:collapse">'+ligneG('A')+ligneG('B')+ligneG('C')
-    +'<tr><td colspan="2" style="padding:6px 8px;border:1px solid #cfc7dc;text-align:right;font-weight:700;font-size:13px">'+ev.justes+' réponses justes sur '+NB+(ev.manuelles?' ('+ev.manuelles+' à corriger à la main)':'')+' · Note automatique · note retenue par le professeur : ………… / '+fmt(TOTAL)+'</td>'
+    +'<tr><td colspan="2" style="padding:6px 8px;border:1px solid #cfc7dc;text-align:right;font-weight:700;font-size:13px">'+ev.justes+' réponses justes sur '+NB+(ev.manuelles?' ('+ev.manuelles+' à corriger à la main)':'')+' · Note retenue par le professeur : ………… / '+fmt(TOTAL)+'</td>'
     +'<td style="padding:6px 8px;border:1px solid #cfc7dc;text-align:center;font-weight:800;font-size:18px;background:#f3edff;color:#6a3fb5">'+fmt(ev.total)+' / '+fmt(TOTAL)+'</td></tr></table>'
-    +'<div style="font-weight:700;font-size:12.5px;margin:9px 0 4px">Niveau de maîtrise de la compétence « '+esc(COMPETENCE.principale)+' »</div>'
-    +'<div style="display:flex;gap:7px">'+cases+'</div>'
     +'<div style="font-weight:700;font-size:12.5px;margin:9px 0 4px">Appréciation du professeur</div>'
     +'<div id="appr" style="border:1.5px solid #8a8396;border-radius:10px;min-height:70px;background-image:repeating-linear-gradient(transparent,transparent 29px,#d5cfe0 29px,#d5cfe0 30px)"></div>'
     +'</div>'
