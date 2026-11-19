@@ -80,39 +80,38 @@ const CFG_DEFAUT = {
   },
   groupes: { A:"Le roman courtois", B:"L’auteur, les genres et la transmission", C:"Le contexte historique" },
   /* Questions déjà sélectionnées et classées de la plus à la moins importante sur le plan littéraire.
-     g = groupe (A, B ou C) · pts = points · rep = réponse attendue (pour mémoire)
-     motsCles = correction automatique : chaque sous-liste est un élément attendu, réussi si l'un de ses mots apparaît. */
+     g = groupe (A, B ou C) · pts = points · rep = réponse attendue */
   items: [
     {id:'l1', g:'A', pts:2, txt:"De quel genre Chrétien de Troyes est-il le créateur ?",
-       rep:"Le roman courtois.", motsCles:[["roman"]]},
+       rep:"Le roman courtois."},
     {id:'l2', g:'A', pts:2, txt:"Qu’appelle-t-on le roman courtois ? (que raconte-t-il ?)",
-       rep:"Un récit qui raconte les aventures d’un chevalier amoureux de sa dame.", motsCles:[["aventure"],["chevalier"],["dame","amour"]]},
+       rep:"Un récit qui raconte les aventures d’un chevalier amoureux de sa dame."},
     {id:'l3', g:'A', pts:2, txt:"Quels personnages le roman courtois met-il en scène ?",
-       rep:"Des chevaliers (Lancelot, Perceval) et leurs dames.", motsCles:[["chevalier"],["dame"]]},
+       rep:"Des chevaliers (Lancelot, Perceval) et leurs dames."},
     {id:'l4', g:'A', pts:2, txt:"Qu’appelle-t-on le roman courtois ? (dans quelle langue est-il écrit ?)",
-       rep:"Un récit écrit en langue romane.", motsCles:[["romane","francais"]]},
+       rep:"Un récit écrit en langue romane."},
     {id:'l5', g:'A', pts:2, txt:"Pourquoi peut-on dire que Yvain, le chevalier au lion a eu un succès durable ?",
-       rep:"Il s’est diffusé dans toute l’Europe et a inspiré de nombreux auteurs et artistes.", motsCles:[["europe"],["inspir","influenc","artiste","auteur","modele"]]},
+       rep:"Il s’est diffusé dans toute l’Europe et a inspiré de nombreux auteurs et artistes."},
     {id:'c5', g:'B', pts:1, txt:"Quels sont les deux genres populaires à l’époque de Chrétien de Troyes ?",
-       rep:"La chanson de geste et le roman (courtois).", motsCles:[["geste"],["roman"]]},
+       rep:"La chanson de geste et le roman (courtois)."},
     {id:'c6', g:'B', pts:1, txt:"De quelle manière les textes se transmettent-ils ? Comment désigne-t-on ceux qui les racontent ?",
-       rep:"À l’oral ; ce sont les troubadours.", motsCles:[["oral","voix","chant","lecture","lisent"],["troubadour"]]},
+       rep:"À l’oral ; ce sont les troubadours."},
     {id:'c7', g:'B', pts:1, txt:"Pourquoi les moines ont-ils un rôle important ?",
-       rep:"Ils recopient les œuvres à la main (copistes) afin d’assurer leur diffusion.", motsCles:[["copi","recopi"],["diffus","manuscrit","transmet","conserv","main"]]},
+       rep:"Ils recopient les œuvres à la main (copistes) afin d’assurer leur diffusion."},
     {id:'l6', g:'B', pts:1, txt:"Chrétien de Troyes était un clerc : que désigne ce terme ?",
-       rep:"Un homme instruit qui sait lire et écrire le latin, souvent lié au clergé.", motsCles:[["instruit","savant","lettre","sait lire","lire"],["ecrire","latin","clerge","eglise"]]},
+       rep:"Un homme instruit qui sait lire et écrire le latin, souvent lié au clergé."},
     {id:'l7', g:'B', pts:1, txt:"Quelles personnes puissantes Chrétien de Troyes a-t-il servies ?",
-       rep:"Marie, comtesse de Champagne, et Philippe d’Alsace, comte de Flandre.", motsCles:[["marie","champagne"],["philippe","alsace","flandre"]]},
+       rep:"Marie, comtesse de Champagne, et Philippe d’Alsace, comte de Flandre."},
     {id:'l8', g:'B', pts:1, txt:"Quelles autres œuvres Chrétien de Troyes a-t-il écrites ?",
-       rep:"Lancelot ou le chevalier de la charrette, Perceval ou le conte du Graal.", motsCles:[["lancelot"],["perceval"]]},
+       rep:"Lancelot ou le chevalier de la charrette, Perceval ou le conte du Graal."},
     {id:'c1', g:'C', pts:1, txt:"Qu’appelle-t-on le système féodal ?",
-       rep:"Des liens de fidélité entre un seigneur (suzerain) et son vassal : le vassal se place sous la protection du suzerain.", motsCles:[["vassal"],["suzerain","seigneur"],["fidelite","protection","lien","serment","hommage"]]},
+       rep:"Des liens de fidélité entre un seigneur (suzerain) et son vassal : le vassal se place sous la protection du suzerain."},
     {id:'c2', g:'C', pts:1, txt:"À quelle période cette œuvre a-t-elle été écrite ?",
-       rep:"Au XIIe siècle.", motsCles:[["xii","12","douzi"]]},
+       rep:"Au XIIe siècle."},
     {id:'c3', g:'C', pts:1, txt:"Quelle était l’importance de la religion chrétienne à cette époque ?",
-       rep:"Elle est très importante : elle rythme la vie des gens.", motsCles:[["important","rythme","quotidien","chaque","vie","partout"]]},
+       rep:"Elle est très importante : elle rythme la vie des gens."},
     {id:'c4', g:'C', pts:1, txt:"Quel adjectif désigne les langues venues du latin comme le français ?",
-       rep:"Romanes.", motsCles:[["roman"]]}
+       rep:"Romanes."}
   ]
 };
 const COUL = {A:'#8a47c9', B:'#2f6fd6', C:'#1f9d63'};
@@ -159,7 +158,6 @@ function nettoyerCfg(c){
     items: c.items.slice(0,40).map((it,i)=>({
       id: txt(it.id,'q'+i) || ('q'+i), g: ['A','B','C'].includes(it.g) ? it.g : 'A',
       pts: Math.max(0, Math.round((Number(it.pts)||0)*4)/4), txt: txt(it.txt,''), rep: txt(it.rep,''),
-      motsCles: (Array.isArray(it.motsCles)?it.motsCles:[]).map(g=>(Array.isArray(g)?g:[]).map(String).filter(x=>x.trim())).filter(g=>g.length)
     }))
   };
   Object.keys(d.competence).forEach(k=>out.competence[k] = txt((c.competence||{})[k], d.competence[k]));
@@ -180,22 +178,6 @@ function appliquerCfg(cfg){
 }
 const sauver = ()=>store.set(CLE,S);
 const nomGroupe = g=>CFG.groupes[g];
-
-/* ---------------- Correction automatique ---------------- */
-function fraction(it, texte){
-  if (!it.motsCles.length) return null;                 // pas de mots-clés : à corriger à la main
-  const t = norm(texte||''); if(!t.trim()) return 0;
-  const ok = it.motsCles.filter(groupe=>groupe.some(m=>t.includes(norm(m).trim()))).length;
-  return ok / it.motsCles.length;
-}
-function evaluer(rep){
-  const r = x=>Math.round(x*2)/2;
-  const fr = ITEMS.map(it=>fraction(it,(rep||{})[it.id]));
-  const parG = {A:0,B:0,C:0}, maxG = {A:0,B:0,C:0};
-  ITEMS.forEach((it,i)=>{ parG[it.g]+=(fr[i]||0)*it.pts; maxG[it.g]+=it.pts; });
-  const pg = {A:r(parG.A), B:r(parG.B), C:r(parG.C)};
-  return {fr, pg, maxG, total:pg.A+pg.B+pg.C, justes:fr.filter(x=>x!==null&&x>=.99).length, manuelles:fr.filter(x=>x===null).length};
-}
 
 /* ====================== ESPACE ÉLÈVE ====================== */
 const ETAPES = ['1 · Qui es-tu ?','2 · Répondre','3 · Rendre'];
@@ -258,74 +240,61 @@ async function bibliotheques(){
   if (!window.html2canvas) await chargerScript('lib/html2canvas.min.js');
   if (!window.jspdf) await chargerScript('lib/jspdf.umd.min.js');
 }
-const PH = 1123, PIED = 54;
+const PH = 1123, PIED = 46;
 const PAGE_CSS = 'position:absolute;left:-10000px;top:0;width:794px;height:'+PH+'px;background:#fff;color:#1d1a24;font-family:-apple-system,Helvetica,Arial,sans-serif;padding:30px 40px;box-sizing:border-box;overflow:hidden;';
 
-function ligneHTML(i, ev, fs){
-  const it = ITEMS[i], f = ev.fr[i], coul = COUL[it.g];
-  const rm = f===null ? ['?','#6c6379'] : f>=.99 ? ['✓','#1f9d63'] : f>0 ? ['≈','#e0862a'] : ['✗','#d11a1a'];
-  const texte = (S.rep[it.id]||'').trim();
-  const gagne = f===null ? '…' : fmt(Math.round(f*it.pts*2)/2);
+function ligneHTML(i, fs){
+  const it = ITEMS[i], coul = COUL[it.g], texte = (S.rep[it.id]||'').trim();
   return '<div style="display:flex;gap:9px;align-items:stretch;margin-bottom:6px">'
     +'<div style="flex:0 0 30px;background:'+coul+';color:#fff;font-weight:700;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px">'+(i+1)+'</div>'
     +'<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:'+fs+'px;line-height:1.22">'+esc(it.txt)+'</div>'
     +'<div style="font-size:'+fs+'px;line-height:1.25;margin-top:2px;'+(texte?'color:#2a3f8f':'color:#b0283a;font-style:italic')+'">'+(texte?esc(texte):'— pas de réponse —')+'</div></div>'
-    +'<div style="flex:0 0 74px;text-align:right;line-height:1.35"><div style="font-size:19px;font-weight:700;color:'+rm[1]+'">'+rm[0]+'</div>'
-    +'<div style="font-size:11.5px;color:#6c6379">'+gagne+' / '+fmt(it.pts)+'</div></div></div>';
+    +'<div style="flex:0 0 78px;text-align:right;align-self:center;font-size:12.5px;color:#6c6379;white-space:nowrap">…… / '+fmt(it.pts)+'</div></div>';
 }
-function pageRecto(ev, rows){
+function enteteHTML(){
   const date = new Date().toLocaleDateString('fr-FR');
-  return '<div style="'+PAGE_CSS+'">'
-    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px">'
+  const niveaux = ['Maîtrise insuffisante','Maîtrise fragile','Maîtrise satisfaisante','Très bonne maîtrise']
+    .map(t=>'<div style="flex:1;display:flex;align-items:center;gap:6px;font-size:11.5px"><span style="flex:0 0 15px;height:15px;border:1.5px solid #333;border-radius:3px;background:#fff"></span>'+t+'</div>').join('');
+  return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px">'
     +  '<div><div style="font-size:22px;font-weight:800">'+esc(CFG.titre)+'</div>'
     +  '<div style="font-size:14px;color:#6c6379;margin-top:2px">'+esc(CFG.sousTitre)+'</div>'
     +  '<div style="margin-top:9px;font-size:15px"><strong>'+esc(S.prenom+' '+S.nom.toUpperCase())+'</strong> · '+esc(S.classe)+' · '+date+'</div></div>'
-    +  '<div style="border:3px solid #6a3fb5;border-radius:14px;padding:6px 16px;text-align:center;min-width:128px"><div style="font-size:11px;color:#6c6379;font-weight:700">NOTE</div>'
-    +  '<div style="font-size:34px;font-weight:800;color:#6a3fb5;line-height:1.1">'+fmt(ev.total)+'<span style="font-size:18px"> / '+fmt(TOTAL)+'</span></div></div></div>'
-    +'<div style="margin-top:10px;background:#f3edff;border:1px solid #d9c9f5;border-radius:10px;padding:7px 12px;font-size:12px;line-height:1.35">'
+    +  '<div style="border:3px solid #6a3fb5;border-radius:14px;padding:6px 16px;text-align:center;min-width:140px"><div style="font-size:11px;color:#6c6379;font-weight:700">NOTE</div>'
+    +  '<div style="font-size:24px;font-weight:800;color:#6a3fb5;line-height:1.5">………… <span style="font-size:17px">/ '+fmt(TOTAL)+'</span></div></div></div>'
+    +'<div style="margin:10px 0 12px;background:#f3edff;border:1px solid #d9c9f5;border-radius:10px;padding:8px 12px;font-size:12px;line-height:1.35">'
     +  '<strong>Compétence travaillée</strong> — '+esc(COMPETENCE.domaine)+'<br>« '+esc(COMPETENCE.principale)+' »<br>'
-    +  '<span style="color:#6c6379">Appui : « '+esc(COMPETENCE.secondaire)+' »</span></div>'
-    +'<div style="height:10px"></div>'
-    +'<div id="rows">'+rows+'</div>'
-    +'<div style="position:absolute;bottom:20px;left:40px;right:40px;font-size:10.5px;color:#6c6379;display:flex;justify-content:space-between;gap:12px"><span>✓ réponse juste · ≈ réponse partielle · ✗ fausse ou absente · ? à corriger par le professeur (correction automatique par mots-clés)</span><span>Recto</span></div>'
-    +'</div>';
+    +  '<span style="color:#6c6379">Appui : « '+esc(COMPETENCE.secondaire)+' »</span>'
+    +  '<div style="display:flex;gap:8px;margin-top:8px">'+niveaux+'</div></div>';
 }
-function pageVerso(ev, rows){
-  const ligneG = g=>{
-    const nums = ITEMS.map((it,i)=>it.g===g?i+1:null).filter(x=>x);
-    if (!nums.length) return '';
-    return '<tr><td style="padding:6px 8px;border:1px solid #cfc7dc;font-weight:700;font-size:13px;color:'+COUL[g]+'">'+esc(nomGroupe(g))+'</td>'
-      +'<td style="padding:6px 8px;border:1px solid #cfc7dc;font-size:12px;color:#6c6379">Questions '+nums.join(', ')+'</td>'
-      +'<td style="padding:6px 8px;border:1px solid #cfc7dc;text-align:center;font-weight:800;font-size:16px;width:90px;color:#6a3fb5">'+fmt(ev.pg[g])+' / '+fmt(ev.maxG[g])+'</td></tr>';
-  };
+function basHTML(){
+  return '<div id="fin" style="margin-top:8px">'
+    +'<div style="font-weight:700;font-size:12.5px;margin-bottom:4px">Appréciation</div>'
+    +'<div style="border:1.5px solid #8a8396;border-radius:8px;height:58px;background-image:repeating-linear-gradient(transparent,transparent 28px,#d5cfe0 28px,#d5cfe0 29px)"></div>'
+    +'<div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:#6c6379"><span>Signature de l’élève : …………………</span><span>Signature des parents : …………………</span></div></div>';
+}
+function pageHTML(rows, premiere, derniere, num, nbPages){
   return '<div style="'+PAGE_CSS+'">'
+    +(premiere ? enteteHTML() : '')
     +'<div id="rows">'+rows+'</div>'
-    +'<div id="bilan" style="margin-top:8px">'
-    +'<div style="font-size:17px;font-weight:800;margin-bottom:5px">Bilan de l’évaluation · '+esc(S.prenom+' '+S.nom.toUpperCase())+' · '+esc(S.classe)+'</div>'
-    +'<table style="width:100%;border-collapse:collapse">'+ligneG('A')+ligneG('B')+ligneG('C')
-    +'<tr><td colspan="2" style="padding:6px 8px;border:1px solid #cfc7dc;text-align:right;font-weight:700;font-size:13px">'+ev.justes+' réponses justes sur '+NB+(ev.manuelles?' ('+ev.manuelles+' à corriger à la main)':'')+' · Note retenue par le professeur : ………… / '+fmt(TOTAL)+'</td>'
-    +'<td style="padding:6px 8px;border:1px solid #cfc7dc;text-align:center;font-weight:800;font-size:18px;background:#f3edff;color:#6a3fb5">'+fmt(ev.total)+' / '+fmt(TOTAL)+'</td></tr></table>'
-    +'<div style="font-weight:700;font-size:12.5px;margin:9px 0 4px">Appréciation du professeur</div>'
-    +'<div id="appr" style="border:1.5px solid #8a8396;border-radius:10px;min-height:70px;background-image:repeating-linear-gradient(transparent,transparent 29px,#d5cfe0 29px,#d5cfe0 30px)"></div>'
-    +'</div>'
-    +'<div style="position:absolute;bottom:20px;left:40px;right:40px;font-size:10.5px;color:#6c6379;display:flex;justify-content:space-between"><span>Signature de l’élève : ………………… · Signature des parents : …………………</span><span>Verso</span></div>'
+    +(derniere ? basHTML() : '')
+    +'<div style="position:absolute;bottom:18px;right:40px;font-size:10.5px;color:#6c6379">'+(nbPages>1?'Page '+num+' / '+nbPages:'')+'</div>'
     +'</div>';
 }
-/* Choisit la taille de police et la coupure recto/verso pour que tout tienne sur 2 pages */
-function composerPages(ev){
+const basPage = el=>{ const f = el.querySelector('#fin') || el.querySelector('#rows'); return f.offsetTop + f.offsetHeight; };
+/* Choisit la taille de police et la coupure recto/verso pour que tout tienne sur 1 ou 2 pages */
+function composerPages(){
   const monter = h=>{ const d=document.createElement('div'); d.innerHTML=h; const el=d.firstChild; document.body.appendChild(el); return el; };
   for (const fs of [13,12.5,12,11.5,11,10.5,10,9.5]){
-    const lignes = ITEMS.map((_,i)=>ligneHTML(i,ev,fs));
+    const lignes = ITEMS.map((_,i)=>ligneHTML(i,fs));
+    const seule = monter(pageHTML(lignes.join(''), true, true, 1, 1));
+    if (basPage(seule) <= PH - PIED) return {pages:[seule], fs, k:NB};
+    seule.remove();
     for (let k=NB; k>=0; k--){
-      const a = monter(pageRecto(ev, lignes.slice(0,k).join('')));
+      const a = monter(pageHTML(lignes.slice(0,k).join(''), true, false, 1, 2));
       const rows1 = a.querySelector('#rows');
       if (rows1.offsetTop + rows1.offsetHeight > PH - PIED){ a.remove(); continue; }
-      const b = monter(pageVerso(ev, lignes.slice(k).join('')));
-      const appr = b.querySelector('#appr');
-      if (appr.offsetTop + appr.offsetHeight <= PH - PIED){
-        appr.style.height = Math.max(70, PH - PIED - appr.offsetTop - 2) + 'px';
-        return {a, b, fs, k};
-      }
+      const b = monter(pageHTML(lignes.slice(k).join(''), false, true, 2, 2));
+      if (basPage(b) <= PH - PIED) return {pages:[a,b], fs, k};
       a.remove(); b.remove();
     }
   }
@@ -333,20 +302,21 @@ function composerPages(ev){
 }
 async function genererPDF(){
   await bibliotheques();
-  const ev = evaluer(S.rep);
-  const data = {type:'evaluation-yvain-seance1', version:4, titre:CFG.titre, eleve:{nom:S.nom,prenom:S.prenom,classe:S.classe}, date:new Date().toISOString(),
-                reponses:ITEMS.map(it=>({id:it.id, texte:(S.rep[it.id]||'').trim()})), note:ev.total, total:TOTAL, detail:ev.pg};
+  const data = {type:'evaluation-yvain-seance1', version:5, titre:CFG.titre, sousTitre:CFG.sousTitre, date:new Date().toISOString(),
+                eleve:{nom:S.nom,prenom:S.prenom,classe:S.classe}, total:TOTAL,
+                competence:{principale:COMPETENCE.principale, secondaire:COMPETENCE.secondaire},
+                questions:ITEMS.map(it=>({id:it.id, texte:it.txt, points:it.pts, attendu:it.rep, reponse:(S.rep[it.id]||'').trim()}))};
   const pdf = new jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4', compress:true});
-  const {a, b, fs, k} = composerPages(ev);
+  const {pages, fs, k} = composerPages();
   try {
-    for (const [idx, el] of [a,b].entries()){
+    for (const [idx, el] of pages.entries()){
       const canvas = await html2canvas(el,{scale:2, backgroundColor:'#ffffff', logging:false});
       if (idx>0) pdf.addPage('a4','portrait');
       pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,210,297);
     }
-  } finally { a.remove(); b.remove(); }
-  pdf.setProperties({title:'Évaluation de '+S.prenom+' '+S.nom, keywords:'YVEVAL4.'+b64e(JSON.stringify(data))+'.FIN'});
-  return {blob:pdf.output('blob'), pages:pdf.getNumberOfPages(), ev, fs, k};
+  } finally { pages.forEach(el=>el.remove()); }
+  pdf.setProperties({title:'Évaluation de '+S.prenom+' '+S.nom, keywords:'YVEVAL5.'+b64e(JSON.stringify(data))+'.FIN'});
+  return {blob:pdf.output('blob'), pages:pdf.getNumberOfPages(), fs, k};
 }
 let lienPDF = null;
 const modale = h=>{ $('#modale-contenu').innerHTML=h; $('#modale').hidden=false; };
@@ -373,8 +343,6 @@ async function creerRendu(){
 const CLE_BROUILLON = 'eval-yvain-seance1-prof';
 let brouillon = null;     // configuration en cours d'édition
 const sauverBrouillon = ()=>{ store.set(CLE_BROUILLON, brouillon); majTotal(); };
-const motsVersTexte = mc=>mc.map(g=>g.join(', ')).join('\n');
-const texteVersMots = t=>t.split('\n').map(l=>l.split(/[,;]/).map(x=>x.trim()).filter(Boolean)).filter(g=>g.length);
 function majTotal(){ const el=$('#total-pts'); if(el){ const t=brouillon.items.reduce((s,i)=>s+(Number(i.pts)||0),0); el.textContent='Total : '+fmt(t)+' points · '+brouillon.items.length+' questions'; } }
 
 function renderProf(){
@@ -402,7 +370,7 @@ function renderProf(){
     +  '<div class="grille2"><label>Groupe C (vert) <input type="text" data-g="C"></label><label>Longueur maximale d’une réponse (caractères) <input type="number" min="20" max="500" step="10" data-k="maxCar"></label></div>'
     +'</div>'
     +'<h2 style="margin:6px 0 10px">Questions (dans l’ordre de l’évaluation)</h2>'
-    +'<div class="aide" style="margin-bottom:10px">Chaque question a une réponse attendue et des <strong>mots-clés</strong> pour la correction automatique : <em>une ligne = un élément attendu ; les mots d’une même ligne sont des variantes séparées par des virgules ; la ligne est réussie si l’un d’eux apparaît dans la réponse</em> (accents et majuscules ignorés ; une racine suffit : « copi » trouve copie et copiste). Sans mots-clés, la question est à corriger à la main.</div>'
+    +'<div class="aide" style="margin-bottom:10px">Chaque question a une réponse attendue, pour mémoire : elle t’aide à corriger.</div>'
     +'<div id="items"></div>'
     +'<div class="barre-actions"><button class="prim" id="b-ajout">＋ Ajouter une question</button></div>';
   // champs simples
@@ -411,7 +379,7 @@ function renderProf(){
   app.querySelectorAll('[data-g]').forEach(i=>{ i.value=c.groupes[i.dataset.g]; i.oninput=()=>{ c.groupes[i.dataset.g]=i.value; sauverBrouillon(); }; });
   dessinerItems();
   majTotal();
-  $('#b-ajout').onclick = ()=>{ c.items.push({id:'q'+Date.now().toString(36), g:'B', pts:1, txt:'', rep:'', motsCles:[]}); sauverBrouillon(); dessinerItems(); const l=document.querySelectorAll('.item'); l[l.length-1].scrollIntoView({behavior:'smooth',block:'center'}); };
+  $('#b-ajout').onclick = ()=>{ c.items.push({id:'q'+Date.now().toString(36), g:'B', pts:1, txt:'', rep:''}); sauverBrouillon(); dessinerItems(); const l=document.querySelectorAll('.item'); l[l.length-1].scrollIntoView({behavior:'smooth',block:'center'}); };
   $('#b-lien').onclick = copierLien;
   $('#b-test').onclick = async ()=>{ const h = await encoderCfg(nettoyerCfg(brouillon)); window.open(location.pathname+'#c='+h,'_blank'); };
   $('#b-page').onclick = verifierMiseEnPage;
@@ -431,15 +399,13 @@ function dessinerItems(){
       +'<label>Question posée à l’élève <textarea data-f="txt"></textarea></label>'
       +'<div class="ligne2"><label>Points <input type="number" min="0" step="0.5" data-f="pts"></label>'
       +'<label>Groupe <select data-f="g"><option value="A">A · '+esc(brouillon.groupes.A)+'</option><option value="B">B · '+esc(brouillon.groupes.B)+'</option><option value="C">C · '+esc(brouillon.groupes.C)+'</option></select></label></div>'
-      +'<div class="grille2"><label>Réponse attendue (pour mémoire) <textarea data-f="rep"></textarea></label>'
-      +'<label>Mots-clés (une ligne = un élément attendu) <textarea data-f="mots" placeholder="ex.&#10;chevalier&#10;dame, amour"></textarea></label></div>';
+      +'<label>Réponse attendue <textarea data-f="rep"></textarea></label>';
     d.querySelector('[data-f=txt]').value = it.txt; d.querySelector('[data-f=pts]').value = it.pts;
-    d.querySelector('[data-f=g]').value = it.g; d.querySelector('[data-f=rep]').value = it.rep; d.querySelector('[data-f=mots]').value = motsVersTexte(it.motsCles);
+    d.querySelector('[data-f=g]').value = it.g; d.querySelector('[data-f=rep]').value = it.rep;
     d.querySelectorAll('[data-f]').forEach(inp=>{
       inp.oninput = ()=>{
         const f = inp.dataset.f;
         if (f==='pts') it.pts = Number(inp.value)||0;
-        else if (f==='mots') it.motsCles = texteVersMots(inp.value);
         else if (f==='g'){ it.g = inp.value; d.style.setProperty('--gc',COUL[it.g]); }
         else it[f] = inp.value;
         sauverBrouillon();
@@ -463,7 +429,7 @@ async function copierLien(){
     try { await navigator.clipboard.writeText(url); ok = true; } catch(e){}
     modale('<h2>'+(ok?'✅ Lien copié':'Lien élève')+'</h2><p>Donne ce lien aux élèves (par exemple à coller dans École Directe). Ils ouvriront ton évaluation modifiée.</p>'
       +'<textarea id="lien-eleve" readonly style="min-height:110px">'+esc(url)+'</textarea>'
-      +'<p class="aide">'+url.length+' caractères. Les réponses attendues et les mots-clés sont contenus dans ce lien : un élève très curieux pourrait les retrouver.</p>'
+      +'<p class="aide">'+url.length+' caractères. Les réponses attendues sont contenues dans ce lien : un élève très curieux pourrait les retrouver.</p>'
       +'<div class="barre-actions"><button class="prim" id="ferme">Fermer</button></div>');
     $('#lien-eleve').onfocus = e=>e.target.select(); $('#ferme').onclick = fermerModale;
   } catch(e){ modale('<h2>Lien impossible</h2><p>'+esc(e.message)+'</p><div class="barre-actions"><button id="ferme">Fermer</button></div>'); $('#ferme').onclick = fermerModale; }
@@ -486,8 +452,8 @@ async function verifierMiseEnPage(){
     appliquerCfg(nettoyerCfg(brouillon));
     S = {nom:'NOM', prenom:'Prénom', classe:'5e A', rep:{}};
     ITEMS.forEach(it=>{ S.rep[it.id] = ((it.rep||'réponse')+' ').repeat(40).slice(0,MAX_CAR); });
-    const ev = evaluer(S.rep), {a,b,fs,k} = composerPages(ev); a.remove(); b.remove();
-    modale('<h2>✅ La mise en page tient sur 2 pages</h2><p>Même si chaque élève écrit des réponses de '+MAX_CAR+' caractères, le PDF reste sur un A4 recto verso (police ajustée à '+fs+' px, '+k+' question'+(k>1?'s':'')+' au recto).</p><div class="barre-actions"><button id="ferme">Fermer</button></div>');
+    const {pages,fs} = composerPages(); const n = pages.length; pages.forEach(el=>el.remove());
+    modale('<h2>✅ La mise en page tient sur '+n+' page'+(n>1?'s':'')+'</h2><p>Même si chaque élève écrit des réponses de '+MAX_CAR+' caractères, le PDF reste sur un A4 recto verso (police ajustée à '+fs+' px).</p><div class="barre-actions"><button id="ferme">Fermer</button></div>');
   } catch(err){
     modale('<h2>⚠ Trop de contenu</h2><p>Avec des réponses de longueur maximale, le PDF ne tiendrait pas sur un A4 recto verso. Retire quelques questions ou réduis la longueur maximale des réponses.</p><div class="barre-actions"><button id="ferme">Fermer</button></div>');
   } finally { CFG = sauveCfg; S = sauveS; $('#titre-page').textContent='📝 '+brouillon.titre; }
