@@ -27,22 +27,11 @@
   .barre-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px; }
   .compteur { font-weight:700; color:var(--vio); margin-left:auto; font-size:20px; }
   .msg { color:var(--err); font-size:15px; min-height:20px; }
-  .grille { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px; }
-  .info { text-align:left; padding:14px 14px 14px 46px; position:relative; line-height:1.35; font-weight:500; min-height:78px; background:#fff; }
-  .info::before { content:""; position:absolute; left:13px; top:15px; width:22px; height:22px; border-radius:50%; border:2px solid var(--bord); background:#fff; }
-  .info.on { border-color:var(--vio); background:#f3edff; }
-  .info.on::before { background:var(--vio); border-color:var(--vio); content:"✓"; color:#fff; font-size:15px; text-align:center; line-height:18px; }
-  .rang-liste { display:flex; flex-direction:column; gap:8px; }
-  .rang { display:flex; align-items:center; gap:10px; background:#fff; border:1.5px solid var(--bord); border-radius:12px; padding:8px 10px; }
-  .rang.drag { box-shadow:0 8px 20px rgba(0,0,0,.25); border-color:var(--vio); background:#f3edff; position:relative; z-index:3; }
-  .num { flex:0 0 34px; height:34px; border-radius:50%; background:var(--vio); color:#fff; font-weight:700; display:flex; align-items:center; justify-content:center; }
-  .rang .txt { flex:1; line-height:1.3; font-size:17px; }
-  .poignee { flex:0 0 40px; height:44px; display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--doux); touch-action:none; cursor:grab; user-select:none; -webkit-user-select:none; }
-  .fl { padding:8px 12px; font-size:18px; }
   .qrep { border:1.5px solid var(--bord); border-radius:12px; padding:12px; margin-bottom:12px; background:#fff; }
   .qrep.fait { border-color:#9fd8bb; background:#f6fcf9; }
   .qrep .q { display:flex; gap:10px; align-items:flex-start; font-weight:600; line-height:1.3; margin-bottom:8px; }
-  .qrep .q .num { flex:0 0 30px; height:30px; font-size:15px; }
+  .num { flex:0 0 30px; height:30px; border-radius:50%; background:var(--vio); color:#fff; font-weight:700; font-size:15px; display:flex; align-items:center; justify-content:center; }
+  .pts { margin-left:auto; flex:0 0 auto; font-size:13px; color:var(--doux); font-weight:600; white-space:nowrap; }
   .aide { color:var(--doux); font-size:15px; }
   .modale { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:16px; z-index:20; }
   .modale[hidden] { display:none; }
@@ -60,62 +49,62 @@
 
 <script>
 /* ===================== RÉGLAGES MODIFIABLES PAR LE PROFESSEUR ===================== */
-const NB_CHOIX = 15;                                              // nombre de questions à choisir
-const MAX_CAR  = 200;                                             // longueur maximale d'une réponse tapée
-const BAREME = { selection:2, blocs:4, ordre:4, reponses:10 };    // total = 20
+const MAX_CAR = 200;      // longueur maximale d'une réponse tapée
 const COMPETENCE = {
   programme: "Programme de français, cycle 4 · 5ème (arrêté du 18 février 2026, BO n°10 du 5 mars 2026)",
   domaine:   "Lecture – Acquérir, structurer et mobiliser des connaissances littéraires et culturelles",
   principale:"Se constituer des repères dans l’histoire littéraire.",
   secondaire:"Tirer parti des informations sur le contexte de production d’une œuvre pour la comprendre et l’interpréter."
 };
-/* Les 16 questions de la carte mentale.
-   bloc    : 'L' = littéraire (à placer d'abord) ; 'C' = contexte historique.
-   L'ordre du tableau est l'ordre d'importance attendu (du plus important au moins important).
-   ecart   : points perdus si l'élève écarte cette question (0 = essentielle, 1 = on peut s'en passer).
+const GROUPES = {
+  A:{nom:"Le roman courtois",                         coul:'#8a47c9'},
+  B:{nom:"L’auteur, les genres et la transmission",   coul:'#2f6fd6'},
+  C:{nom:"Le contexte historique",                    coul:'#1f9d63'}
+};
+/* LES 15 QUESTIONS, déjà sélectionnées et hiérarchisées (de la plus importante à la moins importante
+   sur le plan littéraire). Seize questions figuraient sur la carte mentale ; celle sur le roi
+   (« Quel roi gouvernait à l'époque… ? ») est écartée : c'est la moins utile pour comprendre le roman courtois.
+   pts     : points de la question (total = 20).
    rep     : réponse attendue (pour mémoire).
    motsCles: correction automatique. Chaque groupe est un élément de réponse attendu ;
              il est réussi si l'un de ses mots apparaît dans la réponse de l'élève (accents et majuscules ignorés).
-             Note de la question = groupes réussis / nombre de groupes. */
+             Note de la question = (groupes réussis / nombre de groupes) × pts. */
 const ITEMS = [
-  {id:'l1', bloc:'L', ecart:0,  txt:"De quel genre Chrétien de Troyes est-il le créateur ?",
+  {id:'l1', g:'A', pts:2, txt:"De quel genre Chrétien de Troyes est-il le créateur ?",
      rep:"Le roman courtois.", motsCles:[["roman"]]},
-  {id:'l2', bloc:'L', ecart:0,  txt:"Qu’appelle-t-on le roman courtois ? (que raconte-t-il ?)",
+  {id:'l2', g:'A', pts:2, txt:"Qu’appelle-t-on le roman courtois ? (que raconte-t-il ?)",
      rep:"Un récit qui raconte les aventures d’un chevalier amoureux de sa dame.", motsCles:[["aventure"],["chevalier"],["dame","amour"]]},
-  {id:'l3', bloc:'L', ecart:0,  txt:"Quels personnages le roman courtois met-il en scène ?",
+  {id:'l3', g:'A', pts:2, txt:"Quels personnages le roman courtois met-il en scène ?",
      rep:"Des chevaliers (Lancelot, Perceval) et leurs dames.", motsCles:[["chevalier"],["dame"]]},
-  {id:'l4', bloc:'L', ecart:0,  txt:"Qu’appelle-t-on le roman courtois ? (dans quelle langue est-il écrit ?)",
+  {id:'l4', g:'A', pts:2, txt:"Qu’appelle-t-on le roman courtois ? (dans quelle langue est-il écrit ?)",
      rep:"Un récit écrit en langue romane.", motsCles:[["romane","francais"]]},
-  {id:'l5', bloc:'L', ecart:0,  txt:"Pourquoi peut-on dire que Yvain, le chevalier au lion a eu un succès durable ?",
+  {id:'l5', g:'A', pts:2, txt:"Pourquoi peut-on dire que Yvain, le chevalier au lion a eu un succès durable ?",
      rep:"Il s’est diffusé dans toute l’Europe et a inspiré de nombreux auteurs et artistes.", motsCles:[["europe"],["inspir","influenc","artiste","auteur","modele"]]},
-  {id:'l6', bloc:'L', ecart:0,  txt:"Chrétien de Troyes était un clerc : que désigne ce terme ?",
-     rep:"Un homme instruit qui sait lire et écrire le latin, souvent lié au clergé.", motsCles:[["instruit","savant","lettre","sait lire","lire"],["ecrire","latin","clerge","eglise"]]},
-  {id:'l7', bloc:'L', ecart:.5, txt:"Quelles personnes puissantes Chrétien de Troyes a-t-il servies ?",
-     rep:"Marie, comtesse de Champagne, et Philippe d’Alsace, comte de Flandre.", motsCles:[["marie","champagne"],["philippe","alsace","flandre"]]},
-  {id:'l8', bloc:'L', ecart:1,  txt:"Quelles autres œuvres Chrétien de Troyes a-t-il écrites ?",
-     rep:"Lancelot ou le chevalier de la charrette, Perceval ou le conte du Graal.", motsCles:[["lancelot"],["perceval"]]},
-  {id:'c1', bloc:'C', ecart:0,  txt:"Qu’appelle-t-on le système féodal ?",
-     rep:"Des liens de fidélité entre un seigneur (suzerain) et son vassal : le vassal se place sous la protection du suzerain.", motsCles:[["vassal"],["suzerain","seigneur"],["fidelite","protection","lien","serment","hommage"]]},
-  {id:'c2', bloc:'C', ecart:0,  txt:"À quelle période cette œuvre a-t-elle été écrite ?",
-     rep:"Au XIIe siècle.", motsCles:[["xii","12","douzi"]]},
-  {id:'c3', bloc:'C', ecart:0,  txt:"Quelle était l’importance de la religion chrétienne à cette époque ?",
-     rep:"Elle est très importante : elle rythme la vie des gens.", motsCles:[["important","rythme","quotidien","chaque","vie","partout"]]},
-  {id:'c4', bloc:'C', ecart:0,  txt:"Quel adjectif désigne les langues venues du latin comme le français ?",
-     rep:"Romanes.", motsCles:[["roman"]]},
-  {id:'c5', bloc:'C', ecart:.5, txt:"Quels sont les deux genres populaires à l’époque de Chrétien de Troyes ?",
+  {id:'c5', g:'B', pts:1, txt:"Quels sont les deux genres populaires à l’époque de Chrétien de Troyes ?",
      rep:"La chanson de geste et le roman (courtois).", motsCles:[["geste"],["roman"]]},
-  {id:'c6', bloc:'C', ecart:0,  txt:"De quelle manière les textes se transmettent-ils ? Comment désigne-t-on ceux qui les racontent ?",
+  {id:'c6', g:'B', pts:1, txt:"De quelle manière les textes se transmettent-ils ? Comment désigne-t-on ceux qui les racontent ?",
      rep:"À l’oral ; ce sont les troubadours.", motsCles:[["oral","voix","chant","lecture","lisent"],["troubadour"]]},
-  {id:'c7', bloc:'C', ecart:.5, txt:"Pourquoi les moines ont-ils un rôle important ?",
+  {id:'c7', g:'B', pts:1, txt:"Pourquoi les moines ont-ils un rôle important ?",
      rep:"Ils recopient les œuvres à la main (copistes) afin d’assurer leur diffusion.", motsCles:[["copi","recopi"],["diffus","manuscrit","transmet","conserv","main"]]},
-  {id:'c8', bloc:'C', ecart:1,  txt:"Quel roi gouvernait à l’époque de Chrétien de Troyes ?",
-     rep:"Louis VII, puis Philippe Auguste (à partir de 1180).", motsCles:[["louis","philippe"]]}
+  {id:'l6', g:'B', pts:1, txt:"Chrétien de Troyes était un clerc : que désigne ce terme ?",
+     rep:"Un homme instruit qui sait lire et écrire le latin, souvent lié au clergé.", motsCles:[["instruit","savant","lettre","sait lire","lire"],["ecrire","latin","clerge","eglise"]]},
+  {id:'l7', g:'B', pts:1, txt:"Quelles personnes puissantes Chrétien de Troyes a-t-il servies ?",
+     rep:"Marie, comtesse de Champagne, et Philippe d’Alsace, comte de Flandre.", motsCles:[["marie","champagne"],["philippe","alsace","flandre"]]},
+  {id:'l8', g:'B', pts:1, txt:"Quelles autres œuvres Chrétien de Troyes a-t-il écrites ?",
+     rep:"Lancelot ou le chevalier de la charrette, Perceval ou le conte du Graal.", motsCles:[["lancelot"],["perceval"]]},
+  {id:'c1', g:'C', pts:1, txt:"Qu’appelle-t-on le système féodal ?",
+     rep:"Des liens de fidélité entre un seigneur (suzerain) et son vassal : le vassal se place sous la protection du suzerain.", motsCles:[["vassal"],["suzerain","seigneur"],["fidelite","protection","lien","serment","hommage"]]},
+  {id:'c2', g:'C', pts:1, txt:"À quelle période cette œuvre a-t-elle été écrite ?",
+     rep:"Au XIIe siècle.", motsCles:[["xii","12","douzi"]]},
+  {id:'c3', g:'C', pts:1, txt:"Quelle était l’importance de la religion chrétienne à cette époque ?",
+     rep:"Elle est très importante : elle rythme la vie des gens.", motsCles:[["important","rythme","quotidien","chaque","vie","partout"]]},
+  {id:'c4', g:'C', pts:1, txt:"Quel adjectif désigne les langues venues du latin comme le français ?",
+     rep:"Romanes.", motsCles:[["roman"]]}
 ];
 /* ================================================================================== */
 
-ITEMS.forEach((it,i)=>it.rang=i);
-const PAR_ID = Object.fromEntries(ITEMS.map(i=>[i.id,i]));
-const BLOC_NOM = {L:'Littéraire', C:'Contexte'};
+const NB = ITEMS.length;
+const TOTAL = ITEMS.reduce((s,i)=>s+i.pts,0);
 const $ = s=>document.querySelector(s);
 const esc = s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const store = { get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
@@ -123,59 +112,42 @@ const store = { get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(
 const b64e = s=>btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 const slug = s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const norm = s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[’']/g,' ');
-const melanger = a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const fmt = x=>String(x).replace('.',',');
 
-const CLE = 'eval-yvain-seance1-v2';
-let S = store.get(CLE) || {};
-if (!S.melange || S.melange.length!==ITEMS.length) S = {etape:0, nom:'', prenom:'', classe:'', melange:melanger(ITEMS.map(i=>i.id)), sel:[], ordre:[], rep:{}};
+const CLE = 'eval-yvain-seance1-v3';
+let S = store.get(CLE) || {etape:0, nom:'', prenom:'', classe:'', rep:{}};
 S.rep = S.rep || {};
 const sauver = ()=>store.set(CLE,S);
 
 /* ---------------- Correction automatique ---------------- */
-function noteReponse(id, texte){
+function fraction(it, texte){
   const t = norm(texte||''); if(!t.trim()) return 0;
-  const g = PAR_ID[id].motsCles;
-  return g.filter(groupe=>groupe.some(m=>t.includes(m))).length / g.length;
+  return it.motsCles.filter(groupe=>groupe.some(m=>t.includes(m))).length / it.motsCles.length;
 }
-function evaluer(ordre, rep){
-  const it = ordre.map(id=>PAR_ID[id]), n = it.length;
-  const omis = ITEMS.filter(x=>!ordre.includes(x.id));
-  let ptsSel = 0, noteSel;
-  if (n===NB_CHOIX && omis.length===1){ ptsSel = BAREME.selection/2 + (BAREME.selection/2)*omis[0].ecart; noteSel = 'Question écartée : « ' + omis[0].txt + ' »'; }
-  else noteSel = 'Il fallait choisir exactement ' + NB_CHOIX + ' questions.';
-  let bonB=0,totB=0,bonO=0,totO=0;
-  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
-    if (it[i].bloc!==it[j].bloc){ totB++; if (it[i].bloc==='L') bonB++; }
-    else { totO++; if (it[i].rang<it[j].rang) bonO++; }
-  }
-  const nm = (g,t)=> t ? Math.max(0,(g/t-.5)/.5) : 1;
+function evaluer(rep){
   const r = x=>Math.round(x*2)/2;
-  const fr = ordre.map(id=>noteReponse(id,(rep||{})[id]));
-  const somme = fr.reduce((a,b)=>a+b,0);
-  const p = {selection:r(ptsSel), blocs:r(BAREME.blocs*nm(bonB,totB)), ordre:r(BAREME.ordre*nm(bonO,totO)), reponses:r(BAREME.reponses*somme/NB_CHOIX)};
-  // frontière la plus favorable à l'élève : on ne marque ✗ que les questions qui dépassent de leur bloc
-  let kBest=0, eBest=1e9;
-  for(let k=0;k<=n;k++){ const e=it.slice(0,k).filter(a=>a.bloc==='C').length + it.slice(k).filter(a=>a.bloc==='L').length; if(e<eBest){ eBest=e; kBest=k; } }
-  const mal = it.map((a,i)=> i<kBest ? a.bloc==='C' : a.bloc==='L');
-  const justes = fr.filter(x=>x>=.99).length;
-  return {p, total:p.selection+p.blocs+p.ordre+p.reponses, noteSel, bonB, totB, bonO, totO, mal, fr, justes};
+  const fr = ITEMS.map(it=>fraction(it,(rep||{})[it.id]));
+  const parGroupe = {A:0,B:0,C:0}, maxGroupe = {A:0,B:0,C:0};
+  ITEMS.forEach((it,i)=>{ parGroupe[it.g]+=fr[i]*it.pts; maxGroupe[it.g]+=it.pts; });
+  const pg = {A:r(parGroupe.A), B:r(parGroupe.B), C:r(parGroupe.C)};
+  return {fr, pg, maxGroupe, total:pg.A+pg.B+pg.C, justes:fr.filter(x=>x>=.99).length, vides:ITEMS.filter(it=>!((rep||{})[it.id]||'').trim()).length};
 }
-const fmt = x=>String(x).replace('.',',');
 
 /* ---------------- Écrans ---------------- */
-const ETAPES = ['1 · Qui es-tu ?','2 · Choisir','3 · Classer','4 · Répondre','5 · Rendre'];
+const ETAPES = ['1 · Qui es-tu ?','2 · Répondre','3 · Rendre'];
 function rendreEtapes(){ $('#etapes').innerHTML = ETAPES.map((t,i)=>'<span class="etape'+(i===S.etape?' on':'')+'">'+t+'</span>').join(''); }
 function aller(n){ S.etape=n; sauver(); render(); window.scrollTo(0,0); }
 function enteteCompetence(){
   return '<div class="comp"><strong>Compétence travaillée</strong> — '+esc(COMPETENCE.domaine)+'<br>« '+esc(COMPETENCE.principale)+' »<br>'
     +'<span class="aide">'+esc(COMPETENCE.programme)+'</span></div>';
 }
+const ptsTxt = n=>fmt(n)+(n>1?' points':' point');
 function render(){
   rendreEtapes();
   const app = $('#app');
   if (S.etape===0){
     app.innerHTML = '<div class="carte"><h2>Évaluation sur la carte mentale de la séance 1</h2>'
-      +'<p>Tu vas <strong>choisir '+NB_CHOIX+' questions</strong> de la carte mentale, les <strong>classer selon leur importance</strong> (les questions <strong>littéraires d’abord</strong>), puis <strong>taper ta réponse</strong> à chacune.</p>'
+      +'<p>Tu vas répondre à <strong>'+NB+' questions</strong> issues de la carte mentale, <strong>en tapant tes réponses</strong>. Les questions sont classées de la plus importante à la moins importante pour comprendre le roman courtois : les premières rapportent plus de points.</p>'
       + enteteCompetence()
       +'<label>Nom <input type="text" id="nom" autocomplete="family-name" value="'+esc(S.nom)+'"></label>'
       +'<label>Prénom <input type="text" id="prenom" autocomplete="given-name" value="'+esc(S.prenom)+'"></label>'
@@ -187,105 +159,34 @@ function render(){
       aller(1);
     };
   } else if (S.etape===1){
-    app.innerHTML = '<div class="carte"><h2>Choisis '+NB_CHOIX+' questions</h2><p class="aide">Touche une question pour la choisir ou l’enlever. Tu en choisis '+NB_CHOIX+' sur '+ITEMS.length+'.</p>'
-      +'<div class="grille" id="grille"></div>'
-      +'<div class="barre-actions"><button id="retour">← Retour</button><span class="compteur" id="cpt"></span><button class="prim" id="suite">Classer →</button></div></div>';
-    const g = $('#grille');
-    S.melange.forEach(id=>{
-      const b = document.createElement('button'); b.className='info'+(S.sel.includes(id)?' on':''); b.textContent=PAR_ID[id].txt; b.dataset.id=id;
-      b.onclick = ()=>{
-        if (S.sel.includes(id)) S.sel = S.sel.filter(x=>x!==id);
-        else if (S.sel.length<NB_CHOIX) S.sel.push(id); else return;
-        b.classList.toggle('on', S.sel.includes(id)); maj(); sauver();
-      };
-      g.appendChild(b);
-    });
-    const maj = ()=>{ $('#cpt').textContent = S.sel.length+' / '+NB_CHOIX; $('#suite').disabled = S.sel.length!==NB_CHOIX; };
-    maj();
-    $('#retour').onclick = ()=>aller(0);
-    $('#suite').onclick = ()=>{
-      const gardes = (S.ordre||[]).filter(id=>S.sel.includes(id));
-      S.ordre = gardes.concat(S.melange.filter(id=>S.sel.includes(id) && !gardes.includes(id)));
-      Object.keys(S.rep).forEach(id=>{ if(!S.sel.includes(id)) delete S.rep[id]; });
-      aller(2);
-    };
-  } else if (S.etape===2){
-    app.innerHTML = '<div class="carte"><h2>Classe les questions</h2>'
-      +'<p>De la <strong>plus importante</strong> (n°1, en haut) à la <strong>moins importante</strong> (n°'+NB_CHOIX+', en bas). <strong>Les questions littéraires d’abord</strong>, puis celles du contexte.</p>'
-      +'<p class="aide">Utilise les flèches ▲ ▼, ou fais glisser une question par la poignée ≡.</p>'
-      +'<div class="rang-liste" id="liste"></div>'
-      +'<div class="barre-actions"><button id="retour">← Modifier mon choix</button><button class="prim" id="suite" style="margin-left:auto">Répondre aux questions →</button></div></div>';
-    dessinerListe();
-    $('#retour').onclick = ()=>aller(1);
-    $('#suite').onclick = ()=>aller(3);
-  } else if (S.etape===3){
     app.innerHTML = '<div class="carte"><h2>Tape tes réponses</h2>'
-      +'<p>Réponds à chaque question par une phrase courte, dans l’ordre de ton classement. <span class="aide">(Maximum '+MAX_CAR+' caractères.)</span></p>'
+      +'<p>Réponds à chaque question par une phrase courte. <span class="aide">(Maximum '+MAX_CAR+' caractères par réponse.)</span></p>'
       +'<div id="reponses"></div>'
-      +'<div class="barre-actions"><button id="retour">← Revenir au classement</button><span class="compteur" id="cpt"></span><button class="prim" id="suite">Terminer →</button></div></div>';
+      +'<div class="barre-actions"><button id="retour">← Retour</button><span class="compteur" id="cpt"></span><button class="prim" id="suite">Terminer →</button></div></div>';
     const zone = $('#reponses');
-    S.ordre.forEach((id,i)=>{
-      const d = document.createElement('div'); d.className='qrep'+((S.rep[id]||'').trim()?' fait':'');
-      d.innerHTML = '<div class="q"><div class="num">'+(i+1)+'</div><div>'+esc(PAR_ID[id].txt)+'</div></div>'
+    ITEMS.forEach((it,i)=>{
+      const d = document.createElement('div'); d.className='qrep'+((S.rep[it.id]||'').trim()?' fait':'');
+      d.innerHTML = '<div class="q"><div class="num">'+(i+1)+'</div><div>'+esc(it.txt)+'</div><div class="pts">'+ptsTxt(it.pts)+'</div></div>'
         +'<textarea maxlength="'+MAX_CAR+'" spellcheck="false" autocorrect="off" autocomplete="off" aria-label="Réponse à la question '+(i+1)+'" placeholder="Ta réponse…"></textarea>';
-      const ta = d.querySelector('textarea'); ta.value = S.rep[id]||'';
-      ta.addEventListener('input',()=>{ S.rep[id]=ta.value; d.classList.toggle('fait',!!ta.value.trim()); maj(); sauver(); });
+      const ta = d.querySelector('textarea'); ta.value = S.rep[it.id]||'';
+      ta.addEventListener('input',()=>{ S.rep[it.id]=ta.value; d.classList.toggle('fait',!!ta.value.trim()); maj(); sauver(); });
       zone.appendChild(d);
     });
-    const maj = ()=>{ $('#cpt').textContent = S.ordre.filter(id=>(S.rep[id]||'').trim()).length+' / '+NB_CHOIX+' répondues'; };
+    const maj = ()=>{ $('#cpt').textContent = ITEMS.filter(it=>(S.rep[it.id]||'').trim()).length+' / '+NB+' répondues'; };
     maj();
-    $('#retour').onclick = ()=>aller(2);
-    $('#suite').onclick = ()=>aller(4);
+    $('#retour').onclick = ()=>aller(0);
+    $('#suite').onclick = ()=>aller(2);
   } else {
-    const vides = S.ordre.filter(id=>!(S.rep[id]||'').trim()).length;
+    const vides = ITEMS.filter(it=>!(S.rep[it.id]||'').trim()).length;
     app.innerHTML = '<div class="carte"><h2>Rendre mon travail</h2>'
-      +'<p>Relis ton classement et tes réponses : tu ne pourras plus les modifier une fois le PDF créé.</p>'
+      +'<p>Relis tes réponses : tu ne pourras plus les modifier une fois le PDF créé.</p>'
       +(vides?'<p class="msg">⚠ Il reste '+vides+' question'+(vides>1?'s':'')+' sans réponse.</p>':'')
-      +'<ol style="padding-left:24px;line-height:1.4">'+S.ordre.map(id=>'<li><strong>'+esc(PAR_ID[id].txt)+'</strong><br><span style="color:var(--vio)">'+(esc(S.rep[id]||'').trim()||'<em style="color:var(--err)">— pas de réponse —</em>')+'</span></li>').join('')+'</ol>'
+      +'<ol style="padding-left:24px;line-height:1.4">'+ITEMS.map(it=>'<li><strong>'+esc(it.txt)+'</strong><br><span style="color:var(--vio)">'+(esc(S.rep[it.id]||'').trim()||'<em style="color:var(--err)">— pas de réponse —</em>')+'</span></li>').join('')+'</ol>'
       +'<div class="barre-actions"><button id="retour">← Revenir aux réponses</button><button class="prim" id="pdf" style="margin-left:auto">📤 Créer mon PDF</button></div></div>';
-    $('#retour').onclick = ()=>aller(3);
+    $('#retour').onclick = ()=>aller(1);
     $('#pdf').onclick = creerRendu;
   }
 }
-
-function dessinerListe(){
-  const liste = $('#liste'); liste.innerHTML='';
-  S.ordre.forEach((id,i)=>{
-    const d = document.createElement('div'); d.className='rang'; d.dataset.id=id;
-    d.innerHTML = '<div class="num">'+(i+1)+'</div><div class="txt">'+esc(PAR_ID[id].txt)+'</div>'
-      +'<button class="fl" data-m="-1" aria-label="Monter"'+(i===0?' disabled':'')+'>▲</button>'
-      +'<button class="fl" data-m="1" aria-label="Descendre"'+(i===S.ordre.length-1?' disabled':'')+'>▼</button>'
-      +'<div class="poignee" aria-hidden="true">≡</div>';
-    liste.appendChild(d);
-  });
-}
-function renumeroter(){ document.querySelectorAll('#liste .rang').forEach((r,i)=>r.querySelector('.num').textContent=i+1); }
-document.addEventListener('click',e=>{
-  const b = e.target.closest('.fl'); if(!b) return;
-  const id = b.closest('.rang').dataset.id, i = S.ordre.indexOf(id), j = i+Number(b.dataset.m);
-  if (j<0||j>=S.ordre.length) return;
-  [S.ordre[i],S.ordre[j]]=[S.ordre[j],S.ordre[i]]; sauver(); dessinerListe();
-  const r = document.querySelector('#liste .rang[data-id="'+id+'"]'); if(r) r.scrollIntoView({block:'nearest'});
-});
-let glisse = null;
-document.addEventListener('pointerdown',e=>{
-  const h = e.target.closest('.poignee'); if(!h) return;
-  e.preventDefault(); const row = h.closest('.rang'); row.classList.add('drag'); h.setPointerCapture(e.pointerId);
-  glisse = {row, pid:e.pointerId};
-});
-document.addEventListener('pointermove',e=>{
-  if(!glisse || e.pointerId!==glisse.pid) return;
-  const liste = $('#liste'), lignes = [...liste.querySelectorAll('.rang')].filter(r=>r!==glisse.row);
-  const apres = lignes.find(r=>{ const b=r.getBoundingClientRect(); return e.clientY < b.top+b.height/2; });
-  if (apres) liste.insertBefore(glisse.row, apres); else liste.appendChild(glisse.row);
-  renumeroter();
-  if (e.clientY<90) window.scrollBy(0,-14); else if (e.clientY>innerHeight-90) window.scrollBy(0,14);
-});
-const finGlisse = e=>{
-  if(!glisse || e.pointerId!==glisse.pid) return;
-  S.ordre = [...document.querySelectorAll('#liste .rang')].map(r=>r.dataset.id); glisse=null; sauver(); dessinerListe();
-};
-document.addEventListener('pointerup',finGlisse); document.addEventListener('pointercancel',finGlisse);
 
 /* ---------------- PDF : A4 recto-verso (2 pages maximum) ---------------- */
 function chargerScript(src){ return new Promise((ok,ko)=>{ const s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=()=>ko(new Error('chargement '+src)); document.head.appendChild(s); }); }
@@ -296,17 +197,17 @@ async function bibliotheques(){
 const PH = 1123, PIED = 54;   // hauteur de page (px) et zone réservée au pied de page
 const PAGE_CSS = 'position:absolute;left:-10000px;top:0;width:794px;height:'+PH+'px;background:#fff;color:#1d1a24;font-family:-apple-system,Helvetica,Arial,sans-serif;padding:30px 40px;box-sizing:border-box;overflow:hidden;';
 
-function ligneHTML(i, ev, rep, fs){
-  const id = S.ordre[i], it = PAR_ID[id], mal = ev.mal[i], f = ev.fr[i];
-  const coul = it.bloc==='L' ? '#8a47c9' : '#2f6fd6';
+function ligneHTML(i, ev, fs){
+  const it = ITEMS[i], f = ev.fr[i], coul = GROUPES[it.g].coul;
   const rm = f>=.99 ? ['✓','#1f9d63'] : f>0 ? ['≈','#e0862a'] : ['✗','#d11a1a'];
-  const texte = (rep[id]||'').trim();
+  const texte = (S.rep[it.id]||'').trim();
+  const gagne = Math.round(f*it.pts*2)/2;
   return '<div style="display:flex;gap:9px;align-items:stretch;margin-bottom:6px">'
     +'<div style="flex:0 0 30px;background:'+coul+';color:#fff;font-weight:700;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px">'+(i+1)+'</div>'
     +'<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:'+fs+'px;line-height:1.22">'+esc(it.txt)+'</div>'
     +'<div style="font-size:'+fs+'px;line-height:1.25;margin-top:2px;'+(texte?'color:#2a3f8f':'color:#b0283a;font-style:italic')+'">'+(texte?esc(texte):'— pas de réponse —')+'</div></div>'
-    +'<div style="flex:0 0 112px;font-size:11.5px;line-height:1.5;text-align:right"><div style="color:'+coul+';font-weight:700">'+BLOC_NOM[it.bloc]+' <span style="font-size:15px;color:'+(mal?'#d11a1a':'#1f9d63')+'">'+(mal?'✗':'✓')+'</span></div>'
-    +'<div style="color:#6c6379">réponse <span style="font-size:15px;font-weight:700;color:'+rm[1]+'">'+rm[0]+'</span></div></div></div>';
+    +'<div style="flex:0 0 74px;text-align:right;line-height:1.35"><div style="font-size:19px;font-weight:700;color:'+rm[1]+'">'+rm[0]+'</div>'
+    +'<div style="font-size:11.5px;color:#6c6379">'+fmt(gagne)+' / '+it.pts+'</div></div></div>';
 }
 function pageRecto(ev, rows){
   const date = new Date().toLocaleDateString('fr-FR');
@@ -316,32 +217,28 @@ function pageRecto(ev, rows){
     +  '<div style="font-size:14px;color:#6c6379;margin-top:2px">Séance 1 : le roman courtois et son contexte</div>'
     +  '<div style="margin-top:9px;font-size:15px"><strong>'+esc(S.prenom+' '+S.nom.toUpperCase())+'</strong> · '+esc(S.classe)+' · '+date+'</div></div>'
     +  '<div style="border:3px solid #6a3fb5;border-radius:14px;padding:6px 16px;text-align:center;min-width:128px"><div style="font-size:11px;color:#6c6379;font-weight:700">NOTE</div>'
-    +  '<div style="font-size:34px;font-weight:800;color:#6a3fb5;line-height:1.1">'+fmt(ev.total)+'<span style="font-size:18px"> / 20</span></div></div></div>'
+    +  '<div style="font-size:34px;font-weight:800;color:#6a3fb5;line-height:1.1">'+fmt(ev.total)+'<span style="font-size:18px"> / '+TOTAL+'</span></div></div></div>'
     +'<div style="margin-top:10px;background:#f3edff;border:1px solid #d9c9f5;border-radius:10px;padding:7px 12px;font-size:12px;line-height:1.35">'
     +  '<strong>Compétence travaillée</strong> — '+esc(COMPETENCE.domaine)+'<br>« '+esc(COMPETENCE.principale)+' »<br>'
     +  '<span style="color:#6c6379">Appui : « '+esc(COMPETENCE.secondaire)+' » · '+esc(COMPETENCE.programme)+'</span></div>'
-    +'<div style="margin:9px 0 8px;font-size:12.5px"><strong>Consigne :</strong> choisir '+NB_CHOIX+' questions de la carte mentale, les classer de la plus importante (n°1) à la moins importante, les questions littéraires d’abord, puis y répondre.</div>'
+    +'<div style="margin:9px 0 8px;font-size:12.5px"><strong>Consigne :</strong> répondre aux '+NB+' questions de la carte mentale, classées de la plus importante à la moins importante pour comprendre le roman courtois.</div>'
     +'<div id="rows">'+rows+'</div>'
-    +'<div style="position:absolute;bottom:20px;left:40px;right:40px;font-size:10.5px;color:#6c6379;display:flex;justify-content:space-between;gap:12px"><span>Bloc ✓ / ✗ : question bien / mal placée par rapport à l’autre bloc · réponse ✓ juste, ≈ partielle, ✗ fausse ou absente (correction automatique)</span><span>Recto</span></div>'
+    +'<div style="position:absolute;bottom:20px;left:40px;right:40px;font-size:10.5px;color:#6c6379;display:flex;justify-content:space-between;gap:12px"><span>✓ réponse juste · ≈ réponse partielle · ✗ fausse ou absente (correction automatique par mots-clés)</span><span>Recto</span></div>'
     +'</div>';
 }
 function pageVerso(ev, rows){
   const cases = ['Maîtrise insuffisante','Maîtrise fragile','Maîtrise satisfaisante','Très bonne maîtrise']
     .map(t=>'<div style="flex:1;border:1.5px solid #8a8396;border-radius:8px;padding:7px 4px;text-align:center;font-size:11.5px"><div style="width:14px;height:14px;border:1.5px solid #333;border-radius:3px;margin:0 auto 4px"></div>'+t+'</div>').join('');
-  const crit = (nom,desc,pts,max)=>'<tr><td style="padding:6px 8px;border:1px solid #cfc7dc;font-weight:700;width:120px;font-size:13px">'+nom+'</td>'
-    +'<td style="padding:6px 8px;border:1px solid #cfc7dc;font-size:12px;line-height:1.3">'+desc+'</td>'
-    +'<td style="padding:6px 8px;border:1px solid #cfc7dc;text-align:center;font-weight:800;font-size:16px;width:80px;color:#6a3fb5">'+fmt(pts)+' / '+max+'</td></tr>';
+  const ligneG = g=>'<tr><td style="padding:6px 8px;border:1px solid #cfc7dc;font-weight:700;font-size:13px;color:'+GROUPES[g].coul+'">'+esc(GROUPES[g].nom)+'</td>'
+    +'<td style="padding:6px 8px;border:1px solid #cfc7dc;font-size:12px;color:#6c6379">Questions '+ITEMS.map((it,i)=>it.g===g?i+1:null).filter(x=>x).join(', ')+'</td>'
+    +'<td style="padding:6px 8px;border:1px solid #cfc7dc;text-align:center;font-weight:800;font-size:16px;width:90px;color:#6a3fb5">'+fmt(ev.pg[g])+' / '+ev.maxGroupe[g]+'</td></tr>';
   return '<div style="'+PAGE_CSS+'">'
     +'<div id="rows">'+rows+'</div>'
     +'<div id="bilan" style="margin-top:8px">'
     +'<div style="font-size:17px;font-weight:800;margin-bottom:5px">Bilan de l’évaluation · '+esc(S.prenom+' '+S.nom.toUpperCase())+' · '+esc(S.classe)+'</div>'
-    +'<table style="width:100%;border-collapse:collapse">'
-    + crit('Choix','Choisir exactement '+NB_CHOIX+' questions et écarter la moins essentielle. <span style="color:#6c6379">'+esc(ev.noteSel)+'</span>',ev.p.selection,BAREME.selection)
-    + crit('Littéraire d’abord','Placer les questions littéraires avant celles sur le contexte. <span style="color:#6c6379">'+ev.bonB+' paires bien ordonnées sur '+ev.totB+'.</span>',ev.p.blocs,BAREME.blocs)
-    + crit('Hiérarchie','Classer chaque bloc par ordre d’importance. <span style="color:#6c6379">'+ev.bonO+' paires bien ordonnées sur '+ev.totO+'.</span>',ev.p.ordre,BAREME.ordre)
-    + crit('Réponses','Répondre correctement à chaque question. <span style="color:#6c6379">'+ev.justes+' réponses justes sur '+NB_CHOIX+' (correction automatique par mots-clés).</span>',ev.p.reponses,BAREME.reponses)
-    +'<tr><td colspan="2" style="padding:6px 8px;border:1px solid #cfc7dc;text-align:right;font-weight:700;font-size:13px">Note automatique · note retenue par le professeur : ………… / 20</td>'
-    +'<td style="padding:6px 8px;border:1px solid #cfc7dc;text-align:center;font-weight:800;font-size:18px;background:#f3edff;color:#6a3fb5">'+fmt(ev.total)+' / 20</td></tr></table>'
+    +'<table style="width:100%;border-collapse:collapse">'+ligneG('A')+ligneG('B')+ligneG('C')
+    +'<tr><td colspan="2" style="padding:6px 8px;border:1px solid #cfc7dc;text-align:right;font-weight:700;font-size:13px">'+ev.justes+' réponses justes sur '+NB+' · Note automatique · note retenue par le professeur : ………… / '+TOTAL+'</td>'
+    +'<td style="padding:6px 8px;border:1px solid #cfc7dc;text-align:center;font-weight:800;font-size:18px;background:#f3edff;color:#6a3fb5">'+fmt(ev.total)+' / '+TOTAL+'</td></tr></table>'
     +'<div style="font-weight:700;font-size:12.5px;margin:9px 0 4px">Niveau de maîtrise de la compétence « '+esc(COMPETENCE.principale)+' »</div>'
     +'<div style="display:flex;gap:7px">'+cases+'</div>'
     +'<div style="font-weight:700;font-size:12.5px;margin:9px 0 4px">Appréciation du professeur</div>'
@@ -352,11 +249,10 @@ function pageVerso(ev, rows){
 }
 /* Choisit la taille de police et la coupure recto/verso pour que tout tienne sur 2 pages */
 function composerPages(ev){
-  const rep = S.rep || {}, n = S.ordre.length;
   const monter = h=>{ const d=document.createElement('div'); d.innerHTML=h; const el=d.firstChild; document.body.appendChild(el); return el; };
   for (const fs of [13,12.5,12,11.5,11,10.5,10]){
-    const lignes = S.ordre.map((_,i)=>ligneHTML(i,ev,rep,fs));
-    for (let k=n; k>=3; k--){
+    const lignes = ITEMS.map((_,i)=>ligneHTML(i,ev,fs));
+    for (let k=NB; k>=3; k--){
       const a = monter(pageRecto(ev, lignes.slice(0,k).join('')));
       const rows1 = a.querySelector('#rows');
       if (rows1.offsetTop + rows1.offsetHeight > PH - PIED){ a.remove(); continue; }
@@ -373,9 +269,9 @@ function composerPages(ev){
 }
 async function genererPDF(){
   await bibliotheques();
-  const ev = evaluer(S.ordre, S.rep);
-  const data = {type:'evaluation-yvain-seance1', version:2, eleve:{nom:S.nom,prenom:S.prenom,classe:S.classe}, date:new Date().toISOString(),
-                ordre:S.ordre, reponses:S.ordre.map(id=>({id, texte:(S.rep[id]||'').trim()})), note:ev.total, detail:ev.p};
+  const ev = evaluer(S.rep);
+  const data = {type:'evaluation-yvain-seance1', version:3, eleve:{nom:S.nom,prenom:S.prenom,classe:S.classe}, date:new Date().toISOString(),
+                reponses:ITEMS.map(it=>({id:it.id, texte:(S.rep[it.id]||'').trim()})), note:ev.total, total:TOTAL, detail:ev.pg};
   const pdf = new jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4', compress:true});
   const {a, b, fs, k} = composerPages(ev);
   try {
@@ -385,7 +281,7 @@ async function genererPDF(){
       pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,210,297);
     }
   } finally { a.remove(); b.remove(); }
-  pdf.setProperties({title:'Évaluation de '+S.prenom+' '+S.nom, keywords:'YVEVAL2.'+b64e(JSON.stringify(data))+'.FIN'});
+  pdf.setProperties({title:'Évaluation de '+S.prenom+' '+S.nom, keywords:'YVEVAL3.'+b64e(JSON.stringify(data))+'.FIN'});
   return {blob:pdf.output('blob'), pages:pdf.getNumberOfPages(), ev, fs, k};
 }
 let lienPDF = null;
