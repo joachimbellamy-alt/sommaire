@@ -133,6 +133,9 @@ textarea{resize:vertical}
 .feuille-pdf .cadre-pro{grid-row:2; grid-column:1}
 .feuille-pdf .cadre-verbe{grid-row:1 / 3; grid-column:2}
 .feuille-pdf .zone{min-height:0}
+label.bouton{position:relative; overflow:hidden}
+.fichier-cache{position:absolute; left:0; top:0; width:1px; height:1px; opacity:0; pointer-events:none}
+.version{color:#999; font-size:12px; text-align:center; margin:18px 0 0}
 .modale{position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:900; padding:16px}
 .modale .carte{width:100%; max-width:420px}
 
@@ -224,7 +227,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
       <div id="accueil-corpus"></div>
       <div class="actions" id="accueil-ouvrir">
         <label class="bouton secondaire">📂 Ouvrir l'exercice envoyé par le professeur
-          <input type="file" id="file-corpus" hidden>
+          <input type="file" id="file-corpus" class="fichier-cache">
         </label>
         <button id="btn-exemple" class="secondaire">Essayer avec un exemple</button>
       </div>
@@ -312,7 +315,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
         <button id="ed-lien" class="secondaire">🔗 Copier le lien pour les élèves</button>
         <button id="ed-tester" class="secondaire">👁 Tester comme un élève</button>
         <label class="bouton secondaire">📂 Ouvrir un exercice existant
-          <input type="file" id="ed-ouvrir" hidden>
+          <input type="file" id="ed-ouvrir" class="fichier-cache">
         </label>
         <button id="ed-nouveau" class="secondaire">Nouvel exercice</button>
       </div>
@@ -323,7 +326,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
     <div id="onglet-corriger" class="panneau" hidden>
       <div class="actions">
         <label class="bouton primaire">📂 Ouvrir des travaux d'élèves (plusieurs à la fois possible)
-          <input type="file" id="corr-fichiers" multiple hidden>
+          <input type="file" id="corr-fichiers" class="fichier-cache" multiple>
         </label>
         <button id="corr-tout" class="secondaire" hidden>🖨 Exporter toutes les copies en PDF</button>
         <button id="corr-vider" class="secondaire" hidden>Vider la liste</button>
@@ -333,6 +336,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
       <div id="corr-detail"></div>
     </div>
   </section>
+  <p class="version">Version du 19 novembre 2026</p>
 </main>
 
 <div id="modale" class="modale" hidden>
@@ -865,8 +869,10 @@ $('#rendu-contenu').addEventListener('click', e => {
 /* Accueil */
 $('#btn-commencer').onclick = demarrer;
 $('#file-corpus').addEventListener('change', async e => {
-  const f = e.target.files[0]; e.target.value = '';
+  const f = e.target.files[0];
   if (!f) return;
+  $('#accueil-msg').textContent = '';
+  $('#accueil-corpus').innerHTML = '<p>📂 Lecture de « ' + esc(f.name) + ' »…</p>';
   try {
     const j = await lireJSON(f);
     if (j && j.type === 'travail-classes-variables') {
@@ -876,7 +882,10 @@ $('#file-corpus').addEventListener('change', async e => {
       return;
     }
     chargerCorpus(depuisFichier(j));
-  } catch(err) { $('#accueil-msg').textContent = '« ' + f.name + ' » n\'est pas un exercice de classes grammaticales. Choisis le fichier « exercice_….json » envoyé par ton professeur.'; }
+  } catch(err) {
+    renderAccueil();
+    $('#accueil-msg').textContent = '« ' + f.name + ' » n\'a pas pu être ouvert (' + (err && (err.name || err.message) || 'erreur') + '). Choisis le fichier « exercice_….json » envoyé par ton professeur.';
+  } finally { e.target.value = ''; }
 });
 $('#btn-exemple').onclick = () => chargerCorpus(exemple());
 ['nom','prenom','classe'].forEach(k => $('#in-' + k).addEventListener('change', () => {
@@ -980,14 +989,16 @@ $('#ed-tester').onclick = () => {
   chargerCorpus(clone(ED));
 };
 $('#ed-ouvrir').addEventListener('change', async e => {
-  const f = e.target.files[0]; e.target.value = '';
+  const f = e.target.files[0];
   if (!f) return;
+  $('#ed-msg').textContent = '📂 Lecture de « ' + f.name + ' »…';
   try {
     const j = await lireJSON(f);
     ED = depuisFichier(j.type === 'travail-classes-variables' ? j.corpus : j);
     edVersChamps(); edRender(); edSauver();
     $('#ed-msg').textContent = '✓ Exercice ouvert : vous pouvez le modifier.';
-  } catch(err) { $('#ed-msg').textContent = '⚠ Ce fichier n\'est pas un exercice valide.'; }
+  } catch(err) { $('#ed-msg').textContent = '⚠ « ' + f.name + ' » n\'a pas pu être ouvert (' + (err && (err.name || err.message) || 'erreur') + ').'; }
+  finally { e.target.value = ''; }
 });
 $('#ed-nouveau').onclick = () => {
   if (ED.phrases.length && !confirm('Effacer l\'exercice en cours de création ?')) return;
@@ -1132,7 +1143,8 @@ $('#corr-liste').addEventListener('click', e => {
   $('#corr-detail').scrollIntoView({behavior:'smooth'});
 });
 $('#corr-fichiers').addEventListener('change', async e => {
-  const fichiers = [...e.target.files]; e.target.value = '';
+  const fichiers = [...e.target.files];
+  $('#corr-msg').textContent = '📂 Lecture de ' + fichiers.length + ' fichier(s)…';
   let ok = 0; const ko = [];
   for (const f of fichiers) {
     try {
@@ -1142,6 +1154,7 @@ $('#corr-fichiers').addEventListener('change', async e => {
       ok++;
     } catch(err) { ko.push(f.name); }
   }
+  e.target.value = '';
   copieOuverte = COPIES.length === 1 ? 0 : -1;
   $('#corr-msg').textContent = pluriel(ok, 'copie ouverte', 'copies ouvertes') + '.' + (ko.length ? ' ⚠ Fichiers ignorés (ce ne sont pas des travaux d\'élèves) : ' + ko.join(', ') : '') + (COPIES.length > 1 ? ' Touchez une ligne pour voir la copie corrigée.' : '');
   renderCopies();
