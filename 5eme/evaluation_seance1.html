@@ -184,8 +184,7 @@ const ETAPES = ['1 · Qui es-tu ?','2 · Répondre','3 · Rendre'];
 function rendreEtapes(){ $('#etapes').innerHTML = ETAPES.map((t,i)=>'<span class="etape'+(i===S.etape?' on':'')+'">'+t+'</span>').join(''); }
 function aller(n){ S.etape=n; sauver(); render(); window.scrollTo(0,0); }
 function enteteCompetence(){
-  return '<div class="comp"><strong>Compétence travaillée</strong> — '+esc(COMPETENCE.domaine)+'<br>« '+esc(COMPETENCE.principale)+' »<br>'
-    +'<span class="aide">'+esc(COMPETENCE.programme)+'</span></div>';
+  return '<div class="comp"><strong>Compétence travaillée</strong> — '+esc(COMPETENCE.domaine)+'<br>« '+esc(COMPETENCE.principale)+' »</div>';
 }
 const ptsTxt = n=>fmt(n)+(n>1?' points':' point');
 function render(){
