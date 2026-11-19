@@ -192,7 +192,7 @@ function render(){
   const app = $('#app');
   if (S.etape===0){
     app.innerHTML = '<div class="carte"><h2>'+esc(CFG.sousTitre)+'</h2>'
-      +'<p>Tu vas répondre à <strong>'+NB+' questions</strong> issues de la carte mentale, <strong>en tapant tes réponses</strong>. Les questions sont classées de la plus importante à la moins importante pour comprendre le roman courtois : les premières peuvent rapporter plus de points.</p>'
+      +'<p>Tu vas répondre à <strong>'+NB+' questions</strong> issues de la carte mentale, <strong>en tapant tes réponses</strong>.</p>'
       + enteteCompetence()
       +'<label>Nom <input type="text" id="nom" autocomplete="family-name" value="'+esc(S.nom)+'"></label>'
       +'<label>Prénom <input type="text" id="prenom" autocomplete="given-name" value="'+esc(S.prenom)+'"></label>'
