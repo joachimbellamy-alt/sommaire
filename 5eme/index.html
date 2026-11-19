@@ -5,194 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Français 5ème</title>
     <style>
-        /* Couleur distinctive pour la 5ème : Vert */
         :root { --couleur-classe: forestgreen; }
-
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: #f4f4f4; 
-            padding: 20px; 
-            color: #2c3e50; 
-        }
-        
-        .container { 
-            max-width: 600px; 
-            margin: auto; 
-            background: white; 
-            padding: 25px; 
-            border-radius: 15px; 
-            border-top: 10px solid var(--couleur-classe); 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-        }
-
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; padding: 20px; color: #2c3e50; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 15px; border-top: 10px solid var(--couleur-classe); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         h1 { color: var(--couleur-classe); text-align: center; margin-bottom: 5px; }
-        p { text-align: center; font-style: italic; color: #7f8c8d; margin-bottom: 25px; }
-        
-        .btn { 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            gap: 10px;
-            padding: 18px; 
-            margin: 12px 0; 
-            background: #fff; 
-            border: 2px solid var(--couleur-classe); 
-            color: var(--couleur-classe); 
-            text-decoration: none; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            transition: 0.3s;
-        }
-
-        .btn:hover { 
-            background: var(--couleur-classe); 
-            color: white; 
-            transform: scale(1.02); 
-        }
-        
-        .nouveau {
-            background: #e74c3c; 
-            color: white; 
-            font-size: 0.75em;
-            padding: 2px 10px; 
-            border-radius: 20px; 
-            text-transform: uppercase;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        h2 {
-            color: var(--couleur-classe);
-            font-size: 1.15em;
-            margin: 25px 0 5px;
-            padding-bottom: 6px;
-            border-bottom: 2px solid #e3eee3;
-        }
-
-        .section-outils {
-            background: #f3f9f3;
-            border-radius: 10px;
-            padding: 5px 15px;
-        }
-
-        .section-outils h2 { margin-top: 12px; border-bottom-color: #cfe3cf; }
-
-        .retour {
-            display: block; 
-            text-align: center; 
-            margin-top: 30px; 
-            color: #95a5a6; 
-            text-decoration: none; 
-            font-weight: bold; 
-        }
-
+        p.citation { text-align: center; font-style: italic; color: #7f8c8d; margin-bottom: 25px; }
+        .btn { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 14px 16px; margin: 9px 0; background: #fff; border: 2px solid var(--couleur-classe); color: var(--couleur-classe); text-decoration: none; border-radius: 8px; font-weight: bold; transition: 0.3s; text-align: center; }
+        .btn:hover { background: var(--couleur-classe); color: white; transform: scale(1.02); }
+        .nouveau { background: #e74c3c; color: white; font-size: 0.75em; padding: 2px 10px; border-radius: 20px; text-transform: uppercase; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .groupe { background: #f3f9f3; border-radius: 12px; padding: 4px 14px 10px; margin: 14px 0; border: 1px solid #dcebdc; }
+        .groupe > summary { cursor: pointer; list-style: none; font-size: 1.15em; font-weight: bold; color: var(--couleur-classe); padding: 12px 0; display: flex; justify-content: space-between; align-items: center; }
+        .groupe > summary::-webkit-details-marker { display: none; }
+        .groupe > summary::after { content: "▾"; font-size: 1.1em; transition: transform .2s; }
+        .groupe:not([open]) > summary::after { transform: rotate(-90deg); }
+        .groupe h3 { margin: 16px 0 2px; font-size: 0.95em; color: #5b7a5b; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #cfe3cf; padding-bottom: 4px; }
+        .retour { display: block; text-align: center; margin-top: 30px; color: #95a5a6; text-decoration: none; font-weight: bold; }
         .retour:hover { color: var(--couleur-classe); }
+        .tovalider { border-style: dashed; }
+        .etiquette { background:#fff3cd; color:#7a5b00; font-size:.72em; padding:2px 8px; border-radius:20px; font-weight:600; border:1px solid #ecd48b; }
+        .bandeau-prop { max-width: 600px; margin: 0 auto 14px; background:#fff8e6; border:1px solid #efd9a0; border-radius:10px; padding:10px 14px; font-size:14px; line-height:1.4; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>📚 Espace Français 5ème</h1>
-    <p>« Celui qui déplace la montagne, c'est celui qui commence par enlever les petites pierres. — Confucius »</p>
-    
-    <section class="section-outils">
-        <h2>🧰 Outils grammaticaux</h2>
-        <a href="classes_variables.html" class="btn">
-            🗂️ Ranger les mots selon leur classe grammaticale <span class="nouveau">nouveau</span>
-        </a>
-        <a href="fiche_classes_variables.html" class="btn">
-            📖 Fiche : les classes grammaticales variables <span class="nouveau">nouveau</span>
-        </a>
-    </section>
+    <p class="citation">« Celui qui déplace la montagne, c'est celui qui commence par enlever les petites pierres. — Confucius »</p>
 
-    <h2>📝 Exercices et questionnaires</h2>
-    <div class="list">
-        <a href="activites-emotions-sentiments.html" class="btn">
-            🎭 S'entraîner sur les émotions et les sentiments (6 activités) <span class="nouveau">nouveau</span>
-        </a>
-
-        <a href="carte_identite_verbe.html" class="btn">
-            🧩 Reconstituer la carte d'identité du verbe <span class="nouveau">nouveau</span>
-        </a>
-
-        <a href="chef_des_voleurs_COD.html" class="btn">
-            🏰 Repérer le COD dans un texte <span class="nouveau">nouveau</span>
-        </a>
-
-        <a href="revisions_des_temps_du_passe.html" class="btn">
-            🏰 Identifier la forme correcte des temps du passé <span class="nouveau">nouveau</span>
-        </a>
-
-        <a href="COD_COI_CC.html" class="btn">
-            🏰 Lundi 30 mars : identifier les fonctions <span class="nouveau">nouveau</span>
-        </a>
-         <a href="COD_vrai_faux.html" class="btn">
-            👑 Evaluer sa maitrise du "je retiens" sur les caractétistiques du COD <span class="nouveau">nouveau</span>
-        </a>
-         <a href="COD_petit_prince.html" class="btn">
-            👑 identifier les COD dans un texte inspiré du Petit Prince <span class="nouveau">nouveau</span>
-        </a>
-         <a href="voyages_COD.html" class="btn">
-            👑 Identifier les COD dans un texte inspiré  de la vie de Saint-Exupéry <span class="nouveau">nouveau</span> 
-        </a>
-           <a href="aeropostale_COD.html" class="btn">
-            👑 Identifier les COD dans un texte inspiré  des aventuriers de l'Aéropostale <span class="nouveau">nouveau</span> 
-        </a>
-    
-        <a href="QCM_COI.html" class="btn">
-            👑 tester ses connaissances sur le COI <span class="nouveau">nouveau</span>
-        </a>
-        <a href="COI_exo1.html" class="btn">
-            👑 Identifier les COI (niveau 1) <span class="nouveau">nouveau</span>
-        </a>
-        <a href="COI_exo2.html" class="btn">
-            👑 Identifier les COI (niveau 2) <span class="nouveau">nouveau</span>
-        </a>
-        <a href="COI_pronoms.html" class="btn">
-            👑 Identifier les COI (niveau 3) <span class="nouveau">nouveau</span>
-        </a>
- <a href="allfonctions.html" class="btn">
-            👑 Identifier les fonctions dans la phrase <span class="nouveau">nouveau</span>
-        </a>
-            <a href="se_tester_sur_les_complements_du_verbe.html" class="btn">
-            👑 Tester ses connaissances sur les compléments <span class="nouveau">nouveau</span>
-                </a>
-            <a href="seance1_questions_reponses.html" class="btn">
-            👑 Tester ses connaissances sur la séance 1 d'Yvain, le chevalier au lion <span class="nouveau">nouveau</span>
-                </a>
-            <a href="carte_mentale_seance1.html" class="btn">
-            👑 Carte mentale de la séance 1 : retrouver les réponses <span class="nouveau">nouveau</span>
-                </a>
-            <a href="evaluation_seance1.html" class="btn">
-            📝 Évaluation sur la séance 1 d'Yvain, le chevalier au lion <span class="nouveau">nouveau</span>
-                </a>
-                <a href="prologue-jeu.html" class="btn">
-            👑 Associer des citations aux fontions du prologue<span class="nouveau">nouveau</span>
-                </a>
-                <a href="armement_chevalier.html" class="btn">
-            👑 questionnaire chevalier<span class="nouveau">nouveau</span>
-                </a>
-                 <a href="chapitre8.html" class="btn">
-            👑 questionnaire chapitre 8<span class="nouveau">nouveau</span>
-                </a>
-                <a href="qcm_chapitre9.html" class="btn">
-            👑 questionnaire chapitre 9<span class="nouveau">nouveau</span>
-                </a>
-                <a href="qcm_chapitre10.html" class="btn">
-            👑 questionnaire chapitre 10<span class="nouveau">nouveau</span>
-                </a>
-                <a href="qcm_chapitre11.html" class="btn">
-            👑 questionnaire chapitre 11<span class="nouveau">nouveau</span>
-                </a>
-        <a href="roue-des-emotions.html" class="btn">
-            🎭 Roue des émotions <span class="nouveau">nouveau</span>
-                </a>
-        <a href="roue-des-emotions-sociales.html" class="btn">
-            🤝 Roue des émotions sociales <span class="nouveau">nouveau</span>
-                </a>
-        <a href="sujet-du-verbe-complexe.html" class="btn">
-            🦸 Le sujet du verbe : sujets complexes <span class="nouveau">nouveau</span>
-        </a>
-    </div>
+    <details class="groupe" open>
+        <summary>📖 Yvain, le chevalier au lion</summary>
+        <h3>Séance 1 : l&#x27;auteur et le contexte</h3>
+        <a href="seance1_questions_reponses.html" class="btn">👑 Tester ses connaissances sur la séance 1 (flashcards)</a>
+        <a href="carte_mentale_seance1.html" class="btn">🗺️ Carte mentale de la séance 1 : retrouver les réponses <span class="nouveau">nouveau</span></a>
+        <a href="evaluation_seance1.html" class="btn">📝 Évaluation sur la séance 1 <span class="nouveau">nouveau</span></a>
+        <h3>Séance 2 : le prologue</h3>
+        <a href="prologue-jeu.html" class="btn">👑 Associer des citations aux fonctions du prologue <span class="nouveau">nouveau</span></a>
+        <h3>L&#x27;équipement du chevalier</h3>
+        <a href="armement_chevalier.html" class="btn">⚔️ Questionnaire : l&#x27;armement du chevalier</a>
+        <h3>Lecture par chapitre</h3>
+        <a href="chapitre8.html" class="btn">📜 Chapitre 8 : le Géant de la Montagne</a>
+        <a href="qcm_chapitre9.html" class="btn">📜 Chapitre 9 : le Sauvetage de Lunette</a>
+        <a href="qcm_chapitre10.html" class="btn">📜 Chapitre 10 : le Château de Pesme Aventure</a>
+        <a href="qcm_chapitre11.html" class="btn">📜 Chapitre 11 : le Combat contre les Démons</a>
+    </details>
+    <details class="groupe">
+        <summary>🗂️ Grammaire : les mots et le verbe</summary>
+        <a href="classes_variables.html" class="btn">🗂️ Ranger les mots selon leur classe grammaticale <span class="nouveau">nouveau</span></a>
+        <a href="fiche_classes_variables.html" class="btn">📖 Fiche : les classes grammaticales variables <span class="nouveau">nouveau</span></a>
+        <a href="carte_identite_verbe.html" class="btn">🧩 Reconstituer la carte d&#x27;identité du verbe</a>
+        <a href="revisions_des_temps_du_passe.html" class="btn">🕰️ Identifier la forme correcte des temps du passé</a>
+    </details>
+    <details class="groupe">
+        <summary>🧩 Grammaire : les fonctions</summary>
+        <h3>Le sujet</h3>
+        <a href="sujet-du-verbe-complexe.html" class="btn">🦸 Le sujet du verbe : sujets complexes</a>
+        <a href="sujet_COD_justifier.html" class="btn">🔎 Sujet ou COD ? Justifier son choix</a>
+        <h3>Le COD</h3>
+        <a href="COD_vrai_faux.html" class="btn">✅ Évaluer sa maîtrise du « je retiens » sur le COD</a>
+        <a href="chef_des_voleurs_COD.html" class="btn">🏰 Repérer le COD dans un texte</a>
+        <a href="COD_petit_prince.html" class="btn">👑 Identifier les COD : texte inspiré du Petit Prince</a>
+        <a href="voyages_COD.html" class="btn">👑 Identifier les COD : texte inspiré de la vie de Saint-Exupéry</a>
+        <a href="aeropostale_COD.html" class="btn">👑 Identifier les COD : texte inspiré des aventuriers de l&#x27;Aéropostale</a>
+        <a href="test%20dys.html" class="btn">💎 Mission Ali Baba : le trésor des COD</a>
+        <a href="sujet_COD.html" class="btn">✏️ Le Petit Prince : 10 défis de réécriture</a>
+        <h3>Le COI</h3>
+        <a href="QCM_COI.html" class="btn">👑 Tester ses connaissances sur le COI</a>
+        <a href="COI_exo1.html" class="btn">👑 Identifier les COI (niveau 1)</a>
+        <a href="COI_exo2.html" class="btn">👑 Identifier les COI (niveau 2)</a>
+        <a href="COI_pronoms.html" class="btn">👑 Identifier les COI (niveau 3)</a>
+        <a href="CODvsCOI.html" class="btn">⚖️ COD ou COI ? Exercice de repérage (Le Petit Prince)</a>
+        <a href="COIvsCC.html" class="btn">⚖️ COI ou complément circonstanciel ?</a>
+        <h3>Toutes les fonctions</h3>
+        <a href="COD_COI_CC.html" class="btn">🏰 Identifier les fonctions (COD, COI, CC)</a>
+        <a href="allfonctions.html" class="btn">👑 Identifier les fonctions dans la phrase</a>
+        <a href="se_tester_sur_les_complements_du_verbe.html" class="btn">👑 Tester ses connaissances sur les compléments</a>
+        <a href="sujet%20_COI_CC.html" class="btn">🔎 Analyser les fonctions : sujet, COI, compléments facultatifs</a>
+        <a href="programme%20sac%20groupes.html" class="btn">🧪 Laboratoire de syntaxe : déplacer les groupes</a>
+    </details>
+    <details class="groupe">
+        <summary>🎭 Émotions et sentiments</summary>
+        <a href="activites-emotions-sentiments.html" class="btn">🎭 S&#x27;entraîner sur les émotions et les sentiments (6 activités) <span class="nouveau">nouveau</span></a>
+        <a href="roue-des-emotions.html" class="btn">🎡 Roue des émotions</a>
+        <a href="roue-des-emotions-sociales.html" class="btn">🤝 Roue des émotions sociales</a>
+        <a href="fiche-emotions-sentiments.html" class="btn">📖 Fiche : les émotions et les sentiments</a>
+        <a href="fiche-emotions-sentiments-dys.html" class="btn">📖 Fiche DYS : les émotions et les sentiments</a>
+    </details>
 
     <a href="../index.html" class="retour">🏠 Retour à l'accueil</a>
 </div>
