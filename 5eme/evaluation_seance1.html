@@ -56,7 +56,7 @@
 
 <script>
 /* ===================== RÉGLAGES MODIFIABLES PAR LE PROFESSEUR ===================== */
-const NB_CHOIX = 15;                                   // nombre d'informations à choisir
+const NB_CHOIX = 15;                                   // nombre de questions à choisir
 const BAREME = { selection:4, blocs:8, ordre:8 };      // total = 20
 const COMPETENCE = {
   programme: "Programme de français, cycle 4 · 5ème (arrêté du 18 février 2026, BO n°10 du 5 mars 2026)",
@@ -64,27 +64,27 @@ const COMPETENCE = {
   principale:"Se constituer des repères dans l’histoire littéraire.",
   secondaire:"Tirer parti des informations sur le contexte de production d’une œuvre pour la comprendre et l’interpréter."
 };
-/* Les 16 informations de la carte mentale.
+/* Les 16 questions de la carte mentale.
    bloc : 'L' = littéraire (à placer d'abord) ; 'C' = contexte historique.
    L'ordre du tableau est l'ordre d'importance attendu (du plus important au moins important).
    ecart : points perdus si l'élève écarte cette information (0 = essentielle, 1 = on peut s'en passer). */
 const ITEMS = [
-  {id:'l1', bloc:'L', ecart:0,  txt:"Chrétien de Troyes est le créateur du roman courtois."},
-  {id:'l2', bloc:'L', ecart:0,  txt:"Le roman courtois raconte les aventures d’un chevalier amoureux de sa dame."},
-  {id:'l3', bloc:'L', ecart:0,  txt:"Ses personnages sont des chevaliers (Lancelot, Perceval) et leurs dames."},
-  {id:'l4', bloc:'L', ecart:0,  txt:"Le roman courtois est un récit écrit en langue romane."},
-  {id:'l5', bloc:'L', ecart:0,  txt:"Son succès est durable : il est diffusé dans toute l’Europe et inspire auteurs et artistes."},
-  {id:'l6', bloc:'L', ecart:0,  txt:"Chrétien de Troyes est un clerc : un homme instruit qui sait lire et écrire le latin."},
-  {id:'l7', bloc:'L', ecart:.5, txt:"Il sert des personnages puissants (mécènes) : Marie de Champagne et Philippe d’Alsace."},
-  {id:'l8', bloc:'L', ecart:1,  txt:"Il a aussi écrit Lancelot et Perceval."},
-  {id:'c1', bloc:'C', ecart:0,  txt:"Le système féodal repose sur des liens de fidélité entre un seigneur (suzerain) et son vassal."},
-  {id:'c2', bloc:'C', ecart:0,  txt:"L’œuvre est écrite au XIIe siècle."},
-  {id:'c3', bloc:'C', ecart:0,  txt:"La religion catholique rythme chaque instant de la vie des gens."},
-  {id:'c4', bloc:'C', ecart:0,  txt:"Les langues romanes sont issues du latin, comme le français."},
-  {id:'c5', bloc:'C', ecart:.5, txt:"Deux genres sont populaires : la chanson de geste (exploits) et le roman."},
-  {id:'c6', bloc:'C', ecart:0,  txt:"À l’oral, les troubadours lisent et chantent les histoires en public."},
-  {id:'c7', bloc:'C', ecart:.5, txt:"À l’écrit, les moines copistes recopient les manuscrits à la main."},
-  {id:'c8', bloc:'C', ecart:1,  txt:"Louis VII, puis Philippe Auguste (à partir de 1180), sont rois de France."}
+  {id:'l1', bloc:'L', ecart:0,  txt:"De quel genre Chrétien de Troyes est-il le créateur ?"},
+  {id:'l2', bloc:'L', ecart:0,  txt:"Qu’appelle-t-on le roman courtois ? (que raconte-t-il ?)"},
+  {id:'l3', bloc:'L', ecart:0,  txt:"Quels personnages le roman courtois met-il en scène ?"},
+  {id:'l4', bloc:'L', ecart:0,  txt:"Qu’appelle-t-on le roman courtois ? (dans quelle langue est-il écrit ?)"},
+  {id:'l5', bloc:'L', ecart:0,  txt:"Pourquoi peut-on dire que Yvain, le chevalier au lion a eu un succès durable ?"},
+  {id:'l6', bloc:'L', ecart:0,  txt:"Chrétien de Troyes était un clerc : que désigne ce terme ?"},
+  {id:'l7', bloc:'L', ecart:.5, txt:"Quelles personnes puissantes Chrétien de Troyes a-t-il servies ?"},
+  {id:'l8', bloc:'L', ecart:1,  txt:"Quelles autres œuvres Chrétien de Troyes a-t-il écrites ?"},
+  {id:'c1', bloc:'C', ecart:0,  txt:"Qu’appelle-t-on le système féodal ?"},
+  {id:'c2', bloc:'C', ecart:0,  txt:"À quelle période cette œuvre a-t-elle été écrite ?"},
+  {id:'c3', bloc:'C', ecart:0,  txt:"Quelle était l’importance de la religion chrétienne à cette époque ?"},
+  {id:'c4', bloc:'C', ecart:0,  txt:"Quel adjectif désigne les langues venues du latin comme le français ?"},
+  {id:'c5', bloc:'C', ecart:.5, txt:"Quels sont les deux genres populaires à l’époque de Chrétien de Troyes ?"},
+  {id:'c6', bloc:'C', ecart:0,  txt:"De quelle manière les textes se transmettent-ils ? Comment désigne-t-on ceux qui les racontent ?"},
+  {id:'c7', bloc:'C', ecart:.5, txt:"Pourquoi les moines ont-ils un rôle important ?"},
+  {id:'c8', bloc:'C', ecart:1,  txt:"Quel roi gouvernait à l’époque de Chrétien de Troyes ?"}
 ];
 /* ================================================================================== */
 
@@ -109,8 +109,8 @@ function evaluer(ordre){
   const it = ordre.map(id=>PAR_ID[id]), n = it.length;
   const omis = ITEMS.filter(x=>!ordre.includes(x.id));
   let ptsSel = 0, noteSel;
-  if (n===NB_CHOIX && omis.length===1){ ptsSel = 2 + 2*omis[0].ecart; noteSel = 'Information écartée : « ' + omis[0].txt + ' »'; }
-  else noteSel = 'Il fallait choisir exactement ' + NB_CHOIX + ' informations.';
+  if (n===NB_CHOIX && omis.length===1){ ptsSel = 2 + 2*omis[0].ecart; noteSel = 'Question écartée : « ' + omis[0].txt + ' »'; }
+  else noteSel = 'Il fallait choisir exactement ' + NB_CHOIX + ' questions.';
   let bonB=0,totB=0,bonO=0,totO=0;
   for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
     if (it[i].bloc!==it[j].bloc){ totB++; if (it[i].bloc==='L') bonB++; }
@@ -119,7 +119,7 @@ function evaluer(ordre){
   const norm = (g,t)=> t ? Math.max(0,(g/t-.5)/.5) : 1;
   const r = x=>Math.round(x*2)/2;
   const p = {selection:r(ptsSel), blocs:r(BAREME.blocs*norm(bonB,totB)), ordre:r(BAREME.ordre*norm(bonO,totO))};
-  // frontière la plus favorable à l'élève : on ne marque ✗ que les informations qui dépassent de leur bloc
+  // frontière la plus favorable à l'élève : on ne marque ✗ que les questions qui dépassent de leur bloc
   let kBest=0, eBest=1e9;
   for(let k=0;k<=n;k++){ const e=it.slice(0,k).filter(a=>a.bloc==='C').length + it.slice(k).filter(a=>a.bloc==='L').length; if(e<eBest){ eBest=e; kBest=k; } }
   const mal = it.map((a,i)=> i<kBest ? a.bloc==='C' : a.bloc==='L');
@@ -140,7 +140,7 @@ function render(){
   const app = $('#app');
   if (S.etape===0){
     app.innerHTML = '<div class="carte"><h2>Évaluation sur la carte mentale de la séance 1</h2>'
-      +'<p>Tu vas <strong>choisir '+NB_CHOIX+' informations</strong> de la carte mentale, puis les <strong>classer selon leur importance</strong> : les informations <strong>littéraires d’abord</strong>, puis celles sur le contexte.</p>'
+      +'<p>Tu vas <strong>choisir '+NB_CHOIX+' questions</strong> de la carte mentale, puis les <strong>classer selon leur importance</strong> : les questions <strong>littéraires d’abord</strong>, puis celles sur le contexte.</p>'
       + enteteCompetence()
       +'<label>Nom <input type="text" id="nom" autocomplete="family-name" value="'+esc(S.nom)+'"></label>'
       +'<label>Prénom <input type="text" id="prenom" autocomplete="given-name" value="'+esc(S.prenom)+'"></label>'
@@ -152,7 +152,7 @@ function render(){
       aller(1);
     };
   } else if (S.etape===1){
-    app.innerHTML = '<div class="carte"><h2>Choisis '+NB_CHOIX+' informations</h2><p class="aide">Touche une information pour la choisir ou l’enlever. Tu en choisis '+NB_CHOIX+' sur '+ITEMS.length+'.</p>'
+    app.innerHTML = '<div class="carte"><h2>Choisis '+NB_CHOIX+' questions</h2><p class="aide">Touche une question pour la choisir ou l’enlever. Tu en choisis '+NB_CHOIX+' sur '+ITEMS.length+'.</p>'
       +'<div class="grille" id="grille"></div>'
       +'<div class="barre-actions"><button id="retour">← Retour</button><span class="compteur" id="cpt"></span><button class="prim" id="suite">Classer →</button></div></div>';
     const g = $('#grille');
@@ -174,9 +174,9 @@ function render(){
       aller(2);
     };
   } else if (S.etape===2){
-    app.innerHTML = '<div class="carte"><h2>Classe les informations</h2>'
-      +'<p>De la <strong>plus importante</strong> (n°1, en haut) à la <strong>moins importante</strong> (n°'+NB_CHOIX+', en bas). <strong>Les informations littéraires d’abord</strong>, puis celles du contexte.</p>'
-      +'<p class="aide">Utilise les flèches ▲ ▼, ou fais glisser une information par la poignée ≡.</p>'
+    app.innerHTML = '<div class="carte"><h2>Classe les questions</h2>'
+      +'<p>De la <strong>plus importante</strong> (n°1, en haut) à la <strong>moins importante</strong> (n°'+NB_CHOIX+', en bas). <strong>Les questions littéraires d’abord</strong>, puis celles du contexte.</p>'
+      +'<p class="aide">Utilise les flèches ▲ ▼, ou fais glisser une question par la poignée ≡.</p>'
       +'<div class="rang-liste" id="liste"></div>'
       +'<div class="barre-actions"><button id="retour">← Modifier mon choix</button><button class="prim" id="suite" style="margin-left:auto">Terminer →</button></div></div>';
     dessinerListe();
@@ -184,7 +184,7 @@ function render(){
     $('#suite').onclick = ()=>aller(3);
   } else {
     app.innerHTML = '<div class="carte"><h2>Rendre mon travail</h2>'
-      +'<p>Tu as choisi et classé <strong>'+S.ordre.length+' informations</strong>. Relis ton classement une dernière fois : tu ne pourras plus le modifier une fois le PDF créé.</p>'
+      +'<p>Tu as choisi et classé <strong>'+S.ordre.length+' questions</strong>. Relis ton classement une dernière fois : tu ne pourras plus le modifier une fois le PDF créé.</p>'
       +'<ol style="padding-left:24px;line-height:1.4">'+S.ordre.map(id=>'<li>'+esc(PAR_ID[id].txt)+'</li>').join('')+'</ol>'
       +'<div class="barre-actions"><button id="retour">← Revenir au classement</button><button class="prim" id="pdf" style="margin-left:auto">📤 Créer mon PDF</button></div></div>';
     $('#retour').onclick = ()=>aller(2);
@@ -259,9 +259,9 @@ function pageRecto(ev){
     +'<div style="margin-top:14px;background:#f3edff;border:1px solid #d9c9f5;border-radius:10px;padding:9px 13px;font-size:13px;line-height:1.4">'
     +  '<strong>Compétence travaillée</strong> — '+esc(COMPETENCE.domaine)+'<br>« '+esc(COMPETENCE.principale)+' »<br>'
     +  '<span style="color:#6c6379">Appui : « '+esc(COMPETENCE.secondaire)+' »<br>'+esc(COMPETENCE.programme)+'</span></div>'
-    +'<div style="margin:14px 0 8px;font-size:14px"><strong>Consigne :</strong> choisir '+NB_CHOIX+' informations de la carte mentale et les classer de la plus importante (n°1) à la moins importante, les informations littéraires d’abord.</div>'
+    +'<div style="margin:14px 0 8px;font-size:14px"><strong>Consigne :</strong> choisir '+NB_CHOIX+' questions de la carte mentale et les classer de la plus importante (n°1) à la moins importante, les questions littéraires d’abord.</div>'
     +'<table style="width:100%;border-collapse:collapse">'+lignes+'</table>'
-    +'<div style="position:absolute;bottom:22px;left:40px;right:40px;font-size:11px;color:#6c6379;display:flex;justify-content:space-between"><span>✓ / ✗ : l’information est bien / mal placée par rapport à l’autre bloc</span><span>Recto · voir verso pour le détail</span></div>'
+    +'<div style="position:absolute;bottom:22px;left:40px;right:40px;font-size:11px;color:#6c6379;display:flex;justify-content:space-between"><span>✓ / ✗ : la question est bien / mal placée par rapport à l’autre bloc</span><span>Recto · voir verso pour le détail</span></div>'
     +'</div>';
 }
 function pageVerso(ev){
@@ -274,12 +274,12 @@ function pageVerso(ev){
     +'<div style="font-size:22px;font-weight:800">Bilan de l’évaluation</div>'
     +'<div style="font-size:14px;color:#6c6379;margin:2px 0 14px">'+esc(S.prenom+' '+S.nom.toUpperCase())+' · '+esc(S.classe)+'</div>'
     +'<table style="width:100%;border-collapse:collapse;margin-bottom:6px">'
-    + crit('Sélection','Choisir exactement '+NB_CHOIX+' informations et écarter la moins essentielle.<br><span style="color:#6c6379">'+esc(ev.noteSel)+'</span>',ev.p.selection,BAREME.selection)
-    + crit('Littéraire d’abord','Placer toutes les informations littéraires (auteur, genre, œuvre) avant celles sur le contexte.<br><span style="color:#6c6379">'+ev.bonB+' paires bien ordonnées sur '+ev.totB+'.</span>',ev.p.blocs,BAREME.blocs)
+    + crit('Sélection','Choisir exactement '+NB_CHOIX+' questions et écarter la moins essentielle.<br><span style="color:#6c6379">'+esc(ev.noteSel)+'</span>',ev.p.selection,BAREME.selection)
+    + crit('Littéraire d’abord','Placer toutes les questions littéraires (auteur, genre, œuvre) avant celles sur le contexte.<br><span style="color:#6c6379">'+ev.bonB+' paires bien ordonnées sur '+ev.totB+'.</span>',ev.p.blocs,BAREME.blocs)
     + crit('Hiérarchie','Classer chaque bloc par ordre d’importance.<br><span style="color:#6c6379">'+ev.bonO+' paires bien ordonnées sur '+ev.totO+' à l’intérieur des blocs.</span>',ev.p.ordre,BAREME.ordre)
     +'<tr><td colspan="2" style="padding:10px;border:1px solid #cfc7dc;text-align:right;font-weight:700">Note finale</td>'
     +'<td style="padding:10px;border:1px solid #cfc7dc;text-align:center;font-weight:800;font-size:20px;background:#f3edff;color:#6a3fb5">'+fmt(ev.total)+' / 20</td></tr></table>'
-    +'<div style="font-size:12px;color:#6c6379;margin-bottom:18px">Une paire est bien ordonnée quand, de deux informations, la plus importante est placée avant l’autre.</div>'
+    +'<div style="font-size:12px;color:#6c6379;margin-bottom:18px">Une paire est bien ordonnée quand, de deux questions, la plus importante est placée avant l’autre.</div>'
     +'<div style="font-weight:700;margin-bottom:6px">Niveau de maîtrise de la compétence « '+esc(COMPETENCE.principale)+' »</div>'
     +'<div style="display:flex;gap:8px;margin-bottom:22px">'+cases+'</div>'
     +'<div style="font-weight:700;margin-bottom:6px">Appréciation du professeur</div>'
