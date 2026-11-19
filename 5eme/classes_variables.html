@@ -224,7 +224,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
       <div id="accueil-corpus"></div>
       <div class="actions" id="accueil-ouvrir">
         <label class="bouton secondaire">📂 Ouvrir l'exercice envoyé par le professeur
-          <input type="file" id="file-corpus" accept=".json,application/json" hidden>
+          <input type="file" id="file-corpus" hidden>
         </label>
         <button id="btn-exemple" class="secondaire">Essayer avec un exemple</button>
       </div>
@@ -312,7 +312,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
         <button id="ed-lien" class="secondaire">🔗 Copier le lien pour les élèves</button>
         <button id="ed-tester" class="secondaire">👁 Tester comme un élève</button>
         <label class="bouton secondaire">📂 Ouvrir un exercice existant
-          <input type="file" id="ed-ouvrir" accept=".json,application/json" hidden>
+          <input type="file" id="ed-ouvrir" hidden>
         </label>
         <button id="ed-nouveau" class="secondaire">Nouvel exercice</button>
       </div>
@@ -323,7 +323,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
     <div id="onglet-corriger" class="panneau" hidden>
       <div class="actions">
         <label class="bouton primaire">📂 Ouvrir des travaux d'élèves (plusieurs à la fois possible)
-          <input type="file" id="corr-fichiers" accept=".pdf,application/pdf,.json,application/json" multiple hidden>
+          <input type="file" id="corr-fichiers" multiple hidden>
         </label>
         <button id="corr-tout" class="secondaire" hidden>🖨 Exporter toutes les copies en PDF</button>
         <button id="corr-vider" class="secondaire" hidden>Vider la liste</button>
@@ -457,7 +457,12 @@ function lireJSON(fichier){
           const m = /CGVTRAVAIL1\.([A-Za-z0-9_-]+)\.FIN/.exec(txt);
           if (!m) throw new Error('pdf sans travail');
           ok(JSON.parse(b64urlD(m[1])));
-        } else ok(JSON.parse(decodeURIComponent(escape(txt))));
+        } else {
+          let t = decodeURIComponent(escape(txt)).replace(/^\uFEFF/, '').trim();
+          const debut = t.indexOf('{'), fin = t.lastIndexOf('}');
+          if (debut > 0 || (fin >= 0 && fin < t.length - 1)) t = t.slice(debut, fin + 1);
+          ok(JSON.parse(t));
+        }
       } catch(e) { ko(e); }
     };
     r.onerror = ko;
@@ -871,7 +876,7 @@ $('#file-corpus').addEventListener('change', async e => {
       return;
     }
     chargerCorpus(depuisFichier(j));
-  } catch(err) { $('#accueil-msg').textContent = 'Ce fichier n\'est pas un exercice de classes grammaticales.'; }
+  } catch(err) { $('#accueil-msg').textContent = '« ' + f.name + ' » n\'est pas un exercice de classes grammaticales. Choisis le fichier « exercice_….json » envoyé par ton professeur.'; }
 });
 $('#btn-exemple').onclick = () => chargerCorpus(exemple());
 ['nom','prenom','classe'].forEach(k => $('#in-' + k).addEventListener('change', () => {
