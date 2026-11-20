@@ -123,6 +123,13 @@
   .panneau .ligne-btn { display: flex; gap: 8px; flex-wrap: wrap; }
   .panneau ol { margin: 0 0 10px; padding-left: 20px; font-size: 13px; max-height: 140px; overflow: auto; }
   .saut { break-after: page; page-break-after: always; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips .vide { font-size: 14px; color: var(--gris); }
+  .chips button {
+    font: inherit; font-size: 14px; border-radius: 999px; padding: 6px 12px; cursor: pointer;
+    border: 1px solid #b7dfc3; background: #eefaf1; color: #145c2a;
+  }
+  .chips button.actuel { outline: 2px solid var(--bleu); }
   section.commun { background: #f7f9fc; }
   section.commun .oubli { margin: 8px 0 0; text-align: right; }
   section.eleve { border: 2px solid var(--bleu); }
@@ -209,6 +216,11 @@
     </div>
   </section>
 
+  <section class="bloc" id="zoneFiches">
+    <h2>Mes fiches remplies <small>gardées pendant que l'onglet est ouvert — cliquez sur un nom pour rouvrir sa fiche</small></h2>
+    <div id="chipsFiches" class="chips"></div>
+  </section>
+
   <form id="fiche" autocomplete="off" onsubmit="return false">
     <section class="bloc commun">
       <h2>À remplir une seule fois <small>gardé pour tous les élèves, et retrouvé à votre prochaine visite</small></h2>
@@ -277,7 +289,7 @@
   <button type="button" class="principal" id="btn-word">📝 Télécharger en Word</button>
   <button type="button" id="btn-vierge">🖨️ Fiche vierge</button>
   <button type="button" id="btn-nouveau">🧹 Nouvel élève</button>
-  <button type="button" class="dossier" id="btn-dossier" hidden>📦 Toutes mes fiches</button>
+  <button type="button" class="dossier" id="btn-dossier">📦 Toutes mes fiches (0)</button>
 </div>
 <div class="panneau" id="panneauDossier" hidden>
   <h3>📦 Toutes mes fiches</h3>
@@ -505,19 +517,21 @@ function viderFiche() {
   form.reset();
   Object.entries(garde).forEach(([k, v]) => form.elements[k].value = v);
   modifie = false;
+  try { idSansNom = null; majDossier(); } catch (e) {}   // (au tout premier chargement, le module fiches n'existe pas encore)
 }
 
 // La fiche en cours est gardée dans « Toutes mes fiches » avant de changer d'élève
 function confirmerAbandon() {
   enregistrerFiche();
-  if (modifie && !val("eleve")) return confirm("Cette fiche n'a pas de nom d'élève : elle ne sera pas gardée. Continuer ?");
   return true;
 }
 
 document.getElementById("btn-nouveau").onclick = () => {
   if (TOUS.length) {                 // avec une liste : on passe à l'élève suivant
     if (!ELEVES.length) { toast("Choisissez d'abord votre nom dans la liste « Je suis »."); $("filtreEnseignant").focus(); return; }
+    const avant = val("eleve") && FICHES.has(cleCourante()) ? val("eleve") : "";
     if (!confirmerAbandon()) return;
+    if (avant) toast(`✅ Fiche de ${avant} gardée (${FICHES.size} au total).`);
     const suivant = prochainNonFait();
     if (suivant === -1) { toast("Tous les bilans de la liste sont faits 🎉"); return; }
     choisir(suivant);
@@ -528,7 +542,7 @@ document.getElementById("btn-nouveau").onclick = () => {
   viderFiche();
   window.scrollTo({ top: 0, behavior: "smooth" });
   form.eleve.focus();
-  toast(FICHES.size ? "Fiche gardée dans « Toutes mes fiches ». Élève suivant !" : "Fiche vidée — informations communes conservées.");
+  toast(FICHES.size ? `✅ Fiche gardée (${FICHES.size} au total). Élève suivant !` : "Fiche vidée — informations communes conservées.");
 };
 
 /* =====================  LISTE D'ÉLÈVES  ===================== */
@@ -729,12 +743,13 @@ function choisir(i, sansConfirm) {
   courant = i;
   modifie = false;
   majSelect();
+  try { majDossier(); } catch (err) {}
 }
 
 function prochainNonFait() {
   for (let k = 1; k <= ELEVES.length; k++) {
     const i = (courant + k) % ELEVES.length;
-    if (!faits.has(cle(ELEVES[i]))) return i;
+    if (!faits.has(cle(ELEVES[i])) && !FICHES.has(cle(ELEVES[i]))) return i;
   }
   return -1;
 }
@@ -745,8 +760,8 @@ function marquerFait() {
     majSelect();
   }
   // la fiche téléchargée seule compte aussi comme téléchargée dans « Toutes mes fiches »
-  const k = cleFiche(capturer());
-  if (FICHES.has(k)) {
+  const k = cleCourante();
+  if (k && FICHES.has(k)) {
     EXPORTEES.add(k);
     try { sessionStorage.setItem(MEMO_FICHES, JSON.stringify({ f: [...FICHES], e: [...EXPORTEES] })); } catch (err) {}
     majDossier();
@@ -820,7 +835,10 @@ const FICHES = new Map();        // clé élève -> contenu de la fiche
 const EXPORTEES = new Set();     // fiches déjà incluses dans un téléchargement
 const MEMO_FICHES = "bilanEBEP.fiches";   // sessionStorage : survit à un rechargement, effacé à la fermeture de l'onglet
 const CHAMPS_ELEVE = ["c0","c1","c2","c3","c4","c5","com0","com1","com2","com3","com4","com5","appui","progres","suite","objectifs","commentaire"];
-const cleFiche = o => normal(o.eleve) + "|" + normal(o.classe);
+let idSansNom = null;            // fiche en cours sans nom d'élève
+const cleFiche = o => o.__cle || (normal(o.eleve) + "|" + normal(o.classe));
+const cleCourante = () => val("eleve") ? normal(val("eleve")) + "|" + normal(val("classe")) : idSansNom;
+const nomAffiche = o => String(o.eleve || "").trim() || "Élève sans nom";
 
 function capturer() {
   const o = {};
@@ -842,8 +860,11 @@ const estRemplie = o => CHAMPS_ELEVE.some(k => String(o[k] || "").trim());
 
 function enregistrerFiche() {
   const o = capturer();
-  if (!String(o.eleve || "").trim() || !estRemplie(o)) return;
-  const k = cleFiche(o);
+  if (!estRemplie(o)) return;
+  if (!String(o.eleve || "").trim()) { if (!idSansNom) idSansNom = "sansnom-" + Date.now(); }
+  else if (idSansNom) { FICHES.delete(idSansNom); EXPORTEES.delete(idSansNom); idSansNom = null; }  // le nom a été ajouté
+  const k = String(o.eleve || "").trim() ? normal(o.eleve) + "|" + normal(o.classe) : idSansNom;
+  o.__cle = k;
   const avant = JSON.stringify(FICHES.get(k) || {});
   FICHES.set(k, o);
   if (avant !== JSON.stringify(o)) EXPORTEES.delete(k);   // modifiée depuis le dernier téléchargement
@@ -853,13 +874,19 @@ function enregistrerFiche() {
 
 function majDossier() {
   const n = FICHES.size;
-  $("btn-dossier").hidden = n === 0;
   $("btn-dossier").textContent = `📦 Toutes mes fiches (${n})`;
   const liste = triees();
-  $("listeDossier").innerHTML = liste.map(o => `<li>${EXPORTEES.has(cleFiche(o)) ? "✅" : "📝"} ${esc(o.eleve)}${o.classe ? " — " + esc(o.classe) : ""}</li>`).join("");
+  $("listeDossier").innerHTML = n
+    ? liste.map(o => `<li>${EXPORTEES.has(cleFiche(o)) ? "✅" : "📝"} ${esc(nomAffiche(o))}${o.classe ? " — " + esc(o.classe) : ""}</li>`).join("")
+    : "<li style='list-style:none;margin-left:-20px'>Aucune fiche pour l'instant : remplissez une fiche, elle apparaîtra ici.</li>";
+  $("btnToutPDF").disabled = $("btnToutWord").disabled = n === 0;
+  const actuelle = cleCourante();
+  $("chipsFiches").innerHTML = n
+    ? liste.map(o => `<button type="button" data-cle="${esc(cleFiche(o))}" class="${cleFiche(o) === actuelle ? "actuel" : ""}">${EXPORTEES.has(cleFiche(o)) ? "✅" : "📝"} ${esc(nomAffiche(o))}${o.classe ? " — " + esc(o.classe) : ""}</button>`).join("")
+    : `<span class="vide">Aucune fiche pour l'instant. Chaque fiche que vous remplissez est gardée ici, même quand vous passez à l'élève suivant.</span>`;
   if (typeof majSelect === "function" && ELEVES.length) majSelect();
 }
-const triees = () => [...FICHES.values()].sort((a, b) => (a.classe || "").localeCompare(b.classe || "", "fr") || a.eleve.localeCompare(b.eleve, "fr"));
+const triees = () => [...FICHES.values()].sort((a, b) => (a.classe || "").localeCompare(b.classe || "", "fr") || nomAffiche(a).localeCompare(nomAffiche(b), "fr"));
 
 function nomDossier() {
   const o = triees()[0] || {};
@@ -905,6 +932,22 @@ $("btnViderDossier").onclick = () => {
   $("panneauDossier").hidden = true;
   majDossier();
 };
+
+$("chipsFiches").addEventListener("click", e => {
+  const b = e.target.closest("button[data-cle]"); if (!b) return;
+  const o = FICHES.get(b.dataset.cle); if (!o) return;
+  enregistrerFiche();
+  const i = ELEVES.findIndex(x => cle(x) === b.dataset.cle);
+  if (i >= 0) { choisir(i, true); }
+  else {
+    viderFiche();
+    form.eleve.value = o.eleve || ""; form.classe.value = o.classe || "";
+    restaurer(o);
+    if (o.__cle && o.__cle.startsWith("sansnom-")) idSansNom = o.__cle;
+    courant = -1; modifie = false; majDossier();
+  }
+  document.getElementById("fiche").scrollIntoView({ behavior: "smooth" });
+});
 
 // Chaque modification de la fiche est gardée aussitôt
 form.addEventListener("input", enregistrerFiche);
