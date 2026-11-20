@@ -49,7 +49,7 @@
 
   .ident { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 16px; }
   label.champ { display: flex; flex-direction: column; font-size: 13px; font-weight: 600; gap: 4px; }
-  input[type=text], input[type=date], select, textarea {
+  input[type=text], input[type=date], input[type=password], select, textarea {
     font: inherit; font-size: 15px; font-weight: 400;
     border: 1px solid var(--bord); border-radius: 8px; padding: 8px 10px;
     background: #fbfcfd; color: var(--texte); width: 100%;
@@ -112,6 +112,21 @@
   .compteur { font-size: 13px; color: var(--gris); margin-top: 6px; }
   .compteur b { color: #1e8e3e; }
   [hidden] { display: none !important; }
+  body.verrouille main, body.verrouille .actions, body.verrouille .panneau { display: none !important; }
+  #ecranAcces {
+    position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
+    background: var(--fond); padding: 16px;
+  }
+  #ecranAcces form {
+    background: #fff; border: 1px solid var(--bord); border-radius: 14px; padding: 24px; width: min(380px, 100%);
+    box-shadow: 0 8px 24px rgba(0,0,0,.08); text-align: center;
+  }
+  #ecranAcces h1 { font-size: 20px; margin: 0 0 6px; color: var(--bleu); }
+  #ecranAcces p { font-size: 14px; color: var(--gris); margin: 0 0 14px; }
+  #ecranAcces input { text-align: center; margin-bottom: 10px; }
+  #ecranAcces button { width: 100%; font: inherit; font-weight: 600; font-size: 15px; padding: 10px; border-radius: 10px;
+    border: none; background: var(--accent); color: #fff; cursor: pointer; }
+  #ecranAcces .erreur { color: #c62828; font-size: 14px; min-height: 20px; margin: 8px 0 0; }
   .actions button.dossier { background: #1e8e3e; border-color: #1e8e3e; color: #fff; }
   .panneau {
     position: fixed; left: 50%; transform: translateX(-50%); bottom: 72px; z-index: 5;
@@ -162,7 +177,17 @@
   #impression .pied { text-align: center; color: #777; font-size: 7.5pt; margin-top: 10px; }
 </style>
 </head>
-<body>
+<body class="verrouille">
+
+<div id="ecranAcces">
+  <form id="formAcces" autocomplete="off">
+    <h1>🔒 Bilan de l'heure EBEP</h1>
+    <p>Accès réservé aux enseignants.<br>Saisissez le mot de passe.</p>
+    <input type="password" id="mdpAcces" placeholder="Mot de passe" autofocus>
+    <button type="submit">Entrer</button>
+    <div class="erreur" id="erreurAcces"></div>
+  </form>
+</div>
 
 <main>
   <header class="titre">
@@ -662,7 +687,13 @@ let TOUS = [];             // liste complète ; ELEVES = liste filtrée (enseign
 
 /* Liste publiée depuis le fichier de suivi EBEP (onglet « Liste bilan » publié en CSV).
    Contient seulement : NOM Prénom, Classe, Enseignant 1, Enseignant 2 des élèves actifs. */
-const LISTE_EN_LIGNE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTN8LsoeBzuhDaAFfOikPJqzjFofoZWoyy8_aMYb6-RG0Q6dzFf2URXuCt9DovliwK5bZGHqXi4km7V/pub?gid=1763523754&single=true&output=csv";
+// Lien de la liste, chiffré avec le mot de passe : illisible sans lui (AES-GCM, clé dérivée par PBKDF2).
+const LISTE_CHIFFREE = {
+  s: "O5JlqAOr9x1ZlgE9FyNQ1Q==",
+  i: "Zk2u8WLA2LIAWXSa",
+  d: "pkv5twVb0+jCUUAh/HTzvq9c/wDLI6yau8fFEcsmixdCXhQKi31RMXtBWUFGWXDWNQfG+Lklof/PM/Lcbz+BDoimHfvDeYUQmp9hzdCfwfQcpdQrc8GxcvPzVCBf97tJAygnSkoV6Cs6pOABg3Bt4ZiKmtR2/xXV4fUzPK6b7HuBTB8iqrtDfUS7IybcBZjs4D1ArF640ycRh7wfSEuVasp04A6Irnus5yC0diWLQIgrtrXba6cy2Ms="
+};
+let LISTE_EN_LIGNE = "";   // rempli après le bon mot de passe
 
 async function chargerEnLigne(url = LISTE_EN_LIGNE) {
   if (!url) return;
@@ -960,7 +991,46 @@ try {
 } catch (err) {}
 majDossier();
 
-chargerEnLigne();
+/* =====================  ACCÈS PAR MOT DE PASSE  ===================== */
+const MEMO_ACCES = "bilanEBEP.acces";   // sessionStorage : pas besoin de le retaper dans le même onglet
+
+async function dechiffrer(mdp) {
+  const bin = b => Uint8Array.from(atob(b), c => c.charCodeAt(0));
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(mdp), "PBKDF2", false, ["deriveKey"]);
+  const cle = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: bin(LISTE_CHIFFREE.s), iterations: 200000, hash: "SHA-256" },
+    base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  const clair = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bin(LISTE_CHIFFREE.i) }, cle, bin(LISTE_CHIFFREE.d));
+  return new TextDecoder().decode(clair);   // échoue (exception) si le mot de passe est faux
+}
+
+function ouvrir(url) {
+  LISTE_EN_LIGNE = url;
+  document.body.classList.remove("verrouille");
+  $("ecranAcces").hidden = true;
+  chargerEnLigne();
+}
+
+$("formAcces").addEventListener("submit", async e => {
+  e.preventDefault();
+  const mdp = $("mdpAcces").value.trim();
+  $("erreurAcces").textContent = "Vérification…";
+  try {
+    const url = await dechiffrer(mdp);
+    try { sessionStorage.setItem(MEMO_ACCES, mdp); } catch (err) {}
+    $("erreurAcces").textContent = "";
+    ouvrir(url);
+  } catch (err) {
+    $("erreurAcces").textContent = "Mot de passe incorrect.";
+    $("mdpAcces").select();
+  }
+});
+
+(async () => {
+  let memo = null;
+  try { memo = sessionStorage.getItem(MEMO_ACCES); } catch (err) {}
+  if (memo) { try { ouvrir(await dechiffrer(memo)); return; } catch (err) {} }
+  $("mdpAcces").focus();
+})();
 </script>
 </body>
 </html>
