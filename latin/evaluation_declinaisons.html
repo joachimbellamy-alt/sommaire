@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Évaluation – Déclinaisons latines</title>
+<style>
+  :root { --fond:#fbf7ee; --encre:#2b2433; --doux:#6c6379; --bord:#d6cdb8; --vio:#6a3fb5; --ok:#1f9d63; --err:#d11a1a; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--fond); color:var(--encre); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:18px; }
+  header { position:sticky; top:0; z-index:5; background:#fff; border-bottom:1px solid var(--bord); padding:10px 16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:18px; margin:0; flex:1 1 260px; }
+  .etapes { display:flex; gap:6px; flex-wrap:wrap; }
+  .etape { padding:5px 12px; border-radius:999px; background:#eee7d6; color:var(--doux); font-size:14px; font-weight:600; }
+  .etape.on { background:var(--vio); color:#fff; }
+  main { max-width:860px; margin:0 auto; padding:18px 16px 60px; }
+  .carte { background:#fff; border:1px solid var(--bord); border-radius:14px; padding:18px; margin-bottom:16px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  h2 { margin:0 0 8px; font-size:22px; }
+  h3 { margin:0 0 6px; font-size:18px; }
+  .comp { background:#f3edff; border:1px solid #d9c9f5; border-radius:10px; padding:10px 14px; font-size:15px; line-height:1.4; }
+  label { display:flex; flex-direction:column; gap:4px; font-weight:600; margin:10px 0; font-size:16px; }
+  input[type=text], input[type=number], textarea, select { font:inherit; font-size:16px; font-weight:400; padding:10px 12px; border:1.5px solid var(--bord); border-radius:10px; width:100%; background:#fff; }
+  textarea { min-height:92px; resize:vertical; line-height:1.35; }
+  textarea:focus, input:focus, select:focus { outline:none; border-color:var(--vio); box-shadow:0 0 0 3px rgba(106,63,181,.2); }
+  button { font:inherit; font-weight:600; padding:13px 20px; border-radius:12px; border:1.5px solid var(--bord); background:#fff; cursor:pointer; }
+  button.prim { background:var(--vio); border-color:var(--vio); color:#fff; }
+  button.petit { padding:8px 12px; font-size:16px; }
+  button:disabled { opacity:.4; cursor:default; }
+  .barre-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px; }
+  .compteur { font-weight:700; color:var(--vio); margin-left:auto; font-size:20px; }
+  .msg { color:var(--err); font-size:15px; min-height:20px; }
+  .qrep { border:1.5px solid var(--bord); border-radius:12px; padding:12px; margin-bottom:12px; background:#fff; }
+  .qrep.fait { border-color:#9fd8bb; background:#f6fcf9; }
+  .qrep .q { display:flex; gap:10px; align-items:flex-start; font-weight:600; line-height:1.3; margin-bottom:8px; }
+  .num { flex:0 0 30px; height:30px; border-radius:50%; background:var(--vio); color:#fff; font-weight:700; font-size:15px; display:flex; align-items:center; justify-content:center; }
+  .pts { margin-left:auto; flex:0 0 auto; font-size:13px; color:var(--doux); font-weight:600; white-space:nowrap; }
+  .aide { color:var(--doux); font-size:15px; }
+  .modale { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:16px; z-index:20; }
+  .modale[hidden] { display:none; }
+  .modale .carte { max-width:560px; width:100%; margin:0; }
+  a.bouton { display:inline-block; text-decoration:none; font-weight:600; padding:14px 22px; border-radius:12px; background:var(--vio); color:#fff; }
+  /* espace enseignant */
+  .prof-barre { position:sticky; top:56px; z-index:4; background:#fff; border:1px solid var(--bord); border-radius:12px; padding:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+  .prof-barre button { padding:9px 13px; font-size:15px; }
+  .total-pts { margin-left:auto; font-weight:700; color:var(--vio); }
+  .item { border:1.5px solid var(--bord); border-left:6px solid var(--gc,#8a47c9); border-radius:12px; padding:12px; margin-bottom:12px; background:#fff; }
+  .item-tete { display:flex; gap:8px; align-items:center; margin-bottom:6px; }
+  .item-tete .num { background:var(--gc,#8a47c9); }
+  .ligne2 { display:grid; grid-template-columns:110px 1fr; gap:10px; }
+  .grille2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:640px){ .grille2, .ligne2 { grid-template-columns:1fr; } }
+  .item textarea { min-height:60px; }
+  .info-box { background:#fff8e6; border:1px solid #efd9a0; border-radius:10px; padding:10px 14px; font-size:15px; line-height:1.4; }
+  #lien-eleve { font-size:13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="titre-page">📝 Évaluation</h1>
+  <div class="etapes" id="etapes"></div>
+</header>
+<main id="app"></main>
+<div class="modale" id="modale" hidden><div class="carte" id="modale-contenu"></div></div>
+<input type="file" id="fichier" accept=".json,application/json" hidden>
+
+<script>
+/* ================================================================================== */
+/*  CONFIGURATION PAR DÉFAUT — tu peux aussi tout modifier depuis l'espace enseignant  */
+/*  (ouvre cette page avec « ?prof » à la fin de l'adresse)                            */
+/* ================================================================================== */
+const CFG_DEFAUT = {
+  titre: "Évaluation · Le latin, une langue à déclinaisons",
+  sousTitre: "Séance 3 : les bases de la langue latine (Je retiens)",
+  maxCar: 200,
+  competence: {
+    programme: "Langues et cultures de l’Antiquité (latin), cycle 4 · 3ème",
+    domaine:   "Langue – Comprendre le fonctionnement de la langue latine",
+    principale:"Identifier les cas et leurs fonctions pour comprendre une phrase latine.",
+    secondaire:"Comparer le fonctionnement du latin et celui du français."
+  },
+  groupes: { A:"Définitions du cours", B:"Latin et français : les différences", C:"Les cas et leurs fonctions" },
+  /* g = groupe (A, B ou C) · pts = points · rep = réponse attendue */
+  items: [
+    {id:'d1', g:'A', pts:2, txt:"Qu’est-ce qu’une déclinaison ? Que veut dire « décliner » un mot ?",
+       rep:"L’ensemble des formes que prend un nom (ou un adjectif) selon sa fonction dans la phrase. Décliner un mot, c’est réciter toutes ses formes."},
+    {id:'d2', g:'A', pts:1, txt:"Qu’appelle-t-on un cas ?",
+       rep:"Chaque forme du mot correspond à un cas, c’est-à-dire à une fonction française."},
+    {id:'d4', g:'A', pts:1, txt:"Combien existe-t-il de déclinaisons en latin ?",
+       rep:"Il en existe 5."},
+    {id:'f1', g:'B', pts:1, txt:"En français, la fonction d’un mot est déterminée par sa place dans la phrase. Et en latin ?",
+       rep:"Par sa terminaison (la déclinaison)."},
+    {id:'f2', g:'B', pts:1, txt:"En français, l’ordre des mots est fixe (sujet, verbe, complément). Et en latin ?",
+       rep:"Il est souple ; le verbe est souvent en fin de phrase."},
+    {id:'f3', g:'B', pts:1, txt:"En français, on utilise des articles (le, la, un, des). Et en latin ?",
+       rep:"Il n’y en a aucun : servus = l’esclave ou un esclave."},
+    {id:'f5', g:'B', pts:1, txt:"En français, le pronom sujet est obligatoire (il craint). Et en latin ?",
+       rep:"Il est facultatif : la terminaison du verbe indique la personne."},
+    {id:'f7', g:'B', pts:1, txt:"En français, il existe deux genres (masculin, féminin). Et en latin ?",
+       rep:"Trois genres : masculin, féminin et neutre."},
+    {id:'c1', g:'C', pts:1, txt:"Nominatif (Servus dominum timet.) : quelle(s) fonction(s) française(s) ?",
+       rep:"Sujet ; attribut du sujet (qui est-ce qui ?)."},
+    {id:'c2', g:'C', pts:1, txt:"Accusatif (Servus dominum timet.) : quelle fonction française ?",
+       rep:"COD (qui ? quoi ?)."},
+    {id:'c3', g:'C', pts:1, txt:"Génitif (Villa patris magna erat.) : quelle fonction française ?",
+       rep:"Complément du nom (de qui ? de quoi ?)."},
+    {id:'c4', g:'C', pts:1, txt:"Datif (Nomen Roscii omnibus notum est.) : quelle fonction française ? (à quelle question répond-il ?)",
+       rep:"Complément d’attribution / COI : il répond à « à qui ? pour qui ? » (ici : connu de tous)."},
+    {id:'c5', g:'C', pts:1, txt:"Ablatif : quelle fonction française ?",
+       rep:"Compléments circonstanciels (lieu, moyen, temps)."},
+    {id:'c6', g:'C', pts:1, txt:"Quel cas sert à interpeller quelqu’un ?",
+       rep:"Le vocatif."}
+  ]
+};
+const COUL = {A:'#8a47c9', B:'#2f6fd6', C:'#1f9d63'};
+
+/* ---------------- Outils ---------------- */
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const store = { get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
+                set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} },
+                del(k){ try{ localStorage.removeItem(k); }catch(e){} } };
+const slug = s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const norm = s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[’']/g,' ');
+const fmt = x=>String(x).replace('.',',');
+const clone = o=>JSON.parse(JSON.stringify(o));
+const hash = s=>{ let h=5381; for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return (h>>>0).toString(36); };
+function b64u(bytes){ let s=''; for(let i=0;i<bytes.length;i+=8192) s+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192)); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function unb64u(t){ t=t.replace(/-/g,'+').replace(/_/g,'/'); while(t.length%4) t+='='; const s=atob(t), o=new Uint8Array(s.length); for(let i=0;i<s.length;i++) o[i]=s.charCodeAt(i); return o; }
+const b64e = s=>b64u(new TextEncoder().encode(s));
+async function fluxVersOctets(flux){ return new Uint8Array(await new Response(flux).arrayBuffer()); }
+async function encoderCfg(cfg){
+  const bytes = new TextEncoder().encode(JSON.stringify(cfg));
+  if (window.CompressionStream){
+    const cs = new CompressionStream('deflate-raw'), w = cs.writable.getWriter(); w.write(bytes); w.close();
+    return 'z' + b64u(await fluxVersOctets(cs.readable));
+  }
+  return 'j' + b64u(bytes);
+}
+async function decoderCfg(txt){
+  let bytes = unb64u(txt.slice(1));
+  if (txt[0]==='z'){
+    const ds = new DecompressionStream('deflate-raw'), w = ds.writable.getWriter(); w.write(bytes); w.close();
+    bytes = await fluxVersOctets(ds.readable);
+  }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+/* Vérifie et nettoie une configuration (importée ou décodée) */
+function nettoyerCfg(c){
+  if (!c || !Array.isArray(c.items) || !c.items.length) throw new Error('configuration vide');
+  const d = CFG_DEFAUT, txt = (v,def)=>typeof v==='string' ? v : def;
+  const out = {
+    titre: txt(c.titre,d.titre), sousTitre: txt(c.sousTitre,d.sousTitre),
+    maxCar: Math.min(500, Math.max(20, Number(c.maxCar)||d.maxCar)),
+    competence: {}, groupes: {},
+    items: c.items.slice(0,40).map((it,i)=>({
+      id: txt(it.id,'q'+i) || ('q'+i), g: ['A','B','C'].includes(it.g) ? it.g : 'A',
+      pts: Math.max(0, Math.round((Number(it.pts)||0)*4)/4), txt: txt(it.txt,''), rep: txt(it.rep,''),
+    }))
+  };
+  Object.keys(d.competence).forEach(k=>out.competence[k] = txt((c.competence||{})[k], d.competence[k]));
+  ['A','B','C'].forEach(k=>out.groupes[k] = txt((c.groupes||{})[k], d.groupes[k]));
+  return out;
+}
+
+/* ---------------- Configuration active ---------------- */
+let CFG, ITEMS, NB, TOTAL, MAX_CAR, COMPETENCE, S, CLE;
+function appliquerCfg(cfg){
+  CFG = cfg; ITEMS = cfg.items; NB = ITEMS.length; TOTAL = ITEMS.reduce((s,i)=>s+i.pts,0);
+  MAX_CAR = cfg.maxCar; COMPETENCE = cfg.competence;
+  CLE = 'eval-latin-declinaisons-s3-v1:' + hash(JSON.stringify(ITEMS.map(i=>[i.id,i.txt,i.pts])));
+  S = store.get(CLE) || {etape:0, nom:'', prenom:'', classe:'', rep:{}};
+  S.rep = S.rep || {};
+  $('#titre-page').textContent = '📝 ' + cfg.titre;
+  document.title = cfg.titre;
+}
+const sauver = ()=>store.set(CLE,S);
+const nomGroupe = g=>CFG.groupes[g];
+
+/* ====================== ESPACE ÉLÈVE ====================== */
+const ETAPES = ['1 · Qui es-tu ?','2 · Répondre','3 · Rendre'];
+function rendreEtapes(){ $('#etapes').innerHTML = ETAPES.map((t,i)=>'<span class="etape'+(i===S.etape?' on':'')+'">'+t+'</span>').join(''); }
+function aller(n){ S.etape=n; sauver(); render(); window.scrollTo(0,0); }
+function enteteCompetence(){
+  return '<div class="comp"><strong>Compétence travaillée</strong> — '+esc(COMPETENCE.domaine)+'<br>« '+esc(COMPETENCE.principale)+' »</div>';
+}
+const ptsTxt = n=>fmt(n)+(n>1?' points':' point');
+function render(){
+  rendreEtapes();
+  const app = $('#app');
+  if (S.etape===0){
+    app.innerHTML = '<div class="carte"><h2>'+esc(CFG.sousTitre)+'</h2>'
+      +'<p>Tu vas répondre à <strong>'+NB+' questions</strong> issues de la fiche « Je retiens » de la séance 3, <strong>en tapant tes réponses</strong>.</p>'
+      + enteteCompetence()
+      +'<label>Nom <input type="text" id="nom" autocomplete="family-name" value="'+esc(S.nom)+'"></label>'
+      +'<label>Prénom <input type="text" id="prenom" autocomplete="given-name" value="'+esc(S.prenom)+'"></label>'
+      +'<label>Classe <input type="text" id="classe" value="'+esc(S.classe)+'" placeholder="ex. 3e B"></label>'
+      +'<p class="msg" id="msg"></p><div class="barre-actions"><button class="prim" id="go">Commencer</button></div></div>';
+    $('#go').onclick = ()=>{
+      S.nom=$('#nom').value.trim(); S.prenom=$('#prenom').value.trim(); S.classe=$('#classe').value.trim();
+      if(!S.nom||!S.prenom||!S.classe){ $('#msg').textContent='Écris ton nom, ton prénom et ta classe.'; return; }
+      aller(1);
+    };
+  } else if (S.etape===1){
+    app.innerHTML = '<div class="carte"><h2>Tape tes réponses</h2>'
+      +'<p>Réponds à chaque question par une phrase verbale. <span class="aide">(Maximum '+MAX_CAR+' caractères par réponse.)</span></p>'
+      +'<div id="reponses"></div>'
+      +'<div class="barre-actions"><button id="retour">← Retour</button><span class="compteur" id="cpt"></span><button class="prim" id="suite">Terminer →</button></div></div>';
+    const zone = $('#reponses');
+    ITEMS.forEach((it,i)=>{
+      const d = document.createElement('div'); d.className='qrep'+((S.rep[it.id]||'').trim()?' fait':'');
+      d.innerHTML = '<div class="q"><div class="num">'+(i+1)+'</div><div>'+esc(it.txt)+'</div><div class="pts">'+ptsTxt(it.pts)+'</div></div>'
+        +'<textarea maxlength="'+MAX_CAR+'" spellcheck="false" autocorrect="off" autocomplete="off" aria-label="Réponse à la question '+(i+1)+'" placeholder="Ta réponse…"></textarea>';
+      const ta = d.querySelector('textarea'); ta.value = S.rep[it.id]||'';
+      ta.addEventListener('input',()=>{ S.rep[it.id]=ta.value; d.classList.toggle('fait',!!ta.value.trim()); maj(); sauver(); });
+      zone.appendChild(d);
+    });
+    const maj = ()=>{ $('#cpt').textContent = ITEMS.filter(it=>(S.rep[it.id]||'').trim()).length+' / '+NB+' répondues'; };
+    maj();
+    $('#retour').onclick = ()=>aller(0);
+    $('#suite').onclick = ()=>aller(2);
+  } else {
+    const vides = ITEMS.filter(it=>!(S.rep[it.id]||'').trim()).length;
+    app.innerHTML = '<div class="carte"><h2>Rendre mon travail</h2>'
+      +'<p>Relis tes réponses : tu ne pourras plus les modifier une fois le PDF créé.</p>'
+      +(vides?'<p class="msg">⚠ Il reste '+vides+' question'+(vides>1?'s':'')+' sans réponse.</p>':'')
+      +'<ol style="padding-left:24px;line-height:1.4">'+ITEMS.map(it=>'<li><strong>'+esc(it.txt)+'</strong><br><span style="color:var(--vio)">'+(esc(S.rep[it.id]||'').trim()||'<em style="color:var(--err)">— pas de réponse —</em>')+'</span></li>').join('')+'</ol>'
+      +'<div class="barre-actions"><button id="retour">← Revenir aux réponses</button><button class="prim" id="pdf" style="margin-left:auto">📤 Créer mon PDF</button></div></div>';
+    $('#retour').onclick = ()=>aller(1);
+    $('#pdf').onclick = creerRendu;
+  }
+}
+
+/* ---------------- PDF : une seule page A4 portrait ---------------- */
+function chargerScript(src){ return new Promise((ok,ko)=>{ const s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=()=>ko(new Error('chargement '+src)); document.head.appendChild(s); }); }
+async function bibliotheques(){
+  const essai = (loc, cdn)=>chargerScript(loc).catch(()=>chargerScript(cdn));
+  if (!window.html2canvas) await essai('../5eme/lib/html2canvas.min.js','https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  if (!window.jspdf) await essai('../5eme/lib/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+}
+const PH = 1123, PIED = 46;
+const PAGE_CSS = 'position:absolute;left:-10000px;top:0;width:794px;height:'+PH+'px;background:#fff;color:#1d1a24;font-family:-apple-system,Helvetica,Arial,sans-serif;padding:30px 40px;box-sizing:border-box;overflow:hidden;';
+
+function ligneHTML(i, fs){
+  const it = ITEMS[i], coul = COUL[it.g], texte = (S.rep[it.id]||'').trim();
+  return '<div style="display:flex;gap:9px;align-items:stretch;margin-bottom:6px">'
+    +'<div style="flex:0 0 30px;background:'+coul+';color:#fff;font-weight:700;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px">'+(i+1)+'</div>'
+    +'<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:'+fs+'px;line-height:1.22">'+esc(it.txt)+'</div>'
+    +'<div style="font-size:'+fs+'px;line-height:1.25;margin-top:2px;'+(texte?'color:#2a3f8f':'color:#b0283a;font-style:italic')+'">'+(texte?esc(texte):'— pas de réponse —')+'</div></div>'
+    +'<div style="flex:0 0 78px;text-align:right;align-self:center;font-size:12.5px;color:#6c6379;white-space:nowrap">…… / '+fmt(it.pts)+'</div></div>';
+}
+function enteteHTML(){
+  const date = new Date().toLocaleDateString('fr-FR');
+  const niveaux = ['Maîtrise insuffisante','Maîtrise fragile','Maîtrise satisfaisante','Très bonne maîtrise']
+    .map(t=>'<div style="flex:1;display:flex;align-items:center;gap:6px;font-size:11.5px"><span style="flex:0 0 15px;height:15px;border:1.5px solid #333;border-radius:3px;background:#fff"></span>'+t+'</div>').join('');
+  return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px">'
+    +  '<div><div style="font-size:22px;font-weight:800">'+esc(CFG.titre)+'</div>'
+    +  '<div style="font-size:14px;color:#6c6379;margin-top:2px">'+esc(CFG.sousTitre)+'</div>'
+    +  '<div style="margin-top:9px;font-size:15px"><strong>'+esc(S.prenom+' '+S.nom.toUpperCase())+'</strong> · '+esc(S.classe)+' · '+date+'</div></div>'
+    +  '<div style="border:3px solid #6a3fb5;border-radius:14px;padding:6px 16px;text-align:center;min-width:140px"><div style="font-size:11px;color:#6c6379;font-weight:700">NOTE</div>'
+    +  '<div style="font-size:24px;font-weight:800;color:#6a3fb5;line-height:1.5">………… <span style="font-size:17px">/ '+fmt(TOTAL)+'</span></div></div></div>'
+    +'<div style="margin:10px 0 12px;background:#f3edff;border:1px solid #d9c9f5;border-radius:10px;padding:8px 12px;font-size:12px;line-height:1.35">'
+    +  '<strong>Compétence travaillée</strong> — '+esc(COMPETENCE.domaine)+'<br>« '+esc(COMPETENCE.principale)+' »<br>'
+    +  '<span style="color:#6c6379">Appui : « '+esc(COMPETENCE.secondaire)+' »</span>'
+    +  '<div style="display:flex;gap:8px;margin-top:8px">'+niveaux+'</div></div>';
+}
+function basHTML(){
+  return '<div id="fin" style="margin-top:8px">'
+    +'<div style="font-weight:700;font-size:12.5px;margin-bottom:4px">Appréciation</div>'
+    +'<div style="border:1.5px solid #8a8396;border-radius:8px;height:58px;background-image:repeating-linear-gradient(transparent,transparent 28px,#d5cfe0 28px,#d5cfe0 29px)"></div>'
+    +'<div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:#6c6379"><span>Signature de l’élève : …………………</span><span>Signature des parents : …………………</span></div></div>';
+}
+function pageHTML(rows, premiere, derniere, num, nbPages){
+  return '<div style="'+PAGE_CSS+'">'
+    +(premiere ? enteteHTML() : '')
+    +'<div id="rows">'+rows+'</div>'
+    +(derniere ? basHTML() : '')
+    +'<div style="position:absolute;bottom:18px;right:40px;font-size:10.5px;color:#6c6379">'+(nbPages>1?'Page '+num+' / '+nbPages:'')+'</div>'
+    +'</div>';
+}
+const basPage = el=>{ const f = el.querySelector('#fin') || el.querySelector('#rows'); return f.offsetTop + f.offsetHeight; };
+/* Choisit la plus grande taille de police pour que tout tienne sur UNE page A4 portrait */
+function composerPages(){
+  const monter = h=>{ const d=document.createElement('div'); d.innerHTML=h; const el=d.firstChild; document.body.appendChild(el); return el; };
+  for (const fs of [13,12.5,12,11.5,11,10.5,10,9.5,9,8.5,8]){
+    const seule = monter(pageHTML(ITEMS.map((_,i)=>ligneHTML(i,fs)).join(''), true, true, 1, 1));
+    if (basPage(seule) <= PH - PIED) return {pages:[seule], fs, k:NB};
+    seule.remove();
+  }
+  throw new Error('mise en page impossible');
+}
+async function genererPDF(){
+  await bibliotheques();
+  const data = {type:'evaluation-latin-declinaisons-s3', version:5, titre:CFG.titre, sousTitre:CFG.sousTitre, date:new Date().toISOString(),
+                eleve:{nom:S.nom,prenom:S.prenom,classe:S.classe}, total:TOTAL,
+                competence:{principale:COMPETENCE.principale, secondaire:COMPETENCE.secondaire},
+                questions:ITEMS.map(it=>({id:it.id, texte:it.txt, points:it.pts, attendu:it.rep, reponse:(S.rep[it.id]||'').trim()}))};
+  const pdf = new jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4', compress:true});
+  const {pages, fs, k} = composerPages();
+  try {
+    for (const [idx, el] of pages.entries()){
+      const canvas = await html2canvas(el,{scale:2, backgroundColor:'#ffffff', logging:false});
+      if (idx>0) pdf.addPage('a4','portrait');
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,210,297);
+    }
+  } finally { pages.forEach(el=>el.remove()); }
+  pdf.setProperties({title:'Évaluation de '+S.prenom+' '+S.nom, keywords:'YVEVAL5.'+b64e(JSON.stringify(data))+'.FIN'});
+  return {blob:pdf.output('blob'), pages:pdf.getNumberOfPages(), fs, k};
+}
+let lienPDF = null;
+const modale = h=>{ $('#modale-contenu').innerHTML=h; $('#modale').hidden=false; };
+const fermerModale = ()=>{ $('#modale').hidden=true; };
+async function creerRendu(){
+  modale('<h2>Préparation du PDF…</h2><p>Quelques secondes.</p>');
+  try {
+    const {blob} = await genererPDF();
+    if (lienPDF) URL.revokeObjectURL(lienPDF);
+    lienPDF = URL.createObjectURL(blob);
+    const nom = 'evaluation_'+slug(S.classe)+'_'+slug(S.nom)+'_'+slug(S.prenom)+'.pdf';
+    modale('<h2>✅ Ton PDF est prêt</h2><p class="aide">'+esc(nom)+'</p>'
+      +'<a class="bouton" href="'+lienPDF+'" download="'+esc(nom)+'">📥 Télécharger mon PDF</a>'
+      +'<p class="aide">Tu le retrouveras dans l’app Fichiers, dossier « Téléchargements ». Envoie-le ensuite sur École Directe.</p>'
+      +'<div class="barre-actions"><button id="ferme">Fermer</button></div>');
+    $('#ferme').onclick = fermerModale;
+  } catch(err){
+    modale('<h2>Le PDF n’a pas pu être créé</h2><p>Vérifie ta connexion à Internet, recharge la page puis réessaie. Ton travail est conservé.</p><div class="barre-actions"><button id="ferme">Fermer</button></div>');
+    $('#ferme').onclick = fermerModale;
+  }
+}
+
+/* ====================== ESPACE ENSEIGNANT ====================== */
+const CLE_BROUILLON = 'eval-latin-declinaisons-s3-prof';
+let brouillon = null;     // configuration en cours d'édition
+const sauverBrouillon = ()=>{ store.set(CLE_BROUILLON, brouillon); majTotal(); };
+function majTotal(){ const el=$('#total-pts'); if(el){ const t=brouillon.items.reduce((s,i)=>s+(Number(i.pts)||0),0); el.textContent='Total : '+fmt(t)+' points · '+brouillon.items.length+' questions'; } }
+
+function renderProf(){
+  $('#etapes').innerHTML = '<span class="etape on">✏️ Espace enseignant</span>';
+  const c = brouillon, app = $('#app');
+  app.innerHTML =
+    '<div class="info-box"><strong>Ici, tu modifies l’évaluation.</strong> Tes changements sont gardés sur cet appareil. Pour les donner aux élèves : <strong>« Copier le lien élève »</strong> (ils ouvrent ce lien) ou <strong>« Exporter »</strong> pour garder un fichier. L’adresse normale de la page, sans « ?prof », reste la version d’origine.</div>'
+    +'<div class="prof-barre">'
+    +  '<button class="prim" id="b-lien">🔗 Copier le lien élève</button>'
+    +  '<button id="b-test">👀 Tester comme élève</button>'
+    +  '<button id="b-page">📐 Vérifier la mise en page</button>'
+    +  '<button id="b-export">💾 Exporter</button>'
+    +  '<button id="b-import">📂 Ouvrir</button>'
+    +  '<button id="b-reset">↺ Version d’origine</button>'
+    +  '<span class="total-pts" id="total-pts"></span>'
+    +'</div>'
+    +'<div class="carte"><h2>Titre et compétence</h2>'
+    +  '<label>Titre <input type="text" data-k="titre"></label>'
+    +  '<label>Sous-titre <input type="text" data-k="sousTitre"></label>'
+    +  '<label>Compétence principale <input type="text" data-c="principale"></label>'
+    +  '<label>Compétence d’appui <input type="text" data-c="secondaire"></label>'
+    +  '<label>Domaine du programme <input type="text" data-c="domaine"></label>'
+    +  '<label>Référence du programme <input type="text" data-c="programme"></label>'
+    +  '<div class="grille2"><label>Groupe A (violet) <input type="text" data-g="A"></label><label>Groupe B (bleu) <input type="text" data-g="B"></label></div>'
+    +  '<div class="grille2"><label>Groupe C (vert) <input type="text" data-g="C"></label><label>Longueur maximale d’une réponse (caractères) <input type="number" min="20" max="500" step="10" data-k="maxCar"></label></div>'
+    +'</div>'
+    +'<h2 style="margin:6px 0 10px">Questions (dans l’ordre de l’évaluation)</h2>'
+    +'<div class="aide" style="margin-bottom:10px">Chaque question a une réponse attendue, pour mémoire : elle t’aide à corriger.</div>'
+    +'<div id="items"></div>'
+    +'<div class="barre-actions"><button class="prim" id="b-ajout">＋ Ajouter une question</button></div>';
+  // champs simples
+  app.querySelectorAll('[data-k]').forEach(i=>{ i.value=c[i.dataset.k]; i.oninput=()=>{ c[i.dataset.k]=i.type==='number'?Number(i.value):i.value; sauverBrouillon(); }; });
+  app.querySelectorAll('[data-c]').forEach(i=>{ i.value=c.competence[i.dataset.c]; i.oninput=()=>{ c.competence[i.dataset.c]=i.value; sauverBrouillon(); }; });
+  app.querySelectorAll('[data-g]').forEach(i=>{ i.value=c.groupes[i.dataset.g]; i.oninput=()=>{ c.groupes[i.dataset.g]=i.value; sauverBrouillon(); }; });
+  dessinerItems();
+  majTotal();
+  $('#b-ajout').onclick = ()=>{ c.items.push({id:'q'+Date.now().toString(36), g:'B', pts:1, txt:'', rep:''}); sauverBrouillon(); dessinerItems(); const l=document.querySelectorAll('.item'); l[l.length-1].scrollIntoView({behavior:'smooth',block:'center'}); };
+  $('#b-lien').onclick = copierLien;
+  $('#b-test').onclick = async ()=>{ const h = await encoderCfg(nettoyerCfg(brouillon)); window.open(location.pathname+'#c='+h,'_blank'); };
+  $('#b-page').onclick = verifierMiseEnPage;
+  $('#b-export').onclick = exporter;
+  $('#b-import').onclick = ()=>$('#fichier').click();
+  $('#b-reset').onclick = ()=>{ if(confirm('Revenir à la version d’origine ? Toutes tes modifications seront perdues.')){ brouillon=clone(CFG_DEFAUT); sauverBrouillon(); renderProf(); } };
+}
+function dessinerItems(){
+  const zone = $('#items'); zone.innerHTML='';
+  brouillon.items.forEach((it,i)=>{
+    const d = document.createElement('div'); d.className='item'; d.style.setProperty('--gc',COUL[it.g]);
+    d.innerHTML =
+      '<div class="item-tete"><div class="num">'+(i+1)+'</div><strong style="flex:1">Question '+(i+1)+'</strong>'
+      +'<button class="petit" data-a="haut" '+(i===0?'disabled':'')+' aria-label="Monter">▲</button>'
+      +'<button class="petit" data-a="bas" '+(i===brouillon.items.length-1?'disabled':'')+' aria-label="Descendre">▼</button>'
+      +'<button class="petit" data-a="suppr" aria-label="Supprimer">🗑</button></div>'
+      +'<label>Question posée à l’élève <textarea data-f="txt"></textarea></label>'
+      +'<div class="ligne2"><label>Points <input type="number" min="0" step="0.5" data-f="pts"></label>'
+      +'<label>Groupe <select data-f="g"><option value="A">A · '+esc(brouillon.groupes.A)+'</option><option value="B">B · '+esc(brouillon.groupes.B)+'</option><option value="C">C · '+esc(brouillon.groupes.C)+'</option></select></label></div>'
+      +'<label>Réponse attendue <textarea data-f="rep"></textarea></label>';
+    d.querySelector('[data-f=txt]').value = it.txt; d.querySelector('[data-f=pts]').value = it.pts;
+    d.querySelector('[data-f=g]').value = it.g; d.querySelector('[data-f=rep]').value = it.rep;
+    d.querySelectorAll('[data-f]').forEach(inp=>{
+      inp.oninput = ()=>{
+        const f = inp.dataset.f;
+        if (f==='pts') it.pts = Number(inp.value)||0;
+        else if (f==='g'){ it.g = inp.value; d.style.setProperty('--gc',COUL[it.g]); }
+        else it[f] = inp.value;
+        sauverBrouillon();
+      };
+    });
+    d.querySelectorAll('[data-a]').forEach(b=>b.onclick = ()=>{
+      const a = b.dataset.a, L = brouillon.items;
+      if (a==='haut' && i>0) [L[i-1],L[i]]=[L[i],L[i-1]];
+      else if (a==='bas' && i<L.length-1) [L[i+1],L[i]]=[L[i],L[i+1]];
+      else if (a==='suppr'){ if(!confirm('Supprimer la question '+(i+1)+' ?')) return; L.splice(i,1); }
+      sauverBrouillon(); dessinerItems();
+    });
+    zone.appendChild(d);
+  });
+}
+async function copierLien(){
+  try {
+    const h = await encoderCfg(nettoyerCfg(brouillon));
+    const url = location.origin + location.pathname + '#c=' + h;
+    let ok = false;
+    try { await navigator.clipboard.writeText(url); ok = true; } catch(e){}
+    modale('<h2>'+(ok?'✅ Lien copié':'Lien élève')+'</h2><p>Donne ce lien aux élèves (par exemple à coller dans École Directe). Ils ouvriront ton évaluation modifiée.</p>'
+      +'<textarea id="lien-eleve" readonly style="min-height:110px">'+esc(url)+'</textarea>'
+      +'<p class="aide">'+url.length+' caractères. Les réponses attendues sont contenues dans ce lien : un élève très curieux pourrait les retrouver.</p>'
+      +'<div class="barre-actions"><button class="prim" id="ferme">Fermer</button></div>');
+    $('#lien-eleve').onfocus = e=>e.target.select(); $('#ferme').onclick = fermerModale;
+  } catch(e){ modale('<h2>Lien impossible</h2><p>'+esc(e.message)+'</p><div class="barre-actions"><button id="ferme">Fermer</button></div>'); $('#ferme').onclick = fermerModale; }
+}
+function exporter(){
+  const blob = new Blob([JSON.stringify(brouillon,null,1)],{type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'evaluation-latin-declinaisons-s3.json';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+$('#fichier').addEventListener('change', async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  try { brouillon = nettoyerCfg(JSON.parse(await f.text())); sauverBrouillon(); renderProf(); }
+  catch(err){ modale('<h2>Fichier non valide</h2><p>« '+esc(f.name)+' » n’a pas pu être ouvert.</p><div class="barre-actions"><button id="ferme">Fermer</button></div>'); $('#ferme').onclick = fermerModale; }
+  e.target.value='';
+});
+/* Teste le pire cas (toutes les réponses au maximum de longueur) pour vérifier que le PDF tient sur une page */
+async function verifierMiseEnPage(){
+  const sauveCfg = CFG, sauveS = S;
+  try {
+    appliquerCfg(nettoyerCfg(brouillon));
+    S = {nom:'NOM', prenom:'Prénom', classe:'3e A', rep:{}};
+    ITEMS.forEach(it=>{ S.rep[it.id] = ((it.rep||'réponse')+' ').repeat(40).slice(0,MAX_CAR); });
+    const {pages,fs} = composerPages(); const n = pages.length; pages.forEach(el=>el.remove());
+    modale('<h2>✅ La mise en page tient sur une page</h2><p>Même si chaque élève écrit des réponses de '+MAX_CAR+' caractères, le PDF reste sur une seule page A4 portrait (police ajustée à '+fs+' px).</p><div class="barre-actions"><button id="ferme">Fermer</button></div>');
+  } catch(err){
+    modale('<h2>⚠ Trop de contenu</h2><p>Avec des réponses de longueur maximale, le PDF ne tiendrait pas sur une seule page A4. Retire quelques questions ou réduis la longueur maximale des réponses.</p><div class="barre-actions"><button id="ferme">Fermer</button></div>');
+  } finally { CFG = sauveCfg; S = sauveS; $('#titre-page').textContent='📝 '+brouillon.titre; }
+  $('#ferme').onclick = fermerModale;
+}
+
+/* ====================== DÉMARRAGE ====================== */
+(async function demarrer(){
+  const prof = /(^|[?&])prof(=|&|$)/.test(location.search);
+  const m = /[#&]c=([A-Za-z0-9_-]+)/.exec(location.hash);
+  let cfg = null, erreur = '';
+  if (m){ try { cfg = nettoyerCfg(await decoderCfg(m[1])); } catch(e){ erreur = 'Le lien de l’évaluation est incomplet ou abîmé : la version d’origine est affichée.'; } }
+  if (prof){
+    let b = store.get(CLE_BROUILLON);
+    try { brouillon = b ? nettoyerCfg(b) : (cfg || clone(CFG_DEFAUT)); } catch(e){ brouillon = clone(CFG_DEFAUT); }
+    appliquerCfg(clone(brouillon));
+    renderProf();
+    return;
+  }
+  appliquerCfg(cfg || clone(CFG_DEFAUT));
+  render();
+  if (erreur) $('#app').insertAdjacentHTML('afterbegin','<div class="info-box" style="margin-bottom:12px">'+esc(erreur)+'</div>');
+})();
+</script>
+</body>
+</html>
