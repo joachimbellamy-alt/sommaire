@@ -112,6 +112,17 @@
   .compteur { font-size: 13px; color: var(--gris); margin-top: 6px; }
   .compteur b { color: #1e8e3e; }
   [hidden] { display: none !important; }
+  .actions button.dossier { background: #1e8e3e; border-color: #1e8e3e; color: #fff; }
+  .panneau {
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: 72px; z-index: 5;
+    background: #fff; border: 1px solid var(--bord); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.15);
+    padding: 14px 16px; width: min(440px, calc(100% - 32px));
+  }
+  .panneau h3 { margin: 0 0 4px; font-size: 16px; }
+  .panneau p { margin: 0 0 10px; font-size: 13px; color: var(--gris); }
+  .panneau .ligne-btn { display: flex; gap: 8px; flex-wrap: wrap; }
+  .panneau ol { margin: 0 0 10px; padding-left: 20px; font-size: 13px; max-height: 140px; overflow: auto; }
+  .saut { break-after: page; page-break-after: always; }
   section.commun { background: #f7f9fc; }
   section.commun .oubli { margin: 8px 0 0; text-align: right; }
   section.eleve { border: 2px solid var(--bleu); }
@@ -153,11 +164,11 @@
   </header>
 
   <div class="aide">
-    <b>Comment faire :</b> remplissez la fiche puis cliquez sur <b>Télécharger en PDF</b> ou <b>Télécharger en Word</b>.
-    Rien n'est obligatoire et <b>rien n'est envoyé sur Internet</b> : la fiche reste sur votre ordinateur.
-    Pour imprimer une fiche à remplir à la main, cliquez sur <b>Fiche vierge</b>.<br>
-    <b>Vos élèves :</b> choisissez votre nom dans « Je suis » ; vos élèves EBEP s'affichent et l'en-tête se remplit tout seul.
-    La liste n'est pas conservée : elle s'efface quand vous fermez la page.
+    <b>Comment faire :</b> choisissez votre nom dans « Je suis » : vos élèves s'affichent et l'en-tête se remplit tout seul.
+    Remplissez la fiche, puis passez à l'<b>élève suivant</b> : chaque fiche est gardée.
+    À la fin, cliquez sur <b>📦 Toutes mes fiches</b> pour tout télécharger en un seul fichier (PDF ou Word), à joindre à votre e-mail.<br>
+    Rien n'est obligatoire et <b>rien n'est envoyé sur Internet</b> : vos fiches restent sur votre ordinateur, tant que l'onglet est ouvert.
+    Pour imprimer une fiche à remplir à la main, cliquez sur <b>Fiche vierge</b>.
   </div>
 
   <section class="bloc liste" id="zoneListe">
@@ -266,6 +277,19 @@
   <button type="button" class="principal" id="btn-word">📝 Télécharger en Word</button>
   <button type="button" id="btn-vierge">🖨️ Fiche vierge</button>
   <button type="button" id="btn-nouveau">🧹 Nouvel élève</button>
+  <button type="button" class="dossier" id="btn-dossier" hidden>📦 Toutes mes fiches</button>
+</div>
+<div class="panneau" id="panneauDossier" hidden>
+  <h3>📦 Toutes mes fiches</h3>
+  <p>Un seul fichier, une fiche par page, à joindre à votre e-mail.</p>
+  <ol id="listeDossier"></ol>
+  <div class="ligne-btn">
+    <button type="button" class="btn bleu" id="btnToutPDF">📄 En PDF</button>
+    <button type="button" class="btn bleu" id="btnToutWord">📝 En Word</button>
+    <button type="button" class="btn" id="btnFermerDossier">Fermer</button>
+  </div>
+  <p style="margin:10px 0 0">Les fiches restent ici tant que l'onglet est ouvert.
+    <button type="button" class="lien" id="btnViderDossier">Effacer toutes mes fiches</button></p>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -321,11 +345,20 @@ let modifie = false;
 const marque = e => { if (!COMMUNS.includes(e.target.name)) modifie = true; };
 form.addEventListener("input", marque);
 form.addEventListener("change", marque);
-window.addEventListener("beforeunload", e => { if (modifie) { e.preventDefault(); e.returnValue = ""; } });
+window.addEventListener("beforeunload", e => {
+  if (modifie || [...FICHES.keys()].some(k => !EXPORTEES.has(k))) { e.preventDefault(); e.returnValue = ""; }
+});
 
 // --- lecture des données ---
-function val(name) { const el = form.elements[name]; return el ? (el.value || "").trim() : ""; }
-function radio(name) { const el = form.querySelector(`input[name="${name}"]:checked`); return el ? el.value : ""; }
+let SRC = null;   // si défini : on lit une fiche enregistrée au lieu du formulaire
+function val(name) {
+  if (SRC) return String(SRC[name] || "").trim();
+  const el = form.elements[name]; return el ? (el.value || "").trim() : "";
+}
+function radio(name) {
+  if (SRC) return SRC[name] || "";
+  const el = form.querySelector(`input[name="${name}"]:checked`); return el ? el.value : "";
+}
 function dateFr(iso) { if (!iso) return ""; const [y, m, d] = iso.split("-"); return `${d}/${m}/${y}`; }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
@@ -394,12 +427,13 @@ function imprimer(vierge) {
 }
 
 document.getElementById("btn-pdf").onclick = () => {
+  enregistrerFiche();
   toast("Dans la fenêtre qui s'ouvre, choisissez « Enregistrer en PDF ».");
   setTimeout(() => imprimer(false), 300);
 };
 document.getElementById("btn-vierge").onclick = () => imprimer(true);
 
-document.getElementById("btn-word").onclick = () => {
+function telechargerWord(corps, nom) {
   const css = `body{font-family:Arial,sans-serif;font-size:10pt}
     table{width:100%;border-collapse:collapse;margin-bottom:8px}
     td,th{border:1px solid #9DB7D3;padding:4px 6px;vertical-align:middle}
@@ -412,16 +446,21 @@ document.getElementById("btn-word").onclick = () => {
     .txt{white-space:pre-wrap}
     .pied{text-align:center;color:#777;font-size:7.5pt}`;
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-    <head><meta charset="utf-8"><title>${esc(nomFichier())}</title>
+    <head><meta charset="utf-8"><title>${esc(nom)}</title>
     <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
     <style>@page{size:21cm 29.7cm;margin:1.5cm}${css}</style></head>
-    <body>${ficheHTML(false).replace(/<div class="txt">([\s\S]*?)<\/div>/g, (m, t) => `<div class="txt">${t.replace(/\n/g, "<br>")}</div>`)}</body></html>`;
+    <body>${corps.replace(/<div class="txt">([\s\S]*?)<\/div>/g, (m, t) => `<div class="txt">${t.replace(/\n/g, "<br>")}</div>`)}</body></html>`;
   const blob = new Blob(["﻿", html], { type: "application/msword" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = nomFichier() + ".doc";
+  a.download = nom + ".doc";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+document.getElementById("btn-word").onclick = () => {
+  enregistrerFiche();
+  telechargerWord(ficheHTML(false), nomFichier());
   modifie = false;
   marquerFait();
   toast("Fichier Word téléchargé.");
@@ -468,8 +507,11 @@ function viderFiche() {
   modifie = false;
 }
 
+// La fiche en cours est gardée dans « Toutes mes fiches » avant de changer d'élève
 function confirmerAbandon() {
-  return !modifie || confirm("Cette fiche n'a pas été téléchargée. Passer quand même à un autre élève ?");
+  enregistrerFiche();
+  if (modifie && !val("eleve")) return confirm("Cette fiche n'a pas de nom d'élève : elle ne sera pas gardée. Continuer ?");
+  return true;
 }
 
 document.getElementById("btn-nouveau").onclick = () => {
@@ -482,11 +524,11 @@ document.getElementById("btn-nouveau").onclick = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     return;
   }
-  if (modifie && !confirm("Effacer cette fiche pour passer à l'élève suivant ?\n(Pensez à la télécharger avant.)")) return;
+  if (!confirmerAbandon()) return;
   viderFiche();
   window.scrollTo({ top: 0, behavior: "smooth" });
   form.eleve.focus();
-  toast("Fiche vidée — enseignant, classe, professeur principal, période et date conservés.");
+  toast(FICHES.size ? "Fiche gardée dans « Toutes mes fiches ». Élève suivant !" : "Fiche vidée — informations communes conservées.");
 };
 
 /* =====================  LISTE D'ÉLÈVES  ===================== */
@@ -664,7 +706,7 @@ function filtrer(qui, auChargement) {
 function majSelect() {
   const sel = $("choixEleve");
   sel.innerHTML = ELEVES.length
-    ? ELEVES.map((e, i) => `<option value="${i}">${faits.has(cle(e)) ? "✅ " : ""}${esc(e.eleve)}${e.classe ? " — " + esc(e.classe) : ""}</option>`).join("")
+    ? ELEVES.map((e, i) => `<option value="${i}">${faits.has(cle(e)) ? "✅ " : FICHES.has(cle(e)) ? "📝 " : ""}${esc(e.eleve)}${e.classe ? " — " + esc(e.classe) : ""}</option>`).join("")
     : `<option>Choisissez d'abord votre nom ci-dessus</option>`;
   if (courant >= 0) sel.value = courant;
   const n = ELEVES.filter(e => faits.has(cle(e))).length;
@@ -682,6 +724,8 @@ function choisir(i, sansConfirm) {
   if (e.classe) form.classe.value = e.classe;
   if (e.niveau) form.niveau.value = e.niveau;
   if (e.pp) form.pp.value = e.pp;
+  const deja = FICHES.get(cle(e));
+  if (deja) restaurer(deja);          // on retrouve la fiche déjà remplie
   courant = i;
   modifie = false;
   majSelect();
@@ -699,6 +743,13 @@ function marquerFait() {
   if (courant >= 0 && ELEVES.length && normal(val("eleve")) === normal(ELEVES[courant].eleve)) {
     faits.add(cle(ELEVES[courant]));
     majSelect();
+  }
+  // la fiche téléchargée seule compte aussi comme téléchargée dans « Toutes mes fiches »
+  const k = cleFiche(capturer());
+  if (FICHES.has(k)) {
+    EXPORTEES.add(k);
+    try { sessionStorage.setItem(MEMO_FICHES, JSON.stringify({ f: [...FICHES], e: [...EXPORTEES] })); } catch (err) {}
+    majDossier();
   }
 }
 
@@ -764,6 +815,108 @@ $("btnModele").onclick = () => {
   a.download = "modele-liste-eleves-EBEP.csv";
   document.body.appendChild(a); a.click(); a.remove();
 };
+/* =====================  TOUTES MES FICHES  ===================== */
+const FICHES = new Map();        // clé élève -> contenu de la fiche
+const EXPORTEES = new Set();     // fiches déjà incluses dans un téléchargement
+const MEMO_FICHES = "bilanEBEP.fiches";   // sessionStorage : survit à un rechargement, effacé à la fermeture de l'onglet
+const CHAMPS_ELEVE = ["c0","c1","c2","c3","c4","c5","com0","com1","com2","com3","com4","com5","appui","progres","suite","objectifs","commentaire"];
+const cleFiche = o => normal(o.eleve) + "|" + normal(o.classe);
+
+function capturer() {
+  const o = {};
+  [...form.elements].forEach(el => {
+    if (!el.name) return;
+    if (el.type === "radio") { if (el.checked) o[el.name] = el.value; }
+    else o[el.name] = el.value;
+  });
+  return o;
+}
+function restaurer(o) {
+  [...form.elements].forEach(el => {
+    if (!el.name || COMMUNS.includes(el.name) && el.name !== "date") return;
+    if (el.type === "radio") el.checked = o[el.name] === el.value;
+    else if (o[el.name] !== undefined) el.value = o[el.name];
+  });
+}
+const estRemplie = o => CHAMPS_ELEVE.some(k => String(o[k] || "").trim());
+
+function enregistrerFiche() {
+  const o = capturer();
+  if (!String(o.eleve || "").trim() || !estRemplie(o)) return;
+  const k = cleFiche(o);
+  const avant = JSON.stringify(FICHES.get(k) || {});
+  FICHES.set(k, o);
+  if (avant !== JSON.stringify(o)) EXPORTEES.delete(k);   // modifiée depuis le dernier téléchargement
+  try { sessionStorage.setItem(MEMO_FICHES, JSON.stringify({ f: [...FICHES], e: [...EXPORTEES] })); } catch (err) {}
+  majDossier();
+}
+
+function majDossier() {
+  const n = FICHES.size;
+  $("btn-dossier").hidden = n === 0;
+  $("btn-dossier").textContent = `📦 Toutes mes fiches (${n})`;
+  const liste = triees();
+  $("listeDossier").innerHTML = liste.map(o => `<li>${EXPORTEES.has(cleFiche(o)) ? "✅" : "📝"} ${esc(o.eleve)}${o.classe ? " — " + esc(o.classe) : ""}</li>`).join("");
+  if (typeof majSelect === "function" && ELEVES.length) majSelect();
+}
+const triees = () => [...FICHES.values()].sort((a, b) => (a.classe || "").localeCompare(b.classe || "", "fr") || a.eleve.localeCompare(b.eleve, "fr"));
+
+function nomDossier() {
+  const o = triees()[0] || {};
+  return ["Bilans EBEP", o.enseignant, o.periode, FICHES.size + " élèves"].filter(Boolean).join(" - ").replace(/[\\/:*?"<>|]/g, "-");
+}
+function toutesHTML(separateur) {
+  return triees().map(o => { SRC = o; const h = ficheHTML(false); SRC = null; return h; }).join(separateur);
+}
+function marquerToutExporte() {
+  FICHES.forEach((o, k) => { EXPORTEES.add(k); faits.add(k); });
+  modifie = false;
+  try { sessionStorage.setItem(MEMO_FICHES, JSON.stringify({ f: [...FICHES], e: [...EXPORTEES] })); } catch (err) {}
+  majDossier();
+}
+
+$("btn-dossier").onclick = () => {
+  enregistrerFiche();
+  $("panneauDossier").style.bottom = (document.querySelector(".actions").offsetHeight + 8) + "px";
+  $("panneauDossier").hidden = !$("panneauDossier").hidden;
+};
+$("btnFermerDossier").onclick = () => { $("panneauDossier").hidden = true; };
+$("btnToutPDF").onclick = () => {
+  enregistrerFiche();
+  $("impression").innerHTML = toutesHTML('<div class="saut"></div>');
+  const ancien = document.title;
+  document.title = nomDossier();
+  $("panneauDossier").hidden = true;
+  toast("Choisissez « Enregistrer en PDF » dans la fenêtre qui s'ouvre.");
+  setTimeout(() => { window.print(); document.title = ancien; marquerToutExporte(); }, 300);
+};
+$("btnToutWord").onclick = () => {
+  enregistrerFiche();
+  telechargerWord(toutesHTML('<br clear="all" style="page-break-before:always">'), nomDossier());
+  $("panneauDossier").hidden = true;
+  marquerToutExporte();
+  toast(FICHES.size + " fiches téléchargées dans un seul fichier Word.");
+};
+$("btnViderDossier").onclick = () => {
+  const restantes = [...FICHES.keys()].filter(k => !EXPORTEES.has(k)).length;
+  if (!confirm(restantes ? `${restantes} fiche(s) n'ont pas encore été téléchargées. Tout effacer quand même ?` : "Effacer toutes les fiches gardées ?")) return;
+  FICHES.clear(); EXPORTEES.clear();
+  try { sessionStorage.removeItem(MEMO_FICHES); } catch (err) {}
+  $("panneauDossier").hidden = true;
+  majDossier();
+};
+
+// Chaque modification de la fiche est gardée aussitôt
+form.addEventListener("input", enregistrerFiche);
+form.addEventListener("change", enregistrerFiche);
+
+// Fiches gardées avant un rechargement de la page
+try {
+  const m = JSON.parse(sessionStorage.getItem(MEMO_FICHES) || "null");
+  if (m) { m.f.forEach(([k, o]) => FICHES.set(k, o)); m.e.forEach(k => EXPORTEES.add(k)); }
+} catch (err) {}
+majDossier();
+
 chargerEnLigne();
 </script>
 </body>
