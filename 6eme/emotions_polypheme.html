@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Émotions de Polyphème</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+/* Layout : en haut les 5 compagnons (vies) et la réserve d'étiquettes d'émotion ; dessous, les expressions fixes avec leur case */
+:root{
+  --bg:#f6f7fb; --surface:#ffffff; --fg:#1d2233; --muted:#5d6478; --line:#d9dcea; --accent:#3b4fd8; --tray:#eceffa;
+  --ok:#1f8a4c; --bad:#c62f2f; --cave:#2b2f3f; --cave-fg:#f4f1ff;
+  --joie:#f2c230; --confiance:#8cc63f; --peur:#2e9b5f; --surprise:#2aa7c9; --tristesse:#3f6fd1; --degout:#9a5bc4; --colere:#e0473c;
+  --fierte:#e39a1f; --honte:#e06a9a; --culpa:#9c6b45; --jalousie:#6f8f2a; --gratitude:#17a38c; --mepris:#6d6a8a;
+  --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12141c; --surface:#1c1f2b; --fg:#e9ebf3; --muted:#a3a9bd; --line:#30354a; --accent:#8d9bff; --tray:#191c27;
+  --ok:#4cc27e; --bad:#ff6b6b; --cave:#0b0d14; --cave-fg:#f4f1ff; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12141c; --surface:#1c1f2b; --fg:#e9ebf3; --muted:#a3a9bd; --line:#30354a; --accent:#8d9bff; --tray:#191c27;
+  --ok:#4cc27e; --bad:#ff6b6b; --cave:#0b0d14; --cave-fg:#f4f1ff; color-scheme:dark}
+
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45}
+.wrap{max-width:1100px;margin:0 auto;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(1.6rem,3.5vw,2.3rem);font-weight:800}
+h2{font-size:1.2rem;font-weight:800}
+header p{margin:6px 0 0;color:var(--muted);max-width:72ch}
+button{font:inherit;font-size:.95rem;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:8px 14px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* Vies */
+.lives{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.lives .lbl{font-weight:700;margin-right:4px}
+.mate{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 10px 3px 4px;font-size:.88rem;transition:opacity .3s}
+.mate i{font-style:normal;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--tray);font-size:1rem}
+.mate.lost{opacity:.4;text-decoration:line-through}
+.mate.lost i{background:color-mix(in srgb,var(--bad) 25%,transparent)}
+
+/* Réserve d'étiquettes */
+.bank{background:var(--tray);border:2px dashed var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.bank-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bank-row b{font-size:.8rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-right:4px;min-width:130px}
+.tag{--c:var(--muted);display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:8px;padding:5px 10px;font-weight:700;font-size:.95rem;cursor:grab;user-select:none;touch-action:manipulation}
+.tag.selected{outline:3px solid var(--accent);outline-offset:1px;background:color-mix(in srgb,var(--c) 14%,var(--surface))}
+.hint{font-size:.85rem;color:var(--muted);margin:0}
+
+/* Expressions */
+.items{display:flex;flex-direction:column;gap:8px;padding:0;margin:0;list-style:none}
+.item{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.quotes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;min-width:0}
+.quotes li{padding-left:10px;border-left:3px solid var(--line)}
+.item .q{display:block}
+.item .who{display:block;font-size:.82rem;color:var(--muted)}
+.slot{min-height:40px;border:2px dashed var(--line);border-radius:8px;display:grid;place-items:center;font-size:.85rem;color:var(--muted);cursor:pointer;text-align:center;padding:4px}
+.slot.over,.armed .slot:not(.done):hover{border-color:var(--accent);color:var(--accent)}
+.slot.done{--c:var(--ok);border:2px solid var(--c);background:color-mix(in srgb,var(--c) 16%,var(--surface));color:var(--fg);font-weight:700;cursor:default}
+.slot.done::before{content:"✓ ";color:var(--ok)}
+.item.wrong{animation:shake .4s}
+.item.wrong .slot{border-color:var(--bad);color:var(--bad)}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@media (max-width:620px){.item{grid-template-columns:1fr}}
+
+.progress{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem}
+
+/* Révélation, fin de partie, correction */
+.panel{border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.reveal{background:var(--cave);color:var(--cave-fg);border:1px solid var(--cave)}
+.reveal h2{font-size:1.5rem}
+.reveal p{margin:0;max-width:68ch}
+.reveal .score{font-weight:700}
+.over-panel{background:color-mix(in srgb,var(--bad) 10%,var(--surface));border:1px solid var(--bad)}
+.over-panel p{margin:0}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.corr{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.fam{--c:var(--accent);background:var(--surface);border:1px solid var(--line);border-top:6px solid var(--c);border-radius:12px;padding:10px 12px;min-width:0}
+.fam h3{font-size:1.05rem;margin-bottom:6px}
+.fam h3 small{font-family:var(--body);font-weight:400;color:var(--muted);font-size:.8rem}
+.fam ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.fam li span{color:var(--muted);font-size:.82rem}
+.absent{background:var(--tray);border-radius:10px;padding:10px 12px;font-size:.92rem}
+.absent s{color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:.95rem;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;max-width:calc(100% - 32px)}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+body{margin:0}[hidden]{display:none!important}
+.retour{color:var(--accent);font-weight:700;text-decoration:none;align-self:center}
+.retour:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Les émotions dans la grotte de Polyphème</h1>
+    <p>Les expressions de <i>L'Odyssée</i> sont rangées par groupes : dans chaque groupe, elles expriment la même émotion. Rattache à chaque groupe la bonne émotion. Glisse une étiquette sur la case, ou touche l'étiquette puis touche la case. Attention : à chaque erreur, Polyphème dévore un compagnon d'Ulysse. Tu as 5 compagnons.</p>
+  </header>
+
+  <div class="lives" id="lives" aria-live="polite"></div>
+
+  <section class="bank" id="bank" aria-label="Étiquettes d'émotion">
+    <div class="bank-row" id="row1"><b>🎭 Émotions</b></div>
+    <div class="bank-row" id="row2"><b>🤝 Émotions sociales</b></div>
+    <p class="hint">Chaque groupe a une émotion différente. Certaines étiquettes ne servent à rien. <span class="progress" id="progress"></span></p>
+  </section>
+
+  <div id="end"></div>
+
+  <ol class="items" id="items"></ol>
+  <a class="retour" href="index.html">← Retour à l’espace Français 6ème</a>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const EMO=[
+ {id:"colere",name:"Colère",c:"--colere",g:1},{id:"peur",name:"Peur",c:"--peur",g:1},{id:"degout",name:"Dégoût",c:"--degout",g:1},
+ {id:"tristesse",name:"Tristesse",c:"--tristesse",g:1},{id:"surprise",name:"Surprise",c:"--surprise",g:1},{id:"joie",name:"Joie",c:"--joie",g:1},
+ {id:"confiance",name:"Confiance",c:"--confiance",g:1},
+ {id:"mepris",name:"Mépris",c:"--mepris",g:2},{id:"fierte",name:"Fierté",c:"--fierte",g:2},{id:"honte",name:"Honte",c:"--honte",g:2},
+ {id:"culpa",name:"Culpabilité",c:"--culpa",g:2},{id:"jalousie",name:"Jalousie",c:"--jalousie",g:2},{id:"gratitude",name:"Gratitude",c:"--gratitude",g:2},
+];
+const ITEMS=[
+ ["« je restai à me demander comment je pourrais me venger »","Ulysse","colere"],
+ ["« Bois ce vin après ton repas de chairs humaines »","Ulysse","mepris"],
+ ["« Donne m'en encore, sois gentil »","Polyphème","joie"],
+ ["« un cadeau qui te réjouisse »","Polyphème","joie"],
+ ["« trois fois il but, ce dément ! »","Ulysse","mepris"],
+ ["« tu veux savoir mon illustre nom »","Ulysse","fierte"],
+ ["« ce cœur impitoyable »","Ulysse, qui juge le Cyclope","mepris"],
+ ["« Je mangerai Personne après tous ses compagnons. Voilà mon cadeau ! »","Polyphème","mepris"],
+ ["« De sa gorge jaillirent le vin et des morceaux de chair humaine. Il rotait »","Ulysse / le lecteur","degout"],
+ ["« J'exhortai mes compagnons au courage »","Les compagnons","peur"],
+ ["« un dieu nous donnait du courage »","Ulysse et ses compagnons","confiance"],
+ ["« Il poussa un horrible hurlement »","Polyphème","colere"],
+ ["« Épouvantés, nous nous enfuîmes »","Ulysse et ses compagnons","peur"],
+ ["« il appela à grands cris les Cyclopes »","Polyphème","tristesse"],
+ ["« Pourquoi […] pousses-tu de tels hurlements ? Souffres-tu ? »","Les autres Cyclopes","surprise"],
+ ["« Amis, qui me tue ? Personne ! »","Polyphème","colere"],
+].map(([q,who,ans],i)=>({i,q,who,ans}));
+// Les expressions qui expriment la même émotion forment un groupe (ordre : première apparition dans le texte)
+const GROUPS=[];
+for(const it of ITEMS){let g=GROUPS.find(g=>g.ans===it.ans); if(!g){g={i:GROUPS.length,ans:it.ans,items:[]};GROUPS.push(g)} g.items.push(it)}
+const MATES=[["Euryloque","🛡️"],["Elpénor","🏺"],["Politès","⚓"],["Périmède","🗡️"],["Antiphos","🪶"]];
+const emo=Object.fromEntries(EMO.map(e=>[e.id,e]));
+const $=s=>document.querySelector(s);
+let lives, found, selected=null, over=false;
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("show"),2200)}
+
+// Réserve
+for(const e of EMO){
+  const b=document.createElement("button");
+  b.className="tag"; b.type="button"; b.draggable=true; b.dataset.emo=e.id; b.textContent=e.name;
+  b.style.setProperty("--c",`var(${e.c})`);
+  $(e.g===1?"#row1":"#row2").appendChild(b);
+}
+
+function start(){
+  lives=5; found={}; selected=null; over=false;
+  $("#end").innerHTML="";
+  $("#items").innerHTML=GROUPS.map(g=>`<li class="item" data-i="${g.i}">
+    <ul class="quotes">${g.items.map(it=>`<li><span class="q">${esc(it.q)}</span><span class="who">${esc(it.who)}</span></li>`).join("")}</ul>
+    <div class="slot" data-i="${g.i}" tabindex="0" role="button" aria-label="Case de l'émotion">Dépose une émotion</div></li>`).join("");
+  renderLives(); renderSel(); progress();
+}
+function renderLives(){
+  $("#lives").innerHTML=`<span class="lbl">Compagnons :</span>`+MATES.map(([n,ic],k)=>{
+    const lost=k>=lives; return `<span class="mate${lost?" lost":""}" title="${lost?n+" a été dévoré":n}"><i aria-hidden="true">${lost?"🦴":ic}</i>${n}</span>`}).join("");
+}
+function renderSel(){
+  document.querySelectorAll(".tag").forEach(t=>t.classList.toggle("selected",t.dataset.emo===selected));
+  $("#items").classList.toggle("armed",!!selected);
+}
+function progress(){const n=Object.keys(found).length;$("#progress").textContent=`${n} / ${GROUPS.length} groupes rattachés.`}
+
+function attempt(i,e){
+  if(over||found[i]!==undefined) return;
+  const it=GROUPS[i], li=document.querySelector(`.item[data-i="${i}"]`), slot=li.querySelector(".slot");
+  if(e===it.ans){
+    found[i]=e;
+    slot.className="slot done"; slot.removeAttribute("role"); slot.tabIndex=-1;
+    slot.style.setProperty("--c",`var(${emo[e].c})`); slot.textContent=emo[e].name;
+    progress();
+    if(Object.keys(found).length===GROUPS.length) win();
+  } else {
+    lives--; renderLives();
+    li.classList.remove("wrong"); void li.offsetWidth; li.classList.add("wrong");
+    slot.textContent=`Pas « ${emo[e].name} »`;
+    setTimeout(()=>{li.classList.remove("wrong"); if(found[i]===undefined) slot.textContent="Dépose une émotion"},1400);
+    if(lives<=0) lose(); else toast(`${MATES[lives][0]} a été dévoré ! Il te reste ${lives} compagnon${lives>1?"s":""}.`);
+  }
+}
+
+function lose(){
+  over=true; selected=null; renderSel();
+  $("#end").innerHTML=`<div class="panel over-panel" role="alert"><h2>Polyphème a dévoré tous les compagnons !</h2>
+    <p>Tu as rattaché ${Object.keys(found).length} groupe${Object.keys(found).length>1?"s":""} sur ${GROUPS.length}. Relis bien chaque expression : qui parle, et que ressent-il ?</p>
+    <div class="actions"><button class="primary" id="again">Recommencer</button></div></div>`;
+  $("#again").onclick=start; $("#end").scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+function win(){
+  over=true; selected=null; renderSel();
+  const saved=lives, s=saved>1?"s":"";
+  $("#end").innerHTML=`<div class="panel reveal" role="alert">
+    <h2>🐏 Révélation : Ulysse sort de la grotte !</h2>
+    <p>Au matin, Polyphème, aveugle, roule le gros rocher pour faire sortir ses moutons. Il s'assoit à l'entrée et tâte le dos de chaque bête. Mais Ulysse a attaché ses compagnons sous le ventre des béliers, et lui-même s'accroche à la laine du plus gros. Le Cyclope ne sent que la laine : ils passent tous sans être vus.</p>
+    <p class="score">Bravo ! Tu as rattaché les ${GROUPS.length} groupes d'expressions et sauvé ${saved} compagnon${s} : ${MATES.slice(0,saved).map(m=>m[0]).join(", ")}.</p>
+    <div class="actions"><button class="primary" id="showCorr">Voir la correction</button><button id="again">Rejouer</button></div></div>`;
+  $("#again").onclick=start; $("#showCorr").onclick=correction;
+  $("#end").scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+function correction(){
+  const used=EMO.filter(e=>ITEMS.some(it=>it.ans===e.id));
+  const unused=EMO.filter(e=>!used.includes(e));
+  const html=`<div class="panel" style="padding:0"><h2>Correction : les émotions présentes dans le texte</h2>
+    <div class="corr">${used.map(e=>{const its=ITEMS.filter(it=>it.ans===e.id);
+      return `<div class="fam" style="--c:var(${e.c})"><h3>${e.name} <small>${e.g===1?"émotion":"émotion sociale"} · ${its.length}</small></h3>
+      <ul>${its.map(it=>`<li>${esc(it.q)} <span>(${esc(it.who)})</span></li>`).join("")}</ul></div>`}).join("")}</div>
+    <p class="absent">Émotions écartées, absentes du texte : ${unused.map(e=>`<s>${e.name}</s>`).join(", ")}.</p>
+    <div class="actions"><button id="again2">Rejouer</button></div></div>`;
+  const c=document.createElement("div"); c.innerHTML=html; $("#end").appendChild(c.firstElementChild);
+  $("#showCorr").remove(); $("#again2").onclick=start;
+  $("#end").lastElementChild.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+// Toucher / clic
+document.addEventListener("click",ev=>{
+  const tag=ev.target.closest(".tag");
+  if(tag){ if(over) return; selected=selected===tag.dataset.emo?null:tag.dataset.emo; renderSel(); return; }
+  const slot=ev.target.closest(".slot:not(.done)");
+  if(slot&&selected){ attempt(+slot.dataset.i,selected); selected=null; renderSel(); }
+  else if(slot&&!over) toast("Choisis d'abord une étiquette d'émotion.");
+});
+document.addEventListener("keydown",ev=>{
+  const s=document.activeElement;
+  if((ev.key==="Enter"||ev.key===" ")&&s?.classList.contains("slot")&&!s.classList.contains("done")){
+    ev.preventDefault(); if(selected){attempt(+s.dataset.i,selected); selected=null; renderSel()} else toast("Choisis d'abord une étiquette d'émotion.");
+  }
+  if(ev.key==="Escape"&&selected){selected=null;renderSel()}
+});
+// Glisser-déposer (souris)
+let drag=null;
+document.addEventListener("dragstart",ev=>{const t=ev.target.closest?.(".tag"); if(!t||over){ev.preventDefault();return} drag=t.dataset.emo; try{ev.dataTransfer.setData("text/plain",drag);ev.dataTransfer.effectAllowed="copy"}catch(_){}});
+document.addEventListener("dragend",()=>{drag=null;document.querySelectorAll(".slot.over").forEach(x=>x.classList.remove("over"))});
+document.addEventListener("dragover",ev=>{const s=ev.target.closest?.(".slot:not(.done)"); document.querySelectorAll(".slot.over").forEach(x=>x!==s&&x.classList.remove("over")); if(s&&drag){ev.preventDefault();s.classList.add("over")}});
+document.addEventListener("drop",ev=>{const s=ev.target.closest?.(".slot:not(.done)"); if(s&&drag){ev.preventDefault(); s.classList.remove("over"); attempt(+s.dataset.i,drag); drag=null; selected=null; renderSel()}});
+
+start();
+</script>
+</body>
+</html>
