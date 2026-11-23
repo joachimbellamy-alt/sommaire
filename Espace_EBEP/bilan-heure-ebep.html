@@ -140,6 +140,8 @@
   .saut { break-after: page; page-break-after: always; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chips .vide { font-size: 14px; color: var(--gris); }
+  .sauve { margin: 0 0 8px; font-size: 13px; color: #1e8e3e; min-height: 0; }
+  .sauve.erreur { color: #c62828; font-weight: 600; }
   .chips button {
     font: inherit; font-size: 14px; border-radius: 999px; padding: 6px 12px; cursor: pointer;
     border: 1px solid #b7dfc3; background: #eefaf1; color: #145c2a;
@@ -199,7 +201,7 @@
     <b>Comment faire :</b> choisissez votre nom dans « Je suis » : vos élèves s'affichent et l'en-tête se remplit tout seul.
     Remplissez la fiche, puis passez à l'<b>élève suivant</b> : chaque fiche est gardée.
     À la fin, cliquez sur <b>📦 Toutes mes fiches</b> pour tout télécharger en un seul fichier (PDF ou Word), à joindre à votre e-mail.<br>
-    Rien n'est obligatoire et <b>rien n'est envoyé sur Internet</b> : vos fiches restent sur votre ordinateur, tant que l'onglet est ouvert.
+    Rien n'est obligatoire et <b>rien n'est envoyé sur Internet</b> : vos fiches sont enregistrées au fur et à mesure sur votre ordinateur, même si vous fermez la page.
     Pour imprimer une fiche à remplir à la main, cliquez sur <b>Fiche vierge</b>.
   </div>
 
@@ -242,7 +244,8 @@
   </section>
 
   <section class="bloc" id="zoneFiches">
-    <h2>Mes fiches remplies <small>gardées pendant que l'onglet est ouvert — cliquez sur un nom pour rouvrir sa fiche</small></h2>
+    <h2>Mes fiches remplies <small>enregistrées au fur et à mesure sur cet ordinateur — cliquez sur un nom pour rouvrir sa fiche</small></h2>
+    <p id="etatSauvegarde" class="sauve"></p>
     <div id="chipsFiches" class="chips"></div>
   </section>
 
@@ -325,7 +328,7 @@
     <button type="button" class="btn bleu" id="btnToutWord">📝 En Word</button>
     <button type="button" class="btn" id="btnFermerDossier">Fermer</button>
   </div>
-  <p style="margin:10px 0 0">Les fiches restent ici tant que l'onglet est ouvert.
+  <p style="margin:10px 0 0">Les fiches restent enregistrées sur cet ordinateur. Sur un ordinateur partagé, effacez-les quand vous avez fini.
     <button type="button" class="lien" id="btnViderDossier">Effacer toutes mes fiches</button></p>
 </div>
 <div class="toast" id="toast"></div>
@@ -368,7 +371,7 @@ form.addEventListener("click", e => {
   const lab = e.target.closest(".pills label");
   if (!lab) return;
   const input = document.getElementById(lab.htmlFor);
-  if (input.checked) { e.preventDefault(); input.checked = false; modifie = true; }
+  if (input.checked) { e.preventDefault(); input.checked = false; modifie = true; try { enregistrerFiche(); } catch (err) {} }
 });
 
 function aujourdhui() {
@@ -794,7 +797,7 @@ function marquerFait() {
   const k = cleCourante();
   if (k && FICHES.has(k)) {
     EXPORTEES.add(k);
-    try { sessionStorage.setItem(MEMO_FICHES, JSON.stringify({ f: [...FICHES], e: [...EXPORTEES] })); } catch (err) {}
+    sauverDossier();
     majDossier();
   }
 }
@@ -864,7 +867,22 @@ $("btnModele").onclick = () => {
 /* =====================  TOUTES MES FICHES  ===================== */
 const FICHES = new Map();        // clé élève -> contenu de la fiche
 const EXPORTEES = new Set();     // fiches déjà incluses dans un téléchargement
-const MEMO_FICHES = "bilanEBEP.fiches";   // sessionStorage : survit à un rechargement, effacé à la fermeture de l'onglet
+const MEMO_FICHES = "bilanEBEP.fiches";   // localStorage : gardé sur cet ordinateur, même après fermeture du navigateur
+const DUREE_MAX = 120 * 24 * 3600 * 1000;  // effacé automatiquement après 4 mois sans modification
+
+// Écrit toutes les fiches sur l'ordinateur et affiche l'heure du dernier enregistrement
+function sauverDossier() {
+  const etat = $("etatSauvegarde");
+  try {
+    localStorage.setItem(MEMO_FICHES, JSON.stringify({ t: Date.now(), f: [...FICHES], e: [...EXPORTEES] }));
+    const h = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    etat.textContent = FICHES.size ? `💾 Enregistré à ${h}` : "";
+    etat.className = "sauve";
+  } catch (err) {
+    etat.textContent = "⚠️ Enregistrement impossible sur ce navigateur (navigation privée ?) : téléchargez vos fiches régulièrement.";
+    etat.className = "sauve erreur";
+  }
+}
 const CHAMPS_ELEVE = ["c0","c1","c2","c3","c4","c5","com0","com1","com2","com3","com4","com5","appui","progres","suite","objectifs","commentaire"];
 let idSansNom = null;            // fiche en cours sans nom d'élève
 const cleFiche = o => o.__cle || (normal(o.eleve) + "|" + normal(o.classe));
@@ -891,7 +909,11 @@ const estRemplie = o => CHAMPS_ELEVE.some(k => String(o[k] || "").trim());
 
 function enregistrerFiche() {
   const o = capturer();
-  if (!estRemplie(o)) return;
+  if (!estRemplie(o)) {
+    const k0 = cleCourante();                     // fiche entièrement vidée : on la retire
+    if (k0 && FICHES.has(k0)) { FICHES.delete(k0); EXPORTEES.delete(k0); sauverDossier(); majDossier(); }
+    return;
+  }
   if (!String(o.eleve || "").trim()) { if (!idSansNom) idSansNom = "sansnom-" + Date.now(); }
   else if (idSansNom) { FICHES.delete(idSansNom); EXPORTEES.delete(idSansNom); idSansNom = null; }  // le nom a été ajouté
   const k = String(o.eleve || "").trim() ? normal(o.eleve) + "|" + normal(o.classe) : idSansNom;
@@ -899,7 +921,7 @@ function enregistrerFiche() {
   const avant = JSON.stringify(FICHES.get(k) || {});
   FICHES.set(k, o);
   if (avant !== JSON.stringify(o)) EXPORTEES.delete(k);   // modifiée depuis le dernier téléchargement
-  try { sessionStorage.setItem(MEMO_FICHES, JSON.stringify({ f: [...FICHES], e: [...EXPORTEES] })); } catch (err) {}
+  sauverDossier();
   majDossier();
 }
 
@@ -929,7 +951,7 @@ function toutesHTML(separateur) {
 function marquerToutExporte() {
   FICHES.forEach((o, k) => { EXPORTEES.add(k); faits.add(k); });
   modifie = false;
-  try { sessionStorage.setItem(MEMO_FICHES, JSON.stringify({ f: [...FICHES], e: [...EXPORTEES] })); } catch (err) {}
+  sauverDossier();
   majDossier();
 }
 
@@ -959,7 +981,8 @@ $("btnViderDossier").onclick = () => {
   const restantes = [...FICHES.keys()].filter(k => !EXPORTEES.has(k)).length;
   if (!confirm(restantes ? `${restantes} fiche(s) n'ont pas encore été téléchargées. Tout effacer quand même ?` : "Effacer toutes les fiches gardées ?")) return;
   FICHES.clear(); EXPORTEES.clear();
-  try { sessionStorage.removeItem(MEMO_FICHES); } catch (err) {}
+  try { localStorage.removeItem(MEMO_FICHES); } catch (err) {}
+  $("etatSauvegarde").textContent = "";
   $("panneauDossier").hidden = true;
   majDossier();
 };
@@ -984,12 +1007,24 @@ $("chipsFiches").addEventListener("click", e => {
 form.addEventListener("input", enregistrerFiche);
 form.addEventListener("change", enregistrerFiche);
 
-// Fiches gardées avant un rechargement de la page
+// Fiches déjà enregistrées sur cet ordinateur (même après fermeture du navigateur)
 try {
-  const m = JSON.parse(sessionStorage.getItem(MEMO_FICHES) || "null");
+  let m = JSON.parse(localStorage.getItem(MEMO_FICHES) || "null");
+  const ancienne = JSON.parse(sessionStorage.getItem(MEMO_FICHES) || "null");   // version précédente de la page
+  if (!m && ancienne) m = ancienne;
+  if (m && m.t && Date.now() - m.t > DUREE_MAX) { localStorage.removeItem(MEMO_FICHES); m = null; }
   if (m) { m.f.forEach(([k, o]) => FICHES.set(k, o)); m.e.forEach(k => EXPORTEES.add(k)); }
+  if (ancienne) sessionStorage.removeItem(MEMO_FICHES);
+  if (FICHES.size) {
+    sauverDossier();
+    toast(`${FICHES.size} fiche${FICHES.size > 1 ? "s" : ""} retrouvée${FICHES.size > 1 ? "s" : ""} sur cet ordinateur.`);
+  }
 } catch (err) {}
 majDossier();
+
+// Filet de sécurité : enregistrement aussi quand on quitte ou cache la page
+document.addEventListener("visibilitychange", () => { if (document.hidden) enregistrerFiche(); });
+window.addEventListener("pagehide", enregistrerFiche);
 
 /* =====================  ACCÈS PAR MOT DE PASSE  ===================== */
 const MEMO_ACCES = "bilanEBEP.acces";   // sessionStorage : pas besoin de le retaper dans le même onglet
