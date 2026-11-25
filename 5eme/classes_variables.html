@@ -230,7 +230,6 @@ table.liste tr.clic:hover{background:#f3f7ff}
         <label class="bouton secondaire">📂 Ouvrir l'exercice envoyé par le professeur
           <input type="file" id="file-corpus" class="fichier-cache">
         </label>
-        <button id="btn-exemple" class="secondaire">Essayer avec un exemple</button>
       </div>
       <div class="champs">
         <label>Nom <input type="text" id="in-nom" autocomplete="family-name"></label>
@@ -319,6 +318,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
           <input type="file" id="ed-ouvrir" class="fichier-cache">
         </label>
         <button id="ed-nouveau" class="secondaire">Nouvel exercice</button>
+        <button id="ed-exemple" class="secondaire">Charger l'exemple</button>
       </div>
       <p id="ed-msg" class="aide"></p>
       <input type="text" id="ed-lien-texte" class="lien-texte" readonly hidden>
@@ -896,7 +896,11 @@ $('#file-corpus').addEventListener('change', async e => {
     $('#accueil-msg').textContent = '« ' + f.name + ' » n\'a pas pu être ouvert (' + (err && (err.name || err.message) || 'erreur') + '). Choisis le fichier « exercice_….json » envoyé par ton professeur.';
   } finally { e.target.value = ''; }
 });
-$('#btn-exemple').onclick = () => { oublierLienDansAdresse(); chargerCorpus(exemple(), 'exemple'); };
+$('#ed-exemple').onclick = () => {
+  if (ED.phrases.length && !confirm('Remplacer l\'exercice en cours de création par l\'exemple ?')) return;
+  ED = clone(exemple()); edVersChamps(); edRender(); edSauver();
+  $('#ed-msg').textContent = '✓ Exemple chargé : vous pouvez le modifier, le tester comme un élève ou le télécharger.';
+};
 ['nom','prenom','classe'].forEach(k => $('#in-' + k).addEventListener('change', () => {
   const v = store.get('cgv:eleve') || {}; v[k] = $('#in-' + k).value.trim(); store.set('cgv:eleve', v);
 }));
