@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fiche dys : les classes variables</title>
+<style>
+:root{ --texte:#1a1a1a; --doux:#555; --orange:#f3c26b; --bleu:#1d4f9c; --bleu-clair:#e8f0ff; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#f6f3ec; color:var(--texte); font-family:Arial, Verdana, Helvetica, sans-serif; font-size:19px; line-height:1.5; letter-spacing:.02em; word-spacing:.08em}
+.page{max-width:1180px; margin:0 auto; padding:14px 16px 24px}
+.outils-haut{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+.outils-haut a, .outils-haut button{font:inherit; font-size:16px; font-weight:700; color:#2a6fd1; background:#fff; border:1.5px solid #2a6fd1; border-radius:10px; padding:8px 14px; text-decoration:none; cursor:pointer}
+.boutons{display:flex; gap:8px; flex-wrap:wrap}
+
+.feuille{margin-bottom:28px}
+h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 22px; font-size:26px; font-weight:700; text-align:center}
+.sous-titre{font-size:17px; font-weight:400}
+
+p{margin:6px 0}
+.nom-classe{display:inline-block; font-size:22px; font-weight:700; background:#fff; color:#111; border:2.5px solid #111; border-radius:9px; padding:1px 12px; margin-bottom:6px}
+.ex b, .test b{background:#fff2a8; color:#111; padding:0 4px; border-radius:4px}
+.varie{font-weight:700}
+.varie::before{content:"↔ "}
+.test{background:var(--bleu-clair); border:3px solid #2a6fd1; border-radius:12px; padding:8px 12px; margin-top:10px}
+.test .etiquette{display:block; color:var(--bleu); font-weight:700; font-size:.95em}
+
+/* Page 1 : le groupe nominal */
+.cadre-gn{border:2px solid #222; background:#fff; padding:34px 12px 12px; position:relative; display:grid; grid-template-columns:1fr 1.15fr 1fr; gap:14px}
+.etiq-cadre{position:absolute; top:6px; left:14px; font-size:15px; font-weight:700; color:#333}
+.zone{border-radius:16px; padding:12px 14px}
+.z-det{background:#e3e3e3; border:2px dotted #555}
+.col-nom{display:flex; flex-direction:column; background:#bdbdbd; border:2px solid #333; border-radius:16px; overflow:hidden}
+.col-nom .zone{border-radius:0}
+.z-np{border-top:4px solid #111}
+.z-adj{background:#a3a3a3; border:2px dotted #333}
+
+/* Page 2 : pronom, verbe, principe */
+.ligne2{display:grid; grid-template-columns:1.25fr 1fr; gap:14px}
+.cadre-pro, .cadre-verbe{border:2.5px dashed #222; padding:7px}
+.z-pro{height:100%; background:linear-gradient(90deg,#b5b5b5,#fafafa); border:2px dotted #333; border-radius:22px}
+.z-verbe{height:100%; background:#fff; border:3px solid #111; border-radius:22px}
+.z-verbe ul{margin:4px 0; padding-left:24px}
+.bas{display:grid; grid-template-columns:1.7fr 1fr; gap:14px; margin-top:14px}
+.principe{background:var(--bleu-clair); border:3px solid #2a6fd1; border-radius:14px; padding:12px 16px}
+.principe h2{margin:0 0 6px; font-size:22px; color:var(--bleu)}
+.regle strong{color:var(--bleu)}
+.axe{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
+.axe .col{display:flex; flex-direction:column; align-items:center; background:#fff; border:2px solid #9dbbe8; border-radius:9px; padding:4px 12px; color:var(--bleu)}
+.axe .haut{font-weight:700; color:#111; border-bottom:2.5px solid #2a6fd1}
+.invariables{background:#fff; border:2px solid #aaa; border-radius:14px; padding:12px 16px}
+.invariables h2{margin:0 0 6px; font-size:20px}
+
+@media screen and (max-width:800px){
+  .cadre-gn, .ligne2, .bas{grid-template-columns:1fr}
+}
+
+@page{size:A4 landscape; margin:8mm}
+@media print{
+  *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+  body{background:#fff; font-size:18px}
+  .page{max-width:none; padding:0}
+  .outils-haut{display:none}
+  .feuille{margin:0; break-after:page; page-break-after:always}
+  .feuille:last-child{break-after:auto; page-break-after:auto}
+  h1{font-size:22px; padding:3px 18px; margin-bottom:8px}
+  .nom-classe{font-size:20px}
+  .principe h2{font-size:19px}
+  .invariables h2{font-size:18px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="outils-haut">
+    <a href="index.html">← Espace Français 6e</a>
+    <span class="boutons">
+      <a href="fiche_classes_variables_test.html">🧠 Se tester</a>
+      <a href="fiche_classes_variables_dys.pdf" download="Fiche_classes_grammaticales_variables_dys.pdf">⬇ Télécharger (PDF)</a>
+      <button onclick="window.print()">🖨 Imprimer</button>
+    </span>
+  </div>
+
+  <!-- PAGE 1 -->
+  <section class="feuille">
+    <h1>Les classes grammaticales variables <span class="sous-titre">(1/2)</span></h1>
+    <div class="cadre-gn">
+      <span class="etiq-cadre">Le groupe nominal</span>
+
+      <div class="zone z-det">
+        <span class="nom-classe">Déterminant</span>
+        <p>Il se place <strong>devant le nom</strong>.</p>
+        <p class="varie">Il varie en genre et en nombre.</p>
+        <p>le, la, les, un, une, des, ce, cette, son, ses…</p>
+        <p class="ex">Exemple : <b>le</b> cyclope, <b>ses</b> moutons</p>
+        <p class="test"><span class="etiquette">🔄 Test de substitution</span>Je le remplace par un, une ou des :<br><b>ce</b> monstre → <b>un</b> monstre</p>
+      </div>
+
+      <div class="col-nom">
+        <div class="zone z-nc">
+          <span class="nom-classe">Nom commun</span>
+          <p>Il désigne un être, une chose ou une idée.</p>
+          <p class="varie">Il varie en nombre.</p>
+          <p>un monstre → des monstres</p>
+          <p class="test"><span class="etiquette">🔄 Test de substitution</span>Je le remplace par un autre nom :<br>le <b>monstre</b> → le <b>géant</b></p>
+        </div>
+        <div class="zone z-np">
+          <span class="nom-classe">Nom propre</span>
+          <p>Il commence par une <strong>majuscule</strong>.</p>
+          <p class="test"><span class="etiquette">🔄 Test de substitution</span>Je le remplace par un autre nom propre :<br><b>Ulysse</b> navigue → <b>Thésée</b> navigue</p>
+        </div>
+      </div>
+
+      <div class="zone z-adj">
+        <span class="nom-classe">Adjectif</span>
+        <p>Il <strong>précise le nom</strong> : il dit comment il est.</p>
+        <p class="varie">Il s'accorde avec le nom.</p>
+        <p>cruel → cruelle</p>
+        <p class="ex">Exemple : le monstre <b>cruel</b></p>
+        <p class="test"><span class="etiquette">🔄 Test de substitution</span>Je le remplace par un autre adjectif :<br>le monstre <b>cruel</b> → le monstre <b>affreux</b></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 2 -->
+  <section class="feuille">
+    <h1>Les classes grammaticales variables <span class="sous-titre">(2/2)</span></h1>
+    <div class="ligne2">
+      <div class="cadre-pro">
+        <div class="zone z-pro">
+          <span class="nom-classe">Pronom</span>
+          <p>Il <strong>remplace tout le groupe nominal</strong>.</p>
+          <p class="varie">Il varie en genre, en nombre et en personne.</p>
+          <p>il, elle, ils, elles, le, la, les, lui…</p>
+          <p class="test"><span class="etiquette">🔄 Test de substitution</span>Je remplace tout le groupe nominal par un pronom :<br><b>Le cyclope affreux</b> dévore → <b>Il</b> dévore</p>
+        </div>
+      </div>
+      <div class="cadre-verbe">
+        <div class="zone z-verbe">
+          <span class="nom-classe">Verbe</span>
+          <p>Il dit une <strong>action</strong> ou un <strong>état</strong>.</p>
+          <p class="varie">Il se conjugue.</p>
+          <ul>
+            <li>je dévor<strong>e</strong>, nous dévor<strong>ons</strong></li>
+            <li>Il s'accorde avec le <strong>sujet</strong>.</li>
+          </ul>
+          <p class="test"><span class="etiquette">🔄 Test de substitution</span>Je le remplace par un autre verbe :<br>Le cyclope <b>dévore</b> → Le cyclope <b>avale</b><br>ou je change le temps :<br>Le cyclope <b>dévore</b> → Le cyclope <b>dévorera</b></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bas">
+      <div class="principe">
+        <h2>🔄 Le principe de substitution</h2>
+        <p class="regle">Je <strong>remplace</strong> un mot par un autre mot, <strong>à la même place</strong>.<br>
+          Si la phrase reste correcte, les deux mots sont de la <strong>même classe</strong>.</p>
+        <div class="axe">
+          <div class="col"><span class="haut">Le</span><span>Un</span></div>
+          <div class="col"><span class="haut">monstre</span><span>géant</span></div>
+          <div class="col"><span class="haut">cruel</span><span>affreux</span></div>
+          <div class="col"><span class="haut">dévore</span><span>avale</span></div>
+        </div>
+      </div>
+      <div class="invariables">
+        <h2>🔒 Les mots invariables</h2>
+        <p>Ils ne changent <strong>jamais</strong> :<br>à, de, dans, et, mais, très, ne… pas</p>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

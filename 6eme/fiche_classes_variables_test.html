@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Se tester : les classes variables</title>
+<style>
+:root{ --texte:#1a1a1a; --orange:#f3c26b; --bleu:#1d4f9c; --bleu-clair:#e8f0ff; --cache:#4a5d85; }
+*{box-sizing:border-box; touch-action:manipulation}
+html,body{margin:0}
+body{background:#f6f3ec; color:var(--texte); font-family:Arial, Verdana, Helvetica, sans-serif; font-size:19px; line-height:1.5; letter-spacing:.02em; word-spacing:.08em}
+.page{max-width:1180px; margin:0 auto; padding:14px 16px 30px}
+.outils-haut{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px}
+.outils-haut a, .outils-haut button{font:inherit; font-size:16px; font-weight:700; color:#2a6fd1; background:#fff; border:1.5px solid #2a6fd1; border-radius:10px; padding:8px 14px; text-decoration:none; cursor:pointer}
+.boutons{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+.compteur{font-size:16px; font-weight:700; color:var(--bleu); background:#fff; border-radius:10px; padding:8px 12px}
+h1{margin:0 0 8px; background:var(--orange); border-radius:999px; padding:6px 22px; font-size:26px; font-weight:700; text-align:center}
+.consigne{text-align:center; margin:0 0 14px; font-size:17px}
+
+p{margin:6px 0}
+.nom-classe{display:inline-block; font-size:22px; font-weight:700; background:#fff; color:#111; border:2.5px solid #111; border-radius:9px; padding:1px 12px; margin-bottom:6px; min-width:150px}
+.ex b, .test b{background:#fff2a8; color:#111; padding:0 4px; border-radius:4px}
+.varie{font-weight:700}
+.test{background:var(--bleu-clair); border:3px solid #2a6fd1; border-radius:12px; padding:8px 12px; margin-top:10px}
+.test .etiquette{display:block; color:var(--bleu); font-weight:700; font-size:.95em}
+
+.cadre-gn{border:2px solid #222; background:#fff; padding:34px 12px 12px; position:relative; display:grid; grid-template-columns:1fr 1.15fr 1fr; gap:14px}
+.etiq-cadre{position:absolute; top:6px; left:14px; font-size:15px; font-weight:700; color:#333}
+.zone{border-radius:16px; padding:12px 14px}
+.z-det{background:#e3e3e3; border:2px dotted #555}
+.col-nom{display:flex; flex-direction:column; background:#bdbdbd; border:2px solid #333; border-radius:16px; overflow:hidden}
+.col-nom .zone{border-radius:0}
+.z-np{border-top:4px solid #111}
+.z-adj{background:#a3a3a3; border:2px dotted #333}
+.ligne2{display:grid; grid-template-columns:1.25fr 1fr; gap:14px; margin-top:14px}
+.cadre-pro, .cadre-verbe{border:2.5px dashed #222; padding:7px}
+.z-pro{height:100%; background:linear-gradient(90deg,#b5b5b5,#fafafa); border:2px dotted #333; border-radius:22px}
+.z-verbe{height:100%; background:#fff; border:3px solid #111; border-radius:22px}
+.z-verbe ul{margin:4px 0; padding-left:24px}
+.bas{display:grid; grid-template-columns:1.7fr 1fr; gap:14px; margin-top:14px}
+.principe{background:var(--bleu-clair); border:3px solid #2a6fd1; border-radius:14px; padding:12px 16px}
+.principe h2{margin:0 0 6px; font-size:22px; color:var(--bleu)}
+.invariables{background:#fff; border:2px solid #aaa; border-radius:14px; padding:12px 16px}
+.invariables h2{margin:0 0 6px; font-size:20px}
+
+/* Les caches */
+.cache{position:relative; cursor:pointer; border-radius:7px; -webkit-box-decoration-break:clone; box-decoration-break:clone; outline:none}
+span.cache{padding:0 3px}
+div.cache, p.cache{display:block; min-height:1.5em}
+.cache:not(.vu){background:repeating-linear-gradient(135deg, var(--cache) 0 10px, #56699a 10px 20px); color:transparent !important}
+.cache:not(.vu) *{color:transparent !important; background:transparent !important; border-color:transparent !important}
+.cache:not(.vu):hover, .cache:not(.vu):focus-visible{box-shadow:0 0 0 3px #f3c26b}
+div.cache:not(.vu)::before, p.cache:not(.vu)::before{content:"👆 Toucher pour voir"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px; font-weight:700; letter-spacing:.03em}
+.cache.vu{animation:apparait .25s ease-out}
+.cache.vu::after{content:""; position:absolute; left:0; bottom:-5px; height:4px; border-radius:2px; background:#2a6fd1; animation:decompte 8s linear forwards}
+@keyframes decompte{from{width:100%} to{width:0}}
+@keyframes apparait{from{opacity:.2} to{opacity:1}}
+.nom-classe .cache{display:inline-block; min-width:120px}
+
+@media (max-width:800px){
+  .cadre-gn, .ligne2, .bas{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="outils-haut">
+    <a href="index.html">← Espace Français 6e</a>
+    <span class="boutons">
+      <span class="compteur" id="compteur"></span>
+      <button id="tout-cacher">🔄 Tout recacher</button>
+      <a href="fiche_classes_variables.html">📖 Fiche complète</a>
+    </span>
+  </div>
+
+  <h1>Se tester : les classes grammaticales variables</h1>
+  <p class="consigne">Essaie de te souvenir de la réponse, puis <strong>touche un cache</strong> pour vérifier. La réponse reste affichée <strong>8 secondes</strong>.</p>
+
+  <div class="cadre-gn">
+    <span class="etiq-cadre">Le groupe nominal</span>
+
+    <div class="zone z-det">
+      <span class="nom-classe"><span class="cache">Déterminant</span></span>
+      <p>Il se place <span class="cache"><strong>devant le nom</strong></span>.</p>
+      <p class="varie">↔ Il varie en <span class="cache">genre et en nombre</span>.</p>
+      <p>Exemples : <span class="cache">le, la, les, un, une, des, ce, cette, son, ses…</span></p>
+      <div class="test"><span class="etiquette">🔄 Test de substitution</span>
+        <div class="cache">Je le remplace par un, une ou des :<br><b>ce</b> monstre → <b>un</b> monstre</div></div>
+    </div>
+
+    <div class="col-nom">
+      <div class="zone z-nc">
+        <span class="nom-classe"><span class="cache">Nom commun</span></span>
+        <p>Il désigne <span class="cache">un être, une chose ou une idée</span>.</p>
+        <p class="varie">↔ Il varie en <span class="cache">nombre</span>.</p>
+        <div class="test"><span class="etiquette">🔄 Test de substitution</span>
+          <div class="cache">Je le remplace par un autre nom :<br>le <b>monstre</b> → le <b>géant</b></div></div>
+      </div>
+      <div class="zone z-np">
+        <span class="nom-classe"><span class="cache">Nom propre</span></span>
+        <p>Il commence par <span class="cache">une <strong>majuscule</strong></span>.</p>
+        <div class="test"><span class="etiquette">🔄 Test de substitution</span>
+          <div class="cache">Je le remplace par un autre nom propre :<br><b>Ulysse</b> navigue → <b>Thésée</b> navigue</div></div>
+      </div>
+    </div>
+
+    <div class="zone z-adj">
+      <span class="nom-classe"><span class="cache">Adjectif</span></span>
+      <p>Il <span class="cache"><strong>précise le nom</strong> : il dit comment il est</span>.</p>
+      <p class="varie">↔ Il <span class="cache">s'accorde avec le nom</span>.</p>
+      <p>cruel → <span class="cache">cruelle</span></p>
+      <div class="test"><span class="etiquette">🔄 Test de substitution</span>
+        <div class="cache">Je le remplace par un autre adjectif :<br>le monstre <b>cruel</b> → le monstre <b>affreux</b></div></div>
+    </div>
+  </div>
+
+  <div class="ligne2">
+    <div class="cadre-pro">
+      <div class="zone z-pro">
+        <span class="nom-classe"><span class="cache">Pronom</span></span>
+        <p>Il remplace <span class="cache"><strong>tout le groupe nominal</strong></span>.</p>
+        <p class="varie">↔ Il varie en <span class="cache">genre, en nombre et en personne</span>.</p>
+        <p>Exemples : <span class="cache">il, elle, ils, elles, le, la, les, lui…</span></p>
+        <div class="test"><span class="etiquette">🔄 Test de substitution</span>
+          <div class="cache">Je remplace tout le groupe nominal par un pronom :<br><b>Le cyclope affreux</b> dévore → <b>Il</b> dévore</div></div>
+      </div>
+    </div>
+    <div class="cadre-verbe">
+      <div class="zone z-verbe">
+        <span class="nom-classe"><span class="cache">Verbe</span></span>
+        <p>Il dit <span class="cache">une <strong>action</strong> ou un <strong>état</strong></span>.</p>
+        <p class="varie">↔ Il <span class="cache">se conjugue</span>.</p>
+        <p>Il s'accorde avec <span class="cache">le <strong>sujet</strong></span>.</p>
+        <div class="test"><span class="etiquette">🔄 Test de substitution</span>
+          <div class="cache">Je le remplace par un autre verbe :<br>Le cyclope <b>dévore</b> → Le cyclope <b>avale</b><br>ou je change le temps :<br>Le cyclope <b>dévore</b> → Le cyclope <b>dévorera</b></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bas">
+    <div class="principe">
+      <h2>🔄 Le principe de substitution</h2>
+      <div class="cache">Je <strong>remplace</strong> un mot par un autre mot, <strong>à la même place</strong>.<br>
+        Si la phrase reste correcte, les deux mots sont de la <strong>même classe</strong>.</div>
+    </div>
+    <div class="invariables">
+      <h2>🔒 Les mots invariables</h2>
+      <p>Ils ne changent <span class="cache"><strong>jamais</strong> de forme</span>.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const DUREE = 8000;
+const caches = [...document.querySelectorAll('.cache')];
+const vus = new Set();
+const compteur = document.getElementById('compteur');
+const majCompteur = () => { compteur.textContent = '👀 ' + vus.size + ' / ' + caches.length + ' réponses vues'; };
+function reveler(c, i){
+  if (c.classList.contains('vu')) return;
+  c.classList.add('vu');
+  c.setAttribute('aria-label', 'Réponse affichée');
+  vus.add(i); majCompteur();
+  c._minuteur = setTimeout(() => { c.classList.remove('vu'); c.setAttribute('aria-label', 'Afficher la réponse'); }, DUREE);
+}
+caches.forEach((c, i) => {
+  c.tabIndex = 0;
+  c.setAttribute('role', 'button');
+  c.setAttribute('aria-label', 'Afficher la réponse');
+  c.addEventListener('click', () => reveler(c, i));
+  c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveler(c, i); } });
+});
+document.getElementById('tout-cacher').onclick = () => {
+  caches.forEach(c => { clearTimeout(c._minuteur); c.classList.remove('vu'); c.setAttribute('aria-label', 'Afficher la réponse'); });
+  vus.clear(); majCompteur();
+};
+majCompteur();
+</script>
+</body>
+</html>
