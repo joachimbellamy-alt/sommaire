@@ -337,7 +337,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
       <div id="corr-detail"></div>
     </div>
   </section>
-  <p class="version">Version du 19 novembre 2026 (3)</p>
+  <p class="version">Version du 25 novembre 2026</p>
 </main>
 
 <div id="modale" class="modale" hidden>
@@ -589,7 +589,8 @@ function renderAccueil(){
     try {
       const c = depuisFichier(d.corpus);
       if (!S.corpus || signature(c) !== signature(S.corpus)) {
-        rep.innerHTML = '<div class="reprise"><button class="secondaire" id="btn-reprendre">↩ Reprendre « ' + esc(c.titre) + ' » (' + esc(d.eleve.prenom + ' ' + d.eleve.nom) + ')</button></div>';
+        rep.innerHTML = '<div class="reprise"><p class="aide">Tu as déjà commencé un exercice sur cet appareil. <strong>Si ton professeur t\'a envoyé un nouvel exercice, ouvre son lien ou son fichier</strong> plutôt que ce bouton.</p>' +
+          '<button class="secondaire" id="btn-reprendre">↩ Reprendre mon ancien exercice : « ' + esc(c.titre) + ' » (' + esc(d.eleve.prenom + ' ' + d.eleve.nom) + ')</button></div>';
         $('#btn-reprendre').onclick = () => {
           S.corpus = c;
           $('#in-nom').value = d.eleve.nom; $('#in-prenom').value = d.eleve.prenom; $('#in-classe').value = d.eleve.classe;
@@ -1230,7 +1231,7 @@ function chargerDepuisLien(){
   const m = location.hash.match(/[#&]c=([^&]+)/);
   if (!m) return false;
   $$('.modale').forEach(x => x.hidden = true);
-  try { chargerCorpus(depuisFichier(JSON.parse(b64urlD(m[1]))), 'lien'); oublierLienDansAdresse(); }
+  try { chargerCorpus(depuisFichier(JSON.parse(b64urlD(m[1]))), 'lien'); }
   catch(err) {
     renderAccueil(); montrerEcran('accueil');
     $('#accueil-msg').textContent = 'Le lien de l\'exercice est incomplet. Demande à ton professeur de le renvoyer.';
