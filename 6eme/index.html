@@ -5,34 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Français 6ème</title>
     <style>
-        /* Couleur distinctive pour la 6ème : Bleu */
-        :root { --couleur-classe: dodgerblue; }
+        :root { --couleur-classe: dodgerblue; --texte: #2c3e50; }
 
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; padding: 20px; color: #2c3e50; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 15px; border-top: 10px solid var(--couleur-classe); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { color: var(--couleur-classe); text-align: center; margin-bottom: 5px; }
-        p { text-align: center; font-style: italic; color: #7f8c8d; margin-bottom: 25px; }
-        
-        .btn { 
-            display: flex; justify-content: center; align-items: center; gap: 10px;
-            padding: 18px; margin: 12px 0; 
-            background: #fff; border: 2px solid var(--couleur-classe); 
-            color: var(--couleur-classe); text-decoration: none; 
-            border-radius: 8px; font-weight: bold; transition: 0.3s;
-            text-align: center; /* Pour les textes longs sur mobile */
-        }
-        .btn:hover { background: var(--couleur-classe); color: white; transform: scale(1.02); }
-        
-        /* Harmonisation des badges "Nouveau" */
-        .nouveau, .badge {
-            background: #e74c3c; color: white; font-size: 0.75em;
-            padding: 2px 10px; border-radius: 20px; text-transform: uppercase;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            margin-left: 10px;
-        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; padding: 20px; color: var(--texte); margin: 0; }
+        .container { max-width: 820px; margin: 20px auto; background: white; padding: 30px; border-radius: 15px; border-top: 10px solid var(--couleur-classe); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: var(--couleur-classe); text-align: center; margin: 0 0 5px; }
+        .subtitle { text-align: center; font-style: italic; color: #7f8c8d; margin: 0 0 25px; }
 
+        .recherche { width: 100%; padding: 12px 16px; font-size: 1rem; border: 2px solid #dfe6ec; border-radius: 8px; margin-bottom: 20px; }
+        .recherche:focus { outline: none; border-color: var(--couleur-classe); }
+
+        details { border: 1px solid #dfe6ec; border-radius: 10px; margin: 12px 0; overflow: hidden; }
+        summary { cursor: pointer; padding: 16px 18px; font-weight: bold; font-size: 1.1rem; background: #f0f7ff; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: "▾"; color: var(--couleur-classe); transition: transform .2s; }
+        details[open] > summary::after { transform: rotate(180deg); }
+        summary .compte { font-weight: normal; font-size: .85rem; color: #7f8c8d; margin-left: auto; }
+
+        .sous-titre { margin: 16px 18px 4px; font-size: .85rem; text-transform: uppercase; letter-spacing: .05em; color: #7f8c8d; font-weight: bold; }
+        .liste { padding: 6px 12px 14px; }
+
+        .btn {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 16px; margin: 8px 0;
+            background: #fff; border: 2px solid var(--couleur-classe);
+            color: var(--couleur-classe); text-decoration: none;
+            border-radius: 8px; font-weight: 600; transition: .2s;
+        }
+        .btn:hover { background: var(--couleur-classe); color: white; transform: scale(1.01); }
+        .btn.fiche { border-style: dashed; }
+        .btn small { font-weight: normal; opacity: .8; }
+
+        .vide { text-align: center; color: #7f8c8d; display: none; padding: 20px; }
         .retour { display: block; text-align: center; margin-top: 30px; color: #95a5a6; text-decoration: none; font-weight: bold; }
         .retour:hover { color: var(--couleur-classe); }
+
+        @media (max-width: 500px) { .container { padding: 18px; } }
     </style>
 </head>
 <body>
@@ -40,100 +49,126 @@
 <div class="container">
     <h1>📖 Espace Français 6ème</h1>
     <p class="subtitle">« Celui qui déplace la montagne, c'est celui qui commence par enlever les petites pierres. » — Confucius</p>
-    
-    <div class="list">
-        <a href="classes_variables.html" class="btn">
-            🗂️ Ranger les mots selon leur classe grammaticale (les monstres) <span class="nouveau">nouveau</span>
-        </a>
 
-        <a href="fiche_classes_variables.html" class="btn">
-            📖 Fiche : les classes grammaticales variables <span class="nouveau">nouveau</span>
-        </a>
+    <input class="recherche" id="recherche" type="search" placeholder="🔍 Chercher un exercice (COD, attribut, Petit Prince…)">
 
-        <a href="fiche_classes_variables_dys.html" class="btn">
-            📖 Fiche : les classes grammaticales variables (version dys) <span class="nouveau">nouveau</span>
-        </a>
+    <details open>
+        <summary>🗂️ Les classes grammaticales <span class="compte"></span></summary>
+        <div class="liste">
+            <a href="fiche_classes_variables.html" class="btn fiche">📖 Fiche : les classes grammaticales variables</a>
+            <a href="fiche_classes_variables_dys.html" class="btn fiche">📖 Fiche : les classes variables <small>(version dys)</small></a>
+            <a href="classes_variables.html" class="btn">🗂️ Ranger les mots selon leur classe (les monstres)</a>
+            <a href="devine_mon_monstre.html" class="btn">👹 Devine mon monstre (décrire sans nommer)</a>
+            <a href="fiche_classes_variables_test.html" class="btn">🧠 Se tester sur les classes variables</a>
+        </div>
+    </details>
 
-        <a href="fiche_classes_variables_test.html" class="btn">
-            🧠 Se tester sur les classes grammaticales variables <span class="nouveau">nouveau</span>
-        </a>
+    <details>
+        <summary>🧩 Les fonctions dans la phrase <span class="compte"></span></summary>
+        <div class="liste">
+            <div class="sous-titre">Le COD</div>
+            <a href="COD_vrai_faux.html" class="btn">✅ Évaluer sa maîtrise du « je retiens » (quiz)</a>
+            <a href="COD_petit_prince.html" class="btn">👑 Identifier les COD (Petit Prince)</a>
+            <a href="voyages_COD.html" class="btn">✈️ Les COD (vie de Saint-Exupéry)</a>
+            <a href="aeropostale_COD.html" class="btn">✈️ Les COD (l'Aéropostale)</a>
 
-        <a href="emotions_polypheme.html" class="btn">
-            🎭 Les émotions dans la grotte de Polyphème <span class="nouveau">nouveau</span>
-        </a>
+            <div class="sous-titre">Le COI</div>
+            <a href="QCM_COI.html" class="btn">✅ Tester ses connaissances sur le COI (QCM)</a>
+            <a href="COI_exo1.html" class="btn">👑 Identifier les COI — niveau 1</a>
+            <a href="COI_exo2.html" class="btn">👑 Identifier les COI — niveau 2</a>
+            <a href="COI_pronoms.html" class="btn">👑 Identifier les COI — niveau 3</a>
 
-        <a href="ulysse_et_le_cyclope.html" class="btn">
-            ⛵ Ulysse et le Cyclope : ai-je bien compris le texte ? <span class="nouveau">nouveau</span>
-        </a>
+            <div class="sous-titre">Compléments essentiels et facultatifs</div>
+            <a href="programme sac groupes.html" class="btn">🧪 Complément essentiel vs facultatif (laboratoire de syntaxe)</a>
+            <a href="sujet_COI_CC.html" class="btn">👑 Sujet, COI et compléments facultatifs</a>
+            <a href="se_tester_sur_les_complements_du_verbe.html" class="btn">✅ Tester ses connaissances sur les compléments</a>
 
-        <a href="devine_mon_monstre.html" class="btn">
-            👹 Devine mon monstre (décrire sans nommer) <span class="nouveau">nouveau</span>
-        </a>
+            <div class="sous-titre">L'attribut du sujet</div>
+            <a href="test_connaissances_attribut.html" class="btn">✅ Se tester sur la leçon de l'attribut du sujet</a>
+            <a href="identifier_atttribut.html" class="btn">👑 Identifier l'attribut du sujet</a>
+            <a href="attributs_a_corriger.html" class="btn">👑 Identifier l'attribut et l'accorder avec son sujet</a>
+        </div>
+    </details>
 
-        <a href="malediction-cyclope.html" class="btn">👁️ La malédiction du Cyclope</a>
-        
-        <a href="inferences_avancees.html" class="btn">📚 Exercices de compréhension en lecture</a>
-        
-        <a href="temps_du_passe_identifier.html" class="btn">⏳ Identifier les temps du passé</a>
+    <details>
+        <summary>⏳ Les temps du passé <span class="compte"></span></summary>
+        <div class="liste">
+            <a href="temps_du_passe_identifier.html" class="btn">🏔️ Identifier les temps du passé (les exploratrices de l'extrême)</a>
+            <a href="identifier_temps_du_passe_petit_prince.html" class="btn">👑 Les temps du passé dans le Petit Prince</a>
+        </div>
+    </details>
 
-        <a href="identifier_temps_du_passe_petit_prince.html" class="btn">👑 Les temps du passé dans le Petit Prince</a>
-        
-        <a href="COD_vrai_faux.html" class="btn">👑 Evaluer sa maîtrise du "je retiens" (COD)</a>
-        
-        <a href="COD_petit_prince.html" class="btn">👑 Identifier les COD (Petit Prince)</a>
-        
-        <a href="voyages_COD.html" class="btn">👑 Les COD (Vie de Saint-Exupéry)</a>
-        
-        <a href="aeropostale_COD.html" class="btn">👑 Les COD (L'Aéropostale)</a>
-        
-        <a href="associer_defauts.html" class="btn">
-            👑 Personnages et défauts (Petit Prince) <span class="badge">Nouveau</span>
-        </a> <a href="QCM_COI.html" class="btn">
-            👑 Tester ses connaissances sur le COI <span class="badge">Nouveau</span>
-        </a>
-        
-        <a href="COI_exo1.html" class="btn">
-            👑 Identifier les COI (niveau 1) <span class="badge">Nouveau</span>
-        </a>
-        
-        <a href="COI_exo2.html" class="btn">
-            👑 Identifier les COI (niveau 2) <span class="badge">Nouveau</span>
-        </a>
-        
-        <a href="COI_pronoms.html" class="btn">
-            👑 Identifier les COI (niveau 3) <span class="badge">Nouveau</span>
-        </a>
+    <details>
+        <summary>✍️ Orthographe et dictées <span class="compte"></span></summary>
+        <div class="liste">
+            <a href="dictee_fautive_prince.html" class="btn">👑 Corriger la dictée sur le Petit Prince</a>
+            <a href="mission-dictee-a-corriger.html" class="btn">🚀 Mission Correction (Jane Goodall)</a>
+            <a href="dictee-analyse.html" class="btn">📝 La phrase du jour — analyse grammaticale</a>
+        </div>
+    </details>
 
-        <a href="sujet_COI_CC.html" class="btn">
-            👑 Sujet, COI et compléments facultatifs <span class="badge">Nouveau</span>
-        </a>
+    <details>
+        <summary>📚 Lecture et compréhension <span class="compte"></span></summary>
+        <div class="liste">
+            <div class="sous-titre">Ulysse et le Cyclope</div>
+            <a href="ulysse_et_le_cyclope.html" class="btn">⛵ Ulysse et le Cyclope : ai-je bien compris le texte ?</a>
+            <a href="emotions_polypheme.html" class="btn">🎭 Les émotions dans la grotte de Polyphème</a>
 
-        <a href="programme_sac_groupes.html" class="btn">
-            👑 Complément essentiel vs facultatif <span class="nouveau">nouveau</span>
-        </a>
+            <div class="sous-titre">Le Petit Prince</div>
+            <a href="associer_defauts.html" class="btn">👑 Personnages et défauts</a>
 
-        <a href="se_tester_sur_les_complements_du_verbe.html" class="btn">
-            👑 Tester ses connaissances sur les compléments <span class="nouveau">nouveau</span>
-            </a>
-        <a href="test_connaissances_attribut.html" class="btn">
-            👑 se tester sur sa maitrise de la leçon sur l'attribut du sujet<span class="nouveau">nouveau</span>
-        </a>
-         <a href="identifier_atttribut.html" class="btn">
-            👑 Identifier l'attribut du sujet <span class="nouveau">nouveau</span>
-        </a>
-        <a href="attributs_a_corriger.html" class="btn">
-            👑 Identifier l'attribut du sujet et l'accorder en genre et en nombre avec son sujet <span class="nouveau">nouveau</span>
-        </a>
-        <a href="dictee_fautive_prince.html" class="btn">
-            👑 Corriger l'orthographe grammaticale de la dictée sur le Petit Prince. <span class="nouveau">nouveau</span>
-        </a>
-         <a href="dictee-annalyse.html" class="btn">
-            👑 Corriger l'orthographe grammaticale de la dictée . <span class="nouveau">nouveau</span>
-        </a>
-    </div>
-    
+            <div class="sous-titre">Compréhension en général</div>
+            <a href="inferences_avancees.html" class="btn">🔎 Exercices de compréhension en lecture (inférences)</a>
+        </div>
+    </details>
+
+    <p class="vide" id="vide">Aucun exercice ne correspond à cette recherche.</p>
+
     <a href="../index.html" class="retour">🏠 Retour à l'accueil</a>
 </div>
+
+<script>
+    const champ = document.getElementById('recherche');
+    const sections = [...document.querySelectorAll('details')];
+    const vide = document.getElementById('vide');
+
+    const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+    function compter() {
+        sections.forEach(d => {
+            const n = d.querySelectorAll('.btn').length;
+            d.querySelector('.compte').textContent = n + (n > 1 ? ' activités' : ' activité');
+        });
+    }
+
+    function filtrer() {
+        const q = norm(champ.value.trim());
+        let total = 0;
+        sections.forEach(d => {
+            let visibles = 0;
+            d.querySelectorAll('.btn').forEach(b => {
+                const ok = !q || norm(b.textContent).includes(q);
+                b.style.display = ok ? '' : 'none';
+                if (ok) visibles++;
+            });
+            d.querySelectorAll('.sous-titre').forEach(t => {
+                let el = t.nextElementSibling, reste = false;
+                while (el && !el.classList.contains('sous-titre')) {
+                    if (el.classList.contains('btn') && el.style.display !== 'none') reste = true;
+                    el = el.nextElementSibling;
+                }
+                t.style.display = reste ? '' : 'none';
+            });
+            d.style.display = visibles ? '' : 'none';
+            if (q && visibles) d.open = true;
+            total += visibles;
+        });
+        vide.style.display = total ? 'none' : 'block';
+    }
+
+    compter();
+    champ.addEventListener('input', filtrer);
+</script>
 
 </body>
 </html>
