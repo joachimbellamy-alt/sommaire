@@ -39,8 +39,8 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
 .varie::before{content:"↔ "; }
 .ex{font-style:italic}
 .ex b{font-style:normal; background:#fff6c2; color:#111; padding:0 3px; border-radius:4px}
-.test{background:rgba(255,255,255,.75); color:#111; border-radius:8px; padding:4px 8px; font-size:14px}
-.test::before{content:"🔍 Test : "; font-weight:700}
+.test{background:#e8f0ff; color:#111; border:2.5px solid #2a6fd1; border-radius:10px; padding:7px 10px; margin-top:8px !important; font-size:17.5px; line-height:1.35}
+.test::before{content:"🔄 Test de substitution : "; font-weight:800; color:#1d4f9c; text-transform:uppercase; letter-spacing:.03em; font-size:.85em}
 .z-adj .ex b{background:#fff6c2}
 .pro-contenu{display:grid; grid-template-columns:1.1fr 1fr; gap:4px 18px; align-items:start}
 .fleche{font-weight:800}
@@ -72,16 +72,22 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
 @page{size:A4 landscape; margin:7mm}
 @media print{
   *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
-  body{background:#fff; font-size:12.4px; line-height:1.3}
+  body{background:#fff; font-size:11.4px; line-height:1.24}
   .page{max-width:none; padding:0}
   .outils-haut{display:none}
   h1{font-size:20px; padding:3px 16px; margin-bottom:7px}
   .tableau{gap:7px}
   .cadre-gn{padding:20px 7px 7px; gap:7px}
-  .zone{padding:6px 8px}
+  .zone{padding:5px 8px}
   .nom-classe{font-size:14px; padding:1px 7px; margin-bottom:3px}
-  .test{font-size:11.6px; padding:3px 6px}
-  .zone p{margin:3px 0}
+  body{font-size:11.4px; line-height:1.24}
+  .test{font-size:13.4px; padding:3px 7px; margin-top:4px !important; border-width:2px; line-height:1.28}
+  .zone{padding:5px 8px}
+  .zone p{margin:2px 0}
+  .zone ul{margin:2px 0}
+  .zone li{margin:1px 0}
+  .nom-classe{margin-bottom:2px}
+  .zone p{margin:2px 0}
   .bas{margin-top:7px; gap:7px}
   .encadre{padding:5px 9px}
   .encadre h2{font-size:13.5px}
@@ -110,15 +116,15 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
 
       <div class="zone z-det">
         <span class="nom-classe">Déterminant</span>
-        <p>Il se place <strong>devant le nom</strong> et l'annonce.</p>
-        <p class="varie">Varie en genre et en nombre : le / la / les</p>
+        <p>Il se place <strong>devant le nom</strong>.</p>
+        <p class="varie">Varie en genre (masculin ou féminin) et en nombre (singulier ou pluriel) :</p>
         <ul>
           <li><strong>articles</strong> : le, la, l', les, un, une, des, du, au, aux</li>
           <li><strong>possessifs</strong> : mon, ton, son, sa, ses, notre, leur…</li>
           <li><strong>démonstratifs</strong> : ce, cet, cette, ces</li>
         </ul>
         <p class="ex"><b>le</b> chevalier, <b>ses</b> aventures</p>
-        <p class="test">je le remplace par <em>un, une</em> ou <em>des</em> : <em><b>le</b> chevalier → <b>un</b> chevalier</em>.</p>
+        <p class="test">je le remplace par <em>un, une</em> ou <em>des</em> : <em><b>ce</b> chevalier → <b>un</b> chevalier</em>.</p>
       </div>
 
       <div class="col-nom">
@@ -172,11 +178,13 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
         <span class="nom-classe">Verbe</span>
         <p>Il exprime une <strong>action</strong> ou un <strong>état</strong>. C'est le <strong>noyau de la phrase</strong>.</p>
         <p class="varie">Se conjugue : il change selon la personne, le nombre, le temps et le mode</p>
-        <p>je combat<strong>s</strong>, nous combatt<strong>ons</strong>, il combatt<strong>it</strong>, il <strong>a</strong> combatt<strong>u</strong></p>
-        <p>Il s'accorde avec son <strong>sujet</strong> : le lion <b>suit</b> / les lions <b>suivent</b>.</p>
+        <ul>
+          <li>je combat<strong>s</strong>, nous combatt<strong>ons</strong>, il combatt<strong>it</strong>, il <strong>a</strong> combatt<strong>u</strong></li>
+          <li>Il s'accorde avec son <strong>sujet</strong> : le lion <b>suit</b> / les lions <b>suivent</b>.</li>
+          <li>Dans un temps composé, les deux mots forment le verbe : <em>il <b>a</b> <b>combattu</b></em>.</li>
+        </ul>
         <p class="ex">Yvain <b>combat</b>. Laudine <b>pardonne</b>. Le lion <b>est</b> fidèle.</p>
         <p class="test">je le remplace par un autre verbe : <em>Yvain <b>combat</b> → Yvain <b>attaque</b></em>,<br>ou je change le temps : <em>Yvain <b>combat</b> → Yvain <b>combattra</b></em>.</p>
-        <p>Dans un temps composé, les deux mots forment le verbe : <em>il <b>a</b> <b>combattu</b></em>.</p>
       </div>
     </div>
   </div>
