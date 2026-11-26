@@ -1,3 +1,4 @@
+<meta charset="UTF-8">
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=OpenDyslexic:wght@400;700&display=swap">
 <style>
@@ -153,6 +154,44 @@
   .victory .emoji { font-size: 42px; margin-bottom: 0.6rem; }
   .victory h3 { font-size: 19px; font-weight: 700; margin-bottom: 0.5rem; color: var(--color-text-primary); }
   .victory p { font-size: 15px; color: var(--color-text-secondary); line-height: 1.8; }
+
+  /* Enregistrement en PDF */
+  .pdf-zone {
+    display: none;
+    margin-top: 1.25rem;
+    text-align: center;
+    background: #EEF6FB;
+    border: 1px solid #9CC3DB;
+    border-radius: 12px;
+    padding: 1.5rem;
+    font-family: 'OpenDyslexic', Arial, sans-serif;
+  }
+  .pdf-zone.show { display: block; }
+  .pdf-zone h3 { font-size: 18px; margin-bottom: .75rem; color: #1a1a2e; }
+  .pdf-zone label { font-size: 16px; color: #1a1a2e; }
+  .pdf-zone input {
+    font: inherit; font-size: 16px; padding: .5rem .7rem; margin: .5rem 0 1rem;
+    border: 1px solid #9CC3DB; border-radius: 8px; width: min(320px, 100%);
+  }
+  .pdf-btn {
+    display: inline-block; font: inherit; font-size: 17px; font-weight: 700;
+    padding: .8rem 1.5rem; border-radius: 10px; border: none; cursor: pointer;
+    background: #2a6f97; color: #fff; text-decoration: none;
+  }
+  .pdf-msg { margin-top: 1rem; font-size: 15px; line-height: 1.8; color: #1a1a2e; }
+  .pdf-msg.erreur { color: #A32D2D; }
+  .feuille-pdf {
+    position: fixed; left: -10000px; top: 0; width: 800px;
+    background: #fff; color: #1a1a2e; padding: 40px 48px;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  .feuille-pdf h1 { font-size: 26px; margin-bottom: 6px; color: #2a6f97; }
+  .feuille-pdf .tete { font-size: 16px; margin-bottom: 18px; color: #444; }
+  .feuille-pdf .score { display: flex; gap: 24px; font-size: 16px; margin-bottom: 18px; padding: 10px 14px; background: #f4f4f4; border-radius: 8px; }
+  .feuille-pdf .texte { font-size: 18px; line-height: 2; }
+  .feuille-pdf .ok { color: #0F6E56; font-weight: 700; }
+  .feuille-pdf .montre { color: #854F0B; font-weight: 700; }
+  .feuille-pdf .legende { margin-top: 18px; font-size: 14px; color: #555; }
 </style>
 
 <div id="app">
@@ -176,6 +215,13 @@
     <div class="emoji">🐍</div>
     <h3>Sortilège brisé !</h3>
     <p>Bravo ! Vous avez retrouvé les 24 fautes d'accord. Méduse recouvre sa véritable apparence.</p>
+  </div>
+  <div class="pdf-zone" id="pdf-zone">
+    <h3>📄 Enregistrer mon travail en PDF</h3>
+    <label for="pdf-nom">Ton prénom et ton nom :</label><br>
+    <input type="text" id="pdf-nom" autocomplete="off"><br>
+    <button type="button" class="pdf-btn" id="pdf-creer">Créer mon PDF</button>
+    <div class="pdf-msg" id="pdf-msg"></div>
   </div>
 </div>
 
@@ -376,6 +422,7 @@ function revealAll() {
   for (const [word, f] of Object.entries(faults)) {
     if (!foundSet.has(word)) {
       foundSet.add(word);
+      revealedSet.add(word);
       document.querySelectorAll(`.w[data-word="${word}"][data-fault="true"]`).forEach(el => {
         el.classList.add("found-revealed");
         el.textContent = f.correct;
@@ -388,10 +435,14 @@ function revealAll() {
   document.getElementById("stat-remain").textContent = 0;
   document.getElementById("progress").style.width = "100%";
   closePopup();
+  showPdfZone();
 }
 
 function resetAll() {
   foundSet.clear();
+  revealedSet.clear();
+  document.getElementById("pdf-zone").classList.remove("show");
+  document.getElementById("pdf-msg").innerHTML = "";
   found = 0; errors = 0;
   document.getElementById("stat-good").textContent = 0;
   document.getElementById("stat-wrong").textContent = 0;
@@ -404,8 +455,94 @@ function resetAll() {
 
 function showVictory() {
   document.getElementById("victory").classList.add("show");
+  showPdfZone();
   document.getElementById("victory").scrollIntoView({behavior:"smooth"});
 }
+
+/* ---------- Enregistrement en PDF (une fois l'exercice terminé) ---------- */
+const revealedSet = new Set();
+
+function showPdfZone() {
+  document.getElementById("pdf-zone").classList.add("show");
+}
+
+function chargerScript(src) {
+  return new Promise((ok, ko) => {
+    const e = document.createElement("script");
+    e.src = src; e.onload = ok; e.onerror = ko;
+    document.head.appendChild(e);
+  });
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+}
+
+function slug(s) {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, "") || "eleve";
+}
+
+function feuilleHTML(nom) {
+  let texte = "";
+  for (const [w, isFault, after] of words) {
+    if (isFault) {
+      const cls = revealedSet.has(w) ? "montre" : "ok";
+      texte += `<span class="${cls}">${esc(faults[w].correct)}</span>${esc(after)}`;
+    } else {
+      texte += esc(w) + esc(after);
+    }
+  }
+  const parEleve = TOTAL - revealedSet.size;
+  return `<h1>Méduse : corriger les accords dans le groupe nominal</h1>
+    <div class="tete"><strong>${esc(nom)}</strong> · ${esc(new Date().toLocaleDateString("fr-FR"))}</div>
+    <div class="score">
+      <span>✓ Corrigées seul(e) : <strong>${parEleve} / ${TOTAL}</strong></span>
+      <span>✗ Erreurs : <strong>${errors}</strong></span>
+      ${revealedSet.size ? `<span>👁 Réponses montrées : <strong>${revealedSet.size}</strong></span>` : ""}
+    </div>
+    <div class="texte">${texte}</div>
+    <div class="legende"><span class="ok">en vert</span> : mots corrigés par l'élève${revealedSet.size ? ' · <span class="montre">en orange</span> : réponses montrées' : ""}</div>`;
+}
+
+async function creerPDF() {
+  const nom = document.getElementById("pdf-nom").value.trim();
+  const msg = document.getElementById("pdf-msg");
+  msg.className = "pdf-msg";
+  if (!nom) {
+    msg.className = "pdf-msg erreur";
+    msg.textContent = "Écris d'abord ton prénom et ton nom.";
+    document.getElementById("pdf-nom").focus();
+    return;
+  }
+  msg.textContent = "Préparation du PDF… quelques secondes.";
+  const div = document.createElement("div");
+  div.className = "feuille-pdf";
+  div.innerHTML = feuilleHTML(nom);
+  document.body.appendChild(div);
+  try {
+    if (!window.html2canvas) await chargerScript("../6eme/lib/html2canvas.min.js");
+    if (!window.jspdf) await chargerScript("../6eme/lib/jspdf.umd.min.js");
+    const canvas = await html2canvas(div, { scale: 2, backgroundColor: "#ffffff", logging: false });
+    const pdf = new jspdf.jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+    const L = 210, H = 297, marge = 10;
+    const k = Math.min((L - 2 * marge) / canvas.width, (H - 2 * marge) / canvas.height);
+    const l = canvas.width * k, h = canvas.height * k;
+    pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", (L - l) / 2, marge, l, h);
+    pdf.setProperties({ title: "Méduse – accords – " + nom });
+    const fichier = "meduse_accords_" + slug(nom) + ".pdf";
+    const lien = URL.createObjectURL(pdf.output("blob"));
+    msg.innerHTML = `✅ Ton PDF est prêt.<br><br>
+      <a class="pdf-btn" href="${lien}" download="${esc(fichier)}">📥 Télécharger mon PDF</a><br><br>
+      Sur l'iPad, tu le retrouveras dans l'app <strong>Fichiers</strong>, dossier « Téléchargements ».`;
+  } catch (err) {
+    msg.className = "pdf-msg erreur";
+    msg.textContent = "Le PDF n'a pas pu être créé. Vérifie ta connexion à Internet, puis réessaie.";
+  } finally {
+    div.remove();
+  }
+}
+
+document.getElementById("pdf-creer").addEventListener("click", creerPDF);
 
 buildText();
 document.getElementById("overlay").addEventListener("click", function(e){
