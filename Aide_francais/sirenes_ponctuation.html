@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les sirènes de l'Antiquité – Remets la ponctuation</title>
+<style>
+  :root {
+    --encre: #1f2a44;
+    --fond: #fbf8f2;
+    --carte: #ffffff;
+    --mer: #2a6f97;
+    --mer-clair: #e3f0f7;
+    --bord: #d8d2c4;
+    --corail: #c2410c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Atkinson Hyperlegible", Verdana, "Trebuchet MS", sans-serif;
+    background: var(--fond);
+    color: var(--encre);
+    line-height: 1.5;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+  h1 { font-size: 1.9rem; margin: 0 0 .25rem; color: var(--mer); }
+  .niveau { margin: 0 0 1.5rem; font-size: .95rem; opacity: .75; }
+  .consigne {
+    background: var(--mer-clair);
+    border-left: 6px solid var(--mer);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+  }
+  .consigne p { margin: .3rem 0; }
+  kbd {
+    display: inline-block; min-width: 1.6rem; text-align: center;
+    border: 1px solid #9fb3c4; border-bottom-width: 3px; border-radius: 5px;
+    background: #fff; padding: 0 .35rem; font-weight: bold; font-family: inherit;
+  }
+  .nom { margin-bottom: 1rem; font-size: 1.05rem; }
+  .nom input { font: inherit; padding: .3rem .5rem; border: 1px solid var(--bord); border-radius: 6px; width: 16rem; max-width: 100%; }
+  .texte, .correction {
+    background: var(--carte);
+    border: 1px solid var(--bord);
+    border-radius: 12px;
+    padding: 1.5rem 1.5rem 2rem;
+  }
+  .texte h2, .correction h2 { font-size: 1.4rem; margin: 0 0 1rem; text-align: center; }
+  #texte, #texteCorrige {
+    font-size: 1.35rem;
+    line-height: 2.1;
+    padding: .5rem .75rem;
+  }
+  #texte {
+    min-height: 12rem;
+    border-radius: 8px;
+    outline: 2px dashed transparent;
+    caret-color: var(--mer);
+    white-space: pre-wrap;
+  }
+  #texte:focus { outline-color: #b9c6d2; background: #fdfdfb; }
+  .boutons { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; margin-top: 1.5rem; }
+  .boutons button, #formCorrection button {
+    font: inherit; font-size: 1rem; padding: .6rem 1.2rem;
+    border-radius: 8px; border: 2px solid var(--mer); cursor: pointer;
+    background: #fff; color: var(--mer); font-weight: bold;
+  }
+  .boutons button.principal { background: var(--mer); color: #fff; }
+  .boutons .discret { margin-left: auto; border-color: var(--bord); color: #6b7280; font-weight: normal; }
+  #formCorrection {
+    display: none; gap: .5rem; align-items: center; flex-wrap: wrap;
+    margin-top: 1rem; font-size: 1rem;
+  }
+  #formCorrection.ouvert { display: flex; }
+  #formCorrection input { font: inherit; padding: .5rem .6rem; border: 1px solid var(--bord); border-radius: 6px; }
+  #erreurMdp { color: var(--corail); }
+  .correction { display: none; margin-top: 2rem; border-color: var(--corail); }
+  .correction.visible { display: block; }
+  .correction h2 { color: var(--corail); }
+  .ponct { color: var(--corail); font-weight: bold; font-size: 1.6rem; padding: 0 .05rem; }
+
+  @media print {
+    body { background: #fff; }
+    .boutons, .consigne .astuce, #formCorrection { display: none !important; }
+    .texte, .correction { border: none; padding: 0; }
+    #texte { outline: none; background: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Remets la ponctuation</h1>
+  <p class="niveau">Soutien de français · 6<sup>e</sup></p>
+
+  <div class="consigne">
+    <p><strong>Consigne :</strong> dans ce texte, tous les <strong>points</strong> et toutes les <strong>virgules</strong> ont disparu. Remets-les au bon endroit.</p>
+    <p class="astuce">Clique dans le texte à l'endroit voulu, puis tape <kbd>.</kbd> ou <kbd>,</kbd> au clavier.</p>
+    <p class="astuce">💡 Relis le texte à voix haute : là où tu fais une pause, il faut peut-être une virgule ou un point.</p>
+  </div>
+
+  <div class="nom"><label>Prénom : <input type="text" autocomplete="off"></label></div>
+
+  <section class="texte" aria-label="Texte à ponctuer">
+    <h2>Les sirènes de l'Antiquité</h2>
+    <div id="texte" contenteditable="true" spellcheck="false" autocorrect="off" autocapitalize="off" role="textbox" aria-multiline="true"></div>
+  </section>
+
+  <div class="boutons">
+    <button type="button" class="principal" onclick="window.print()">🖨️ Imprimer</button>
+    <button type="button" id="recommencer">↺ Recommencer</button>
+    <button type="button" id="ouvrirCorrection" class="discret">🔒 Correction</button>
+  </div>
+
+  <form id="formCorrection" autocomplete="off">
+    <label for="mdp">Mot de passe :</label>
+    <input type="password" id="mdp">
+    <button type="submit">Afficher</button>
+    <span id="erreurMdp" role="alert"></span>
+  </form>
+
+  <section class="correction" id="correction" aria-label="Correction">
+    <h2>Correction</h2>
+    <p id="texteCorrige"></p>
+  </section>
+</main>
+
+<script>
+  // Texte sans ponctuation ni majuscules de début de phrase
+  const texteDepart = "dans l'Antiquité les sirènes ne sont pas des femmes à queue de poisson " +
+    "en effet ce sont des créatures avec une tête de femme et un corps d'oiseau " +
+    "de plus elles vivent sur une île au milieu de la mer " +
+    "leur voix est douce belle et envoûtante " +
+    "ainsi quand les marins entendent leur chant ils s'approchent du rivage " +
+    "alors leur navire se brise sur les rochers et ils meurent " +
+    "cependant dans l'Odyssée la magicienne Circé avertit Ulysse du danger " +
+    "d'abord le héros bouche les oreilles de ses compagnons avec de la cire " +
+    "ensuite comme il veut écouter les sirènes ses hommes l'attachent au mât " +
+    "enfin Ulysse supplie ses compagnons de le libérer mais le bateau s'éloigne";
+
+  const texteCorrige = "Dans l'Antiquité, les sirènes ne sont pas des femmes à queue de poisson. " +
+    "En effet, ce sont des créatures avec une tête de femme et un corps d'oiseau. " +
+    "De plus, elles vivent sur une île au milieu de la mer. " +
+    "Leur voix est douce, belle et envoûtante. " +
+    "Ainsi, quand les marins entendent leur chant, ils s'approchent du rivage. " +
+    "Alors, leur navire se brise sur les rochers et ils meurent. " +
+    "Cependant, dans l'Odyssée, la magicienne Circé avertit Ulysse du danger. " +
+    "D'abord, le héros bouche les oreilles de ses compagnons avec de la cire. " +
+    "Ensuite, comme il veut écouter les sirènes, ses hommes l'attachent au mât. " +
+    "Enfin, Ulysse supplie ses compagnons de le libérer mais le bateau s'éloigne.";
+
+  // Noms propres : leur majuscule ne change jamais
+  const nomsPropres = new Set(["circé", "ulysse"]);
+
+  const zone = document.getElementById("texte");
+
+  /* Majuscule automatique : la première lettre d'un mot devient majuscule
+     s'il est au début du texte ou juste après un point, et redevient
+     minuscule si le point est effacé. */
+  function ajusterMajuscules(t) {
+    let res = "";
+    let debutPhrase = true;
+    const morceaux = t.split(/(\s+)/);
+    for (const m of morceaux) {
+      if (m === "" || /^\s+$/.test(m)) { res += m; continue; }
+      const match = m.match(/^([^\p{L}]*)(\p{L})(.*)$/u);
+      if (!match) { res += m; }
+      else {
+        const [, avant, lettre, reste] = match;
+        const motNu = (lettre + reste).replace(/[^\p{L}']/gu, "").toLowerCase();
+        let l = lettre;
+        if (!nomsPropres.has(motNu)) {
+          l = (debutPhrase && avant === "") ? lettre.toUpperCase() : lettre.toLowerCase();
+        }
+        res += avant + l + reste;
+      }
+      // Le mot (ou signe isolé) se termine-t-il par un point ?
+      const sansEspaces = m.replace(/\s+$/, "");
+      if (/[.!?]$/.test(sansEspaces)) debutPhrase = true;
+      else if (/\p{L}/u.test(m)) debutPhrase = false;
+    }
+    return res;
+  }
+
+  function positionCurseur() {
+    const sel = window.getSelection();
+    if (!sel.rangeCount || !zone.contains(sel.anchorNode)) return null;
+    const r = sel.getRangeAt(0).cloneRange();
+    r.selectNodeContents(zone);
+    r.setEnd(sel.anchorNode, sel.anchorOffset);
+    return r.toString().length;
+  }
+
+  function placerCurseur(pos) {
+    const noeud = zone.firstChild;
+    if (!noeud) return;
+    const r = document.createRange();
+    r.setStart(noeud, Math.min(pos, noeud.length));
+    r.collapse(true);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+  }
+
+  function miseAJour() {
+    const pos = positionCurseur();
+    const brut = zone.textContent.replace(/\n/g, " ");
+    const ajuste = ajusterMajuscules(brut);
+    if (ajuste !== zone.textContent || zone.childNodes.length !== 1) {
+      zone.textContent = ajuste;
+      if (pos !== null) placerCurseur(pos);
+    }
+  }
+
+  let composition = false;
+  zone.addEventListener("compositionstart", () => composition = true);
+  zone.addEventListener("compositionend", () => { composition = false; miseAJour(); });
+  zone.addEventListener("input", () => { if (!composition) miseAJour(); });
+  zone.addEventListener("keydown", e => { if (e.key === "Enter") e.preventDefault(); });
+  zone.addEventListener("paste", e => {
+    e.preventDefault();
+    const t = (e.clipboardData || window.clipboardData).getData("text/plain");
+    document.execCommand("insertText", false, t.replace(/\s+/g, " "));
+  });
+
+  function initialiser() { zone.textContent = ajusterMajuscules(texteDepart); }
+  initialiser();
+
+  document.getElementById("recommencer").addEventListener("click", () => {
+    if (!confirm("Effacer toute ta ponctuation et recommencer ?")) return;
+    initialiser();
+  });
+
+  // Correction protégée par mot de passe
+  const form = document.getElementById("formCorrection");
+  const mdp = document.getElementById("mdp");
+  const erreur = document.getElementById("erreurMdp");
+  const blocCorrection = document.getElementById("correction");
+
+  document.getElementById("ouvrirCorrection").addEventListener("click", () => {
+    if (blocCorrection.classList.contains("visible")) {
+      blocCorrection.classList.remove("visible");
+      return;
+    }
+    form.classList.toggle("ouvert");
+    if (form.classList.contains("ouvert")) mdp.focus();
+  });
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    if (mdp.value.trim().toLowerCase() === "correction") {
+      const p = document.getElementById("texteCorrige");
+      p.innerHTML = "";
+      texteCorrige.split(/([.,])/).forEach(part => {
+        if (part === "." || part === ",") {
+          const s = document.createElement("span");
+          s.className = "ponct";
+          s.textContent = part;
+          p.append(s);
+        } else p.append(part);
+      });
+      blocCorrection.classList.add("visible");
+      form.classList.remove("ouvert");
+      mdp.value = "";
+      erreur.textContent = "";
+      blocCorrection.scrollIntoView({ behavior: "smooth" });
+    } else {
+      erreur.textContent = "Mot de passe incorrect.";
+      mdp.select();
+    }
+  });
+</script>
+</body>
+</html>
