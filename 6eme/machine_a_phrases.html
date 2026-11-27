@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La machine à phrases</title>
+<style>
+:root{ --texte:#1a1a1a; --doux:#555; --orange:#f3c26b; --bleu:#1d4f9c; --vert:#1e7a35; --rouge:#b42318; }
+*{box-sizing:border-box; touch-action:manipulation}
+html,body{margin:0}
+body{background:#f6f3ec; color:var(--texte); font-family:Arial, Verdana, Helvetica, sans-serif; font-size:18px; line-height:1.45}
+.page{max-width:1180px; margin:0 auto; padding:14px 16px 30px}
+.haut{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px}
+.haut a, .haut select, button{font:inherit}
+.haut a{font-size:16px; font-weight:700; color:#2a6fd1; background:#fff; border:1.5px solid #2a6fd1; border-radius:10px; padding:8px 14px; text-decoration:none}
+.haut label{font-size:16px; font-weight:700}
+.haut select{font-size:16px; padding:6px 10px; border-radius:10px; border:1.5px solid #888}
+h1{margin:0 0 10px; background:var(--orange); border-radius:999px; padding:6px 22px; font-size:26px; text-align:center}
+
+.defi{background:#fff; border:3px solid #2a6fd1; border-radius:14px; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap}
+.defi .etiquette{color:var(--bleu); font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:.04em}
+.defi .consigne{font-size:21px; font-weight:700}
+.compteur{font-weight:700; color:var(--vert); white-space:nowrap}
+
+.apercu{background:#fffaf0; border:2px solid #e5c98f; border-radius:14px; padding:14px 18px; margin:12px 0; font-size:28px; min-height:72px; display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center}
+.apercu .vide{color:#aaa; font-size:20px}
+.apercu .mot{border-bottom:4px solid transparent; padding:0 2px}
+.apercu .mot.manque{color:#bbb}
+.apercu .mot.ok{border-color:var(--vert)}
+.apercu .mot.err{border-color:var(--rouge); color:var(--rouge)}
+
+.cases{display:grid; grid-template-columns:repeat(5, 1fr); gap:10px}
+.case{border-radius:14px; padding:10px; border:2px solid #555; display:flex; flex-direction:column; gap:8px; min-width:0}
+.case h2{margin:0; font-size:17px; display:flex; justify-content:space-between; align-items:center}
+.case select{font:inherit; font-size:17px; padding:7px 8px; border-radius:9px; border:1.5px solid #666; background:#fff; width:100%}
+.formes{display:flex; flex-wrap:wrap; gap:6px}
+.formes button{border:2px solid #444; background:#fff; border-radius:9px; padding:6px 10px; font-size:18px; cursor:pointer}
+.formes button.choisi{background:#1a1a1a; color:#fff; border-color:#1a1a1a}
+.aide-case{font-size:14px; color:#333}
+.case.ok{box-shadow:0 0 0 4px var(--vert)}
+.case.err{box-shadow:0 0 0 4px var(--rouge)}
+.c-det{background:#cfe3ff} .c-nom{background:#ffe3a3} .c-adj{background:#c9f0c9} .c-verbe{background:#ffd2ad} .c-comp{background:#e6e6e6} .c-pro{background:#e4d4ff}
+.modele{background:#fff; border:2px dashed #7a5cc7; border-radius:12px; padding:8px 14px; margin-bottom:10px; font-size:19px}
+
+.actions{display:flex; gap:10px; flex-wrap:wrap; margin:14px 0}
+.primaire, .secondaire{border-radius:10px; padding:11px 18px; font-weight:700; cursor:pointer; font-size:18px}
+.primaire{background:#2a6fd1; color:#fff; border:2px solid #2a6fd1}
+.secondaire{background:#fff; color:#2a6fd1; border:2px solid #2a6fd1}
+.retour{border-radius:12px; padding:10px 16px; font-size:18px; display:none}
+.retour.ok{display:block; background:#e5f6e9; border:2px solid var(--vert)}
+.retour.err{display:block; background:#fde8e6; border:2px solid var(--rouge)}
+.retour ul{margin:6px 0 0; padding-left:22px}
+.mes-phrases{background:#fff; border-radius:14px; padding:10px 16px; margin-top:12px}
+.mes-phrases h2{margin:0 0 6px; font-size:19px}
+.mes-phrases ol{margin:0; padding-left:24px}
+.mes-phrases li{margin:3px 0}
+.badge{display:inline-block; font-size:13px; background:#eef4ff; color:var(--bleu); border-radius:6px; padding:0 6px; margin-left:6px; vertical-align:middle}
+
+@media (max-width:900px){ .cases{grid-template-columns:1fr 1fr} .apercu{font-size:23px} }
+@media (max-width:520px){ .cases{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="haut">
+    <a href="index.html" id="lien-retour">← Espace Français</a>
+    <span><label for="banque">Thème : </label><select id="banque"></select></span>
+  </div>
+  <h1>⚙️ La machine à phrases</h1>
+
+  <div class="defi">
+    <div><div class="etiquette">Ton défi</div><div class="consigne" id="consigne"></div></div>
+    <div class="compteur" id="compteur"></div>
+  </div>
+
+  <div class="apercu" id="apercu"></div>
+  <div id="modele"></div>
+  <div class="cases" id="cases"></div>
+
+  <div class="actions">
+    <button class="primaire" id="verifier">✔ Vérifier ma phrase</button>
+    <button class="secondaire" id="suivant">🎲 Défi suivant</button>
+    <button class="secondaire" id="effacer">Tout effacer</button>
+  </div>
+  <div class="retour" id="retour"></div>
+
+  <div class="mes-phrases" id="mes-phrases" hidden>
+    <h2>✅ Mes phrases réussies</h2>
+    <ol id="liste"></ol>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ---------- Banques de mots (formes : masc. sing., fém. sing., masc. plur., fém. plur.) ---------- */
+const DETS = [
+  {l:'le / la / les', f:['le','la','les']},
+  {l:'un / une / des', f:['un','une','des']},
+  {l:'ce / cette / ces', f:['ce','cette','ces']},
+  {l:'son / sa / ses', f:['son','sa','ses']}
+];
+const BANQUES = {
+  monstres: {
+    titre:'Les monstres', retour:'index.html',
+    noms:[['cyclope','m','cyclopes'],['sorcière','f','sorcières'],['géant','m','géants'],['sirène','f','sirènes'],['monstre','m','monstres'],['créature','f','créatures'],['dragon','m','dragons'],['gorgone','f','gorgones'],['serpent','m','serpents']],
+    adjs:[['cruel','cruelle','cruels','cruelles'],['affreux','affreuse','affreux','affreuses'],['méchant','méchante','méchants','méchantes'],['furieux','furieuse','furieux','furieuses'],['rusé','rusée','rusés','rusées'],['terrible','terrible','terribles','terribles'],['gigantesque','gigantesque','gigantesques','gigantesques']],
+    verbes:[['dévore','dévorent'],['attaque','attaquent'],['effraie','effraient'],['poursuit','poursuivent'],['menace','menacent'],['capture','capturent']],
+    comps:['les marins','Ulysse','les voyageurs','le héros','les bergers','le navire']
+  },
+  yvain: {
+    titre:'Yvain, le chevalier au lion', retour:'../5eme/index.html',
+    noms:[['chevalier','m','chevaliers'],['dame','f','dames'],['lion','m','lions'],['géant','m','géants'],['reine','f','reines'],['demoiselle','f','demoiselles'],['serpent','m','serpents'],['fée','f','fées']],
+    adjs:[['courageux','courageuse','courageux','courageuses'],['loyal','loyale','loyaux','loyales'],['puissant','puissante','puissants','puissantes'],['cruel','cruelle','cruels','cruelles'],['fidèle','fidèle','fidèles','fidèles'],['noble','noble','nobles','nobles']],
+    verbes:[['combat','combattent'],['protège','protègent'],['aide','aident'],['défie','défient'],['poursuit','poursuivent'],['sauve','sauvent']],
+    comps:['le serpent','Laudine','les ennemis','le château','son maître','la fontaine']
+  }
+};
+const DEFIS = [
+  {id:'libre', txt:'Construis une phrase correcte.'},
+  {id:'pluriel', txt:'Construis une phrase au pluriel.'},
+  {id:'feminin', txt:'Construis une phrase avec un nom féminin.'},
+  {id:'femPl', txt:'Construis une phrase au féminin pluriel.'},
+  {id:'pronom', txt:'Remplace le groupe nominal sujet par un pronom.'},
+  {id:'commutation', txt:'Change un seul mot de ta dernière phrase réussie, et garde une phrase correcte.'}
+];
+const PRONOMS = ['il','elle','ils','elles'];
+
+/* ---------- État ---------- */
+const params = new URLSearchParams(location.search);
+let cleBanque = BANQUES[params.get('banque')] ? params.get('banque') : 'monstres';
+let B = BANQUES[cleBanque];
+let defi = DEFIS[0];
+let sel = {};
+let derniere = null;          // dernière phrase réussie (pour la commutation et le pronom)
+let modele = null;            // groupe nominal à remplacer (défi pronom)
+let reussies = [];
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hasard = a => a[Math.floor(Math.random() * a.length)];
+
+/* ---------- Calculs grammaticaux ---------- */
+const infoNom = () => {
+  const n = B.noms.find(x => x[0] === sel.nomL);
+  if (!n || !sel.nomF) return null;
+  return {g:n[1], n:sel.nomF === n[2] && n[2] !== n[0] ? 'p' : 's', forme:sel.nomF};
+};
+const formeDet = (d, g, n) => d.f[n === 'p' ? 2 : (g === 'f' ? 1 : 0)];
+const formeAdj = (a, g, n) => a[(n === 'p' ? 2 : 0) + (g === 'f' ? 1 : 0)];
+const formePro = (g, n) => n === 'p' ? (g === 'f' ? 'elles' : 'ils') : (g === 'f' ? 'elle' : 'il');
+const nomGN = (g, n) => g === 'f' ? (n === 'p' ? 'féminin pluriel' : 'féminin singulier') : (n === 'p' ? 'masculin pluriel' : 'masculin singulier');
+const modePronom = () => defi.id === 'pronom';
+
+/* ---------- Affichage des cases ---------- */
+function options(liste, valeur, vide){
+  return '<option value="">' + vide + '</option>' + liste.map(v => '<option' + (v === valeur ? ' selected' : '') + '>' + esc(v) + '</option>').join('');
+}
+function boutons(formes, choisie, cle){
+  const uniques = [...new Set(formes)];
+  return '<div class="formes">' + uniques.map(f => '<button data-cle="' + cle + '" data-forme="' + esc(f) + '" class="' + (f === choisie ? 'choisi' : '') + '">' + esc(f) + '</button>').join('') + '</div>';
+}
+function rendre(){
+  const c = $('#cases');
+  let h = '';
+  if (modePronom()) {
+    h += caseHTML('pro', 'c-pro', 'Pronom', '', boutons(PRONOMS, sel.pro, 'pro'), 'Choisis le pronom qui remplace le groupe nominal.');
+  } else {
+    const d = DETS.find(x => x.l === sel.detL);
+    h += caseHTML('det', 'c-det', 'Déterminant', '<select data-cle="detL">' + options(DETS.map(x => x.l), sel.detL, '— choisir —') + '</select>',
+      d ? boutons(d.f, sel.detF, 'detF') : '', d ? 'Choisis la bonne forme.' : '');
+    const n = B.noms.find(x => x[0] === sel.nomL);
+    h += caseHTML('nom', 'c-nom', 'Nom', '<select data-cle="nomL">' + options(B.noms.map(x => x[0]), sel.nomL, '— choisir —') + '</select>',
+      n ? boutons([n[0], n[2]], sel.nomF, 'nomF') : '', n ? 'Singulier ou pluriel ?' : '');
+    const a = B.adjs.find(x => x[0] === sel.adjL);
+    h += caseHTML('adj', 'c-adj', 'Adjectif', '<select data-cle="adjL">' + options(B.adjs.map(x => x[0]), sel.adjL, '— choisir —') + '</select>',
+      a ? boutons(a, sel.adjF, 'adjF') : '', a ? 'Accorde-le avec le nom.' : '');
+  }
+  const v = B.verbes.find(x => x[0] === sel.verbeL);
+  h += caseHTML('verbe', 'c-verbe', 'Verbe', '<select data-cle="verbeL">' + options(B.verbes.map(x => x[0] + ' / ' + x[1]), sel.verbeL ? sel.verbeL + ' / ' + v[1] : '', '— choisir —') + '</select>',
+    v ? boutons(v, sel.verbeF, 'verbeF') : '', v ? 'Accorde-le avec le sujet.' : '');
+  h += caseHTML('comp', 'c-comp', 'Complément', '<select data-cle="comp">' + options(B.comps, sel.comp, '— choisir —') + '</select>', '', 'Il ne change pas.');
+  c.innerHTML = h;
+  $('#modele').innerHTML = modePronom() && modele ? '<div class="modele">Groupe nominal à remplacer : <strong>« ' + esc(modele.texte) + ' »</strong> (' + nomGN(modele.g, modele.n) + ')</div>' : '';
+  apercu();
+}
+function caseHTML(id, cls, titre, choix, formes, aide){
+  return '<div class="case ' + cls + '" id="case-' + id + '"><h2>' + titre + '</h2>' + choix + formes + (aide ? '<div class="aide-case">' + aide + '</div>' : '') + '</div>';
+}
+function mots(){
+  return modePronom()
+    ? [['pro', sel.pro], ['verbe', sel.verbeF], ['comp', sel.comp]]
+    : [['det', sel.detF], ['nom', sel.nomF], ['adj', sel.adjF], ['verbe', sel.verbeF], ['comp', sel.comp]];
+}
+function apercu(etats){
+  const m = mots();
+  if (!m.some(x => x[1])) { $('#apercu').innerHTML = '<span class="vide">Ta phrase apparaîtra ici…</span>'; return; }
+  $('#apercu').innerHTML = m.map(([k, v], i) => {
+    let t = v || '…';
+    if (i === 0 && v) t = t.charAt(0).toUpperCase() + t.slice(1);
+    return '<span class="mot ' + (v ? (etats && etats[k] ? etats[k] : '') : 'manque') + '">' + esc(t) + '</span>';
+  }).join(' ') + '<span>.</span>';
+}
+
+/* ---------- Saisie ---------- */
+$('#cases').addEventListener('change', e => {
+  const s = e.target.closest('select'); if (!s) return;
+  const k = s.dataset.cle;
+  if (k === 'verbeL') sel.verbeL = s.value ? s.value.split(' / ')[0] : '';
+  else sel[k] = s.value;
+  if (k === 'detL') sel.detF = '';
+  if (k === 'nomL') sel.nomF = '';
+  if (k === 'adjL') sel.adjF = '';
+  if (k === 'verbeL') sel.verbeF = '';
+  effacerRetour(); rendre();
+});
+$('#cases').addEventListener('click', e => {
+  const b = e.target.closest('button[data-forme]'); if (!b) return;
+  sel[b.dataset.cle] = b.dataset.forme;
+  effacerRetour(); rendre();
+});
+
+/* ---------- Vérification ---------- */
+function verifier(){
+  const pb = [], etats = {};
+  const manque = mots().filter(x => !x[1]).map(x => ({det:'le déterminant', nom:'le nom', adj:"l'adjectif", verbe:'le verbe', comp:'le complément', pro:'le pronom'}[x[0]]));
+  if (manque.length) return afficher(false, ['Il manque encore : ' + manque.join(', ') + '.'], {});
+  let g, n;
+  if (modePronom()) {
+    g = modele.g; n = modele.n;
+    const attendu = formePro(g, n);
+    if (sel.pro === attendu) etats.pro = 'ok';
+    else { etats.pro = 'err'; pb.push('« ' + sel.pro + ' » ne peut pas remplacer « ' + modele.texte + ' » : ce groupe est au ' + nomGN(g, n) + '.'); }
+  } else {
+    const info = infoNom(); g = info.g; n = info.n;
+    etats.nom = 'ok';
+    const d = DETS.find(x => x.l === sel.detL), a = B.adjs.find(x => x[0] === sel.adjL);
+    if (sel.detF === formeDet(d, g, n)) etats.det = 'ok';
+    else { etats.det = 'err'; pb.push('Le déterminant « ' + sel.detF + ' » ne s\'accorde pas avec « ' + sel.nomF + ' » (' + nomGN(g, n) + ').'); }
+    if (sel.adjF === formeAdj(a, g, n)) etats.adj = 'ok';
+    else { etats.adj = 'err'; pb.push('L\'adjectif « ' + sel.adjF + ' » doit s\'accorder avec « ' + sel.nomF + ' » (' + nomGN(g, n) + ').'); }
+  }
+  const v = B.verbes.find(x => x[0] === sel.verbeL);
+  if (sel.verbeF === v[n === 'p' ? 1 : 0]) etats.verbe = 'ok';
+  else { etats.verbe = 'err'; pb.push('Le verbe « ' + sel.verbeF + ' » doit s\'accorder avec son sujet, qui est au ' + (n === 'p' ? 'pluriel' : 'singulier') + '.'); }
+  etats.comp = 'ok';
+  // Contraintes du défi
+  if (defi.id === 'pluriel' && n !== 'p') pb.push('Le défi demande une phrase au pluriel.');
+  if (defi.id === 'feminin' && g !== 'f') pb.push('Le défi demande un nom féminin.');
+  if (defi.id === 'femPl' && (g !== 'f' || n !== 'p')) pb.push('Le défi demande un nom au féminin pluriel.');
+  if (defi.id === 'commutation') {
+    const diff = ['detL', 'detF', 'nomL', 'nomF', 'adjL', 'adjF', 'verbeL', 'verbeF', 'comp'].filter(k => sel[k] !== derniere.sel[k]);
+    const groupes = new Set(diff.map(k => k.replace(/[LF]$/, '')));
+    // changer de nombre modifie plusieurs mots : on compte le mot choisi, pas ses accords
+    const motsChanges = [...groupes].filter(gp => gp === 'comp' || derniere.sel[gp + 'L'] !== sel[gp + 'L']).length;
+    const nombreChange = derniere.n !== n || derniere.g !== g;
+    if (motsChanges + (nombreChange && motsChanges === 0 ? 1 : 0) !== 1)
+      pb.push('Le défi demande de changer un seul mot de ta phrase précédente (« ' + derniere.texte + ' »).');
+  }
+  if (pb.length) return afficher(false, pb, etats);
+  const brut = mots().map(x => x[1]).join(' ');
+  const texte = brut.charAt(0).toUpperCase() + brut.slice(1) + '.';
+  reussies.push({texte, defi:defi.txt});
+  if (!modePronom()) derniere = {sel:{...sel}, g, n, texte, gn:[sel.detF, sel.nomF, sel.adjF].join(' ')};
+  afficher(true, ['Bravo, ta phrase est correcte : tous les accords sont justes !'], etats);
+  majListe();
+}
+function afficher(ok, lignes, etats){
+  const r = $('#retour');
+  r.className = 'retour ' + (ok ? 'ok' : 'err');
+  r.innerHTML = (ok ? '✅ ' : '✗ ') + (lignes.length === 1 ? esc(lignes[0]) : '<strong>À revoir :</strong><ul>' + lignes.map(l => '<li>' + esc(l) + '</li>').join('') + '</ul>');
+  ['det', 'nom', 'adj', 'verbe', 'comp', 'pro'].forEach(k => { const c = $('#case-' + k); if (c) { c.classList.remove('ok', 'err'); if (etats[k]) c.classList.add(etats[k]); } });
+  apercu(etats);
+}
+function effacerRetour(){ $('#retour').className = 'retour'; $('#retour').innerHTML = ''; }
+function majListe(){
+  $('#mes-phrases').hidden = !reussies.length;
+  $('#liste').innerHTML = reussies.map(x => '<li>' + esc(x.texte) + '<span class="badge">' + esc(x.defi) + '</span></li>').join('');
+  $('#compteur').textContent = '⭐ ' + reussies.length + ' phrase' + (reussies.length > 1 ? 's' : '') + ' réussie' + (reussies.length > 1 ? 's' : '');
+}
+
+/* ---------- Défis ---------- */
+function nouveauDefi(id){
+  const possibles = DEFIS.filter(d => d.id !== defi.id && (d.id !== 'commutation' || derniere));
+  defi = id ? DEFIS.find(d => d.id === id) : hasard(possibles);
+  if (defi.id === 'commutation') sel = {...derniere.sel};
+  else if (defi.id === 'pronom') {
+    if (derniere) modele = {g:derniere.g, n:derniere.n, texte:derniere.gn};
+    else {
+      const nm = hasard(B.noms), n = Math.random() < .5 ? 's' : 'p', a = hasard(B.adjs), d = DETS[0];
+      modele = {g:nm[1], n, texte:formeDet(d, nm[1], n) + ' ' + (n === 'p' ? nm[2] : nm[0]) + ' ' + formeAdj(a, nm[1], n)};
+    }
+    modele.texte = modele.texte.charAt(0).toUpperCase() + modele.texte.slice(1);
+    sel = {verbeL:sel.verbeL || '', comp:sel.comp || ''};
+  } else sel = {};
+  $('#consigne').textContent = defi.txt;
+  effacerRetour(); rendre();
+}
+$('#verifier').onclick = verifier;
+$('#suivant').onclick = () => nouveauDefi();
+$('#effacer').onclick = () => { sel = modePronom() ? {} : (defi.id === 'commutation' ? {...derniere.sel} : {}); effacerRetour(); rendre(); };
+
+/* ---------- Thème ---------- */
+$('#banque').innerHTML = Object.entries(BANQUES).map(([k, v]) => '<option value="' + k + '"' + (k === cleBanque ? ' selected' : '') + '>' + esc(v.titre) + '</option>').join('');
+$('#banque').onchange = e => {
+  cleBanque = e.target.value; B = BANQUES[cleBanque];
+  $('#lien-retour').href = B.retour;
+  derniere = null; reussies = []; majListe(); nouveauDefi('libre');
+};
+$('#lien-retour').href = B.retour;
+majListe();
+nouveauDefi('libre');
+</script>
+</body>
+</html>
