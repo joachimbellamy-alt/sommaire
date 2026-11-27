@@ -51,6 +51,15 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
 .encadre h2{font-size:16px; margin:0 0 4px}
 .encadre p{margin:4px 0}
 .bas{grid-template-columns:1fr 1.9fr}
+.cle{color:#b42318; font-weight:800; font-style:normal}
+.autour{color:#111; font-weight:700}
+table.accord{border-collapse:collapse; margin:5px 0; background:#fff; color:#111; font-size:.95em}
+table.accord th, table.accord td{border:1.5px solid #444; padding:1px 9px; text-align:center}
+table.accord th{background:#ececec; font-weight:700}
+table.accord td b{color:#b42318}
+.piege{border:2px solid #d97706; background:#fff7e6; border-radius:9px; padding:3px 8px; margin-top:5px}
+.piege p{margin:1px 0}
+.piege-titre{font-weight:800; color:#9a4b00}
 .principe{background:#e8f0ff; border:2.5px solid #2a6fd1; border-radius:12px; padding:10px 14px}
 .principe h2{font-size:17px; margin:0 0 6px; color:#1d4f9c}
 .principe-grille{display:grid; grid-template-columns:1fr auto; gap:14px; align-items:center}
@@ -69,11 +78,11 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
   .axe{flex-wrap:wrap}
 }
 
-@page{size:A4 landscape; margin:7mm}
+@page{size:A3 landscape; margin:10mm}
 @media print{
   *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
   body{background:#fff; font-size:11.4px; line-height:1.24}
-  .page{max-width:none; padding:0}
+  .page{max-width:none; padding:0; zoom:1.41}
   .outils-haut{display:none}
   h1{font-size:20px; padding:3px 16px; margin-bottom:7px}
   .tableau{gap:7px}
@@ -104,7 +113,7 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
     <span class="boutons">
       <a href="fiche_classes_variables_dys.html">Version dys</a>
       <a href="fiche_classes_variables_test.html">🧠 Se tester</a>
-      <a href="fiche_classes_variables.pdf" download="Fiche_classes_grammaticales_variables.pdf">⬇ Télécharger (PDF)</a>
+      <a href="fiche_classes_variables.pdf" download="Fiche_classes_grammaticales_variables_A3.pdf">⬇ Télécharger (PDF A3)</a>
       <button onclick="window.print()">🖨 Imprimer</button>
     </span>
   </div>
@@ -126,21 +135,21 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
           <li><strong>démonstratifs</strong> : ce, cet, cette, ces</li>
         </ul>
         <p class="ex"><b>le</b> cyclope, <b>ses</b> moutons</p>
-        <p class="test">je le remplace par <em>un, une</em> ou <em>des</em> : <em><b>ce</b> monstre → <b>un</b> monstre</em>.</p>
+        <p class="test">je le remplace par <span class="cle">un</span>, <span class="cle">une</span> ou <span class="cle">des</span> : <em><b>ce</b> monstre → <b>un</b> monstre</em>.</p>
       </div>
 
       <div class="col-nom">
         <div class="zone z-nc">
           <span class="nom-classe">Nom commun</span>
           <p>Il désigne un être, une chose, un lieu ou une idée. C'est le <strong>noyau</strong> du groupe nominal.</p>
+          <p class="autour">👀 Tout ce que tu vois autour de toi est un nom : la table, la fenêtre, le cahier…</p>
           <p class="varie">Varie en nombre : un monstre → des monstres</p>
           <p>Son genre est fixe : <em>le</em> cyclope, <em>la</em> caverne.</p>
-          <p class="ex">le <b>monstre</b>, la <b>caverne</b>, la <b>peur</b></p>
           <p class="test">je le remplace par un autre nom : <em>le <b>monstre</b> → le <b>géant</b></em>.</p>
         </div>
         <div class="zone z-np">
           <span class="nom-classe">Nom propre</span>
-          <p>Il commence par une <strong>majuscule</strong> et désigne une personne, un lieu ou un animal précis. Souvent sans déterminant.</p>
+          <p>Il commence par une <strong>majuscule</strong> : une personne, un lieu précis.</p>
           <p class="ex"><b>Ulysse</b>, <b>Polyphème</b>, <b>Méduse</b></p>
           <p class="test">je le remplace par un autre nom propre : <em><b>Ulysse</b> navigue → <b>Thésée</b> navigue</em>.</p>
         </div>
@@ -150,7 +159,11 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
         <span class="nom-classe">Adjectif</span>
         <p>Il <strong>précise le nom</strong> : il dit comment est l'être ou la chose.</p>
         <p class="varie">S'accorde en genre et en nombre avec le nom</p>
-        <p>cruel → cruel<strong>le</strong> → cruel<strong>les</strong></p>
+        <table class="accord">
+          <tr><th></th><th>masculin</th><th>féminin</th></tr>
+          <tr><th>singulier</th><td>cruel</td><td>cruel<b>le</b></td></tr>
+          <tr><th>pluriel</th><td>cruel<b>s</b></td><td>cruel<b>les</b></td></tr>
+        </table>
         <p class="ex">le monstre <b>cruel</b>, la <b>sombre</b> caverne</p>
         <p class="test">je le remplace par un autre adjectif : <em>le monstre <b>cruel</b> → le monstre <b>affreux</b></em>.</p>
       </div>
@@ -162,13 +175,17 @@ h1{margin:0 0 12px; background:var(--orange); border-radius:999px; padding:6px 2
         <span class="nom-classe">Pronom</span>
         <div class="pro-contenu">
           <div>
-            <p>Il <strong>remplace tout un groupe nominal</strong> (ou un nom propre) pour éviter une répétition.</p>
+            <p>Il <strong>remplace un groupe nominal</strong> pour éviter une répétition.</p>
             <p class="varie">Varie en genre, en nombre et en personne</p>
-            <p>je, tu, il, elle, nous, vous, ils, elles · le, la, les, lui, leur · me, te, se</p>
+            <p><strong>Sujets</strong> : je, tu, il, elle, on, nous, vous, ils, elles</p>
+            <p><strong>Compléments</strong> : me, te, se, le, la, l', les, lui, leur, nous, vous, en, y</p>
+            <div class="piege">
+              <p><span class="piege-titre">⚠️ le, la, les :</span> devant un <strong>nom</strong> → déterminant (<em><b>le</b> cyclope</em>) ; devant un <strong>verbe</strong> → pronom (<em>Ulysse <b>le</b> trompe</em>).</p>
+            </div>
           </div>
           <div>
             <p class="ex"><span class="fleche">Le cyclope affreux</span> dévore <span class="fleche">les marins</span>.<br>→ <b>Il</b> <b>les</b> dévore.</p>
-            <p class="test">je remplace <strong>tout le groupe nominal</strong> par un pronom : <em><b>Le cyclope affreux</b> dévore → <b>Il</b> dévore</em>.<br>Attention : <em>le, la, les</em> pronoms se placent <strong>devant le verbe</strong>.</p>
+            <p class="test">je remplace <strong>tout le groupe nominal</strong> par un pronom : <em><b>Le cyclope affreux</b> dévore → <b>Il</b> dévore</em>.</p>
           </div>
         </div>
       </div>

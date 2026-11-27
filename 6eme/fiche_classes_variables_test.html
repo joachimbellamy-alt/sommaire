@@ -56,6 +56,15 @@ div.cache:not(.vu)::before, p.cache:not(.vu)::before{content:"👆 Toucher pour 
 @keyframes decompte{from{width:100%} to{width:0}}
 @keyframes apparait{from{opacity:.2} to{opacity:1}}
 .nom-classe .cache{display:inline-block; min-width:120px}
+.cle{color:#b42318; font-weight:700}
+table.accord{border-collapse:collapse; margin:6px 0; background:#fff; color:#111}
+table.accord th, table.accord td{border:2px solid #444; padding:3px 12px; text-align:center; min-width:90px}
+table.accord th{background:#ececec}
+table.accord td b{color:#b42318}
+.piege{background:#fff7e6; border:3px solid #d97706; border-radius:12px; padding:6px 12px; margin-top:10px}
+.piege p{margin:3px 0}
+.piege b{background:#fff2a8; padding:0 4px; border-radius:4px}
+.piege-titre{font-weight:700; color:#9a4b00}
 
 @media (max-width:800px){
   .cadre-gn, .ligne2, .bas{grid-template-columns:1fr}
@@ -85,13 +94,14 @@ div.cache:not(.vu)::before, p.cache:not(.vu)::before{content:"👆 Toucher pour 
       <p class="varie">↔ Il varie en <span class="cache">genre et en nombre</span>.</p>
       <p>Exemples : <span class="cache">le, la, les, un, une, des, ce, cette, son, ses…</span></p>
       <div class="test"><span class="etiquette">🔄 Test de substitution</span>
-        <div class="cache">Je le remplace par un, une ou des :<br><b>ce</b> monstre → <b>un</b> monstre</div></div>
+        <div class="cache">Je le remplace par <span class="cle">un</span>, <span class="cle">une</span> ou <span class="cle">des</span> :<br><b>ce</b> monstre → <b>un</b> monstre</div></div>
     </div>
 
     <div class="col-nom">
       <div class="zone z-nc">
         <span class="nom-classe"><span class="cache">Nom commun</span></span>
         <p>Il désigne <span class="cache">un être, une chose ou une idée</span>.</p>
+        <p>👀 Tout ce que tu vois autour de toi est <span class="cache"><strong>un nom</strong></span>.</p>
         <p class="varie">↔ Il varie en <span class="cache">nombre</span>.</p>
         <div class="test"><span class="etiquette">🔄 Test de substitution</span>
           <div class="cache">Je le remplace par un autre nom :<br>le <b>monstre</b> → le <b>géant</b></div></div>
@@ -108,7 +118,11 @@ div.cache:not(.vu)::before, p.cache:not(.vu)::before{content:"👆 Toucher pour 
       <span class="nom-classe"><span class="cache">Adjectif</span></span>
       <p>Il <span class="cache"><strong>précise le nom</strong> : il dit comment il est</span>.</p>
       <p class="varie">↔ Il <span class="cache">s'accorde avec le nom</span>.</p>
-      <p>cruel → <span class="cache">cruelle</span></p>
+      <table class="accord">
+        <tr><th></th><th>masculin</th><th>féminin</th></tr>
+        <tr><th>singulier</th><td>cruel</td><td><span class="cache">cruel<b>le</b></span></td></tr>
+        <tr><th>pluriel</th><td><span class="cache">cruel<b>s</b></span></td><td><span class="cache">cruel<b>les</b></span></td></tr>
+      </table>
       <div class="test"><span class="etiquette">🔄 Test de substitution</span>
         <div class="cache">Je le remplace par un autre adjectif :<br>le monstre <b>cruel</b> → le monstre <b>affreux</b></div></div>
     </div>
@@ -120,9 +134,15 @@ div.cache:not(.vu)::before, p.cache:not(.vu)::before{content:"👆 Toucher pour 
         <span class="nom-classe"><span class="cache">Pronom</span></span>
         <p>Il remplace <span class="cache"><strong>tout le groupe nominal</strong></span>.</p>
         <p class="varie">↔ Il varie en <span class="cache">genre, en nombre et en personne</span>.</p>
-        <p>Exemples : <span class="cache">il, elle, ils, elles, le, la, les, lui…</span></p>
+        <p><strong>Pronoms sujets</strong> : <span class="cache">je, tu, il, elle, on, nous, vous, ils, elles</span></p>
+        <p><strong>Pronoms compléments</strong> : <span class="cache">me, te, se, le, la, les, lui, leur, en, y</span></p>
         <div class="test"><span class="etiquette">🔄 Test de substitution</span>
           <div class="cache">Je remplace tout le groupe nominal par un pronom :<br><b>Le cyclope affreux</b> dévore → <b>Il</b> dévore</div></div>
+        <div class="piege">
+          <p class="piege-titre">⚠️ le, la, les : déterminant ou pronom ?</p>
+          <p>Devant un <strong>nom</strong> (<b>le</b> cyclope) → <span class="cache"><strong>déterminant</strong></span></p>
+          <p>Devant un <strong>verbe</strong> (Ulysse <b>le</b> trompe) → <span class="cache"><strong>pronom</strong></span></p>
+        </div>
       </div>
     </div>
     <div class="cadre-verbe">

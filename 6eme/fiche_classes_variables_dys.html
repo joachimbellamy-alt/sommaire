@@ -52,6 +52,16 @@ p{margin:6px 0}
 .invariables{background:#fff; border:2px solid #aaa; border-radius:14px; padding:12px 16px}
 .invariables h2{margin:0 0 6px; font-size:20px}
 
+.cle{color:#b42318; font-weight:700}
+.autour{font-weight:700}
+table.accord{border-collapse:collapse; margin:6px 0; background:#fff; color:#111}
+table.accord th, table.accord td{border:2px solid #444; padding:2px 12px; text-align:center}
+table.accord th{background:#ececec}
+table.accord td b{color:#b42318}
+.piege{background:#fff7e6; border:3px solid #d97706; border-radius:12px; padding:6px 12px; margin-top:10px}
+.piege p{margin:2px 0}
+.piege-titre{font-weight:700; color:#9a4b00}
+.piege b{background:#fff2a8; padding:0 4px; border-radius:4px}
 @media screen and (max-width:800px){
   .cadre-gn, .ligne2, .bas{grid-template-columns:1fr}
 }
@@ -59,7 +69,7 @@ p{margin:6px 0}
 @page{size:A4 landscape; margin:8mm}
 @media print{
   *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
-  body{background:#fff; font-size:18px}
+  body{background:#fff; font-size:17px}
   .page{max-width:none; padding:0}
   .outils-haut{display:none}
   .feuille{margin:0; break-after:page; page-break-after:always}
@@ -94,13 +104,14 @@ p{margin:6px 0}
         <p class="varie">Il varie en genre et en nombre.</p>
         <p>le, la, les, un, une, des, ce, cette, son, ses…</p>
         <p class="ex">Exemple : <b>le</b> cyclope, <b>ses</b> moutons</p>
-        <p class="test"><span class="etiquette">🔄 Test de substitution</span>Je le remplace par un, une ou des :<br><b>ce</b> monstre → <b>un</b> monstre</p>
+        <p class="test"><span class="etiquette">🔄 Test de substitution</span>Je le remplace par <span class="cle">un</span>, <span class="cle">une</span> ou <span class="cle">des</span> :<br><b>ce</b> monstre → <b>un</b> monstre</p>
       </div>
 
       <div class="col-nom">
         <div class="zone z-nc">
           <span class="nom-classe">Nom commun</span>
           <p>Il désigne un être, une chose ou une idée.</p>
+          <p class="autour">👀 Tout ce que tu vois autour de toi est un nom.</p>
           <p class="varie">Il varie en nombre.</p>
           <p>un monstre → des monstres</p>
           <p class="test"><span class="etiquette">🔄 Test de substitution</span>Je le remplace par un autre nom :<br>le <b>monstre</b> → le <b>géant</b></p>
@@ -116,7 +127,11 @@ p{margin:6px 0}
         <span class="nom-classe">Adjectif</span>
         <p>Il <strong>précise le nom</strong> : il dit comment il est.</p>
         <p class="varie">Il s'accorde avec le nom.</p>
-        <p>cruel → cruelle</p>
+        <table class="accord">
+          <tr><th></th><th>masculin</th><th>féminin</th></tr>
+          <tr><th>singulier</th><td>cruel</td><td>cruel<b>le</b></td></tr>
+          <tr><th>pluriel</th><td>cruel<b>s</b></td><td>cruel<b>les</b></td></tr>
+        </table>
         <p class="ex">Exemple : le monstre <b>cruel</b></p>
         <p class="test"><span class="etiquette">🔄 Test de substitution</span>Je le remplace par un autre adjectif :<br>le monstre <b>cruel</b> → le monstre <b>affreux</b></p>
       </div>
@@ -132,8 +147,14 @@ p{margin:6px 0}
           <span class="nom-classe">Pronom</span>
           <p>Il <strong>remplace tout le groupe nominal</strong>.</p>
           <p class="varie">Il varie en genre, en nombre et en personne.</p>
-          <p>il, elle, ils, elles, le, la, les, lui…</p>
+          <p><strong>Pronoms sujets</strong> : je, tu, il, elle, on, nous, vous, ils, elles</p>
+          <p><strong>Pronoms compléments</strong> : me, te, se, le, la, les, lui, leur, en, y</p>
           <p class="test"><span class="etiquette">🔄 Test de substitution</span>Je remplace tout le groupe nominal par un pronom :<br><b>Le cyclope affreux</b> dévore → <b>Il</b> dévore</p>
+          <div class="piege">
+            <p class="piege-titre">⚠️ le, la, les : déterminant ou pronom ?</p>
+            <p>Devant un <strong>nom</strong> → déterminant : <b>le</b> cyclope</p>
+            <p>Devant un <strong>verbe</strong> → pronom : Ulysse <b>le</b> trompe</p>
+          </div>
         </div>
       </div>
       <div class="cadre-verbe">
