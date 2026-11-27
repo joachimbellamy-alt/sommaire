@@ -42,6 +42,12 @@ textarea{resize:vertical}
 .exercice-pret .lien{font-size:14px; padding:0}
 .exercice-charge{background:#eef4ff; border:1.5px solid #bcd2f5; border-radius:10px; padding:10px 14px}
 .reprise{margin-top:16px; padding-top:12px; border-top:1px solid #eee}
+.histo-titre{margin:14px 0 4px; font-size:18px}
+.histo{list-style:none; padding:0; margin:6px 0}
+.histo li{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #eee}
+.histo-info{color:var(--doux); font-size:14px}
+.histo-boutons{display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end}
+button.petit{padding:6px 10px; font-size:14px}
 .aide{color:var(--doux); font-size:15px}
 
 /* Élève */
@@ -322,6 +328,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
       </div>
       <p id="ed-msg" class="aide"></p>
       <input type="text" id="ed-lien-texte" class="lien-texte" readonly hidden>
+      <div id="ed-crees"></div>
     </div>
 
     <div id="onglet-corriger" class="panneau" hidden>
@@ -337,7 +344,7 @@ table.liste tr.clic:hover{background:#f3f7ff}
       <div id="corr-detail"></div>
     </div>
   </section>
-  <p class="version">Version du 25 novembre 2026</p>
+  <p class="version">Version du 27 novembre 2026</p>
 </main>
 
 <div id="modale" class="modale" hidden>
@@ -547,6 +554,11 @@ window.addEventListener('resize', () => {
   minuteurAjuste = setTimeout(() => { ajusterZones($('#tableau-eleve')); ajusterZones($('#corr-detail')); }, 150);
 });
 
+/* ---------- Historiques (élève et enseignant) ---------- */
+const CLE_HISTO = 'cgv:historique', CLE_CREES = 'cgv:crees';
+const dateHeure = t => { const d = new Date(t); return isNaN(d) ? '' : 'le ' + d.toLocaleDateString('fr-FR') + ' à ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}); };
+const lienPour = fichier => location.href.split('#')[0].split('?')[0] + '#c=' + b64urlE(JSON.stringify(fichier));
+
 /* ---------- Élève ---------- */
 const S = {corpus:null, eleve:null, placements:[], verifs:0, montrer:false, sel:null, ecran:'accueil'};
 
@@ -584,22 +596,52 @@ function renderAccueil(){
   if (S.corpus) $('#btn-autre-exercice').onclick = () => { $('#accueil-ouvrir').hidden = false; $('#btn-autre-exercice').hidden = true; };
   const rep = $('#accueil-reprise'); rep.innerHTML = '';
   if (S.corpus) return;
-  const d = store.get('cgv:dernier');
-  if (d && d.corpus && d.eleve) {
-    try {
-      const c = depuisFichier(d.corpus);
-      if (!S.corpus || signature(c) !== signature(S.corpus)) {
-        rep.innerHTML = '<div class="reprise"><p class="aide">Tu as déjà commencé un exercice sur cet appareil. <strong>Si ton professeur t\'a envoyé un nouvel exercice, ouvre son lien ou son fichier</strong> plutôt que ce bouton.</p>' +
-          '<button class="secondaire" id="btn-reprendre">↩ Reprendre mon ancien exercice : « ' + esc(c.titre) + ' » (' + esc(d.eleve.prenom + ' ' + d.eleve.nom) + ')</button></div>';
-        $('#btn-reprendre').onclick = () => {
-          S.corpus = c;
-          $('#in-nom').value = d.eleve.nom; $('#in-prenom').value = d.eleve.prenom; $('#in-classe').value = d.eleve.classe;
-          demarrer();
-        };
-      }
-    } catch(e) {}
-  }
+  const h = historique();
+  if (!h.length) return;
+  rep.innerHTML = '<div class="reprise"><h3 class="histo-titre">📚 Mes exercices sur cet appareil</h3>' +
+    '<p class="aide">Si ton professeur t\'a envoyé un <strong>nouvel</strong> exercice, ouvre son lien ou son fichier : il n\'est pas dans cette liste.</p>' +
+    '<ul class="histo">' + h.map((x, i) => '<li><div><strong>' + esc(x.titre) + '</strong><br><span class="histo-info">' +
+      esc(x.eleve.prenom + ' ' + x.eleve.nom) + ' · ' + dateHeure(x.maj) + ' · ' + pluriel(x.ranges || 0, 'mot placé', 'mots placés') + '</span></div>' +
+      '<span class="histo-boutons"><button class="secondaire petit" data-rouvrir="' + i + '">Rouvrir</button>' +
+      '<button class="lien petit" data-oublier="' + i + '" aria-label="Retirer de la liste">✕</button></span></li>').join('') + '</ul></div>';
 }
+function historique(){
+  let h = store.get(CLE_HISTO);
+  if (!Array.isArray(h)) {
+    h = [];
+    const d = store.get('cgv:dernier');
+    if (d && d.corpus && d.eleve) {
+      try { const c = depuisFichier(d.corpus); h.push({sig:signature(c), cleE:slug(d.eleve.classe + '-' + d.eleve.nom + '-' + d.eleve.prenom), titre:c.titre, eleve:d.eleve, debut:Date.now(), maj:Date.now(), ranges:0, corpus:d.corpus}); } catch(e) {}
+    }
+    store.set(CLE_HISTO, h);
+  }
+  return h.filter(x => x && x.corpus && x.eleve);
+}
+function noterHistorique(){
+  if (!S.corpus || !S.eleve) return;
+  const sig = signature(S.corpus), cleE = slug(S.eleve.classe + '-' + S.eleve.nom + '-' + S.eleve.prenom);
+  const h = historique();
+  const i = h.findIndex(x => x.sig === sig && x.cleE === cleE);
+  const ancien = i >= 0 ? h.splice(i, 1)[0] : null;
+  h.unshift({sig, cleE, titre:S.corpus.titre, eleve:S.eleve, debut:ancien ? ancien.debut : Date.now(), maj:Date.now(), ranges:S.placements.length, corpus:versFichier(S.corpus)});
+  store.set(CLE_HISTO, h.slice(0, 25));
+}
+$('#accueil-reprise').addEventListener('click', e => {
+  const r = e.target.closest('[data-rouvrir]'), o = e.target.closest('[data-oublier]');
+  const h = historique();
+  if (r) {
+    const x = h[+r.dataset.rouvrir]; if (!x) return;
+    try {
+      oublierLienDansAdresse(); chargerCorpus(depuisFichier(x.corpus), 'mes exercices');
+      $('#in-nom').value = x.eleve.nom; $('#in-prenom').value = x.eleve.prenom; $('#in-classe').value = x.eleve.classe;
+      demarrer();
+    } catch(err) { $('#accueil-msg').textContent = 'Cet exercice ne peut pas être rouvert.'; }
+  } else if (o) {
+    const x = h[+o.dataset.oublier]; if (!x) return;
+    if (!confirm('Retirer « ' + x.titre + ' » de la liste ?')) return;
+    h.splice(+o.dataset.oublier, 1); store.set(CLE_HISTO, h); renderAccueil();
+  }
+});
 
 const cleTravail = () => 'cgv:travail:' + signature(S.corpus) + ':' + slug(S.eleve.classe + '-' + S.eleve.nom + '-' + S.eleve.prenom);
 
@@ -618,6 +660,7 @@ function demarrer(){
 function sauver(){
   const ok = store.set(cleTravail(), {placements:S.placements, verifs:S.verifs});
   store.set('cgv:dernier', {corpus:versFichier(S.corpus), eleve:S.eleve});
+  noterHistorique();
   const h = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
   $('#etat-sauvegarde').textContent = ok
     ? '✓ Travail enregistré automatiquement sur cet iPad (' + h + ').'
@@ -991,11 +1034,13 @@ $('#ed-telecharger').onclick = () => {
   const horodatage = d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + '_' + z(d.getHours()) + 'h' + z(d.getMinutes());
   const nom = 'exercice_' + slug(ED.titre).slice(0, 50) + '_' + horodatage + '.json';
   telecharger(nom, JSON.stringify(versFichier(ED)));
+  noterCree();
   $('#ed-msg').textContent = '✓ Fichier « ' + nom + ' » téléchargé. Envoyez-le aux élèves : ils l\'ouvrent avec le bouton « Ouvrir l\'exercice envoyé par le professeur ».';
 };
 $('#ed-lien').onclick = () => {
   if (!edPret()) return;
-  const url = location.href.split('#')[0].split('?')[0] + '#c=' + b64urlE(JSON.stringify(versFichier(ED)));
+  const url = lienPour(versFichier(ED));
+  noterCree();
   const champ = $('#ed-lien-texte'); champ.value = url; champ.hidden = false; champ.select();
   const fin = ok => { $('#ed-msg').textContent = (ok ? '✓ Lien copié. ' : 'Copiez le lien ci-dessous. ') +
     'Collez-le dans École Directe : en l\'ouvrant, l\'élève arrive directement sur l\'exercice.' +
@@ -1099,6 +1144,46 @@ $('#ia-remplacer').onclick = () => {
 };
 $('#ia-ajouter').onclick = () => remplirIA(true);
 
+function crees(){ const c = store.get(CLE_CREES); return Array.isArray(c) ? c.filter(x => x && x.corpus) : []; }
+function noterCree(){
+  const sig = signature(ED);
+  const c = crees().filter(x => x.sig !== sig);
+  c.unshift({sig, titre:ED.titre, date:Date.now(), n:ED.phrases.length, corpus:versFichier(ED)});
+  store.set(CLE_CREES, c.slice(0, 40));
+  renderCrees();
+}
+function renderCrees(){
+  const c = crees(), box = $('#ed-crees');
+  box.innerHTML = c.length ? '<h3 class="histo-titre">📚 Mes exercices créés (sur cet appareil)</h3><ul class="histo">' +
+    c.map((x, i) => '<li><div><strong>' + esc(x.titre) + '</strong><br><span class="histo-info">' + dateHeure(x.date) + ' · ' + pluriel(x.n, 'phrase') + '</span></div>' +
+      '<span class="histo-boutons"><button class="secondaire petit" data-cree="modifier" data-i="' + i + '">✏️ Modifier</button>' +
+      '<button class="secondaire petit" data-cree="lien" data-i="' + i + '">🔗 Lien</button>' +
+      '<button class="secondaire petit" data-cree="fichier" data-i="' + i + '">💾 Fichier</button>' +
+      '<button class="lien petit" data-cree="oublier" data-i="' + i + '" aria-label="Retirer de la liste">✕</button></span></li>').join('') + '</ul>' : '';
+}
+$('#ed-crees').addEventListener('click', e => {
+  const b = e.target.closest('[data-cree]'); if (!b) return;
+  const c = crees(), x = c[+b.dataset.i]; if (!x) return;
+  const action = b.dataset.cree;
+  if (action === 'modifier') {
+    if (ED.phrases.length && !confirm('Remplacer l\'exercice en cours de création par « ' + x.titre + ' » ?')) return;
+    ED = depuisFichier(x.corpus); edVersChamps(); edRender(); edSauver();
+    $('#ed-msg').textContent = '✓ « ' + x.titre + ' » est ouvert dans l\'éditeur.';
+    window.scrollTo({top:0, behavior:'smooth'});
+  } else if (action === 'lien') {
+    const url = lienPour(x.corpus), champ = $('#ed-lien-texte');
+    champ.value = url; champ.hidden = false; champ.select();
+    const fin = ok => { $('#ed-msg').textContent = (ok ? '✓ Lien de « ' + x.titre + ' » copié. ' : 'Copiez le lien ci-dessous. ') + 'Collez-le dans École Directe.'; };
+    if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => fin(true), () => fin(false)); else fin(false);
+  } else if (action === 'fichier') {
+    telecharger('exercice_' + slug(x.titre).slice(0, 50) + '.json', JSON.stringify(x.corpus));
+    $('#ed-msg').textContent = '✓ Fichier de « ' + x.titre + ' » téléchargé.';
+  } else if (action === 'oublier') {
+    if (!confirm('Retirer « ' + x.titre + ' » de la liste ? (Les liens déjà envoyés continueront de fonctionner.)')) return;
+    c.splice(+b.dataset.i, 1); store.set(CLE_CREES, c); renderCrees();
+  }
+});
+
 /* ---------- Enseignant : correction ---------- */
 let COPIES = [], copieOuverte = -1;
 function lireTravail(f){
@@ -1196,7 +1281,7 @@ window.addEventListener('afterprint', () => {
 /* ---------- Navigation ---------- */
 const EMPREINTE_CODE = 'aoir7l';
 const EMPREINTE_COLLEGUE = '1d49jbl';
-const ouvrirProf = complet => { $('#ia').hidden = !complet; $('#modale-code').hidden = true; montrerEcran('prof'); edRender(); };
+const ouvrirProf = complet => { $('#ia').hidden = !complet; $('#modale-code').hidden = true; montrerEcran('prof'); edRender(); renderCrees(); };
 function accesMemorise(){ try { return sessionStorage.getItem('cgv:prof'); } catch(e) { return null; } }
 function retenirAcces(v){ try { sessionStorage.setItem('cgv:prof', v); } catch(e) {} }
 $('#btn-prof').onclick = () => {
